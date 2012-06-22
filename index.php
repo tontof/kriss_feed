@@ -11,11 +11,16 @@ define('DATA_FILE',DATA_DIR.'/data.php');
 define('CONFIG_FILE',DATA_DIR.'/config.php');
 define('STYLE_FILE','style.css');
 
-define('FEED_VERSION',1);
+define('FEED_VERSION',2);
 
 define('PHPPREFIX','<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX',' */ ?>'); // Suffix to encapsulate data in php code.
 
+define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
+
+define('ERROR_NO_XML',1);
+define('ERROR_ITEMS_MISSED',2);
+define('ERROR_LAST_UPDATE',2);
 
 class Feed_Conf
 {
@@ -28,16 +33,32 @@ class Feed_Conf
     public $title = "Kriss feed";
 
     // Redirector (e.g. http://anonym.to/? will mask the HTTP_REFERER)
+    // (do not consider link in the article)
     public $redirector = '';
 
+    // shaarli link
+    public $shaarli = '';
+
     // Number of entries to display per page
-    public $byPage = "10";
+    public $byPage = 10;
+
+    // Max number of articles by channel
+    public $maxItems = 100;
 
     // Max number of minutes between each update of channel
     public $maxUpdate = 60;
 
     // Reversed order ?
     public $reverseOrder = true;
+
+    // new items ? (or all items)
+    public $newItems = true;
+
+    // expanded view ? (or list view)
+    public $expandedView = true;
+
+    // default view (show, reader, feeds)
+    public $defaultView = 'show';
 
     // Feed url (leave empty to autodetect)
     public $url = '';
@@ -155,9 +176,38 @@ class Feed_Conf
         $this->byPage=$byPage;
     }
 
-    public function setMaxUpdate($maxUpdate)
+    public function setShaarli($url)
     {
-        $this->maxUpdate=$maxUpdate;
+        $this->shaarli=$url;
+    }
+
+    public function setMaxUpdate($max)
+    {
+        $this->maxUpdate=$max;
+    }
+
+    public function setMaxItems($max)
+    {
+        $this->maxItems=$max;
+    }
+
+    public function setNewItems($new)
+    {
+        $this->newItems=$new;
+    }
+
+    public function setExpandedView($expandedView)
+    {
+        $this->expandedView=$expandedView;
+    }
+
+    public function setDefaultView($defaultView)
+    {
+	if ($defaultView == 'show'){
+	    $this->defaultView = 'show';
+	} elseif ($defaultView == 'reader'){
+	    $this->defaultView = 'reader';
+	}
     }
 
     public function setReverseOrder($reverseOrder)
@@ -168,7 +218,8 @@ class Feed_Conf
     public function write()
     {	
         $data = array('login', 'hash', 'salt', 'title', 'redirector',
-                      'byPage', 'reverseOrder', 'maxUpdate');
+                      'byPage', 'reverseOrder', 'maxUpdate', 'shaarli',
+		      'maxItems', 'newItems', 'expandedView', 'defaultView');
         $out = '<?php';
         $out.= "\n";
 
@@ -193,17 +244,60 @@ class Feed_Page
 {
   // Default stylesheet
   private $css = '<style>
-.admin {
+.admin, .error {
   color: red !important;
+  font-size: 1.1em !important;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
   background: #eee;
   color: #000;
+}
+
+#config, #edit, #feeds, #import, #show {
+  border: 2px solid #999;
+  border-top: none;
+  background: #fff;
   width:800px;
   margin:auto;
+  padding: .2em;
+}
+
+#reader {
+  background: #fff;
+  width:100%;
   height:100%;
+}
+
+#list-feeds {
+  width: 250px;
+  height: 100%;
+  float: left;
+  overflow: auto;
+}
+
+#list-feeds h3 {
+  background-color: #ccc;
+}
+
+#list-feeds ul {
+  font-size: .9em;
+  list-style: none;
+  margin: 0;
+  padding : 0;
+}
+
+#container {
+  margin-left:250px;
+  height: 100%;
+  overflow: auto;
 }
 
 #extra {
@@ -220,19 +314,6 @@ body {
   height:auto;
 }
 
-#global {
-  border: 2px solid #999;
-  border-top: none;
-  padding: 1em 1.5em 0;
-  background: #fff;
-}
-
-#footer {
-  margin: 0;
-  font-size: 0.7em;
-  text-align: center;
-}
-
 #title {
   margin: 0;
   color: #666;
@@ -247,11 +328,22 @@ body {
   color: #666;
 }
 
+#footer {
+  margin: 0;
+  font-size: 0.7em;
+  text-align: center;
+  clear:both;
+  background: #fff;
+  width: 100%;
+}
+
+
 #nav {
   border: 1px dashed #999;
-  padding-left: .5em;
   font-size: .9em;
   color: #666;
+  text-align: center;
+  background: #fff;
 }
 
 .pagination {
@@ -270,7 +362,7 @@ body {
   font-size: 1.2em;
 }
 
-.article, .comment {
+#article, .article, .comment{
   border: 1px dotted #999;
   padding: .5em;
   margin: 1.5em 0;
@@ -294,6 +386,10 @@ body {
   padding:.5em;
 }
 
+.description{
+  padding:.5em;
+}
+
 .link {
   font-size: .9em;
   float: right;
@@ -303,20 +399,6 @@ body {
 
 .read {
   opacity: 0.4;
-}
-
-#new_comment button { 
-  border: 1px solid #000;
-  border-radius: 4px;
-  margin: 0 .2em;
-  background: #fff;
-  height:32px;
-  width:32px;
-}
-
-#new_comment button:hover { 
-  border: 1px solid #000;
-  background: #999;
 }
 
 fieldset{
@@ -337,6 +419,10 @@ input[type=text], textarea{
   width:100%;
 }
 
+button{
+  font-size: 1.1em;
+}
+
 a:active, a:visited, a:link {
   text-decoration: underline;
   color: #666;
@@ -346,15 +432,50 @@ a:hover {
   text-decoration: none;
 }
 
-@media (max-width: 800px) {
- body{
-  width:100%;
-  height:100%;
- }
+ul, ol {
+  margin-left:1em;
+  margin-bottom:.2em;
+  padding-left:0;
+}
 
- .nomobile{
+li {
+  margin-bottom:.2em;
+}
+
+#plusmenu li {
+  display:inline;
+} 
+
+@media (max-width: 800px) {
+body{
+  width: 100%;
+  height: 100%;
+}
+
+#config, #edit, #feeds, #import, #show, #reader, #list-feeds, #container {
+  width: auto;
+  height: auto;
+}
+
+#list-feeds {
+  float: none;
+}
+
+#container {
+  margin-left: 0;
+}
+
+img, video, iframe, object{
+  max-width:100%;
+  height:auto;
+}
+
+#plusmenu li {
+  display:block;
+} 
+.nomobile{
   display:none;
- }
+}
 }
 </style>
 ';
@@ -365,36 +486,77 @@ a:hover {
 	    $this->css = '<link rel="stylesheet" href="'.$css_file.'">';
     }
 
-    public function menuDiv($type){
+    public function menu($type, $kfc, $hash = ''){
 	$menu = '
-      <div id="nav"><p>';
+      <p>';
 	switch($type){
-	case 'index':
-	case 'config':
+	case 'show':
+	    $menu .= '
+        <button onclick="previousItem();">&lt;</button>
+        <button onclick="plusMenu();" id="butplusmenu">+</button>
+        <button onclick="nextItem();">&gt;</button>
+        <ul id="plusmenu" style="display:none">
+          <li><a href="?show" title="Show view">Show</a></li>
+          <li><a href="?reader" title="Reader view">Reader</a></li>
+          <li><a href="#" onclick="shareItem();" title="Share item on shaarli">Shaarli</a></li>
+          <li><a href="#" onclick="forceUpdate();" title="Update manually">Update</a></li>
+          <li><input type="checkbox" name="keepunread" id="keepunread"><label for="keepunread">Keep unread</label></li>';
+if (Session::isLogged()) {
+		$menu .= '
+          <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
+          <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
+        </ul>
+';
+} else {
+$menu .= '
+          <li><a href="?login">Login</a></li>
+';
+}
+	    break;
 	case 'edit':
 	    $menu .= '
-        <a href="?">All items</a>
-      | <a href="?feeds">Feeds</a>';
+        <a href="?show" title="Show view">Show</a>
+      | <a href="?reader" title="Reader view">Reader</a>';
 	    if (Session::isLogged()) {
 		$menu .= '
-      | <a href="?config" class="admin">Configuration</a>
-      | <a href="?logout" class="admin">Logout</a>';
+      | <a href="?config" class="admin" title="Configuration">Configuration</a>
+      | <a href="?logout" class="admin" title="Logout">Logout</a>';
+	    }
+	    break;
+	case 'reader':
+	    $menu .= '
+        <a href="?show" title="Show view">Show</a>
+      | <a href="?reader" title="Reader view">Reader</a>';
+
+	    if (Session::isLogged()) {
+		$sep = '';
+		if ($hash != ''){
+		    $sep = '=';
+		    $menu .= '
+      | <a href="?edit'.$sep.$hash.'" class="admin">Edit</a>';
+		}
+		$menu .= '
+      | <a href="?update'.$sep.$hash.'" class="admin" title="Manual update">Update</a>
+      | <a href="?read'.$sep.$hash.'" class="admin" title="Mark as read">Read</a>
+      | <a href="?unread'.$sep.$hash.'" class="admin" title="Mark as unread">Unread</a>
+      | <a href="?config" class="admin" title="Configuration">Configuration</a>
+      | <a href="?logout" class="admin" title="Logout">Logout</a>';
 	    }
 	    else{
 		$menu .= '
       | <a href="?login">login</a>';
 	    }
 	    break;
-	case 'feeds':
+	case 'config':
 	    $menu .= '
-        <a href="?">All items</a>
-      | <a href="?feeds">Feeds</a>';
+        <a href="?show" title="Show view">Show</a>
+      | <a href="?reader" title="Reader view">Reader</a>';
 	if (Session::isLogged()) {
 	    $menu .= '
-      | <a href="?import" class="admin">Import</a>
-      | <a href="?export" class="admin">Export</a>
-      | <a href="?config" class="admin">Configuration</a>
-      | <a href="?logout" class="admin">Logout</a>';
+      | <a href="?import" class="admin" title="Import OPML file">Import</a>
+      | <a href="?export" class="admin" title="Export OPML file">Export</a>
+      | <a href="?config" class="admin" title="Configuration">Configuration</a>
+      | <a href="?logout" class="admin" title="Logout">Logout</a>';
 	}
 	else{
 	    $menu .= '
@@ -405,8 +567,14 @@ a:hover {
 	    break;
 	}
 	$menu .= '
-      </p></div>'; 
+      </p>'; 
 	return $menu;
+    }
+
+    public function footer(){
+        return '<a href="http://github.com/tontof/kriss_feed">KrISS feed '.FEED_VERSION.'</a>'.
+	    '<span class="nomobile"> - A simple and smart (or stupid) feed reader</span>. '.
+	    'By <a href="http://tontof.net">Tontof</a>';
     }
 
     public function htmlPage($title,$body)
@@ -420,7 +588,8 @@ a:hover {
     '.$this->css.'
     <link rel="alternate" type="application/rss+xml" title="'.$title.' RSS" href="?rss">
   </head>
-  <body>'.$body.'
+  <body>
+'.$body.'
   </body>
 </html>';
     }
@@ -430,14 +599,13 @@ a:hover {
 	if (isset($_SERVER['HTTP_REFERER'])){
 	    $ref = htmlspecialchars($_SERVER['HTTP_REFERER']);
 	}
-	$menu = $this->menuDiv('config');
+	$menu = $this->menu('config',$kfc);
 
 	return '
-    <div id="global">
-      <div id="header">
-        <h1 id="title">Configuration (version '.$kfc->version.')</h1>
-        <h2 id="subtitle">Why don\'t you <a href="http://github.com/tontof/kriss_feed/">check for a new version</a> ?</h2>
-      </div>'.$menu.'
+    <div id="config">
+      <div id="nav">
+'.$menu.'
+      </div>
       <div id="section">
         <form method="post" action="">
           <input type="hidden" name="token" value="'.Session::getToken().'">
@@ -446,7 +614,12 @@ a:hover {
             <legend>Feed Reader information</legend>
             <label>- Feed reader title</label><br>
             <input type="text" name="title" value="'.htmlspecialchars($kfc->title).'"><br>
-            <label>- Feed reader redirector (<strong>not implemented yet</strong>)</label><br>
+            <label for="showView">- Default view</label><br>
+            <input type="radio" id="showView" name="defaultView" value="show" '.($kfc->defaultView=='show' ? 'checked="checked"' : '').' /><label for="showView">Show view</label><br>
+            <input type="radio" id="readerView" name="defaultView" value="reader" '.($kfc->defaultView=='reader' ? 'checked="checked"' : '').' /><label for="readerView">Reader view</label><br>
+            <label>- Shaarli url</label><br>
+            <input type="text" name="shaarli" value="'.htmlspecialchars($kfc->shaarli).'"><br>
+            <label>- Feed reader redirector (only for links, media are not considered)</label><br>
             <input type="text" name="redirector" value="'.htmlspecialchars($kfc->redirector).'"><br>
             <p>(e.g. http://anonym.to/? will mask the HTTP_REFERER)</p>
           </fieldset>
@@ -454,10 +627,18 @@ a:hover {
             <legend>Feed reader preferences</legend>
             <label>- Number of entries by page</label><br>
             <input type="text" maxlength="3" name="byPage" value="'.(int) $kfc->byPage.'"><br>
-            <label>- Maximum delay between channel update (in minutes) (<strong>not implemented yet</strong>)</label><br>
-            <input type="text" maxlength="3" name="maxUpdate" value="'.(int) $kfc->maxUpdate.'"><br>
-            <label for="reverse">- Order of entries (<strong>not implemented yet</strong>)</label><br>
-            <input type="radio" id="normalorder" name="reverseorder" value="0" '.(!$kfc->reverseOrder ? 'checked="checked"' : '').' /> <label for="normalorder">From the latest to the newest</label><br>
+            <label>- Maximum number of entries by channel</label><br>
+            <input type="text" maxlength="3" name="maxItems" value="'.(int) $kfc->maxItems.'"><br>
+            <label>- Maximum delay between channel update (in minutes)</label><br>
+            <input type="text" maxlength="4" name="maxUpdate" value="'.(int) $kfc->maxUpdate.'"><br>
+            <label for="expandedview">- Item view (<strong>not implemented yet</strong>)</label><br>
+            <input type="radio" id="expandedview" name="expandedView" value="1" '.($kfc->expandedView ? 'checked="checked"' : '').' /><label for="expandedview">Expanded view</label><br>
+            <input type="radio" id="listview" name="expandedView" value="0" '.(!$kfc->expandedView ? 'checked="checked"' : '').' /><label for="listview">List view</label><br>
+            <label for="newitems">- Items selection</label><br>
+            <input type="radio" id="newitems" name="newItems" value="1" '.($kfc->newItems ? 'checked="checked"' : '').' /><label for="newitems">New items</label><br>
+            <input type="radio" id="readitems" name="newItems" value="0" '.(!$kfc->newItems ? 'checked="checked"' : '').' /><label for="readitems">All items</label><br>
+            <label for="reverseorder">- Order of entries</label><br>
+            <input type="radio" id="normalorder" name="reverseOrder" value="0" '.(!$kfc->reverseOrder ? 'checked="checked"' : '').' /><label for="normalorder">From the latest to the newest</label><br>
             <input type="radio" id="reverseorder" name="reverseOrder" value="1" '.($kfc->reverseOrder ? 'checked="checked"' : '').' /><label for="reverseorder"><strong>Reverse order:</strong> from the newest to the latest</label><br>
             <input type="submit" name="cancel" value="Cancel"/>
             <input type="submit" name="save" value="Save" />
@@ -474,14 +655,13 @@ a:hover {
 	    $ref = htmlspecialchars($_SERVER['HTTP_REFERER']);
 	}
 
-	$menu = $this->menuDiv('edit');
+	$menu = $this->menu('edit',$kf->kfc);
 
 	return '
-    <div id="global">
-      <div id="header">
-        <h1 id="title">Edit</h1>
-        <h2 id="subtitle">folder</h2>
-      </div>'.$menu.'
+    <div id="edit">
+      <div id="nav">
+'.$menu.'
+      </div>
       <div id="section">
         <div class="article">
         <form method="post" action="">
@@ -505,10 +685,10 @@ a:hover {
 	    $ref = htmlspecialchars($_SERVER['HTTP_REFERER']);
 	}
 
-	$menu = $this->menuDiv('edit');
+	$menu = $this->menu('edit',$kf->kfc);
 	$lastUpdate = 'need update';
-	$diff = (int)(time()-$feed['lastUpdate']);
-	if($diff < $kf->kfc->maxUpdate * 60){
+	if (!$kf->needUpdate($feed)){
+	    $diff = (int)(time()-$feed['lastUpdate']);
 	    $lastUpdate = (int)($diff/60).' m '.(int)($diff%60).' s';
 	}
 
@@ -525,11 +705,10 @@ a:hover {
             
 
 	return '
-    <div id="global">
-      <div id="header">
-        <h1 id="title">Edit</h1>
-        <h2 id="subtitle">feed</h2>
-      </div>'.$menu.'
+    <div id="edit">
+      <div id="nav">
+'.$menu.'
+      </div>
       <div id="section">
         <form method="post" action="">
           <input type="hidden" name="returnurl" value="'.$ref.'" />
@@ -551,19 +730,19 @@ a:hover {
           <fieldset>
             <legend>Feed preferences</legend>
             <label>- Time update (\'auto\', \'max\' or a number of minutes less than \'max\' define in <a href="?config">config</a>)</label><br>
-            <input type="text" name="timeUpdate" value="'.$feed['timeUpdate'].' (not implemented yet)"><br>
+            <input type="text" name="timeUpdate" value="'.$feed['timeUpdate'].' '.$kf->getTimeUpdate($feed).'"><br>
             <label>- Last update (<em>read only</em>)</label><br>
             <input type="text" name="lastUpdate" value="'.$lastUpdate.'"><br>
-            <input type="submit" name="delete" value="Delete"/>
-            <input type="submit" name="cancel" value="Cancel"/>
             <input type="submit" name="save" value="Save" />
+            <input type="submit" name="cancel" value="Cancel"/>
+            <input type="submit" name="delete" value="Delete"/>
           </fieldset>
         </form><br>
       </div>
     </div>';
     }
     
-    public function feedsDiv($kf, $action)
+    public function listFeeds($kf)
     {
 	$str = '';
 	$feeds = $kf->getFeeds();
@@ -575,10 +754,9 @@ a:hover {
 	    $unread = ' ('.$unread.')';
 	}
 	$str .= '
-        <div class="article">
           <ul>
-          <li><strong><a href="?show">Subscriptions</a>'.$unread.'</strong>
-            <ul>';
+          <li><h3 class="title"><button onclick="toggle(\'all-subscriptions\',this)">-</button> <a href="?reader">Subscriptions</a>'.$unread.'</h3>
+            <ul id="all-subscriptions">';
 	foreach ($feeds as $hashUrl => $arrayInfo){
 	    if (empty($arrayInfo['folders'])){
 		$unread = $kf->getUnread($hashUrl);
@@ -587,12 +765,14 @@ a:hover {
 		} else {
 		    $unread = ' ('.$unread.')';
 		}
+		$atitle = trim(htmlspecialchars($arrayInfo['description']));
+		if (empty($atitle)){
+		    $atitle = trim(htmlspecialchars($arrayInfo['title']));
+		}
 		$str .= '
-            <li><strong><a href="?'.$action.'='.$hashUrl.'" title="'.htmlspecialchars($arrayInfo['xmlUrl']).'">'.htmlspecialchars($arrayInfo['title']).'</a>'.$unread.'</strong> : '.htmlspecialchars($arrayInfo['description']).'</li>';
+            <li> - <strong><a href="?reader='.$hashUrl.'"'.(isset($arrayInfo['error'])?' class="error" title="'.$kf->getError($arrayInfo['error']).'"':'').'>'.htmlspecialchars($arrayInfo['title']).'</a>'.$unread.'</strong></li>';
 	    }
 	}
-	$str .= '
-            </ul>';
 	foreach ($folders as $hashFold => $folder){
 	    $unread = $kf->getUnread($hashFold);
 	    if ($unread == 0){
@@ -601,9 +781,8 @@ a:hover {
 		$unread = ' ('.$unread.')';
 	    }
 	    $str .= '
-            <ul>
-            <li><h3 class="title"><a href="?'.$action.'='.$hashFold.'">'.htmlspecialchars($folder).'</a>'.$unread.'</h3>
-              <ul>';
+            <li><h3 class="title"><button onclick="toggle(\'folder-'.$hashFold.'\',this)">-</button> <a href="?reader='.$hashFold.'">'.htmlspecialchars($folder).'</a>'.$unread.'</h3>
+              <ul id="folder-'.$hashFold.'">';
 	    foreach ($feeds as $hashUrl => $arrayInfo){
 		if (in_array($folder, $arrayInfo['folders'])){
 		    $unread = $kf->getUnread($hashUrl);
@@ -612,25 +791,109 @@ a:hover {
 		    } else {
 			$unread = ' ('.$unread.')';
 		    }
+		    $atitle = trim(htmlspecialchars($arrayInfo['description']));
+		    if (empty($atitle) || $atitle == ' '){
+			$atitle = trim(htmlspecialchars($arrayInfo['title']));
+		    }
 		    $str .= '
-              <li><strong><a href="?'.$action.'='.$hashUrl.'" title="'.htmlspecialchars($arrayInfo['xmlUrl']).'">'.htmlspecialchars($arrayInfo['title']).'</a>'.$unread.'</strong> : '.htmlspecialchars($arrayInfo['description']).'</li>';
+              <li> - <strong><a href="?reader='.$hashUrl.'"'.(isset($arrayInfo['error'])?' class="error" title="'.$kf->getError($arrayInfo['error']).'"':'').'>'.htmlspecialchars($arrayInfo['title']).'</a>'.$unread.'</strong></li>';
 		}
 	    }
 	    $str .= '
               </ul>
-            </li>
-            </ul>';
+            </li>';
 	}
         $str .= '
-          </li>
-          </ul>
-        </div>';
+            </ul>
+          </ul>';
 	return $str;
     }
 
-    public function feedsPage($kf)
+    public function readerPage($kf, $hash = '', $page = 1)
     {
-	$menu = $this->menuDiv('feeds');
+	$list = $kf->getItems($hash);
+	$type = $kf->hashType($hash);
+
+	// create menu
+	$menu = $this->menu('reader',$kf->kfc, $hash);
+
+	// create pagination
+	$pagination = '';
+
+	$begin = ($page - 1) * $kf->kfc->byPage;
+        $pages = (count($list) <= $kf->kfc->byPage)?'':ceil(count($list) / $kf->kfc->byPage);
+	
+	if (!empty($pages)) {
+	    $previousPage = $page-1;
+	    $nextPage = $page+1;
+	    if ($previousPage < 1){
+		$previousPage = 1;
+	    }
+	    if ($nextPage > $pages){
+		$nextPage = $pages;
+	    }
+	    $pagination .= '
+        <p class="pagination">
+        ';
+	    $reader='reader';
+	    if (!empty($hash)) {
+		$reader='reader='.$hash;
+	    }
+	    $pagination .= '
+          <a href="?'.$reader.'&page='.$previousPage.'">previous</a>
+          ';
+
+	    for ($p = 1; $p <= $pages; $p++) {
+		$pagination .= ' <a href="?'.$reader.'&page='.$p.'" '.($page == $p ? ' class="selected"' : '').'>'.$p.'</a> ';
+	    }
+
+	    $pagination .= '
+          <a href="?'.$reader.'&page='.$nextPage.'">next</a>
+        </p>';
+	}
+
+	// create footer
+	$footer = $this->footer();
+
+	// select items on the page
+	$list = array_slice($list,$begin,$kf->kfc->byPage,true);
+	$listItems = '';
+	if (empty($list)) {
+	    $listItems .= '
+        <div class="article"><p>No item.</p></div>';
+	} else {
+	    $i=0;
+	    foreach ($list as $itemHash => $item){
+		$read = '';
+		$markAs = '';
+		if ($item['read']==1){
+		    $read = ' read';
+		}
+		if (Session::isLogged()) {
+		    $markAs = ' (<a href="?read='.$itemHash.'">Mark as read</a>)';
+		    if ($item['read']==1){
+			$markAs = ' (<a href="?unread='.$itemHash.'">Mark as unread</a>)';
+		    }
+		}
+
+/*<div class="description">
+           '.preg_replace('/<a(.*?)href=["\'](.*?)["\'](.*?)>/',$kf->kfc->redirector.'$1 $2 $3',preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', "", $item['description'])).'
+	   </div>*/
+
+		$listItems .= '
+        <div class="article'.$read.'">
+          <h3 class="title"><a href="'.$kf->kfc->redirector.htmlspecialchars($item['link']).'">'.htmlspecialchars(html_entity_decode($item['title'],ENT_QUOTES,'UTF-8')).'</a>'.$markAs.'</h3>
+          <h4 class="subtitle">from <a href="'.$kf->kfc->redirector.htmlspecialchars($item['xmlUrl']).'">'.htmlspecialchars($item['author']).'</a></h4>
+          <div class="content">
+           '.preg_replace('/<a(.*?)href=["\'](.*?)["\'](.*?)>/','<a$1href="'.$kf->kfc->redirector.'$2"$3>',preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', "", $item['content'])).'
+          </div>
+        </div>';
+		$i++;
+	    }
+	}
+
+	// list of feeds
+	$listFeeds = $this->listFeeds($kf);
 
 	$addNewFeed = '';
 	if (Session::isLogged()) {
@@ -645,107 +908,669 @@ a:hover {
         </div>';
 	}
 
-	$str = '
-    <div id="global">'.$menu.'
-      <div id="section">';
-	$str .= $addNewFeed.$this->feedsDiv($kf,'edit').'
+	// ajaxscript
+        $ajaxScript = $this->ajaxScript($kf);
+
+	return <<<HTML
+    <div id="reader">
+      <div id="list-feeds">
+$addNewFeed
+$listFeeds
+      </div>
+      <div id="container">
+        <div id="nav">
+$menu
+        </div>
+$pagination
+        <div id="section">
+$listItems
+        </div>
+$pagination
+        <div id="footer">
+$footer
+        </div>
       </div>
     </div>
-';
-	return $str;
+$ajaxScript
+HTML;
     }
 
-    public function itemsOptionDiv($kf, $hash){
-	$str = '';
-	$type = $kf->hashType($hash);
-	if (empty($type)){
-	    $type = 'all';
-	}
-	$sep= '';
-	if (!empty($hash)){
-	    $sep = '=';
-	}
-	
-	$str .= '
-        <div class="article">
-          '.$type.': <a href="?update'.$sep.$hash.'">Update</a> <a href="?read'.$sep.$hash.'">Mark all as read</a>
-        </div>';
-	return $str;
-    }
-
-    public function indexPage($kf, $hash = '', $page = 1)
+    public function showPage($kf)
     {
-	$begin = ($page - 1) * $kf->kfc->byPage;
-	$list = $kf->getItems($hash);
+	$menu = $this->menu('show',$kf->kfc);
+	$footer = $this->footer();
+	$ajaxscript = $this->ajaxScript($kf);
 
-	$menu = $this->menuDiv('index');
-
-	$type = $kf->hashType($hash);
-
-
-        $pages = (count($list) <= $kf->kfc->byPage)?'':ceil(count($list) / $kf->kfc->byPage);
-	
-	$pagination = '';
-	if (!empty($pages))
-	{
-	    $pagination .= '
-        <p class="pagination">
-        ';
-	    $show='';
-	    if (!empty($hash)){
-		$show='show='.$hash.'&';
-	    }
-	    for ($p = 1; $p <= $pages; $p++)
-	    {
-		$pagination .= ' <a href="?'.$show.'page='.$p.'" '.($page == $p ? ' class="selected"' : '').'>'.$p.'</a> ';
-	    }
-
-	    $pagination .= '
-        </>';
-	}
-
-	$list = array_slice($list,$begin,$kf->kfc->byPage,true);
-
-	$str = '
-    <div id="global">'.$menu.'
-      <div id="feeds">'.$this->itemsOptionDiv($kf, $hash).'
+	return <<<HTML
+    <div id="show">
+      <div id="nav">
+$menu
       </div>
-      <div id="feeds">'.$this->feedsDiv($kf,'show').'
-      </div>
-      <div id="section">'.$pagination;
-
-	if (empty($list)) {
-	    $str .= '
-        <div class="article"><p>No item.</p></div>';
-	} else {
-	    $i=0;
-	    foreach ($list as $itemHash => $item){
-		$read = '';
-		$markAs = ' (<a href="?read='.$itemHash.'">Mark as read</a>)';
-		if ($item['read']==1){
-		    $read = ' read';
-		    $markAs = ' (<a href="?unread='.$itemHash.'">Mark as unread</a>)';
-		}
-		$str .= '
-        <div class="article'.$read.'">
-          <h3 class="title"><a href="'.htmlspecialchars($item['link']).'">'.htmlspecialchars($item['title']).'</a>'.$markAs.'</h3>
-          <h4 class="subtitle">from <a href="'.htmlspecialchars($item['xmlUrl']).'">'.htmlspecialchars($item['author']).'</a></h4>
-          <div class="content">
-           '.preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', "", $item['content']).'
-          </div>
-        </div>';
-		$i++;
-	    }
-	}
-	
-	$str .= $pagination.'
+      <div id="section">
+        <div id="article">
+          <h3 id="title"></h3>
+          <h4 id="subtitle"></h4>
+          <div id="content"></div>
+        </div>
       </div>
       <div id="footer">
-        <a href="http://github.com/tontof/kriss_feed">KrISS feed</a> - A simple and smart (or stupid) feed reader.
-        By <a href="http://tontof.net">Tontof</a>
+$footer
       </div>
-    </div>';
-	return $str;
+    </div>
+$ajaxscript
+HTML;
+    }
+
+    public function ajaxScript($kf){
+	$redir = $kf->kfc->redirector;
+	$shaarli = $kf->kfc->shaarli;
+	return <<<JS
+<script>
+var redirector = '$redir',
+    title = '',
+    listFeedsHash = []
+    listItemsHash = [],
+    itemsUnread = 0,
+    currentItemInd = 0,
+    previous = '',
+    current = '',
+    next = '',
+    working = false,
+    workingsave = '',
+    currentFeedInd = 0,
+    updatingFeed = false,
+    updateTimer = null,
+    footer = '',
+    shaarli = '$shaarli';
+/*
+   Provide the XMLHttpRequest constructor for Internet Explorer 5.x-6.x:
+   Other browsers (including Internet Explorer 7.x-9.x) do not redefine
+   XMLHttpRequest if it already exists.
+ 
+   This example is based on findings at:
+   http://blogs.msdn.com/xmlteam/archive/2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
+*/
+if (typeof XMLHttpRequest == "undefined") {
+  XMLHttpRequest = function () {
+    try { return new ActiveXObject("Msxml2.XMLHTTP.6.0"); }
+      catch (e) {}
+    try { return new ActiveXObject("Msxml2.XMLHTTP.3.0"); }
+      catch (e) {}
+    try { return new ActiveXObject("Microsoft.XMLHTTP"); }
+      catch (e) {}
+    //Microsoft.XMLHTTP points to Msxml2.XMLHTTP and is redundant
+    throw new Error("This browser does not support XMLHttpRequest.");
+  };
+}
+
+Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+
+function removeAllChild(el){
+    while (el.firstChild) {
+	el.removeChild(el.firstChild);
+    }
+}
+
+//http://stackoverflow.com/questions/1912501/unescape-html-entities-in-javascript
+function htmlDecode(input){
+  var e = document.createElement('div');
+  e.innerHTML = input;
+  return e.childNodes.length === 0 ? "" : e.firstChild.nodeValue;
+}
+
+// http://papermashup.com/read-url-get-variables-withjavascript/
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
+
+function changePage(direction) {
+    var currentPage = getUrlVars()['page'];
+    var currentHash = getUrlVars()['reader'];
+
+    if (typeof(currentPage) == 'undefined' || parseInt(currentPage) <= 0){
+	currentPage = 1;
+    }
+    var nextPage = parseInt(currentPage) + direction;
+    if (nextPage == 0){
+	nextPage = 1;
+    }
+
+    if (typeof(currentHash) == 'undefined'){
+	window.location.href = '?reader&page='+nextPage;
+    } else {
+	window.location.href = '?reader='+currentHash+'&page='+nextPage;
+    }
+}
+
+function nextPage(){
+    changePage(1);
+}
+
+function previousPage(){
+    changePage(-1);
+}
+
+function unloadItem(){
+    var title = document.getElementById('title');
+    var subtitle = document.getElementById('subtitle');
+    var content = document.getElementById('content');
+
+    removeAllChild(title);
+    removeAllChild(subtitle);
+    removeAllChild(content);
+}
+
+function shareItem(){
+    if (shaarli != ''){
+	var url = current['link'];
+	var title = current['title'];
+	window.open(shaarli+'/index.php?post='+encodeURIComponent(url)+'&title='+encodeURIComponent(title)+'&source=bookmarklet','_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=no,status=no');
+    } else {
+	alert('please configure your shaarli on config page !');
+    }
+}
+
+function setTitle(){
+    if (title === ''){
+	title = document.title
+    }
+    document.title = title + ' ('+itemsUnread+')';
+    
+    var but = document.getElementById('butplusmenu');
+    but.textContent = itemsUnread+' item(s)';
+
+}
+
+function anonymize(el){
+    var a_to_anon = el.getElementsByTagName("a");
+    for(var i = 0; i < a_to_anon.length; i++) {
+	a_to_anon[i].href = redirector+a_to_anon[i].href;
+    }
+}
+
+function loadItem(item) {
+    unloadItem();
+    if (item !== '') {
+	var article = document.getElementById('article');
+	if (item['read']==1){
+	    article.setAttribute('class','read');
+	} else {
+	    article.setAttribute('class','');
+	}
+	if (document.getElementById('keepunread') != 'null'){
+	    if (item['read']==-1){
+		document.getElementById('keepunread').checked = true;
+	    } else {
+		document.getElementById('keepunread').checked = false;
+	    }
+	}
+	var title = document.getElementById('title');
+	var subtitle = document.getElementById('subtitle');
+	var content = document.getElementById('content');
+
+	var link = document.createElement('a');
+	link.href = htmlDecode(item['link']);
+	link.title = htmlDecode(item['title']);
+	link.textContent = htmlDecode(item['title']);
+	
+	title.appendChild(link);
+	subtitle.textContent = 'from ';
+
+	var author = document.createElement('a');
+	author.href = htmlDecode(item['xmlUrl']);
+	author.title = htmlDecode(item['author']);
+	author.textContent = htmlDecode(item['author']);
+	subtitle.appendChild(author);
+	
+	content.innerHTML = item['content'];
+	anonymize(article);
+    }
+}
+
+function nextItem() {
+    if (current == ''){
+	getCurrentItem();
+    }
+    if (!working){
+	markAsRead();
+	if (next != ''){
+	    working=true;
+	    previous = current;
+	    current = next;
+	    currentItemInd++;
+	    next = '';
+	}
+	loadItem(current);
+	getNextItem();
+    } else {
+	workingsave = 'next';
+    }
+}
+
+function previousItem() {
+    if (!working){
+	if (previous != ''){
+	    working=true;
+	    next = current;
+	    current = previous;
+	    currentItemInd--;
+	    previous = ''; 
+	    loadItem(current);
+	    getPreviousItem();
+	}
+    } else {
+	workingsave = 'previous';
+    }
+}
+
+function plusMenu() {;
+    var pm = document.getElementById('plusmenu');
+    var but = document.getElementById('butplusmenu');
+    if (pm.getAttribute('style') == 'display:none') {
+	pm.setAttribute('style','display:block;list-style:none;');
+    } else {
+	pm.setAttribute('style','display:none');
+    }
+}
+
+
+function markAsRead(){
+    keepunread = false;
+    if (document.getElementById('keepunread')!= null){
+	if (document.getElementById('keepunread').checked){
+	    keepunread = true;
+	}
+    }
+    if (typeof(current['read'])!=='undefined' && current['read']!==1 && !keepunread){
+	var xhr = new XMLHttpRequest();
+	var hash = listItemsHash[currentItemInd];
+	var url = '?ajaxread='+hash;
+	xhr.open('GET', url, true);
+	xhr.onreadystatechange = function() { 
+	    // Everything OK
+	    if (xhr.readyState == 4) {
+		if (xhr.status == 200){
+		    var res = JSON.parse(xhr.responseText);
+		    if (res){
+			itemsUnread--;
+			setTitle();
+		    }
+		}
+	    }
+	};
+	xhr.send(null);
+	current['read']=1;
+    } else {
+	if (keepunread) {
+	    if (current['read']===1){
+		var xhr = new XMLHttpRequest();
+		var hash = listItemsHash[currentItemInd];
+		var url = '?ajaxkeepunread='+hash;
+		xhr.open('GET', url, true);
+		xhr.onreadystatechange = function() { 
+		    // Everything OK
+		    if (xhr.readyState == 4) {
+			if (xhr.status == 200){
+			    var res = JSON.parse(xhr.responseText);
+			    if (res){
+				itemsUnread++;
+				setTitle();
+			    }
+			}
+		    }
+		};
+		xhr.send(null);
+		current['read']=-1;
+	    } else if (current['read']===0) {
+		var xhr = new XMLHttpRequest();
+		var hash = listItemsHash[currentItemInd];
+		var url = '?ajaxkeepunread='+hash;
+		xhr.open('GET', url, true);
+		xhr.send(null);
+		current['read']=-1;
+	    }
+	}
+    }
+}
+
+function finishWorking(){
+    working = false;
+    switch(workingsave){
+    case 'next':
+	workingsave = '';
+	nextItem();
+	break;
+    case 'previous':
+	workingsave = '';
+	previousItem();
+	break;
+    case '':
+    default:
+	break;
+    }
+}
+
+function getPreviousItem(){
+    if (currentItemInd > 0) {
+	var xhr = new XMLHttpRequest();
+	var hash = listItemsHash[currentItemInd-1];
+	var url = '?ajaxitem='+hash;
+	xhr.open('GET', url, true);
+	xhr.onreadystatechange = function() { 
+	    // Everything OK
+	    if (xhr.readyState == 4) {
+		if (xhr.status == 200){
+		    previous = JSON.parse(xhr.responseText);
+		}
+		finishWorking();
+	    }
+	}
+	xhr.send(null);
+    } else {
+	finishWorking();
+    }
+}
+
+function getNextItem(){
+    if (currentItemInd < listItemsHash.length-1) {
+	var xhr = new XMLHttpRequest();
+	var hash = listItemsHash[currentItemInd+1];
+	var url = '?ajaxitem='+hash;
+	xhr.open('GET', url, true);
+	xhr.onreadystatechange = function() { 
+	    // Everything OK
+	    if (xhr.readyState == 4) {
+		if (xhr.status == 200){
+		    next = JSON.parse(xhr.responseText);
+		}
+		finishWorking();
+	    }
+	}
+	xhr.send(null);
+    } else {
+	finishWorking();
+    }
+}
+
+function getCurrentItem(){
+    if (currentItemInd < listItemsHash.length) {
+	var xhr = new XMLHttpRequest();
+	var hash = listItemsHash[currentItemInd];
+	var url = '?ajaxitem='+hash;
+	xhr.open('GET', url, true);
+	xhr.onreadystatechange = function() { 
+	    // Everything OK
+	    if (xhr.readyState == 4 && xhr.status == 200) {
+		current = JSON.parse(xhr.responseText);
+		loadItem(current);
+	    }
+	}
+	xhr.send(null);
+    }
+}
+
+function addItems(res){
+    for (var i = 0, len = res.length; i < len; i++) {
+	if (listItemsHash.indexOf(res[i]) == -1) {
+	    listItemsHash.push(res[i]);
+	    itemsUnread++;
+	}
+    }
+    setTitle();
+}
+
+function forceUpdate(i){
+    if (typeof(i) == "undefined"){
+	i = 0;
+    }
+    if (i < listFeedsHash.length){
+	setFooter("updating : "+listFeedsHash[i][2]);
+	var xhr = new XMLHttpRequest();
+	var url = '?ajaxupdate='+listFeedsHash[i][1];
+	xhr.open('GET', url, true);
+	xhr.onreadystatechange = function() { 
+	    // Everything OK
+	    if (xhr.readyState == 4) {
+		if (xhr.status == 200) {
+		    res = JSON.parse(xhr.responseText);
+		    addItems(res);
+		}
+		listFeedsHash[i][3] = Math.round((new Date().getTime())/1000);
+		forceUpdate(i+1)
+	    }
+	}
+	xhr.send(null);
+    } else {
+	setFooter(footer);
+    }
+}
+
+function update(feed){
+    var xhr = new XMLHttpRequest();
+    var url = '?ajaxupdate='+feed;
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() { 
+	// Everything OK
+        if (xhr.readyState == 4) {
+	    if (xhr.status == 200) {
+		res = JSON.parse(xhr.responseText);
+		addItems(res);
+	    }
+	    listFeedsHash[currentFeedInd][3] = Math.round((new Date().getTime())/1000);
+	    updatingFeed = false;
+	    currentFeedInd++;
+	}
+    }
+    xhr.send(null);
+}
+
+function updateCurrentFeed(){
+    if (!updatingFeed){
+	updatingFeed = true;
+	if (currentFeedInd >= listFeedsHash.length){
+	    updatingFeed = false;
+	    currentFeedInd = 0;
+	    window.clearInterval(updateTimer);
+	    setFooter(footer);
+	} else {
+	    if ((Math.round((new Date().getTime())/1000)-listFeedsHash[currentFeedInd][3])/60 > listFeedsHash[currentFeedInd][4]){
+		setFooter("updating : "+listFeedsHash[currentFeedInd][2]);
+		update(listFeedsHash[currentFeedInd][1]);
+	    } else {
+		updatingFeed = false;
+		currentFeedInd++;
+	    }
+	}
+    }
+}
+
+function updateFeeds(){
+    if (!updatingFeed){
+	currentFeedInd = 0;
+	updateTimer = window.setInterval(updateCurrentFeed,100);
+    }
+}
+
+function setFooter(text){
+    document.getElementById('footer').innerHTML = text;
+}
+
+function initAjax(){
+    show = document.getElementById('show');
+    if (show){
+	footer = document.getElementById('footer').innerHTML;
+	var xhr = new XMLHttpRequest();
+	var url = '?ajaxlist';
+	xhr.open('GET', url, true);
+	xhr.onreadystatechange = function() { 
+	    // Everything OK
+	    if (xhr.readyState == 4 && xhr.status == 200) {
+		res = JSON.parse(xhr.responseText);
+		listItemsHash = res.items;
+		listFeedsHash = res.feeds;
+		itemsUnread = res.unread;
+		if (listItemsHash.length>0){
+		    getCurrentItem();
+		}
+		if (listItemsHash.length>1){
+		    getNextItem();
+		}
+		setTitle();
+		updateFeeds();
+		window.setInterval(updateFeeds,60000);
+	    }
+	}
+	xhr.send(null);
+    }
+}
+
+function toggle(id,el) {
+  var e = document.getElementById(id);
+
+  if (e.style.display == '') {
+      e.style.display = 'none';
+      el.innerHTML = '+';
+  } else {
+      e.style.display = '';
+      el.innerHTML = '-';
+  }
+}
+
+function checkKey(e){
+    if (!e.ctrlKey && !e.altKey && !e.shiftKey){
+	var code;
+	if (!e) var e = window.event;
+	if (e.keyCode) code = e.keyCode;
+	else if (e.which) code = e.which;
+	switch(code){
+	case 39: // right arrow
+	case 110: // 'n'
+	case 78: // 'N'
+	case 106: // 'j'
+	case 74: // 'J'
+	    if (document.getElementById('show')!=null){
+		nextItem();
+	    } else if (document.getElementById('reader')!=null){
+		nextPage();
+	    }
+	    break;
+	case 37: // left arrow
+	case 112: // 'p'
+	case 80 : // 'P'
+	case 107: // 'k'
+	case 75: // 'K'
+	    if (document.getElementById('show')!=null){
+		previousItem();
+	    } else if (document.getElementById('reader')!=null){
+		previousPage();
+	    }
+	    break;
+	case 115: // 's'
+	case 83: // 'S'
+	    if (document.getElementById('show')!=null){
+		shareItem();
+	    }
+	default:
+	    break;
+	}
+    }
+}
+
+
+// http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
+function checkMove(e){
+    // More than this horizontal displacement, and we will suppress scrolling.
+    var scrollSupressionThreshold = 10,
+    // More time than this, and it isn't a swipe.
+    durationThreshold = 500,
+    // Swipe horizontal displacement must be more than this.
+    horizontalDistanceThreshold = 30,
+    // Swipe vertical displacement must be less than this.
+    verticalDistanceThreshold = 75;
+
+    if (e.targetTouches.length == 1) {
+        var touch = e.targetTouches[0],
+        start = { time: ( new Date() ).getTime(),
+                  coords: [ touch.pageX, touch.pageY ] },
+	    stop;
+	    function moveHandler( e ) {
+
+		if ( !start ) {
+		    return;
+		}
+		
+		if (e.targetTouches.length == 1) {
+		    var touch = e.targetTouches[0];
+		    stop = { time: ( new Date() ).getTime(),
+				 coords: [ touch.pageX, touch.pageY ] };
+
+		    // prevent scrolling
+		    if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) >  scrollSupressionThreshold) {
+			e.preventDefault();
+		    }
+		}
+	    }
+
+	    addEvent(window, 'touchmove', moveHandler);
+	    addEvent(window, 'touchend', function (e){
+		    removeEvent(window, 'touchmove', moveHandler);
+		    if ( start && stop ) {
+			if ( stop.time - start.time < durationThreshold &&
+			     Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+			     Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold ) {
+
+			    start.coords[0] > stop.coords[ 0 ]
+				? nextItem()
+				: previousItem() ;
+			}
+			start = stop = undefined;
+		    }
+		});
+    }
+}
+
+//http://scottandrew.com/weblog/articles/cbs-events
+function addEvent(obj, evType, fn, useCapture){
+    if (obj.addEventListener){
+	obj.addEventListener(evType, fn, useCapture);
+	return true;
+    } else if (obj.attachEvent){
+	var r = obj.attachEvent("on"+evType, fn);
+	return r;
+    } else {
+	alert("Handler could not be attached");
+    }
+} 
+function removeEvent(obj, evType, fn, useCapture){
+    if (obj.removeEventListener){
+	obj.removeEventListener(evType, fn, useCapture);
+	return true;
+    } else if (obj.detachEvent){
+	var r = obj.detachEvent("on"+evType, fn);
+	return r;
+    } else {
+	alert("Handler could not be removed");
+    }
+}
+
+// when document is loaded animated images
+if (document.getElementById && document.createTextNode) {
+    addEvent(window, 'load', initAjax);
+    addEvent(window, 'keypress', checkKey);
+    addEvent(window, 'touchstart', checkMove);
+}
+</script>
+JS;
     }
 
     public function importPage()
@@ -755,7 +1580,7 @@ a:hover {
 	    $ref = htmlspecialchars($_SERVER['HTTP_REFERER']);
 	}
 	return '
-    <div id="global">
+    <div id="import">
       <div id="section">
         <form method="post" action="?import" enctype="multipart/form-data">
           Import Opml file (as exported by Google Reader, Tiny Tiny RSS, RSS lounge...) (Max: '.MyTool::humanBytes(MyTool::getMaxFileSize()).')
@@ -772,11 +1597,22 @@ a:hover {
 }
 
 
-// compare two items depending on time
-function compItems($a, $b){
+// compare two items depending on time (newest first)
+function compItemsR($a, $b){
     if ($a['time'] == $b['time']) {
 	return 0;
     } else if ($a['time'] > $b['time']) {
+	return -1;
+    } else {
+	return 1;
+    }
+}
+
+// compare two items depending on time (latest first)
+function compItems($a, $b){
+    if ($a['time'] == $b['time']) {
+	return 0;
+    } else if ($a['time'] < $b['time']) {
 	return -1;
     } else {
 	return 1;
@@ -827,7 +1663,7 @@ class Feed
 		$folders = array();
 		if (isset($arrayInfo['folders'])) {
 		    foreach ($arrayInfo['folders'] as $folder){
-			$folders[] = html_entity_decode($folder);
+			$folders[] = html_entity_decode($folder,ENT_QUOTES,'UTF-8');
 		    }
 		}
 		$timeUpdate = 'auto';
@@ -847,10 +1683,11 @@ class Feed
 		}
 		// create new feed
 		if (!empty($xmlUrl)){
-		    $current = array('title' => html_entity_decode($title),
-				     'description' => html_entity_decode($description),
-				     'htmlUrl' => html_entity_decode($htmlUrl),
-				     'xmlUrl' => html_entity_decode($xmlUrl),
+		    $current = array('title' => html_entity_decode($title,ENT_QUOTES,'UTF-8'),
+				     'description' => html_entity_decode($description,ENT_QUOTES,'UTF-8'),
+				     'htmlUrl' => html_entity_decode($htmlUrl,ENT_QUOTES,'UTF-8'),
+				     //TODO urldecode ?
+				     'xmlUrl' => html_entity_decode($xmlUrl,ENT_QUOTES,'UTF-8'),
 				     'folders' => $folders,
 				     'timeUpdate' => $timeUpdate,
 				     'lastUpdate' => $lastUpdate,
@@ -1129,15 +1966,17 @@ class Feed
 		    $this->_data[$feedHash]['folders'][] = $folder;
 		}
 	    }
+	    $this->_data[$feedHash]['timeUpdate'] = 'auto';
 	    if (!empty($timeUpdate)){
-		if ($timeUpdate == 'auto'
-		    || $timeUpdate == 'max'
-		    || ($timeUpdate >=5 && $timeUpdate < $this->kfc->maxUpdate)){
+		if ($timeUpdate == 'max') {
 		    $this->_data[$feedHash]['timeUpdate'] = $timeUpdate;
 		} else {
-		    $this->_data[$feedHash]['timeUpdate'] = 'auto';
+		    $this->_data[$feedHash]['timeUpdate'] = (int) $timeUpdate;
+		    if ($this->_data[$feedHash]['timeUpdate'] < MIN_TIME_UPDATE || $this->_data[$feedHash]['timeUpdate'] > $this->kfc->maxUpdate) {
+			$this->_data[$feedHash]['timeUpdate'] = 'auto';
+		    }
 		}
-	    }
+	    } 
 
 	    if (!$this->writeData())
 		die("Can't write to ".$pb->file);
@@ -1195,52 +2034,44 @@ class Feed
     }
 
     // format items into
-    public function formatItems($items)
+    public function formatItems($items, $formats)
     {
 	$newItems = array();
 
-	// list of format for each info in order of importance
-	$formats = array('title' => array('title'),
-			 'time' => array('pubDate', 'updated', 'lastBuildDate', 'published', 'dc:date', 'date'),
-			 'author' => array('author', 'creator', 'dc:author', 'dc:creator'),
-			 'link' => array('link', 'guid', 'id'),
-			 'description' => array('description', 'summary', 'subtitle', 'content', 'content:encoded'),
-			 'content' => array('content:encoded', 'content', 'description', 'summary', 'subtitle'));
-
 	foreach ($items as $item) {
-	    $tmp = array();
+	    $tmpItem = array();
 	    foreach ($formats as $format => $list) {
-		$tmp[$format] = '';
+		$tmpItem[$format] = '';
 		$len = count($list);
 		for ($i = 0; $i < $len; $i++) {
-		    $tag = $item->getElementsByTagName($list[$i]);
+		    if (is_array($list[$i])){
+			$tag = $item->getElementsByTagNameNS($list[$i][0],$list[$i][1]);
+		    } else {
+			$tag = $item->getElementsByTagName($list[$i]);
+		    }
 		    if ($tag->length != 0){
 			// we find a correspondence for the current format
-			// select first item (item(0)), may not work
+			// select first item (item(0)), (may not work)
 			// stop to search for another one
 			if ($format == 'link'){
-			    $tmp[$format]=$tag->item(0)->getAttribute('href');
+			    $tmpItem[$format]= $tag->item(0)->getAttribute('href');
 			}
-			if (empty($tmp[$format])){
-			    $tmp[$format] = $tag->item(0)->textContent;
+			if (empty($tmpItem[$format])){
+			    $tmpItem[$format] = $tag->item(0)->textContent;
 			}
 			$i = $len;
 		    }
 		}
 	    }
-	    if (!empty($tmp['link'])){
-		$hashUrl = MyTool::smallHash($tmp['link']);
+	    if (!empty($tmpItem['link'])){
+		$hashUrl = MyTool::smallHash($tmpItem['link']);
 		$newItems[$hashUrl] = array();
-		$newItems[$hashUrl]['title'] = $tmp['title'];
-		if (empty($tmp['time'])) {
-		    $tmp['time']=time();
-		}
-		// convert time to order feed items
-		$newItems[$hashUrl]['time']=strtotime($tmp['time']);
-		$newItems[$hashUrl]['link'] = $tmp['link'];
-		$newItems[$hashUrl]['author'] = $tmp['author'];
-		$newItems[$hashUrl]['description'] = $tmp['description'];
-		$newItems[$hashUrl]['content'] = $tmp['content'];
+		$newItems[$hashUrl]['title'] = $tmpItem['title'];
+		$newItems[$hashUrl]['time']=strtotime($tmpItem['time'])?strtotime($tmpItem['time']):time();
+		$newItems[$hashUrl]['link'] = $tmpItem['link'];
+		$newItems[$hashUrl]['author'] = $tmpItem['author'];
+		$newItems[$hashUrl]['description'] = substr(strip_tags($tmpItem['description']), 0, 500)."...";
+		$newItems[$hashUrl]['content'] = $tmpItem['content'];
 		$newItems[$hashUrl]['read'] = 0;
 	    }
 	}
@@ -1261,6 +2092,10 @@ class Feed
 	    for ($i = 0; $i < $len; $i++) {
 		$items[$i] = $feed->item($i);
 	    }
+	    $feed = $xml->getElementsByTagName('rss');
+	    if (!$feed->item(0)){
+		$feed = $xml->getElementsByTagNameNS("http://www.w3.org/1999/02/22-rdf-syntax-ns#",'RDF');
+	    }	    
 	} else {
 	    $feed = $xml->getElementsByTagName('feed');
 	    if ($feed->item(0)){
@@ -1270,12 +2105,35 @@ class Feed
 		for ($i = 0; $i < $len; $i++) {
 		    $items[$i] = $feed->item($i);
 		}
-	    } else {
-		// unknown feed
-	    }
+		$feed = $xml->getElementsByTagName('feed');
+	    } 
 	}
 
-	return $this->formatItems($items);
+	// list of format for each info in order of importance
+	$formats = array('title' => array('title'),
+			 'time' => array('pubDate', 'updated', 'lastBuildDate', 'published', 'dc:date', 'date'),
+			 'author' => array('author', 'creator', 'dc:author', 'dc:creator'),
+			 'link' => array('feedburner:origLink', 'link', 'guid', 'id'),
+			 'description' => array('description', 'summary', 'subtitle', 'content', 'content:encoded'),
+			 'content' => array('content:encoded', 'content', 'description', 'summary', 'subtitle'));
+
+	if ($feed->item(0)){
+	    $formats = $this->formatRDF($formats, $feed->item(0));
+	}
+	return $this->formatItems($items, $formats);
+    }
+
+    // format for RDF namespace
+    public function formatRDF($formats, $feed){
+	foreach ($formats as $format => $list) {
+	    for ($i = 0, $len = count($list); $i < $len; $i++) {
+		$ns = explode(':',$list[$i]);
+		if (count($ns)>1){
+		    $formats[$format][$i] = array($feed->getAttribute('xmlns:'.$ns[0]),$ns[1]);
+		}
+	    }
+	}
+	return $formats;
     }
 
     // loadXml 
@@ -1295,7 +2153,7 @@ class Feed
 	return @DOMDocument::load($xmlUrl);
     }
 
-    // update channel
+    // add channel
     public function addChannel($xmlUrl)
     {
 	$feedHash = MyTool::smallHash($xmlUrl);
@@ -1310,6 +2168,8 @@ class Feed
 		foreach (array_keys($items) as $itemHash){
 		    if (empty($items[$itemHash]['author'])){
 			$items[$itemHash]['author'] = $channel['title'];
+		    } else {
+			$items[$itemHash]['author'] = $channel[$feedHash]['title'].' ('.$items[$itemHash]['author'].')';
 		    }
 		    $items[$itemHash]['xmlUrl'] = $xmlUrl;
 		}
@@ -1329,47 +2189,150 @@ class Feed
 	return false;
     }
 
+    public function getFeedsUpdate(){
+	$list = array();
+	foreach (array_keys($this->_data) as $feedHash) {
+	    $list[] = array($this->getAutoTimeUpdate($this->_data[$feedHash], false), $feedHash, $this->_data[$feedHash]['title'], $this->_data[$feedHash]['lastUpdate'], $this->getTimeUpdate($this->_data[$feedHash]));
+	}
+	sort($list);
+	return($list);
+    }
+
+    // calculate auto update
+    public function getAutoTimeUpdate($feed, $auto = true){
+	// auto with the last 7 items
+	$items = array_slice($feed['items'],0,7,true);
+	$sum = 0;
+	$firstTime = 0;
+	$nbItems = 0;
+	foreach($items as $item){
+	    if ($firstTime == 0){
+		$firstTime = $item['time'];
+	    }
+	    $sum += $firstTime-$item['time'];
+	    $nbItems++;
+	}
+	$freq = 0;
+	if ($nbItems!=0){
+	    $freq = (int) (($sum / $nbItems) / 60);
+	}
+	if ($auto){
+	    return $freq;
+	} else {
+	    return (time()-$firstTime);
+	}
+    }
+
+    // calculate updates
+    public function getTimeUpdate($feed){
+	$max = $feed['timeUpdate'];
+	
+	if ($max == 'auto'){
+	    $freq = $this->getAutoTimeUpdate($feed);
+	    if ($freq >= MIN_TIME_UPDATE && $freq < $this->kfc->maxUpdate){
+		$max = $freq;
+	    } else {
+		$max = $this->kfc->maxUpdate;
+	    }
+	} elseif ($max == 'max'){
+	    $max = $this->kfc->maxUpdate;
+	} elseif ((int)$max < 0 && (int)$max > $this->kfc->maxUpdate) {
+	    $max = $this->kfc->maxUpdate;
+	}
+	return (int)$max;
+    }
+    
+    // return if feed need an update
+    public function needUpdate($feed){
+	$diff = (int)(time()-$feed['lastUpdate']);
+	if($diff > $this->getTimeUpdate($feed) * 60){
+	    return true;
+	}
+	return false;
+    }
+
+    // get readable error
+    public function getError($error) {
+	switch ($error){
+	case ERROR_NO_XML:
+	    return 'Feed is not in XML format';
+	    break;
+	case ERROR_ITEMS_MISSED:
+	    return 'Items may have been missed';
+	    break;
+	default:
+	    return 'unknown error';
+	    break;
+	}
+    }
+
     // update channel
-    public function updateChannelItems($feedHash)
+    public function updateChannelItems($feedHash, $force = false)
     {
-	if (isset($this->_data[$feedHash])){
+	if (isset($this->_data[$feedHash])
+	    && ($force ||$this->needUpdate($this->_data[$feedHash]))){
 	    $xmlUrl = $this->_data[$feedHash]['xmlUrl'];
 	    $xml = $this->loadXml($xmlUrl);
-
+	    if (isset($this->_data[$feedHash]['error'])) {
+		unset($this->_data[$feedHash]['error']);
+	    }
 	    if (!$xml){
+		if (isset($this->_data[$feedHash]['items']) && !empty($this->_data[$feedHash]['items'])){
+		    $this->_data[$feedHash]['error'] = ERROR_LAST_UPDATE;
+		} else {
+		    $this->_data[$feedHash]['error'] = ERROR_NO_XML;
+		}
+		$this->_data[$feedHash]['lastUpdate'] = time();
+		$this->writeData();
 		return false;
 	    } else {
 		// if feed description is empty try to update description
 		// (after opml import, description is often empty)
 		if (empty($this->_data[$feedHash]['description'])){
-		    $this->_data[$feedHash]['description'] = ' ';
 		    $channel = $this->getChannelFromXml($xml);
 		    $this->_data[$feedHash]['description'] = $channel['description'];
+		    if (empty($this->_data[$feedHash]['description'])){
+			$this->_data[$feedHash]['description'] = ' ';
+		    }
 		}
-		
-
+		    
+		    
 		$oldItems = array();
 		if (isset($this->_data[$feedHash]['items'])) {
 		    $oldItems = $this->_data[$feedHash]['items'];
 		}
-
+		    
 		$newItems = $this->getItemsFromXml($xml);
 		foreach (array_keys($newItems) as $itemHash){
 		    if (empty($newItems[$itemHash]['author'])){
 			$newItems[$itemHash]['author'] = $this->_data[$feedHash]['title'];
+		    } else {
+			$newItems[$itemHash]['author'] = $this->_data[$feedHash]['title'].' ('.$newItems[$itemHash]['author'].')';
 		    }
 		    $newItems[$itemHash]['xmlUrl'] = $xmlUrl;
 		}
-
+		
 		$this->_data[$feedHash]['items'] = array_merge($newItems, $oldItems);
-		$this->_data[$feedHash]['lastUpdate'] = time();
+		
+		// Check if items may have been missed
+		if (count($this->_data[$feedHash]['items']) == count($newItems) + count($oldItems)){
+		    $this->_data[$feedHash]['error'] = ERROR_ITEMS_MISSED;
+		}
 
+		uasort($this->_data[$feedHash]['items'],"compItemsR");
+		// Check if quota exceeded
+		if (count($this->_data[$feedHash]['items'])>$this->kfc->maxItems){
+		    $this->_data[$feedHash]['items'] = array_slice($this->_data[$feedHash]['items'],0,$this->kfc->maxItems,true);
+		}
+		$this->_data[$feedHash]['lastUpdate'] = time();
+		    
+		// Remove already read items not any more in the feed
 		foreach ($this->_data[$feedHash]['items'] as $itemHash => $item){
 		    if ($item['read'] == 1 && !in_array($itemHash,array_keys($newItems))){
 			unset($this->_data[$feedHash]['items'][$itemHash]);
 		    }
 		}
-
+		    
 		$this->writeData();
 		return true;
 	    }
@@ -1394,12 +2357,12 @@ class Feed
     }
 
     // return number of unread items 
-    public function getUnread($hash)
+    public function getUnread($hash = '')
     {
 	$list = $this->getItems($hash);
 	$unread = 0;
 	foreach (array_values($list) as $item){
-	    if ($item['read']==0){
+	    if ($item['read']!=1){
 		$unread++;
 	    }
 	}
@@ -1407,13 +2370,23 @@ class Feed
     }
 
     // mark read/unread items depending on the hash : item, feed, folder or ''
-    public function mark($hash,$read)
+    public function mark($hash,$read, $force = false)
     {
-	$list = array_keys($this->getItems($hash));
+	$list = array_keys($this->getItems($hash,false));
 	foreach ($this->_data as $feedHash => $feed) {
 	    foreach ($feed['items'] as $itemHash => $item) {
 		if (in_array($itemHash,$list)){
-		    $this->_data[$feedHash]['items'][$itemHash]['read'] = $read;
+		    if ($force) {
+			$this->_data[$feedHash]['items'][$itemHash]['read'] = $read;
+		    } else {
+			if ($read == 1) {
+			    if ($this->_data[$feedHash]['items'][$itemHash]['read'] != -1){
+				$this->_data[$feedHash]['items'][$itemHash]['read'] = $read;
+			    }
+			} else {
+			    $this->_data[$feedHash]['items'][$itemHash]['read'] = $read;
+			}
+		    }
 		}
 	    }
 	}
@@ -1450,11 +2423,11 @@ class Feed
     // return list of items
     // hash may represent an item, a feed, a folder
     // if hash is empty return all items
-    public function getItems($hash)
+    public function getItems($hash = '', $filter = true)
     {
 	$list = array();
       
-	if (empty($hash)){
+	if (empty($hash) || $hash == 'all'){
 	    // all items
 	    foreach (array_values($this->_data) as $arrayInfo) {
 		$list = array_merge($list,$arrayInfo['items']);
@@ -1483,7 +2456,19 @@ class Feed
 		}
 	    }
 	}
-	uasort($list,"compItems");
+	if ($this->kfc->reverseOrder){
+	    uasort($list,"compItemsR");
+	} else {
+	    uasort($list,"compItems");
+	}
+	
+        if (($filter===true && $this->kfc->newItems) || $filter === 'new'){
+	    foreach($list as $itemHash => $item){
+		if (isset($item['read']) && $item['read']==1){
+		    unset($list[$itemHash]);
+		}
+	    }
+        }
 
 	return $list;
     }
@@ -1538,7 +2523,7 @@ class MyTool
     public static function initPHP()
     {
         if (phpversion() < 5){
-            die("Argh you don't have PHP 5 ! Please install it right now !");
+            die("Argh you don't have PHP 5 !");
         }
 
         error_reporting(E_ALL);
@@ -1940,12 +2925,12 @@ if (isset($_GET['login'])) {
 } elseif (isset($_GET['newfeed']) && !empty($_GET['newfeed']) && Session::isLogged()) {
 // Add channel
     $kf->loadData();
-    if ($kf->addChannel(urldecode($_GET['newfeed']))){
+    if ($kf->addChannel($_GET['newfeed'])){
 	// Add success
-        header('Location: '.MyTool::getUrl().'?show='.MyTool::smallHash(urldecode($_GET['newfeed'])));
+        header('Location: '.MyTool::getUrl().'?'.$kfc->defaultView.'='.MyTool::smallHash($_GET['newfeed']));
         exit();
     } else {
-	$returnurl = ( empty($_SERVER['HTTP_REFERER']) ? '?feeds' : $_SERVER['HTTP_REFERER'] );
+	$returnurl = ( empty($_SERVER['HTTP_REFERER']) ? '?'.$kfc->defaultView : $_SERVER['HTTP_REFERER'] );
 	echo '<script>alert("The feed you are trying to add already exists or is wrong. Check your feed or try again later.");document.location=\''.htmlspecialchars($returnurl).'\';</script>';
 	exit;
 	// Add fail
@@ -1953,7 +2938,6 @@ if (isset($_GET['login'])) {
 } elseif ((isset($_GET['read']) || isset($_GET['unread'])) && Session::isLogged()) {
 // mark all as read : item, feed, folder, all
     $kf->loadData();
-    $rurl = ( empty($_SERVER['HTTP_REFERER']) ? '?' : $_SERVER['HTTP_REFERER'] );
     $hash = '';
     $read = 1;
     if (isset($_GET['read'])){
@@ -1965,8 +2949,12 @@ if (isset($_GET['login'])) {
 	$read = 0;
     }
     $kf->mark($hash, $read);
+    $rurl = MyTool::getUrl();
+    if (isset($_SERVER['HTTP_REFERER'])){
+	$rurl = $_SERVER['HTTP_REFERER'];
+    }
     header('Location: '.$rurl);
-    exit;
+    exit();
 } elseif (isset($_GET['edit']) && !empty($_GET['edit']) && Session::isLogged()) {
 // Edit feed, folder
     $kf->loadData();
@@ -2059,57 +3047,140 @@ if (isset($_GET['login'])) {
     default:
 	break;
     }
-    echo $kfp->htmlPage(strip_tags(MyTool::formatText($kf->kfc->title)),$kfp->indexPage($kf));
+    echo $kfp->htmlPage(strip_tags(MyTool::formatText($kf->kfc->title)),$kfp->readerPage($kf));
     exit;
 } elseif (isset($_GET['update']) && Session::isLogged()) {
 // Update
+    $force = false;
+    if (isset($_GET['force'])){
+	$force = true;
+    }
     $kf->loadData();
     $hash = substr(trim($_GET['update'], '/'),0,6);
     $type = $kf->hashType($hash);
     switch($type){
     case 'feed':
-	$kf->updateChannelItems($hash);
+	$kf->updateChannelItems($hash,$force);
 	break;
     case 'folder':
 	$feedsHash = $kf->getFeedsHashFromFolderHash($hash);
 	foreach($feedsHash as $feedHash){
-	    $kf->updateChannelItems($feedHash);
+	    $kf->updateChannelItems($feedHash,$force);
 	}
 	break;
     case '':
 	$feedsHash = array_keys($kf->getFeeds());
 	foreach($feedsHash as $feedHash){
-	    $kf->updateChannelItems($feedHash);
+	    $kf->updateChannelItems($feedHash,$force);
 	}
 	break;
     case 'item':
     default:
 	break;
     }
-    $sep = empty($hash)?'':'=';
-    header('Location: '.MyTool::getUrl().'?show'.$sep.$hash);
+    $rurl = MyTool::getUrl();
+    if (isset($_SERVER['HTTP_REFERER'])){
+	$rurl = $_SERVER['HTTP_REFERER'];
+    }
+    header('Location: '.$rurl);
     exit();
-} elseif (isset($_GET['feeds'])) {
-// List feeds
+} elseif (isset($_GET['ajaxlist'])
+	  || isset($_GET['ajaxupdate'])
+	  || isset($_GET['ajaxitem'])
+	  || isset($_GET['ajaxread'])
+	  || isset($_GET['ajaxkeepunread'])
+) {
+// Ajax 
     $kf->loadData();
-    echo $kfp->htmlPage('List of the feeds',$kfp->feedsPage($kf));
-} elseif (isset($_GET['show']) || isset($_GET['page'])) {
+    
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+    header('Content-type: application/json; charset=UTF-8');
+
+    if (isset($_GET['ajaxlist'])){
+	$list = $kf->getItems('all','new');    
+	$feedsUpdate = array();
+	if (Session::isLogged()){
+	    $feedsUpdate = $kf->getFeedsUpdate();
+	}
+	echo json_encode(array('items' => array_keys($list), 'feeds' => $feedsUpdate, 'unread' => $kf->getUnread()));
+	exit;
+    } elseif (isset($_GET['ajaxupdate'])) {
+	$force = true;
+	$kf->loadData();
+	$hash = substr(trim($_GET['ajaxupdate'], '/'),0,6);
+	$type = $kf->hashType($hash);
+	switch($type){
+	case 'feed':
+	    $kf->updateChannelItems($hash,$force);
+	    break;
+	case 'folder':
+	    $feedsHash = $kf->getFeedsHashFromFolderHash($hash);
+	    foreach($feedsHash as $feedHash){
+		$kf->updateChannelItems($feedHash,$force);
+	    }
+	    break;
+	case '':
+	    $feedsHash = array_keys($kf->getFeeds());
+	    foreach($feedsHash as $feedHash){
+		!$kf->updateChannelItems($feedHash,$force);
+	    }
+	    break;
+	case 'item':
+	default:
+	    break;
+	}
+	$list = $kf->getItems('all','new');
+	echo json_encode(array_keys($list));
+	exit;
+    } elseif (isset($_GET['ajaxitem'])) {
+	if (!empty($_GET['ajaxitem'])){
+	    $hash = substr(trim($_GET['ajaxitem'], '/'),0,6);
+	}
+	if ($kf->hashType($hash)=='item'){
+	    $list = $kf->getItems($hash, false);
+	    echo json_encode($list[$hash]);
+	    exit;
+	}
+    } elseif (isset($_GET['ajaxread']) && Session::isLogged()) {
+	if (!empty($_GET['ajaxread'])){
+	    $hash = substr(trim($_GET['ajaxread'], '/'),0,6);
+	    $kf->mark($hash, 1, true);
+	    echo json_encode(TRUE);
+	    exit;
+        }
+    } elseif (isset($_GET['ajaxkeepunread']) && Session::isLogged()) {
+	if (!empty($_GET['ajaxkeepunread'])){
+	    $hash = substr(trim($_GET['ajaxkeepunread'], '/'),0,6);
+	    $kf->mark($hash, -1);
+	    echo json_encode(TRUE);
+	    exit;
+        }
+    }
+    echo json_encode(FALSE);
+    exit;
+} elseif (isset($_GET['reader']) || isset($_GET['page'])) {
 // List items : all, folder, feed or entry
     $hash = '';
-    if (!empty($_GET['show'])){
-	$hash = substr(trim($_GET['show'], '/'),0,6);
+    if (!empty($_GET['reader'])){
+	$hash = substr(trim($_GET['reader'], '/'),0,6);
     }
     $page = 1;
     if (isset($_GET['page']) && !empty($_GET['page'])){
 	$page = (int)$_GET['page'];
+	if ($page<=0){
+	    $page=1;
+	}
     }
     $kf->loadData();
-    echo $kfp->htmlPage(strip_tags(MyTool::formatText($kf->kfc->title)),$kfp->indexPage($kf,$hash,$page));
-} else {
-// TODO : 
-// Magical page, read article by article as Google reader
+    echo $kfp->htmlPage(strip_tags(MyTool::formatText($kf->kfc->title)),$kfp->readerPage($kf,$hash,$page));
+} elseif (isset($_GET['show'])) {
+// show, read article by article as Google reader
 // using 'n' and 'p' with ajax
     $kf->loadData();
-    echo $kfp->htmlPage(strip_tags(MyTool::formatText($kf->kfc->title)),$kfp->indexPage($kf));
+    echo $kfp->htmlPage(strip_tags(MyTool::formatText($kf->kfc->title)),$kfp->showPage($kf));
     exit();
+} else {
+    header('Location: ?'.$kfc->defaultView);
+    exit(); 
 }

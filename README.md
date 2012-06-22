@@ -13,14 +13,19 @@ Features
   * update manually feed/folder/all
   * mark as read feed/folder/all
 
+* version 2
+  * show and reader view
+  * anonymize link (not image or media)
+  * simple share with shaarli
+  * auto update in show view
+
 TODOs
 =====
-* show new items only
-* auto update
-* use description and content infos
-* use redirector to mash REFERER
-* limit the number of articles to save per feed
-* fast view as google reader with 'n' and 'p' keys
+* auto show if link is a image
+* improve reader view
+* save folder state (opened/closed)
+* fix some media feeds 
+* show new items first
 
 Licence
 =======
