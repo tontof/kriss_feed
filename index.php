@@ -2260,6 +2260,8 @@ class Feed
 	case ERROR_ITEMS_MISSED:
 	    return 'Items may have been missed';
 	    break;
+        case ERROR_LAST_UPDATE:
+	    return 'Problem with the last update';
 	default:
 	    return 'unknown error';
 	    break;
@@ -2315,7 +2317,7 @@ class Feed
 		$this->_data[$feedHash]['items'] = array_merge($newItems, $oldItems);
 		
 		// Check if items may have been missed
-		if (count($this->_data[$feedHash]['items']) == count($newItems) + count($oldItems)){
+		if ((count($this->_data[$feedHash]['items']) == count($newItems) + count($oldItems)) && count($oldItems)!=0){
 		    $this->_data[$feedHash]['error'] = ERROR_ITEMS_MISSED;
 		}
 
