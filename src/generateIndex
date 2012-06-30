@@ -1,0 +1,17 @@
+file="kriss_feed.php"
+n=$(\grep "function __autoload" ${file} -n | cut -d ":" -f 1)
+nt=$(cat ${file} | wc -l)
+
+function removeComments {
+ sed -e '/\/\*/,/*\//d;'
+}
+
+head -n $((${n} - 1)) ${file} | removeComments
+
+for i in class/*.php
+do
+ echo -n "del>"
+ cat $i
+done | sed -e 's:del><?php::g' | removeComments
+
+tail -n $(( ${nt} - $((${n} + 3)) )) ${file} | removeComments
