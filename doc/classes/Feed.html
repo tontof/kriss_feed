@@ -1,0 +1,673 @@
+<!DOCTYPE html><html xmlns:date="http://exslt.org/dates-and-times" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+<meta charset="utf-8">
+<title>phpDocumentor » \Feed</title>
+<meta name="author" content="Mike van Riel">
+<meta name="description" content="">
+<link href="../css/template.css" rel="stylesheet" media="all">
+<script src="../js/jquery-1.7.1.min.js" type="text/javascript"></script><script src="../js/jquery-ui-1.8.2.custom.min.js" type="text/javascript"></script><script src="../js/jquery.mousewheel.min.js" type="text/javascript"></script><script src="../js/bootstrap.js" type="text/javascript"></script><script src="../js/template.js" type="text/javascript"></script><script src="../js/prettify/prettify.min.js" type="text/javascript"></script><link rel="shortcut icon" href="../img/favicon.ico">
+<link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="72x72" href="../img/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="114x114" href="../img/apple-touch-icon-114x114.png">
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+<div class="navbar-inner"><div class="container">
+<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a><a class="brand" href="../index.html">phpDocumentor</a><div class="nav-collapse"><ul class="nav">
+<li class="dropdown">
+<a href="#api" class="dropdown-toggle" data-toggle="dropdown">
+                                    API Documentation <b class="caret"></b></a><ul class="dropdown-menu"></ul>
+</li>
+<li class="dropdown" id="charts-menu">
+<a href="#charts" class="dropdown-toggle" data-toggle="dropdown">
+                                    Charts <b class="caret"></b></a><ul class="dropdown-menu"><li><a href="../graph_class.html"><i class="icon-list-alt"></i> Class hierarchy diagram</a></li></ul>
+</li>
+<li class="dropdown" id="reports-menu">
+<a href="#reports" class="dropdown-toggle" data-toggle="dropdown">
+                                    Reports <b class="caret"></b></a><ul class="dropdown-menu">
+<li><a href="../errors.html"><i class="icon-remove-sign"></i> Errors 
+                <span class="label label-info">0</span></a></li>
+<li><a href="../markers.html"><i class="icon-map-marker"></i> Markers 
+                <ul></ul></a></li>
+<li><a href="../deprecated.html"><i class="icon-stop"></i> Deprecated elements 
+                <span class="label label-info">0</span></a></li>
+</ul>
+</li>
+</ul></div>
+</div></div>
+<div class="go_to_top"><a href="#___" style="color: inherit">Back to top  <i class="icon-upload icon-white"></i></a></div>
+</div>
+<div id="___" class="container">
+<noscript><div class="alert alert-warning">
+                            Javascript is disabled; several features are only available
+                            if Javascript is enabled.
+                        </div></noscript>
+<div class="row">
+<div class="span4">
+<span class="btn-group visibility" data-toggle="buttons-checkbox"><button class="btn public active" title="Show public elements">Public</button><button class="btn protected" title="Show protected elements">Protected</button><button class="btn private" title="Show private elements">Private</button><button class="btn inherited active" title="Show inherited elements">Inherited</button></span><div class="btn-group view pull-right" data-toggle="buttons-radio">
+<button class="btn details" title="Show descriptions and method names"><i class="icon-list"></i></button><button class="btn simple" title="Show only method names"><i class="icon-align-justify"></i></button>
+</div>
+<ul class="side-nav nav nav-list">
+<li class="nav-header">
+<i class="icon-custom icon-method"></i> Methods</li>
+<li class="method public "><a href="#__construct" title="__construct :: constructor"><span class="description">constructor</span><pre>__construct()</pre></a></li>
+<li class="method public "><a href="#addChannel" title="addChannel :: add channel"><span class="description">add channel</span><pre>addChannel()</pre></a></li>
+<li class="method public "><a href="#compItems" title="compItems :: Compare two items depending on time (oldest first)"><span class="description">Compare two items depending on time (oldest first)</span><pre>compItems()</pre></a></li>
+<li class="method public "><a href="#compItemsR" title="compItemsR :: Compare two items depending on time (reverse order : newest first)"><span class="description">Compare two items depending on time (reverse order : newest first)</span><pre>compItemsR()</pre></a></li>
+<li class="method public "><a href="#convertOpmlArray" title="convertOpmlArray :: Convert opml array into more convenient array with xmlUrl as key"><span class="description">Convert opml array into more convenient array with xmlUrl as key</span><pre>convertOpmlArray()</pre></a></li>
+<li class="method public "><a href="#editFeed" title="editFeed :: Edit a feed from given information"><span class="description">Edit a feed from given information</span><pre>editFeed()</pre></a></li>
+<li class="method public "><a href="#exportOpml" title="exportOpml :: Export feeds to an opml file"><span class="description">Export feeds to an opml file</span><pre>exportOpml()</pre></a></li>
+<li class="method public "><a href="#formatChannel" title="formatChannel :: Format xml channel into array"><span class="description">Format xml channel into array</span><pre>formatChannel()</pre></a></li>
+<li class="method public "><a href="#formatItems" title="formatItems :: format items into array"><span class="description">format items into array</span><pre>formatItems()</pre></a></li>
+<li class="method public "><a href="#formatRDF" title="formatRDF :: Add a namespaceURI when format corresponds to a rdf tag."><span class="description">Add a namespaceURI when format corresponds to a rdf tag.</span><pre>formatRDF()</pre></a></li>
+<li class="method public "><a href="#getArrayFromXml" title="getArrayFromXml :: Convert opml xml node into array for import
+http://www.php.net/manual/en/class.domdocument.php#101014"><span class="description">Convert opml xml node into array for import
+http://www.php.net/manual/en/class.domdocument.php#101014</span><pre>getArrayFromXml()</pre></a></li>
+<li class="method public "><a href="#getAttributeNS" title="getAttributeNS :: Search a namespaceURI into tags
+(used when namespaceURI are not defined in the root tag)"><span class="description">Search a namespaceURI into tags
+(used when namespaceURI are not defined in the root tag)</span><pre>getAttributeNS()</pre></a></li>
+<li class="method public "><a href="#getAutoTimeUpdate" title="getAutoTimeUpdate :: Calculate automatic update (need improvements)"><span class="description">Calculate automatic update (need improvements)</span><pre>getAutoTimeUpdate()</pre></a></li>
+<li class="method public "><a href="#getChannelFromXml" title="getChannelFromXml :: return channel from xmlUrl"><span class="description">return channel from xmlUrl</span><pre>getChannelFromXml()</pre></a></li>
+<li class="method public "><a href="#getError" title="getError :: Get human readable error"><span class="description">Get human readable error</span><pre>getError()</pre></a></li>
+<li class="method public "><a href="#getFeed" title="getFeed :: Return a particular feed from a given hash feed"><span class="description">Return a particular feed from a given hash feed</span><pre>getFeed()</pre></a></li>
+<li class="method public "><a href="#getFeeds" title="getFeeds :: Return list of feeds"><span class="description">Return list of feeds</span><pre>getFeeds()</pre></a></li>
+<li class="method public "><a href="#getFeedsHashFromFolderHash" title="getFeedsHashFromFolderHash :: return feeds hash in folder"><span class="description">return feeds hash in folder</span><pre>getFeedsHashFromFolderHash()</pre></a></li>
+<li class="method public "><a href="#getFeedsUpdate" title="getFeedsUpdate :: List of feeds with update information and title"><span class="description">List of feeds with update information and title</span><pre>getFeedsUpdate()</pre></a></li>
+<li class="method public "><a href="#getFolder" title="getFolder :: Return folder name from a given folder hash"><span class="description">Return folder name from a given folder hash</span><pre>getFolder()</pre></a></li>
+<li class="method public "><a href="#getFolders" title="getFolders :: Return list of folders used to categorize feeds"><span class="description">Return list of folders used to categorize feeds</span><pre>getFolders()</pre></a></li>
+<li class="method public "><a href="#getItems" title="getItems :: Get array of items depending on hash and filter"><span class="description">Get array of items depending on hash and filter</span><pre>getItems()</pre></a></li>
+<li class="method public "><a href="#getItemsFromXml" title="getItemsFromXml :: Return array of items from xml"><span class="description">Return array of items from xml</span><pre>getItemsFromXml()</pre></a></li>
+<li class="method public "><a href="#getTimeUpdate" title="getTimeUpdate :: Calculate updates depending on timeUpdate feed information"><span class="description">Calculate updates depending on timeUpdate feed information</span><pre>getTimeUpdate()</pre></a></li>
+<li class="method public "><a href="#getUnread" title="getUnread :: Get number of unread items depending on hash"><span class="description">Get number of unread items depending on hash</span><pre>getUnread()</pre></a></li>
+<li class="method public "><a href="#hashType" title="hashType :: Get type of a hash : item, feed, folder or ''"><span class="description">Get type of a hash : item, feed, folder or ''</span><pre>hashType()</pre></a></li>
+<li class="method public "><a href="#importOpml" title="importOpml :: Import feed from opml file (as exported by google reader,
+tiny tiny rss, rss lounge... using"><span class="description">Import feed from opml file (as exported by google reader,
+tiny tiny rss, rss lounge... using</span><pre>importOpml()</pre></a></li>
+<li class="method public "><a href="#loadData" title="loadData :: Load data file or create one if not exists"><span class="description">Load data file or create one if not exists</span><pre>loadData()</pre></a></li>
+<li class="method public "><a href="#loadXml" title="loadXml :: Load an xml file through HTTP"><span class="description">Load an xml file through HTTP</span><pre>loadXml()</pre></a></li>
+<li class="method public "><a href="#mark" title="mark :: Mark items read/unread depending on the hash : item, feed, folder or ''
+force is used for not overwriting keep unread when mark as read."><span class="description">Mark items read/unread depending on the hash : item, feed, folder or ''
+force is used for not overwriting keep unread when mark as read.</span><pre>mark()</pre></a></li>
+<li class="method public "><a href="#needUpdate" title="needUpdate :: Check if feed needs an update"><span class="description">Check if feed needs an update</span><pre>needUpdate()</pre></a></li>
+<li class="method public "><a href="#removeFeed" title="removeFeed :: Remove feed from a given hash feed"><span class="description">Remove feed from a given hash feed</span><pre>removeFeed()</pre></a></li>
+<li class="method public "><a href="#renameFolder" title="renameFolder :: Rename folder into items (delete folder is newFolder is empty)"><span class="description">Rename folder into items (delete folder is newFolder is empty)</span><pre>renameFolder()</pre></a></li>
+<li class="method public "><a href="#updateChannelItems" title="updateChannelItems :: Update items from a channel channel"><span class="description">Update items from a channel channel</span><pre>updateChannelItems()</pre></a></li>
+<li class="method public "><a href="#writeData" title="writeData :: Write data file"><span class="description">Write data file</span><pre>writeData()</pre></a></li>
+<li class="nav-header">
+<i class="icon-custom icon-property"></i> Properties</li>
+<li class="property public "><a href="#%24file" title="$file :: The file containing the feed entries"><span class="description">The file containing the feed entries</span><pre>$file</pre></a></li>
+<li class="property public "><a href="#%24kfc" title="$kfc :: Feed_Conf object"><span class="description">Feed_Conf object</span><pre>$kfc</pre></a></li>
+<li class="nav-header private">» Private</li>
+<li class="property private "><a href="#%24_data" title="$_data :: Array with data"><span class="description">Array with data</span><pre>$_data</pre></a></li>
+</ul>
+</div>
+<div class="span8">
+<a name="%5CFeed" id="\Feed"></a><ul class="breadcrumb">
+<li>
+<a href="../index.html"><i class="icon-custom icon-class"></i></a><span class="divider">\</span>
+</li>
+<li><a href="../namespaces/.html"></a></li>
+<li class="active">
+<span class="divider">\</span><a href="../classes/Feed.html">Feed</a>
+</li>
+</ul>
+<div href="../classes/Feed.html" class="element class">
+<p class="short_description">Feed class corresponds to a model class for feed manipulation.</p>
+<div class="details">
+<p class="long_description"><p>Data corresponds to an array of feeds where each feeds contains
+feed articles.</p></p>
+<h3>
+<i class="icon-custom icon-method"></i> Methods</h3>
+<a name="__construct" id="__construct"></a><div class="element clickable method public __construct" data-toggle="collapse" data-target=".__construct .collapse">
+<h2>constructor</h2>
+<pre>__construct(string $dataFile, <a href="../classes/Feed_Conf.html">\Feed_Conf</a> $kfc) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$dataFile</h4>
+<code>string</code><p>File to store feed data</p></div>
+<div class="subelement argument">
+<h4>$kfc</h4>
+<code><a href="../classes/Feed_Conf.html">\Feed_Conf</a></code><p>Object corresponding to feed reader config</p></div>
+</div></div>
+</div>
+<a name="addChannel" id="addChannel"></a><div class="element clickable method public addChannel" data-toggle="collapse" data-target=".addChannel .collapse">
+<h2>add channel</h2>
+<pre>addChannel(string $xmlUrl) : true | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$xmlUrl</h4>
+<code>string</code><p>String corresponding to the XML URL</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code><code>false</code>True if add is success, false otherwise</div>
+</div></div>
+</div>
+<a name="compItems" id="compItems"></a><div class="element clickable method public compItems" data-toggle="collapse" data-target=".compItems .collapse">
+<h2>Compare two items depending on time (oldest first)</h2>
+<pre>compItems(array $a, array $b) : \-1 | \0 | \1</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$a</h4>
+<code>array</code><p>Array reprensenting the first item to compare</p></div>
+<div class="subelement argument">
+<h4>$b</h4>
+<code>array</code><p>Array reprensenting the second item to compare</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\-1</code><code>\0</code><code>\1</code>
+</div>
+</div></div>
+</div>
+<a name="compItemsR" id="compItemsR"></a><div class="element clickable method public compItemsR" data-toggle="collapse" data-target=".compItemsR .collapse">
+<h2>Compare two items depending on time (reverse order : newest first)</h2>
+<pre>compItemsR(array $a, array $b) : \-1 | \0 | \1</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$a</h4>
+<code>array</code><p>Array reprensenting the first item to compare</p></div>
+<div class="subelement argument">
+<h4>$b</h4>
+<code>array</code><p>Array reprensenting the second item to compare</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\-1</code><code>\0</code><code>\1</code>
+</div>
+</div></div>
+</div>
+<a name="convertOpmlArray" id="convertOpmlArray"></a><div class="element clickable method public convertOpmlArray" data-toggle="collapse" data-target=".convertOpmlArray .collapse">
+<h2>Convert opml array into more convenient array with xmlUrl as key</h2>
+<pre>convertOpmlArray(array $array, array $listFolders) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$array</h4>
+<code>array</code><p>Array obtained from Opml file</p></div>
+<div class="subelement argument">
+<h4>$listFolders</h4>
+<code>array</code><p>List of current folders</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>New formated array</div>
+</div></div>
+</div>
+<a name="editFeed" id="editFeed"></a><div class="element clickable method public editFeed" data-toggle="collapse" data-target=".editFeed .collapse">
+<h2>Edit a feed from given information</h2>
+<pre>editFeed(string $feedHash, string $title, string $description, array $folders, string $timeUpdate) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feedHash</h4>
+<code>string</code><p>Hash corresponding to a feed</p></div>
+<div class="subelement argument">
+<h4>$title</h4>
+<code>string</code><p>New title of the feed</p></div>
+<div class="subelement argument">
+<h4>$description</h4>
+<code>string</code><p>New description of the feed</p></div>
+<div class="subelement argument">
+<h4>$folders</h4>
+<code>array</code><p>List of associated folders to the feed</p></div>
+<div class="subelement argument">
+<h4>$timeUpdate</h4>
+<code>string</code><p>Update config ('auto', 'max' or number of min)</p>
+</div>
+</div></div>
+</div>
+<a name="exportOpml" id="exportOpml"></a><div class="element clickable method public exportOpml" data-toggle="collapse" data-target=".exportOpml .collapse">
+<h2>Export feeds to an opml file</h2>
+<pre>exportOpml() </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="formatChannel" id="formatChannel"></a><div class="element clickable method public formatChannel" data-toggle="collapse" data-target=".formatChannel .collapse">
+<h2>Format xml channel into array</h2>
+<pre>formatChannel(<a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a> $channel) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$channel</h4>
+<code><a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a></code><p>DOMDocument of the channel feed</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>Array with extracted information channel</div>
+</div></div>
+</div>
+<a name="formatItems" id="formatItems"></a><div class="element clickable method public formatItems" data-toggle="collapse" data-target=".formatItems .collapse">
+<h2>format items into array</h2>
+<pre>formatItems(<a href="http://php.net/manual/en/class.domnodelist.php">\DOMNodeList</a> $items, array $formats) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$items</h4>
+<code><a href="http://php.net/manual/en/class.domnodelist.php">\DOMNodeList</a></code><p>DOMNodeList of items in a feed</p></div>
+<div class="subelement argument">
+<h4>$formats</h4>
+<code>array</code><p>List of information to extract</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>List of items with information</div>
+</div></div>
+</div>
+<a name="formatRDF" id="formatRDF"></a><div class="element clickable method public formatRDF" data-toggle="collapse" data-target=".formatRDF .collapse">
+<h2>Add a namespaceURI when format corresponds to a rdf tag.</h2>
+<pre>formatRDF(array $formats, <a href="http://php.net/manual/en/class.domnode.php">\DOMNode</a> $feed) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$formats</h4>
+<code>array</code><p>Array of formats</p></div>
+<div class="subelement argument">
+<h4>$feed</h4>
+<code><a href="http://php.net/manual/en/class.domnode.php">\DOMNode</a></code><p>DOMNode corresponding to the channel root</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>Array of new formated format with namespaceURI</div>
+</div></div>
+</div>
+<a name="getArrayFromXml" id="getArrayFromXml"></a><div class="element clickable method public getArrayFromXml" data-toggle="collapse" data-target=".getArrayFromXml .collapse">
+<h2>Convert opml xml node into array for import
+http://www.php.net/manual/en/class.domdocument.php#101014</h2>
+<pre>getArrayFromXml(<a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a> $node) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$node</h4>
+<code><a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a></code><p>Node to convert into array</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>Array corresponding to the given node</div>
+</div></div>
+</div>
+<a name="getAttributeNS" id="getAttributeNS"></a><div class="element clickable method public getAttributeNS" data-toggle="collapse" data-target=".getAttributeNS .collapse">
+<h2>Search a namespaceURI into tags
+(used when namespaceURI are not defined in the root tag)</h2>
+<pre>getAttributeNS(<a href="http://php.net/manual/en/class.domnode.php">\DOMNode</a> $feed, string $name) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feed</h4>
+<code><a href="http://php.net/manual/en/class.domnode.php">\DOMNode</a></code><p>DOMNode to look into</p></div>
+<div class="subelement argument">
+<h4>$name</h4>
+<code>string</code><p>String of the namespace to look for</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>The namespaceURI or empty string if not found</div>
+</div></div>
+</div>
+<a name="getAutoTimeUpdate" id="getAutoTimeUpdate"></a><div class="element clickable method public getAutoTimeUpdate" data-toggle="collapse" data-target=".getAutoTimeUpdate .collapse">
+<h2>Calculate automatic update (need improvements)</h2>
+<pre>getAutoTimeUpdate(array $feed, true | false $auto) : integer</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feed</h4>
+<code>array</code><p>Array of a feed information</p></div>
+<div class="subelement argument">
+<h4>$auto</h4>
+<code>truefalse</code><p>Used for old feed with no new items</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>integer</code>Number of automatic minute for update</div>
+</div></div>
+</div>
+<a name="getChannelFromXml" id="getChannelFromXml"></a><div class="element clickable method public getChannelFromXml" data-toggle="collapse" data-target=".getChannelFromXml .collapse">
+<h2>return channel from xmlUrl</h2>
+<pre>getChannelFromXml(<a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a> $xml) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$xml</h4>
+<code><a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a></code><p>DOMDocument of the feed</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>Array with extracted information channel</div>
+</div></div>
+</div>
+<a name="getError" id="getError"></a><div class="element clickable method public getError" data-toggle="collapse" data-target=".getError .collapse">
+<h2>Get human readable error</h2>
+<pre>getError(integer $error) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$error</h4>
+<code>integer</code><p>Number of error occured during a feed update</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>String of the corresponding error</div>
+</div></div>
+</div>
+<a name="getFeed" id="getFeed"></a><div class="element clickable method public getFeed" data-toggle="collapse" data-target=".getFeed .collapse">
+<h2>Return a particular feed from a given hash feed</h2>
+<pre>getFeed(string $hash) : array | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$hash</h4>
+<code>string</code><p>Hash corresponding to a feed</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code><code>false</code>Feed array if exists, false otherwise</div>
+</div></div>
+</div>
+<a name="getFeeds" id="getFeeds"></a><div class="element clickable method public getFeeds" data-toggle="collapse" data-target=".getFeeds .collapse">
+<h2>Return list of feeds</h2>
+<pre>getFeeds() : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>List of feeds stored into data</div>
+</div></div>
+</div>
+<a name="getFeedsHashFromFolderHash" id="getFeedsHashFromFolderHash"></a><div class="element clickable method public getFeedsHashFromFolderHash" data-toggle="collapse" data-target=".getFeedsHashFromFolderHash .collapse">
+<h2>return feeds hash in folder</h2>
+<pre>getFeedsHashFromFolderHash(string $folderHash) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$folderHash</h4>
+<code>string</code><p>Hash corresponding to a folder</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>List of feed hash associated to the given folder</div>
+</div></div>
+</div>
+<a name="getFeedsUpdate" id="getFeedsUpdate"></a><div class="element clickable method public getFeedsUpdate" data-toggle="collapse" data-target=".getFeedsUpdate .collapse">
+<h2>List of feeds with update information and title</h2>
+<pre>getFeedsUpdate() : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>List of feeds for ajaxlist</div>
+</div></div>
+</div>
+<a name="getFolder" id="getFolder"></a><div class="element clickable method public getFolder" data-toggle="collapse" data-target=".getFolder .collapse">
+<h2>Return folder name from a given folder hash</h2>
+<pre>getFolder(string $hash) : string | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$hash</h4>
+<code>string</code><p>Hash corresponding to a folder</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code><code>false</code>Folder name if exists, false otherwise</div>
+</div></div>
+</div>
+<a name="getFolders" id="getFolders"></a><div class="element clickable method public getFolders" data-toggle="collapse" data-target=".getFolders .collapse">
+<h2>Return list of folders used to categorize feeds</h2>
+<pre>getFolders() : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>List of folders name</div>
+</div></div>
+</div>
+<a name="getItems" id="getItems"></a><div class="element clickable method public getItems" data-toggle="collapse" data-target=".getItems .collapse">
+<h2>Get array of items depending on hash and filter</h2>
+<pre>getItems(string $hash, bool $filter) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$hash</h4>
+<code>string</code><p>Hash may represent an item, a feed, a folder if empty or 'all', return all items</p>
+</div>
+<div class="subelement argument">
+<h4>$filter</h4>
+<code>bool</code><p>In order to specify a filter depending on newItems in config, if 'new' return all new items.</p>
+</div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>of filtered items depending on hash</div>
+</div></div>
+</div>
+<a name="getItemsFromXml" id="getItemsFromXml"></a><div class="element clickable method public getItemsFromXml" data-toggle="collapse" data-target=".getItemsFromXml .collapse">
+<h2>Return array of items from xml</h2>
+<pre>getItemsFromXml(<a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a> $xml) : array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$xml</h4>
+<code><a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a></code><p>DOMDocument where to extract items</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>array</code>Array of items extracted from the DOMDocument</div>
+</div></div>
+</div>
+<a name="getTimeUpdate" id="getTimeUpdate"></a><div class="element clickable method public getTimeUpdate" data-toggle="collapse" data-target=".getTimeUpdate .collapse">
+<h2>Calculate updates depending on timeUpdate feed information</h2>
+<pre>getTimeUpdate(array $feed) : integer</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feed</h4>
+<code>array</code><p>Array of a feed information</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>integer</code>Number of minutes between each update</div>
+</div></div>
+</div>
+<a name="getUnread" id="getUnread"></a><div class="element clickable method public getUnread" data-toggle="collapse" data-target=".getUnread .collapse">
+<h2>Get number of unread items depending on hash</h2>
+<pre>getUnread(string $hash) : integer</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$hash</h4>
+<code>string</code><p>Hash may represent an item, a feed, a folder or all is ''</p>
+</div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>integer</code>Number of unread items depending on hash</div>
+</div></div>
+</div>
+<a name="hashType" id="hashType"></a><div class="element clickable method public hashType" data-toggle="collapse" data-target=".hashType .collapse">
+<h2>Get type of a hash : item, feed, folder or ''</h2>
+<pre>hashType(string $hash) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$hash</h4>
+<code>string</code><p>Hash may represent an item, a feed, a folder</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>String corresponding to '' is hash is empty, 'feed' if hash corresponds to a feed hash, 'folder' if hash corresponds to a folder hash or 'item' otherwise (hash may not correspond to an item hash)</div>
+</div></div>
+</div>
+<a name="importOpml" id="importOpml"></a><div class="element clickable method public importOpml" data-toggle="collapse" data-target=".importOpml .collapse">
+<h2>Import feed from opml file (as exported by google reader,
+tiny tiny rss, rss lounge... using</h2>
+<pre>importOpml() </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="loadData" id="loadData"></a><div class="element clickable method public loadData" data-toggle="collapse" data-target=".loadData .collapse">
+<h2>Load data file or create one if not exists</h2>
+<pre>loadData() : void</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="loadXml" id="loadXml"></a><div class="element clickable method public loadXml" data-toggle="collapse" data-target=".loadXml .collapse">
+<h2>Load an xml file through HTTP</h2>
+<pre>loadXml(string $xmlUrl) : <a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a></pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$xmlUrl</h4>
+<code>string</code><p>String corresponding to the XML URL</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code><a href="http://php.net/manual/en/class.domdocument.php">\DOMDocument</a></code>DOMDocument corresponding to the XML URL</div>
+</div></div>
+</div>
+<a name="mark" id="mark"></a><div class="element clickable method public mark" data-toggle="collapse" data-target=".mark .collapse">
+<h2>Mark items read/unread depending on the hash : item, feed, folder or ''
+force is used for not overwriting keep unread when mark as read.</h2>
+<pre>mark(string $hash, integer $read, boolean $force) : void</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$hash</h4>
+<code>string</code><p>Hash may represent an item, a feed, a folder</p></div>
+<div class="subelement argument">
+<h4>$read</h4>
+<code>integer</code><p>KEEPUNREAD, UNREAD, READ</p></div>
+<div class="subelement argument">
+<h4>$force</h4>
+<code>boolean</code><p>Force read setting</p></div>
+</div></div>
+</div>
+<a name="needUpdate" id="needUpdate"></a><div class="element clickable method public needUpdate" data-toggle="collapse" data-target=".needUpdate .collapse">
+<h2>Check if feed needs an update</h2>
+<pre>needUpdate(array $feed) : true | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feed</h4>
+<code>array</code><p>Array of a feed information</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code><code>false</code>True if feed needs update, false otherwise</div>
+</div></div>
+</div>
+<a name="removeFeed" id="removeFeed"></a><div class="element clickable method public removeFeed" data-toggle="collapse" data-target=".removeFeed .collapse">
+<h2>Remove feed from a given hash feed</h2>
+<pre>removeFeed(string $feedHash) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feedHash</h4>
+<code>string</code><p>Hash corresponding to a feed</p></div>
+</div></div>
+</div>
+<a name="renameFolder" id="renameFolder"></a><div class="element clickable method public renameFolder" data-toggle="collapse" data-target=".renameFolder .collapse">
+<h2>Rename folder into items (delete folder is newFolder is empty)</h2>
+<pre>renameFolder(string $oldFolder, string $newFolder) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$oldFolder</h4>
+<code>string</code><p>Old folder name</p></div>
+<div class="subelement argument">
+<h4>$newFolder</h4>
+<code>string</code><p>New folder name</p></div>
+</div></div>
+</div>
+<a name="updateChannelItems" id="updateChannelItems"></a><div class="element clickable method public updateChannelItems" data-toggle="collapse" data-target=".updateChannelItems .collapse">
+<h2>Update items from a channel channel</h2>
+<pre>updateChannelItems(string $feedHash) : true | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$feedHash</h4>
+<code>string</code><p>Hash corresponding to a feed</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code><code>false</code>True is update success, false otherwise</div>
+</div></div>
+</div>
+<a name="writeData" id="writeData"></a><div class="element clickable method public writeData" data-toggle="collapse" data-target=".writeData .collapse">
+<h2>Write data file</h2>
+<pre>writeData() : void</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<h3>
+<i class="icon-custom icon-property"></i> Properties</h3>
+<a name="%24file" id="$file"> </a><div class="element clickable property public $file" data-toggle="collapse" data-target=".$file .collapse">
+<h2>The file containing the feed entries</h2>
+<pre>$file </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24kfc" id="$kfc"> </a><div class="element clickable property public $kfc" data-toggle="collapse" data-target=".$kfc .collapse">
+<h2>Feed_Conf object</h2>
+<pre>$kfc </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="%24_data" id="$_data"> </a><div class="element clickable property private $_data" data-toggle="collapse" data-target=".$_data .collapse">
+<h2>Array with data</h2>
+<pre>$_data </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row"><footer class="span12">
+            Template is built using <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap 2</a> and icons provided by <a href="http://glyphicons.com/">Glyphicons</a>.<br>
+            Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor 2.0.0a6</a> and<br>
+            generated on 2012-06-30T11:36:19+02:00.<br></footer></div>
+</div>
+</body>
+</html>

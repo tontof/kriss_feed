@@ -1,0 +1,2213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project version="2.0.0a6" title="">
+  <file path="class/Feed_Conf.php" hash="c101f4f8f4dca62bc836b5b478c6d9c1" package="Default">
+    <include line="101" type="Include Once" package="Default">
+      <name/>
+    </include>
+    <class final="false" abstract="false" namespace="" line="5" package="Default">
+      <extends/>
+      <name>Feed_Conf</name>
+      <full_name>\Feed_Conf</full_name>
+      <docblock line="5">
+        <description><![CDATA[Feed Conf is a class to configurate Feed reader.]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="private" line="10" namespace="" package="Default">
+        <name>$_file</name>
+        <default><![CDATA['']]></default>
+        <docblock line="10">
+          <description><![CDATA[Configuration file]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="15" namespace="" package="Default">
+        <name>$login</name>
+        <default><![CDATA['']]></default>
+        <docblock line="15">
+          <description><![CDATA[Login]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="20" namespace="" package="Default">
+        <name>$hash</name>
+        <default><![CDATA['']]></default>
+        <docblock line="20">
+          <description><![CDATA[Hash of the password]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="25" namespace="" package="Default">
+        <name>$salt</name>
+        <default><![CDATA['']]></default>
+        <docblock line="25">
+          <description><![CDATA[Salt]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="30" namespace="" package="Default">
+        <name>$title</name>
+        <default><![CDATA['Kriss feed']]></default>
+        <docblock line="30">
+          <description><![CDATA[Feed title]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="36" namespace="" package="Default">
+        <name>$redirector</name>
+        <default><![CDATA['']]></default>
+        <docblock line="36">
+          <description><![CDATA[Redirector (e.g. http://anonym.to/? will mask the HTTP_REFERER)
+(consider only links in the article, not images and media)]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="41" namespace="" package="Default">
+        <name>$shaarli</name>
+        <default><![CDATA['']]></default>
+        <docblock line="41">
+          <description><![CDATA[Shaarli link]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="46" namespace="" package="Default">
+        <name>$byPage</name>
+        <default><![CDATA[10]]></default>
+        <docblock line="46">
+          <description><![CDATA[Number of entries to display per page]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="51" namespace="" package="Default">
+        <name>$maxItems</name>
+        <default><![CDATA[100]]></default>
+        <docblock line="51">
+          <description><![CDATA[Max number of articles by channel]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="56" namespace="" package="Default">
+        <name>$maxUpdate</name>
+        <default><![CDATA[60]]></default>
+        <docblock line="56">
+          <description><![CDATA[Max number of minutes between each update of channel]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="61" namespace="" package="Default">
+        <name>$reverseOrder</name>
+        <default><![CDATA[true]]></default>
+        <docblock line="61">
+          <description><![CDATA[Reversed order]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="66" namespace="" package="Default">
+        <name>$newItems</name>
+        <default><![CDATA[true]]></default>
+        <docblock line="66">
+          <description><![CDATA[New items (or all items)]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="71" namespace="" package="Default">
+        <name>$expandedView</name>
+        <default><![CDATA[true]]></default>
+        <docblock line="71">
+          <description><![CDATA[Expanded view (or list view)]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="76" namespace="" package="Default">
+        <name>$defaultView</name>
+        <default><![CDATA['show']]></default>
+        <docblock line="76">
+          <description><![CDATA[Default view (show, reader)]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="81" namespace="" package="Default">
+        <name>$public</name>
+        <default><![CDATA[false]]></default>
+        <docblock line="81">
+          <description><![CDATA[Public/private feed reader]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="86" namespace="" package="Default">
+        <name>$version</name>
+        <default><![CDATA[]]></default>
+        <docblock line="86">
+          <description><![CDATA[Kriss_feed version]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="94" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="94">
+          <description><![CDATA[Constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="94" name="param" description="Configuration file" type="string" variable="$configFile">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="94" name="param" description="Kriss feed version" type="string" variable="$version">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="94">
+          <name>$configFile</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="94">
+          <name>$version</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="" line="110" package="Default">
+        <name>_install</name>
+        <full_name>_install</full_name>
+        <docblock line="110">
+          <description><![CDATA[Installation of the configuration file]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="171" package="Default">
+        <name>hydrate</name>
+        <full_name>hydrate</full_name>
+        <docblock line="171">
+          <description><![CDATA[Hydate to set all configuration variables]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="171" name="param" description="List of variable to hydrate" type="array" variable="$data">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="171">
+          <name>$data</name>
+          <default><![CDATA[]]></default>
+          <type>array</type>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="189" package="Default">
+        <name>setLogin</name>
+        <full_name>setLogin</full_name>
+        <docblock line="189">
+          <description><![CDATA[Login setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="189" name="param" description="New login" type="string" variable="$login">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="189">
+          <name>$login</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="199" package="Default">
+        <name>setPublic</name>
+        <full_name>setPublic</full_name>
+        <docblock line="199">
+          <description><![CDATA[Public setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="199" name="param" description="New public" type="string" variable="$public">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="199">
+          <name>$public</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="209" package="Default">
+        <name>setHash</name>
+        <full_name>setHash</full_name>
+        <docblock line="209">
+          <description><![CDATA[Hash setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="209" name="param" description="New hash" type="string" variable="$pass">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="209">
+          <name>$pass</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="219" package="Default">
+        <name>setSalt</name>
+        <full_name>setSalt</full_name>
+        <docblock line="219">
+          <description><![CDATA[Salt setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="219" name="param" description="New salt" type="string" variable="$salt">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="219">
+          <name>$salt</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="229" package="Default">
+        <name>setTitle</name>
+        <full_name>setTitle</full_name>
+        <docblock line="229">
+          <description><![CDATA[Title setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="229" name="param" description="New title" type="string" variable="$title">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="229">
+          <name>$title</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="239" package="Default">
+        <name>setRedirector</name>
+        <full_name>setRedirector</full_name>
+        <docblock line="239">
+          <description><![CDATA[Redirector setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="239" name="param" description="New redirector" type="string" variable="$redirector">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="239">
+          <name>$redirector</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="249" package="Default">
+        <name>setByPage</name>
+        <full_name>setByPage</full_name>
+        <docblock line="249">
+          <description><![CDATA[ByPage setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="249" name="param" description="New byPage" type="string" variable="$byPage">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="249">
+          <name>$byPage</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="259" package="Default">
+        <name>setShaarli</name>
+        <full_name>setShaarli</full_name>
+        <docblock line="259">
+          <description><![CDATA[Shaarli setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="259" name="param" description="New shaarli" type="string" variable="$url">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="259">
+          <name>$url</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="269" package="Default">
+        <name>setMaxUpdate</name>
+        <full_name>setMaxUpdate</full_name>
+        <docblock line="269">
+          <description><![CDATA[MaxUpdate setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="269" name="param" description="New maxUpdate" type="string" variable="$max">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="269">
+          <name>$max</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="279" package="Default">
+        <name>setMaxItems</name>
+        <full_name>setMaxItems</full_name>
+        <docblock line="279">
+          <description><![CDATA[MaxItems setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="279" name="param" description="New maxItems" type="string" variable="$max">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="279">
+          <name>$max</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="289" package="Default">
+        <name>setNewItems</name>
+        <full_name>setNewItems</full_name>
+        <docblock line="289">
+          <description><![CDATA[NewItems setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="289" name="param" description="New newItems" type="true|false" variable="$new">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="289">
+          <name>$new</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="299" package="Default">
+        <name>setExpandedView</name>
+        <full_name>setExpandedView</full_name>
+        <docblock line="299">
+          <description><![CDATA[ExpandedView setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="299" name="param" description="New expandedView" type="true|false" variable="$expandedView">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="299">
+          <name>$expandedView</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="309" package="Default">
+        <name>setDefaultView</name>
+        <full_name>setDefaultView</full_name>
+        <docblock line="309">
+          <description><![CDATA[DefaultView setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="309" name="param" description="New defaultView" type="string" variable="$defaultView">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="309">
+          <name>$defaultView</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="323" package="Default">
+        <name>setReverseOrder</name>
+        <full_name>setReverseOrder</full_name>
+        <docblock line="323">
+          <description><![CDATA[ReverseOrder setter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="323" name="param" description="New reverseOrder" type="string" variable="$reverseOrder">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="323">
+          <name>$reverseOrder</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="333" package="Default">
+        <name>write</name>
+        <full_name>write</full_name>
+        <docblock line="333">
+          <description><![CDATA[Write configuration file]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="333" name="return" description="True if file successfully saved, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="class/Feed_Page.php" hash="bc3acbed50acb8c05843a63b36055fc9" package="Default">
+    <class final="false" abstract="false" namespace="" line="5" package="Default">
+      <extends/>
+      <name>Feed_Page</name>
+      <full_name>\Feed_Page</full_name>
+      <docblock line="5">
+        <description><![CDATA[Feed Page corresponds to a view class for html page generation.]]></description>
+        <long-description><![CDATA[]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="private" line="10" namespace="" package="Default">
+        <name>$_css</name>
+        <default><![CDATA['<style>
+.admin, .error {
+  color: red !important;
+  font-size: 1.1em !important;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #eee;
+  color: #000;
+}
+
+#config, #edit, #feeds, #import, #show {
+  border: 2px solid #999;
+  border-top: none;
+  background: #fff;
+  width:800px;
+  margin:auto;
+  padding: .2em;
+}
+
+#reader {
+  background: #fff;
+  width:100%;
+  height:100%;
+}
+
+#list-feeds {
+  width: 250px;
+  height: 100%;
+  float: left;
+  overflow: auto;
+}
+
+#list-feeds h3 {
+  background-color: #ccc;
+}
+
+#list-feeds ul {
+  font-size: .9em;
+  list-style: none;
+  margin: 0;
+  padding : 0;
+}
+
+#container {
+  margin-left:250px;
+  height: 100%;
+  overflow: auto;
+}
+
+#extra {
+  position:absolute;
+  background: #fff;
+  border: 1px dotted #999;
+  width:15px;
+  height:15px;
+  overflow: hidden;
+}
+
+#extra:hover {
+  width:auto;
+  height:auto;
+}
+
+#title {
+  margin: 0;
+  color: #666;
+  border-bottom: 1px dotted #999;
+}
+
+#subtitle {
+  text-align: right;
+  font-style: italic;
+  margin: 0;
+  margin-bottom: 1em;
+  color: #666;
+}
+
+#status {
+  margin: 0;
+  font-size: 0.7em;
+  text-align: center;
+  clear:both;
+  background: #fff;
+  width: 100%;
+}
+
+
+#nav {
+  border: 1px dashed #999;
+  font-size: .9em;
+  color: #666;
+  text-align: center;
+  background: #fff;
+}
+
+.pagination {
+  list-style-type: none;
+  text-align: center;
+  margin: .5em;
+}
+
+.pagination li {
+  display: inline;
+  margin: .3em;
+}
+
+.selected {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+#article, .article, .comment{
+  border: 1px dotted #999;
+  padding: .5em;
+  margin: 1.5em 0;
+  overflow: auto;
+}
+
+.title {
+  margin: 0;
+}
+
+.subtitle {
+  text-align: right;
+  font-style: italic;
+  color: #666;
+  border-bottom: 1px dotted #999;
+  margin: 0;
+  margin-bottom: 1em;
+}
+
+.content{
+  padding:.5em;
+}
+
+.description{
+  padding:.5em;
+}
+
+.link {
+  font-size: .9em;
+  float: right;
+  border: 1px dotted #999;
+  padding: .3em;
+}
+
+.read {
+  opacity: 0.4;
+}
+
+fieldset{
+  padding: 1em;
+}
+
+legend {
+  font-weight: bold;
+  margin: 0 .42em;
+  padding: 0 .42em;
+}
+
+input[type=text], textarea{
+  border: 1px solid #000;
+  margin: .2em 0;
+  padding: .2em;
+  font-size: 1em;
+  width:100%;
+}
+
+button{
+  font-size: 1.1em;
+}
+
+a:active, a:visited, a:link {
+  text-decoration: underline;
+  color: #666;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+ul, ol {
+  margin-left:1em;
+  margin-bottom:.2em;
+  padding-left:0;
+}
+
+li {
+  margin-bottom:.2em;
+}
+
+#plusmenu li {
+  display:inline;
+}
+
+@media (max-width: 800px) {
+body{
+  width: 100%;
+  height: 100%;
+}
+
+#config, #edit, #feeds, #import, #show, #reader, #list-feeds, #container {
+  width: auto;
+  height: auto;
+}
+
+#list-feeds {
+  float: none;
+}
+
+#container {
+  margin-left: 0;
+}
+
+img, video, iframe, object{
+  max-width:100%;
+  height:auto;
+}
+
+#plusmenu li {
+  display:block;
+}
+.nomobile{
+  display:none;
+}
+}
+</style>']]></default>
+        <docblock line="10">
+          <description><![CDATA[Default stylesheet]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="253" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="253">
+          <description><![CDATA[Constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="253" name="param" description="String of the css file to check" type="string" variable="$cssFile">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="253">
+          <name>$cssFile</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="270" package="Default">
+        <name>menu</name>
+        <full_name>menu</full_name>
+        <docblock line="270">
+          <description><![CDATA[Paragraph of the menu]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="270" name="param" description="Type of the menu" type="string" variable="$type">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="270" name="param" description="Kriss Feed Conf object" type="\Feed_Conf" variable="$kfc">
+            <type by_reference="false">\Feed_Conf</type>
+          </tag>
+          <tag line="270" name="param" description="Current hash" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="270" name="return" description="HTML menu" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="270">
+          <name>$type</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="270">
+          <name>$kfc</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="270">
+          <name>$hash</name>
+          <default><![CDATA['']]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="381" package="Default">
+        <name>status</name>
+        <full_name>status</full_name>
+        <docblock line="381">
+          <description><![CDATA[Status information (update, footer)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="381" name="return" description="HTML corresponding to default status" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="397" package="Default">
+        <name>htmlPage</name>
+        <full_name>htmlPage</full_name>
+        <docblock line="397">
+          <description><![CDATA[Html page template]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="397" name="param" description="Title of the page" type="string" variable="$title">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="397" name="param" description="Body of the page" type="string" variable="$body">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="397" name="return" description="HTML page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="397">
+          <name>$title</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="397">
+          <name>$body</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="422" package="Default">
+        <name>configPage</name>
+        <full_name>configPage</full_name>
+        <docblock line="422">
+          <description><![CDATA[Config page]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="422" name="param" description="Kriss Feed Conf object" type="\Feed_Conf" variable="$kfc">
+            <type by_reference="false">\Feed_Conf</type>
+          </tag>
+          <tag line="422" name="return" description="HTML config page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="422">
+          <name>$kfc</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="520" package="Default">
+        <name>editFolderPage</name>
+        <full_name>editFolderPage</full_name>
+        <docblock line="520">
+          <description><![CDATA[Edit folder page]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="520" name="param" description="Kriss Feed object" type="\Feed" variable="$kf">
+            <type by_reference="false">\Feed</type>
+          </tag>
+          <tag line="520" name="param" description="Folder name to edit" type="string" variable="$folder">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="520" name="return" description="HTML edit folder page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="520">
+          <name>$kf</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="520">
+          <name>$folder</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="560" package="Default">
+        <name>editFeedPage</name>
+        <full_name>editFeedPage</full_name>
+        <docblock line="560">
+          <description><![CDATA[Edit feed page]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="560" name="param" description="Kriss Feed object" type="\Feed" variable="$kf">
+            <type by_reference="false">\Feed</type>
+          </tag>
+          <tag line="560" name="param" description="Feed to edit" type="array" variable="$feed">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="560" name="return" description="HTML edit feed page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="560">
+          <name>$kf</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="560">
+          <name>$feed</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="644" package="Default">
+        <name>listFeeds</name>
+        <full_name>listFeeds</full_name>
+        <docblock line="644">
+          <description><![CDATA[List of the feeds into folders]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="644" name="param" description="Kriss Feed object" type="\Feed" variable="$kf">
+            <type by_reference="false">\Feed</type>
+          </tag>
+          <tag line="644" name="return" description="HTML ul listing feeds" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="644">
+          <name>$kf</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="739" package="Default">
+        <name>readerPage</name>
+        <full_name>readerPage</full_name>
+        <docblock line="739">
+          <description><![CDATA[Reader page]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="739" name="param" description="Kriss Feed object" type="\Feed" variable="$kf">
+            <type by_reference="false">\Feed</type>
+          </tag>
+          <tag line="739" name="param" description="Hash representing item/feed/folder" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="739" name="param" description="Page to show" type="integer" variable="$page">
+            <type by_reference="false">integer</type>
+          </tag>
+          <tag line="739" name="return" description="HTML reader page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="739">
+          <name>$kf</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="739">
+          <name>$hash</name>
+          <default><![CDATA['']]></default>
+          <type/>
+        </argument>
+        <argument line="739">
+          <name>$page</name>
+          <default><![CDATA[1]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="897" package="Default">
+        <name>showPage</name>
+        <full_name>showPage</full_name>
+        <docblock line="897">
+          <description><![CDATA[Show page]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="897" name="param" description="Kriss Feed object" type="\Feed" variable="$kf">
+            <type by_reference="false">\Feed</type>
+          </tag>
+          <tag line="897" name="return" description="HTML show page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="897">
+          <name>$kf</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="930" package="Default">
+        <name>ajaxScript</name>
+        <full_name>ajaxScript</full_name>
+        <docblock line="930">
+          <description><![CDATA[Javascript for ajax request]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="930" name="param" description="Kriss Feed object" type="\Feed" variable="$kf">
+            <type by_reference="false">\Feed</type>
+          </tag>
+          <tag line="930" name="return" description="Javascript" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="930">
+          <name>$kf</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1592" package="Default">
+        <name>importPage</name>
+        <full_name>importPage</full_name>
+        <docblock line="1592">
+          <description><![CDATA[Get the import page]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1592" name="return" description="HTML import page" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="class/Feed.php" hash="12b38800d73a80b55fb90687438a088d" package="Default">
+    <class final="false" abstract="false" namespace="" line="7" package="Default">
+      <extends/>
+      <name>Feed</name>
+      <full_name>\Feed</full_name>
+      <docblock line="7">
+        <description><![CDATA[Feed class corresponds to a model class for feed manipulation.]]></description>
+        <long-description><![CDATA[<p>Data corresponds to an array of feeds where each feeds contains
+feed articles.</p>]]></long-description>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="12" namespace="" package="Default">
+        <name>$file</name>
+        <default><![CDATA['']]></default>
+        <docblock line="12">
+          <description><![CDATA[The file containing the feed entries]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="17" namespace="" package="Default">
+        <name>$kfc</name>
+        <default><![CDATA[]]></default>
+        <docblock line="17">
+          <description><![CDATA[Feed_Conf object]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="private" line="22" namespace="" package="Default">
+        <name>$_data</name>
+        <default><![CDATA[array()]]></default>
+        <docblock line="22">
+          <description><![CDATA[Array with data]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="30" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="30">
+          <description><![CDATA[constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="30" name="param" description="File to store feed data" type="string" variable="$dataFile">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="30" name="param" description="Object corresponding to feed reader config" type="\Feed_Conf" variable="$kfc">
+            <type by_reference="false">\Feed_Conf</type>
+          </tag>
+        </docblock>
+        <argument line="30">
+          <name>$dataFile</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="30">
+          <name>$kfc</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="40" package="Default">
+        <name>importOpml</name>
+        <full_name>importOpml</full_name>
+        <docblock line="40">
+          <description><![CDATA[Import feed from opml file (as exported by google reader,
+tiny tiny rss, rss lounge... using]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="132" package="Default">
+        <name>exportOpml</name>
+        <full_name>exportOpml</full_name>
+        <docblock line="132">
+          <description><![CDATA[Export feeds to an opml file]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="262" package="Default">
+        <name>getArrayFromXml</name>
+        <full_name>getArrayFromXml</full_name>
+        <docblock line="262">
+          <description><![CDATA[Convert opml xml node into array for import
+http://www.php.net/manual/en/class.domdocument.php#101014]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="262" name="param" description="Node to convert into array" type="\DOMDocument" variable="$node">
+            <type by_reference="false">\DOMDocument</type>
+          </tag>
+          <tag line="262" name="return" description="Array corresponding to the given node" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="262">
+          <name>$node</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="297" package="Default">
+        <name>convertOpmlArray</name>
+        <full_name>convertOpmlArray</full_name>
+        <docblock line="297">
+          <description><![CDATA[Convert opml array into more convenient array with xmlUrl as key]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="297" name="param" description="Array obtained from Opml file" type="array" variable="$array">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="297" name="param" description="List of current folders" type="array" variable="$listFolders">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="297" name="return" description="New formated array" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="297">
+          <name>$array</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="297">
+          <name>$listFolders</name>
+          <default><![CDATA[array()]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="355" package="Default">
+        <name>renameFolder</name>
+        <full_name>renameFolder</full_name>
+        <docblock line="355">
+          <description><![CDATA[Rename folder into items (delete folder is newFolder is empty)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="355" name="param" description="Old folder name" type="string" variable="$oldFolder">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="355" name="param" description="New folder name" type="string" variable="$newFolder">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="355">
+          <name>$oldFolder</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="355">
+          <name>$newFolder</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="375" package="Default">
+        <name>getFolders</name>
+        <full_name>getFolders</full_name>
+        <docblock line="375">
+          <description><![CDATA[Return list of folders used to categorize feeds]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="375" name="return" description="List of folders name" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="396" package="Default">
+        <name>getFolder</name>
+        <full_name>getFolder</full_name>
+        <docblock line="396">
+          <description><![CDATA[Return folder name from a given folder hash]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="396" name="param" description="Hash corresponding to a folder" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="396" name="return" description="Folder name if exists, false otherwise" type="string|false">
+            <type by_reference="false">string</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="396">
+          <name>$hash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="411" package="Default">
+        <name>getFeeds</name>
+        <full_name>getFeeds</full_name>
+        <docblock line="411">
+          <description><![CDATA[Return list of feeds]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="411" name="return" description="List of feeds stored into data" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="423" package="Default">
+        <name>getFeed</name>
+        <full_name>getFeed</full_name>
+        <docblock line="423">
+          <description><![CDATA[Return a particular feed from a given hash feed]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="423" name="param" description="Hash corresponding to a feed" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="423" name="return" description="Feed array if exists, false otherwise" type="array|false">
+            <type by_reference="false">array</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="423">
+          <name>$hash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="437" package="Default">
+        <name>removeFeed</name>
+        <full_name>removeFeed</full_name>
+        <docblock line="437">
+          <description><![CDATA[Remove feed from a given hash feed]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="437" name="param" description="Hash corresponding to a feed" type="string" variable="$feedHash">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="437">
+          <name>$feedHash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="454" package="Default">
+        <name>editFeed</name>
+        <full_name>editFeed</full_name>
+        <docblock line="454">
+          <description><![CDATA[Edit a feed from given information]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="454" name="param" description="Hash corresponding to a feed" type="string" variable="$feedHash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="454" name="param" description="New title of the feed" type="string" variable="$title">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="454" name="param" description="New description of the feed" type="string" variable="$description">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="454" name="param" description="List of associated folders to the feed" type="array" variable="$folders">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="454" name="param" description="Update config ('auto', 'max' or number of min)" type="string" variable="$timeUpdate">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="455">
+          <name>$feedHash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="456">
+          <name>$title</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="457">
+          <name>$description</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="458">
+          <name>$folders</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="459">
+          <name>$timeUpdate</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="501" package="Default">
+        <name>formatChannel</name>
+        <full_name>formatChannel</full_name>
+        <docblock line="501">
+          <description><![CDATA[Format xml channel into array]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="501" name="param" description="DOMDocument of the channel feed" type="\DOMDocument" variable="$channel">
+            <type by_reference="false">\DOMDocument</type>
+          </tag>
+          <tag line="501" name="return" description="Array with extracted information channel" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="501">
+          <name>$channel</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="540" package="Default">
+        <name>getChannelFromXml</name>
+        <full_name>getChannelFromXml</full_name>
+        <docblock line="540">
+          <description><![CDATA[return channel from xmlUrl]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="540" name="param" description="DOMDocument of the feed" type="\DOMDocument" variable="$xml">
+            <type by_reference="false">\DOMDocument</type>
+          </tag>
+          <tag line="540" name="return" description="Array with extracted information channel" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="540">
+          <name>$xml</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="570" package="Default">
+        <name>formatItems</name>
+        <full_name>formatItems</full_name>
+        <docblock line="570">
+          <description><![CDATA[format items into array]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="570" name="param" description="DOMNodeList of items in a feed" type="\DOMNodeList" variable="$items">
+            <type by_reference="false">\DOMNodeList</type>
+          </tag>
+          <tag line="570" name="param" description="List of information to extract" type="array" variable="$formats">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="570" name="return" description="List of items with information" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="570">
+          <name>$items</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="570">
+          <name>$formats</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="630" package="Default">
+        <name>getItemsFromXml</name>
+        <full_name>getItemsFromXml</full_name>
+        <docblock line="630">
+          <description><![CDATA[Return array of items from xml]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="630" name="param" description="DOMDocument where to extract items" type="\DOMDocument" variable="$xml">
+            <type by_reference="false">\DOMDocument</type>
+          </tag>
+          <tag line="630" name="return" description="Array of items extracted from the DOMDocument" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="630">
+          <name>$xml</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="692" package="Default">
+        <name>getAttributeNS</name>
+        <full_name>getAttributeNS</full_name>
+        <docblock line="692">
+          <description><![CDATA[Search a namespaceURI into tags
+(used when namespaceURI are not defined in the root tag)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="692" name="param" description="DOMNode to look into" type="\DOMNode" variable="$feed">
+            <type by_reference="false">\DOMNode</type>
+          </tag>
+          <tag line="692" name="param" description="String of the namespace to look for" type="string" variable="$name">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="692" name="return" description="The namespaceURI or empty string if not found" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="692">
+          <name>$feed</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="692">
+          <name>$name</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="721" package="Default">
+        <name>formatRDF</name>
+        <full_name>formatRDF</full_name>
+        <docblock line="721">
+          <description><![CDATA[Add a namespaceURI when format corresponds to a rdf tag.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="721" name="param" description="Array of formats" type="array" variable="$formats">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="721" name="param" description="DOMNode corresponding to the channel root" type="\DOMNode" variable="$feed">
+            <type by_reference="false">\DOMNode</type>
+          </tag>
+          <tag line="721" name="return" description="Array of new formated format with namespaceURI" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="721">
+          <name>$formats</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="721">
+          <name>$feed</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="748" package="Default">
+        <name>loadXml</name>
+        <full_name>loadXml</full_name>
+        <docblock line="748">
+          <description><![CDATA[Load an xml file through HTTP]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="748" name="param" description="String corresponding to the XML URL" type="string" variable="$xmlUrl">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="748" name="return" description="DOMDocument corresponding to the XML URL" type="\DOMDocument">
+            <type by_reference="false">\DOMDocument</type>
+          </tag>
+        </docblock>
+        <argument line="748">
+          <name>$xmlUrl</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="772" package="Default">
+        <name>addChannel</name>
+        <full_name>addChannel</full_name>
+        <docblock line="772">
+          <description><![CDATA[add channel]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="772" name="param" description="String corresponding to the XML URL" type="string" variable="$xmlUrl">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="772" name="return" description="True if add is success, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="772">
+          <name>$xmlUrl</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="816" package="Default">
+        <name>getFeedsUpdate</name>
+        <full_name>getFeedsUpdate</full_name>
+        <docblock line="816">
+          <description><![CDATA[List of feeds with update information and title]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="816" name="return" description="List of feeds for ajaxlist" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="841" package="Default">
+        <name>getAutoTimeUpdate</name>
+        <full_name>getAutoTimeUpdate</full_name>
+        <docblock line="841">
+          <description><![CDATA[Calculate automatic update (need improvements)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="841" name="param" description="Array of a feed information" type="array" variable="$feed">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="841" name="param" description="Used for old feed with no new items" type="true|false" variable="$auto">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+          <tag line="841" name="return" description="Number of automatic minute for update" type="integer">
+            <type by_reference="false">integer</type>
+          </tag>
+        </docblock>
+        <argument line="841">
+          <name>$feed</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="841">
+          <name>$auto</name>
+          <default><![CDATA[true]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="873" package="Default">
+        <name>getTimeUpdate</name>
+        <full_name>getTimeUpdate</full_name>
+        <docblock line="873">
+          <description><![CDATA[Calculate updates depending on timeUpdate feed information]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="873" name="param" description="Array of a feed information" type="array" variable="$feed">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="873" name="return" description="Number of minutes between each update" type="integer">
+            <type by_reference="false">integer</type>
+          </tag>
+        </docblock>
+        <argument line="873">
+          <name>$feed</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="900" package="Default">
+        <name>needUpdate</name>
+        <full_name>needUpdate</full_name>
+        <docblock line="900">
+          <description><![CDATA[Check if feed needs an update]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="900" name="param" description="Array of a feed information" type="array" variable="$feed">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="900" name="return" description="True if feed needs update, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="900">
+          <name>$feed</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="917" package="Default">
+        <name>getError</name>
+        <full_name>getError</full_name>
+        <docblock line="917">
+          <description><![CDATA[Get human readable error]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="917" name="param" description="Number of error occured during a feed update" type="integer" variable="$error">
+            <type by_reference="false">integer</type>
+          </tag>
+          <tag line="917" name="return" description="String of the corresponding error" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="917">
+          <name>$error</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="942" package="Default">
+        <name>updateChannelItems</name>
+        <full_name>updateChannelItems</full_name>
+        <docblock line="942">
+          <description><![CDATA[Update items from a channel channel]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="942" name="param" description="Hash corresponding to a feed" type="string" variable="$feedHash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="942" name="return" description="True is update success, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="942">
+          <name>$feedHash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1045" package="Default">
+        <name>getFeedsHashFromFolderHash</name>
+        <full_name>getFeedsHashFromFolderHash</full_name>
+        <docblock line="1045">
+          <description><![CDATA[return feeds hash in folder]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1045" name="param" description="Hash corresponding to a folder" type="string" variable="$folderHash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="1045" name="return" description="List of feed hash associated to the given folder" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="1045">
+          <name>$folderHash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1069" package="Default">
+        <name>getUnread</name>
+        <full_name>getUnread</full_name>
+        <docblock line="1069">
+          <description><![CDATA[Get number of unread items depending on hash]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1069" name="param" description="Hash may represent an item, a feed, a folder or all is ''" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="1069" name="return" description="Number of unread items depending on hash" type="integer">
+            <type by_reference="false">integer</type>
+          </tag>
+        </docblock>
+        <argument line="1069">
+          <name>$hash</name>
+          <default><![CDATA['']]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1092" package="Default">
+        <name>mark</name>
+        <full_name>mark</full_name>
+        <docblock line="1092">
+          <description><![CDATA[Mark items read/unread depending on the hash : item, feed, folder or ''
+force is used for not overwriting keep unread when mark as read.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1092" name="param" description="Hash may represent an item, a feed, a folder" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="1092" name="param" description="KEEPUNREAD, UNREAD, READ" type="integer" variable="$read">
+            <type by_reference="false">integer</type>
+          </tag>
+          <tag line="1092" name="param" description="Force read setting" type="boolean" variable="$force">
+            <type by_reference="false">boolean</type>
+          </tag>
+          <tag line="1092" name="return" description="" type="void">
+            <type by_reference="false">void</type>
+          </tag>
+        </docblock>
+        <argument line="1092">
+          <name>$hash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="1092">
+          <name>$read</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="1092">
+          <name>$force</name>
+          <default><![CDATA[false]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1128" package="Default">
+        <name>hashType</name>
+        <full_name>hashType</full_name>
+        <docblock line="1128">
+          <description><![CDATA[Get type of a hash : item, feed, folder or '']]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1128" name="param" description="Hash may represent an item, a feed, a folder" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="1128" name="return" description="String corresponding to '' is hash is empty, 'feed' if hash corresponds to a feed hash, 'folder' if hash corresponds to a folder hash or 'item' otherwise (hash may not correspond to an item hash)" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="1128">
+          <name>$hash</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1162" package="Default">
+        <name>getItems</name>
+        <full_name>getItems</full_name>
+        <docblock line="1162">
+          <description><![CDATA[Get array of items depending on hash and filter]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1162" name="param" description="Hash may represent an item, a feed, a folder if empty or 'all', return all items" type="string" variable="$hash">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="1162" name="param" description="In order to specify a filter depending on newItems in config, if 'new' return all new items." type="bool" variable="$filter">
+            <type by_reference="false">bool</type>
+          </tag>
+          <tag line="1162" name="return" description="of filtered items depending on hash" type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="1162">
+          <name>$hash</name>
+          <default><![CDATA['']]></default>
+          <type/>
+        </argument>
+        <argument line="1162">
+          <name>$filter</name>
+          <default><![CDATA[true]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="1223" package="Default">
+        <name>compItemsR</name>
+        <full_name>compItemsR</full_name>
+        <docblock line="1223">
+          <description><![CDATA[Compare two items depending on time (reverse order : newest first)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1223" name="param" description="Array reprensenting the first item to compare" type="array" variable="$a">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="1223" name="param" description="Array reprensenting the second item to compare" type="array" variable="$b">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="1223" name="return" description="" type="\-1|\0|\1">
+            <type by_reference="false">\-1</type>
+            <type by_reference="false">\0</type>
+            <type by_reference="false">\1</type>
+          </tag>
+        </docblock>
+        <argument line="1223">
+          <name>$a</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="1223">
+          <name>$b</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="1242" package="Default">
+        <name>compItems</name>
+        <full_name>compItems</full_name>
+        <docblock line="1242">
+          <description><![CDATA[Compare two items depending on time (oldest first)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1242" name="param" description="Array reprensenting the first item to compare" type="array" variable="$a">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="1242" name="param" description="Array reprensenting the second item to compare" type="array" variable="$b">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="1242" name="return" description="" type="\-1|\0|\1">
+            <type by_reference="false">\-1</type>
+            <type by_reference="false">\0</type>
+            <type by_reference="false">\1</type>
+          </tag>
+        </docblock>
+        <argument line="1242">
+          <name>$a</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="1242">
+          <name>$b</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1258" package="Default">
+        <name>loadData</name>
+        <full_name>loadData</full_name>
+        <docblock line="1258">
+          <description><![CDATA[Load data file or create one if not exists]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1258" name="return" description="" type="void">
+            <type by_reference="false">void</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="" line="1295" package="Default">
+        <name>writeData</name>
+        <full_name>writeData</full_name>
+        <docblock line="1295">
+          <description><![CDATA[Write data file]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="1295" name="return" description="" type="void">
+            <type by_reference="false">void</type>
+          </tag>
+        </docblock>
+      </method>
+    </class>
+  </file>
+  <file path="class/Session.php" hash="f5c583b91f77fe82d3c2a673d5e4e5c9" package="Default">
+    <class final="false" abstract="false" namespace="" line="31" package="Default">
+      <extends/>
+      <name>Session</name>
+      <full_name>\Session</full_name>
+      <docblock line="31">
+        <description><![CDATA[Session management]]></description>
+        <long-description><![CDATA[<p>PHP version 5</p>
+
+<p>http://www.developpez.net/forums/d51943/php/langage/sessions/
+http://sebsauvage.net/wiki/doku.php?id=php:session
+http://sebsauvage.net/wiki/doku.php?id=php:shaarli</p>
+
+<p>Features:
+- Everything is stored on server-side (we do not trust client-side data,
+  such as cookie expiration)
+- IP addresses + user agent are checked on each access to prevent session
+  cookie hijacking (such as Firesheep)
+- Session expires on user inactivity (Session expiration date is
+  automatically updated everytime the user accesses a page.)
+- A unique secret key is generated on server-side for this session
+  (and never sent over the wire) which can be used
+  to sign forms (HMAC) (See $_SESSION['uid'] )
+- Token management to prevent XSRF attacks.</p>
+
+<p>TODO:
+- log login fail
+- prevent brute force (ban IP)</p>
+
+<p>HOWTOUSE:
+- Just call Session::init(); to initialize session and
+  check if connected with Session::isLogged()</p>]]></long-description>
+      </docblock>
+      <property final="false" static="true" visibility="public" line="37" namespace="" package="Default">
+        <name>$inactivityTimeout</name>
+        <default><![CDATA[3600]]></default>
+        <docblock line="37">
+          <description><![CDATA[If the user does not access any page within this time,
+his/her session is considered expired (in seconds).]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <property final="false" static="true" visibility="private" line="42" namespace="" package="Default">
+        <name>$_instance</name>
+        <default><![CDATA[]]></default>
+        <docblock line="42">
+          <description><![CDATA[Static session]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="" line="47" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="47">
+          <description><![CDATA[constructor]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="63" package="Default">
+        <name>init</name>
+        <full_name>init</full_name>
+        <docblock line="63">
+          <description><![CDATA[initialize private instance of session class]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="private" namespace="" line="76" package="Default">
+        <name>_allInfo</name>
+        <full_name>_allInfo</full_name>
+        <docblock line="76">
+          <description><![CDATA[Returns the IP address, user agent and language of the client
+(Used to prevent session cookie hijacking.)]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="76" name="return" description="Hash of all information" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="103" package="Default">
+        <name>login</name>
+        <full_name>login</full_name>
+        <docblock line="103">
+          <description><![CDATA[Check that user/password is correct and then init some SESSION variables.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="103" name="param" description="Login reference" type="string" variable="$login">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="103" name="param" description="Password reference" type="string" variable="$password">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="103" name="param" description="Login to compare with login reference" type="string" variable="$loginTest">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="103" name="param" description="Password to compare with password reference" type="string" variable="$passwordTest">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="103" name="param" description="Array of variables to store in SESSION" type="array" variable="$pValues">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="103" name="return" description="True if login and password are correct, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="104">
+          <name>$login</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="105">
+          <name>$password</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="106">
+          <name>$loginTest</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="107">
+          <name>$passwordTest</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+        <argument line="108">
+          <name>$pValues</name>
+          <default><![CDATA[array()]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="132" package="Default">
+        <name>logout</name>
+        <full_name>logout</full_name>
+        <docblock line="132">
+          <description><![CDATA[Unset SESSION variable to force logout]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="142" package="Default">
+        <name>isLogged</name>
+        <full_name>isLogged</full_name>
+        <docblock line="142">
+          <description><![CDATA[Make sure user is logged in.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="142" name="return" description="True if user is logged in, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="162" package="Default">
+        <name>getToken</name>
+        <full_name>getToken</full_name>
+        <docblock line="162">
+          <description><![CDATA[Create a token, store it in SESSION and return it]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="162" name="return" description="Token created" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="181" package="Default">
+        <name>isToken</name>
+        <full_name>isToken</full_name>
+        <docblock line="181">
+          <description><![CDATA[Tells if a token is ok. Using this function will destroy the token.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="181" name="param" description="Token to test" type="string" variable="$token">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="181" name="return" description="True if token is correct, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="181">
+          <name>$token</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="class/MyTool.php" hash="8832753cf600207c6d63b328ff385f29" package="Default">
+    <class final="false" abstract="false" namespace="" line="13" package="Default">
+      <extends/>
+      <name>MyTool</name>
+      <full_name>\MyTool</full_name>
+      <docblock line="13">
+        <description><![CDATA[Useful php snippets]]></description>
+        <long-description><![CDATA[<p>PHP version 5</p>
+
+<p>Features:
+- initPHP, isUrl, isEmail, formatBBCode, formatText, getUrl, rrmdir,
+  humanBytes, returnBytes, getMaxFileSize, smallHash
+TODO:</p>]]></long-description>
+      </docblock>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="19" package="Default">
+        <name>initPhp</name>
+        <full_name>initPhp</full_name>
+        <docblock line="19">
+          <description><![CDATA[Test if php version is greater than 5, set error reporting, deal
+with magic quotes for POST, GET and COOKIE and initialize bufferization]]></description>
+          <long-description><![CDATA[]]></long-description>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="private" namespace="" line="44" package="Default">
+        <name>_stripslashesDeep</name>
+        <full_name>_stripslashesDeep</full_name>
+        <docblock line="44">
+          <description><![CDATA[Strip slashes when magic quotes is activated]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="44" name="param" description="Value to remove slashes" type="string|array" variable="$value">
+            <type by_reference="false">string</type>
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="44" name="return" description="Value with no slashes" type="string|array">
+            <type by_reference="false">string</type>
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+        <argument line="44">
+          <name>$value</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="59" package="Default">
+        <name>isUrl</name>
+        <full_name>isUrl</full_name>
+        <docblock line="59">
+          <description><![CDATA[Test if parameter is an URL
+use http://www.php.net/manual/en/function.filter-var.php instead ?]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="59" name="param" description="Url to check" type="string" variable="$url">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="59" name="return" description="True if paramater is a URL, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="59">
+          <name>$url</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="74" package="Default">
+        <name>isEmail</name>
+        <full_name>isEmail</full_name>
+        <docblock line="74">
+          <description><![CDATA[Test if parameter is an email
+use http://www.php.net/manual/en/function.filter-var.php instead ?]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="74" name="param" description="Email to check" type="string" variable="$email">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="74" name="return" description="True if paramater is an email, false otherwise" type="true|false">
+            <type by_reference="false">true</type>
+            <type by_reference="false">false</type>
+          </tag>
+        </docblock>
+        <argument line="74">
+          <name>$email</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="88" package="Default">
+        <name>formatBBCode</name>
+        <full_name>formatBBCode</full_name>
+        <docblock line="88">
+          <description><![CDATA[Format given text using BBCode with corresponding tags]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="88" name="param" description="BBCodeText to format" type="string" variable="$text">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="88" name="return" description="Converted text" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="88">
+          <name>$text</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="128" package="Default">
+        <name>formatText</name>
+        <full_name>formatText</full_name>
+        <docblock line="128">
+          <description><![CDATA[Format text to emphasize html, php, URL and wikipedia URL]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="128" name="param" description="Original text to format" type="string" variable="$text">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="128" name="return" description="Converted text" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="128">
+          <name>$text</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="176" package="Default">
+        <name>getUrl</name>
+        <full_name>getUrl</full_name>
+        <docblock line="176">
+          <description><![CDATA[Return URL website]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="176" name="return" description="URL website" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="189" package="Default">
+        <name>rrmdir</name>
+        <full_name>rrmdir</full_name>
+        <docblock line="189">
+          <description><![CDATA[Remove not empty directory using unlink]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="189" name="param" description="Directory to remove" type="\$string" variable="$dir">
+            <type by_reference="false">\$string</type>
+          </tag>
+        </docblock>
+        <argument line="189">
+          <name>$dir</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="210" package="Default">
+        <name>humanBytes</name>
+        <full_name>humanBytes</full_name>
+        <docblock line="210">
+          <description><![CDATA[Convert a number of bytes into human readable number of bytes
+http://www.php.net/manual/fr/function.disk-free-space.php#103382]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="210" name="param" description="Number of bytes to convert into human readable" type="integer" variable="$bytes">
+            <type by_reference="false">integer</type>
+          </tag>
+          <tag line="210" name="return" description="String of human readable number of bytes" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="210">
+          <name>$bytes</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="227" package="Default">
+        <name>returnBytes</name>
+        <full_name>returnBytes</full_name>
+        <docblock line="227">
+          <description><![CDATA[Convert post_max_size/upload_max_filesize (eg.'16M') parameters to bytes.]]></description>
+          <long-description><![CDATA[]]></long-description>
+          <tag line="227" name="param" description="Value to convert" type="string" variable="$val">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="227" name="return" description="Number of bytes corresponding to the given value" type="\interg">
+            <type by_reference="false">\interg</type>
+          </tag>
+        </docblock>
+        <argument line="227">
+          <name>$val</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="247" package="Default">
+        <name>getMaxFileSize</name>
+        <full_name>getMaxFileSize</full_name>
+        <docblock line="247">
+          <description><![CDATA[Try to determine max file size for uploads (POST).]]></description>
+          <long-description><![CDATA[<p>http://sebsauvage.net/wiki/doku.php?id=php:shaarli</p>]]></long-description>
+          <tag line="247" name="return" description="Number of bytes" type="integer">
+            <type by_reference="false">integer</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="true" visibility="public" namespace="" line="270" package="Default">
+        <name>smallHash</name>
+        <full_name>smallHash</full_name>
+        <docblock line="270">
+          <description><![CDATA[Returns the small hash of a string
+http://sebsauvage.net/wiki/doku.php?id=php:shaarli
+eg. smallHash('20111006_131924') --> yZH23w
+Small hashes:
+- are unique (well, as unique as crc32, at last)
+- are always 6 characters long.]]></description>
+          <long-description><![CDATA[<ul>
+<li>only use the following characters: a-z A-Z 0-9 - _ @</li>
+<li>are NOT cryptographically secure (they CAN be forged)</li>
+</ul>]]></long-description>
+          <tag line="270" name="param" description="Text to convert into small hash" type="string" variable="$text">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="270" name="return" description="Small hash corresponding to the given text" type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="270">
+          <name>$text</name>
+          <default><![CDATA[]]></default>
+          <type/>
+        </argument>
+      </method>
+    </class>
+  </file>
+  <file path="kriss_feed.php" hash="314d793bcb981aad26bcf66963540b47" package="Default">
+    <include line="30" type="Include Once" package="Default">
+      <name/>
+    </include>
+    <constant namespace="" line="6" package="Default">
+      <name>DATA_DIR</name>
+      <full_name>\DATA_DIR</full_name>
+      <value><![CDATA['data']]></value>
+    </constant>
+    <constant namespace="" line="8" package="Default">
+      <name>DATA_FILE</name>
+      <full_name>\DATA_FILE</full_name>
+      <value><![CDATA[DATA_DIR . '/data.php']]></value>
+    </constant>
+    <constant namespace="" line="9" package="Default">
+      <name>CONFIG_FILE</name>
+      <full_name>\CONFIG_FILE</full_name>
+      <value><![CDATA[DATA_DIR . '/config.php']]></value>
+    </constant>
+    <constant namespace="" line="10" package="Default">
+      <name>STYLE_FILE</name>
+      <full_name>\STYLE_FILE</full_name>
+      <value><![CDATA['style.css']]></value>
+    </constant>
+    <constant namespace="" line="12" package="Default">
+      <name>FEED_VERSION</name>
+      <full_name>\FEED_VERSION</full_name>
+      <value><![CDATA[2]]></value>
+    </constant>
+    <constant namespace="" line="14" package="Default">
+      <name>PHPPREFIX</name>
+      <full_name>\PHPPREFIX</full_name>
+      <value><![CDATA['<?php /* ']]></value>
+    </constant>
+    <constant namespace="" line="15" package="Default">
+      <name>PHPSUFFIX</name>
+      <full_name>\PHPSUFFIX</full_name>
+      <value><![CDATA[' */ ?>']]></value>
+    </constant>
+    <constant namespace="" line="17" package="Default">
+      <name>MIN_TIME_UPDATE</name>
+      <full_name>\MIN_TIME_UPDATE</full_name>
+      <value><![CDATA[5]]></value>
+    </constant>
+    <constant namespace="" line="19" package="Default">
+      <name>ERROR_NO_XML</name>
+      <full_name>\ERROR_NO_XML</full_name>
+      <value><![CDATA[1]]></value>
+    </constant>
+    <constant namespace="" line="20" package="Default">
+      <name>ERROR_ITEMS_MISSED</name>
+      <full_name>\ERROR_ITEMS_MISSED</full_name>
+      <value><![CDATA[2]]></value>
+    </constant>
+    <constant namespace="" line="21" package="Default">
+      <name>ERROR_LAST_UPDATE</name>
+      <full_name>\ERROR_LAST_UPDATE</full_name>
+      <value><![CDATA[3]]></value>
+    </constant>
+    <function namespace="" line="28" package="Default">
+      <name>__autoload</name>
+      <full_name>\__autoload</full_name>
+      <docblock line="28">
+        <description><![CDATA[autoload class]]></description>
+        <long-description><![CDATA[]]></long-description>
+        <tag line="28" name="param" description="The name of the class to load" type="string" variable="$className">
+          <type by_reference="false">string</type>
+        </tag>
+      </docblock>
+      <argument line="28">
+        <name>$className</name>
+        <default><![CDATA[]]></default>
+        <type/>
+      </argument>
+    </function>
+  </file>
+  <package name="Default" full_name="Default"/>
+  <namespace name="" full_name=""/>
+  <marker count="0">todo</marker>
+  <marker count="0">fixme</marker>
+  <deprecated count="0"/>
+</project>

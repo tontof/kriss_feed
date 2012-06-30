@@ -1,0 +1,291 @@
+<!DOCTYPE html><html xmlns:date="http://exslt.org/dates-and-times" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+<meta charset="utf-8">
+<title>phpDocumentor » \MyTool</title>
+<meta name="author" content="Mike van Riel">
+<meta name="description" content="">
+<link href="../css/template.css" rel="stylesheet" media="all">
+<script src="../js/jquery-1.7.1.min.js" type="text/javascript"></script><script src="../js/jquery-ui-1.8.2.custom.min.js" type="text/javascript"></script><script src="../js/jquery.mousewheel.min.js" type="text/javascript"></script><script src="../js/bootstrap.js" type="text/javascript"></script><script src="../js/template.js" type="text/javascript"></script><script src="../js/prettify/prettify.min.js" type="text/javascript"></script><link rel="shortcut icon" href="../img/favicon.ico">
+<link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="72x72" href="../img/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="114x114" href="../img/apple-touch-icon-114x114.png">
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+<div class="navbar-inner"><div class="container">
+<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a><a class="brand" href="../index.html">phpDocumentor</a><div class="nav-collapse"><ul class="nav">
+<li class="dropdown">
+<a href="#api" class="dropdown-toggle" data-toggle="dropdown">
+                                    API Documentation <b class="caret"></b></a><ul class="dropdown-menu"></ul>
+</li>
+<li class="dropdown" id="charts-menu">
+<a href="#charts" class="dropdown-toggle" data-toggle="dropdown">
+                                    Charts <b class="caret"></b></a><ul class="dropdown-menu"><li><a href="../graph_class.html"><i class="icon-list-alt"></i> Class hierarchy diagram</a></li></ul>
+</li>
+<li class="dropdown" id="reports-menu">
+<a href="#reports" class="dropdown-toggle" data-toggle="dropdown">
+                                    Reports <b class="caret"></b></a><ul class="dropdown-menu">
+<li><a href="../errors.html"><i class="icon-remove-sign"></i> Errors 
+                <span class="label label-info">0</span></a></li>
+<li><a href="../markers.html"><i class="icon-map-marker"></i> Markers 
+                <ul></ul></a></li>
+<li><a href="../deprecated.html"><i class="icon-stop"></i> Deprecated elements 
+                <span class="label label-info">0</span></a></li>
+</ul>
+</li>
+</ul></div>
+</div></div>
+<div class="go_to_top"><a href="#___" style="color: inherit">Back to top  <i class="icon-upload icon-white"></i></a></div>
+</div>
+<div id="___" class="container">
+<noscript><div class="alert alert-warning">
+                            Javascript is disabled; several features are only available
+                            if Javascript is enabled.
+                        </div></noscript>
+<div class="row">
+<div class="span4">
+<span class="btn-group visibility" data-toggle="buttons-checkbox"><button class="btn public active" title="Show public elements">Public</button><button class="btn protected" title="Show protected elements">Protected</button><button class="btn private" title="Show private elements">Private</button><button class="btn inherited active" title="Show inherited elements">Inherited</button></span><div class="btn-group view pull-right" data-toggle="buttons-radio">
+<button class="btn details" title="Show descriptions and method names"><i class="icon-list"></i></button><button class="btn simple" title="Show only method names"><i class="icon-align-justify"></i></button>
+</div>
+<ul class="side-nav nav nav-list">
+<li class="nav-header">
+<i class="icon-custom icon-method"></i> Methods</li>
+<li class="method public "><a href="#formatBBCode" title="formatBBCode :: Format given text using BBCode with corresponding tags"><span class="description">Format given text using BBCode with corresponding tags</span><pre>formatBBCode()</pre></a></li>
+<li class="method public "><a href="#formatText" title="formatText :: Format text to emphasize html, php, URL and wikipedia URL"><span class="description">Format text to emphasize html, php, URL and wikipedia URL</span><pre>formatText()</pre></a></li>
+<li class="method public "><a href="#getMaxFileSize" title="getMaxFileSize :: Try to determine max file size for uploads (POST)."><span class="description">Try to determine max file size for uploads (POST).</span><pre>getMaxFileSize()</pre></a></li>
+<li class="method public "><a href="#getUrl" title="getUrl :: Return URL website"><span class="description">Return URL website</span><pre>getUrl()</pre></a></li>
+<li class="method public "><a href="#humanBytes" title="humanBytes :: Convert a number of bytes into human readable number of bytes
+http://www.php.net/manual/fr/function.disk-free-space.php#103382"><span class="description">Convert a number of bytes into human readable number of bytes
+http://www.php.net/manual/fr/function.disk-free-space.php#103382</span><pre>humanBytes()</pre></a></li>
+<li class="method public "><a href="#initPhp" title="initPhp :: Test if php version is greater than 5, set error reporting, deal
+with magic quotes for POST, GET and COOKIE and initialize bufferization"><span class="description">Test if php version is greater than 5, set error reporting, deal
+with magic quotes for POST, GET and COOKIE and initialize bufferization</span><pre>initPhp()</pre></a></li>
+<li class="method public "><a href="#isEmail" title="isEmail :: Test if parameter is an email
+use http://www.php.net/manual/en/function.filter-var.php instead ?"><span class="description">Test if parameter is an email
+use http://www.php.net/manual/en/function.filter-var.php instead ?</span><pre>isEmail()</pre></a></li>
+<li class="method public "><a href="#isUrl" title="isUrl :: Test if parameter is an URL
+use http://www.php.net/manual/en/function.filter-var.php instead ?"><span class="description">Test if parameter is an URL
+use http://www.php.net/manual/en/function.filter-var.php instead ?</span><pre>isUrl()</pre></a></li>
+<li class="method public "><a href="#returnBytes" title="returnBytes :: Convert post_max_size/upload_max_filesize (eg.'16M') parameters to bytes."><span class="description">Convert post_max_size/upload_max_filesize (eg.'16M') parameters to bytes.</span><pre>returnBytes()</pre></a></li>
+<li class="method public "><a href="#rrmdir" title="rrmdir :: Remove not empty directory using unlink"><span class="description">Remove not empty directory using unlink</span><pre>rrmdir()</pre></a></li>
+<li class="method public "><a href="#smallHash" title="smallHash :: Returns the small hash of a string
+http://sebsauvage.net/wiki/doku.php?id=php:shaarli
+eg. smallHash('20111006_131924') --&gt; yZH23w
+Small hashes:
+- are unique (well, as unique as crc32, at last)
+- are always 6 characters long."><span class="description">Returns the small hash of a string
+http://sebsauvage.net/wiki/doku.php?id=php:shaarli
+eg. smallHash('20111006_131924') --&gt; yZH23w
+Small hashes:
+- are unique (well, as unique as crc32, at last)
+- are always 6 characters long.</span><pre>smallHash()</pre></a></li>
+<li class="nav-header private">» Private</li>
+<li class="method private "><a href="#_stripslashesDeep" title="_stripslashesDeep :: Strip slashes when magic quotes is activated"><span class="description">Strip slashes when magic quotes is activated</span><pre>_stripslashesDeep()</pre></a></li>
+</ul>
+</div>
+<div class="span8">
+<a name="%5CMyTool" id="\MyTool"></a><ul class="breadcrumb">
+<li>
+<a href="../index.html"><i class="icon-custom icon-class"></i></a><span class="divider">\</span>
+</li>
+<li><a href="../namespaces/.html"></a></li>
+<li class="active">
+<span class="divider">\</span><a href="../classes/MyTool.html">MyTool</a>
+</li>
+</ul>
+<div href="../classes/MyTool.html" class="element class">
+<p class="short_description">Useful php snippets</p>
+<div class="details">
+<p class="long_description"><p>PHP version 5</p>
+
+<p>Features:
+- initPHP, isUrl, isEmail, formatBBCode, formatText, getUrl, rrmdir,
+  humanBytes, returnBytes, getMaxFileSize, smallHash
+TODO:</p></p>
+<h3>
+<i class="icon-custom icon-method"></i> Methods</h3>
+<a name="formatBBCode" id="formatBBCode"></a><div class="element clickable method public formatBBCode" data-toggle="collapse" data-target=".formatBBCode .collapse">
+<h2>Format given text using BBCode with corresponding tags</h2>
+<pre>formatBBCode(string $text) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$text</h4>
+<code>string</code><p>BBCodeText to format</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>Converted text</div>
+</div></div>
+</div>
+<a name="formatText" id="formatText"></a><div class="element clickable method public formatText" data-toggle="collapse" data-target=".formatText .collapse">
+<h2>Format text to emphasize html, php, URL and wikipedia URL</h2>
+<pre>formatText(string $text) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$text</h4>
+<code>string</code><p>Original text to format</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>Converted text</div>
+</div></div>
+</div>
+<a name="getMaxFileSize" id="getMaxFileSize"></a><div class="element clickable method public getMaxFileSize" data-toggle="collapse" data-target=".getMaxFileSize .collapse">
+<h2>Try to determine max file size for uploads (POST).</h2>
+<pre>getMaxFileSize() : integer</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"><p>http://sebsauvage.net/wiki/doku.php?id=php:shaarli</p></p>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>integer</code>Number of bytes</div>
+</div></div>
+</div>
+<a name="getUrl" id="getUrl"></a><div class="element clickable method public getUrl" data-toggle="collapse" data-target=".getUrl .collapse">
+<h2>Return URL website</h2>
+<pre>getUrl() : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>URL website</div>
+</div></div>
+</div>
+<a name="humanBytes" id="humanBytes"></a><div class="element clickable method public humanBytes" data-toggle="collapse" data-target=".humanBytes .collapse">
+<h2>Convert a number of bytes into human readable number of bytes
+http://www.php.net/manual/fr/function.disk-free-space.php#103382</h2>
+<pre>humanBytes(integer $bytes) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$bytes</h4>
+<code>integer</code><p>Number of bytes to convert into human readable</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>String of human readable number of bytes</div>
+</div></div>
+</div>
+<a name="initPhp" id="initPhp"></a><div class="element clickable method public initPhp" data-toggle="collapse" data-target=".initPhp .collapse">
+<h2>Test if php version is greater than 5, set error reporting, deal
+with magic quotes for POST, GET and COOKIE and initialize bufferization</h2>
+<pre>initPhp() </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description"><p class="long_description"></p></div></div>
+</div>
+<a name="isEmail" id="isEmail"></a><div class="element clickable method public isEmail" data-toggle="collapse" data-target=".isEmail .collapse">
+<h2>Test if parameter is an email
+use http://www.php.net/manual/en/function.filter-var.php instead ?</h2>
+<pre>isEmail(string $email) : true | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$email</h4>
+<code>string</code><p>Email to check</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code><code>false</code>True if paramater is an email, false otherwise</div>
+</div></div>
+</div>
+<a name="isUrl" id="isUrl"></a><div class="element clickable method public isUrl" data-toggle="collapse" data-target=".isUrl .collapse">
+<h2>Test if parameter is an URL
+use http://www.php.net/manual/en/function.filter-var.php instead ?</h2>
+<pre>isUrl(string $url) : true | false</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$url</h4>
+<code>string</code><p>Url to check</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>true</code><code>false</code>True if paramater is a URL, false otherwise</div>
+</div></div>
+</div>
+<a name="returnBytes" id="returnBytes"></a><div class="element clickable method public returnBytes" data-toggle="collapse" data-target=".returnBytes .collapse">
+<h2>Convert post_max_size/upload_max_filesize (eg.'16M') parameters to bytes.</h2>
+<pre>returnBytes(string $val) : \interg</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$val</h4>
+<code>string</code><p>Value to convert</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>\interg</code>Number of bytes corresponding to the given value</div>
+</div></div>
+</div>
+<a name="rrmdir" id="rrmdir"></a><div class="element clickable method public rrmdir" data-toggle="collapse" data-target=".rrmdir .collapse">
+<h2>Remove not empty directory using unlink</h2>
+<pre>rrmdir(\$string $dir) </pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$dir</h4>
+<code>\$string</code><p>Directory to remove</p></div>
+</div></div>
+</div>
+<a name="smallHash" id="smallHash"></a><div class="element clickable method public smallHash" data-toggle="collapse" data-target=".smallHash .collapse">
+<h2>Returns the small hash of a string
+http://sebsauvage.net/wiki/doku.php?id=php:shaarli
+eg. smallHash('20111006_131924') --&gt; yZH23w
+Small hashes:
+- are unique (well, as unique as crc32, at last)
+- are always 6 characters long.</h2>
+<pre>smallHash(string $text) : string</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"><ul>
+<li>only use the following characters: a-z A-Z 0-9 - _ @</li>
+<li>are NOT cryptographically secure (they CAN be forged)</li>
+</ul></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$text</h4>
+<code>string</code><p>Text to convert into small hash</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code>Small hash corresponding to the given text</div>
+</div></div>
+</div>
+<a name="_stripslashesDeep" id="_stripslashesDeep"></a><div class="element clickable method private _stripslashesDeep" data-toggle="collapse" data-target="._stripslashesDeep .collapse">
+<h2>Strip slashes when magic quotes is activated</h2>
+<pre>_stripslashesDeep(string | array $value) : string | array</pre>
+<div class="labels"></div>
+<div class="row collapse"><div class="detail-description">
+<p class="long_description"></p>
+<h3>Parameters</h3>
+<div class="subelement argument">
+<h4>$value</h4>
+<code>stringarray</code><p>Value to remove slashes</p></div>
+<h3>Returns</h3>
+<div class="subelement response">
+<code>string</code><code>array</code>Value with no slashes</div>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="row"><footer class="span12">
+            Template is built using <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap 2</a> and icons provided by <a href="http://glyphicons.com/">Glyphicons</a>.<br>
+            Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor 2.0.0a6</a> and<br>
+            generated on 2012-06-30T11:36:19+02:00.<br></footer></div>
+</div>
+</body>
+</html>
