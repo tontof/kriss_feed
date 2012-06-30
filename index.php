@@ -11,8 +11,6 @@ define('STYLE_FILE', 'style.css');
 
 define('FEED_VERSION', 2);
 
-define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
-define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
 
 define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
 
@@ -20,104 +18,41 @@ define('ERROR_NO_XML', 1);
 define('ERROR_ITEMS_MISSED', 2);
 define('ERROR_LAST_UPDATE', 3);
 
-/**
- * autoload class
- *
- * @param string $className The name of the class to load
- */
 
-/**
- * Feed Conf is a class to configurate Feed reader.
- */
 class Feed_Conf
 {
-    /**
-     * Configuration file
-     */
     private $_file = '';
 
-    /**
-     * Login
-     */
     public $login = '';
 
-    /**
-     * Hash of the password
-     */
     public $hash = '';
 
-    /**
-     * Salt
-     */
     public $salt = '';
 
-    /**
-     * Feed title
-     */
     public $title = "Kriss feed";
 
-    /**
-     * Redirector (e.g. http://anonym.to/? will mask the HTTP_REFERER)
-     * (consider only links in the article, not images and media)
-     */
     public $redirector = '';
 
-    /**
-     * Shaarli link
-     */
     public $shaarli = '';
 
-    /**
-     * Number of entries to display per page
-     */
     public $byPage = 10;
 
-    /**
-     * Max number of articles by channel
-     */
     public $maxItems = 100;
 
-    /**
-     * Max number of minutes between each update of channel
-     */
     public $maxUpdate = 60;
 
-    /**
-     * Reversed order
-     */
     public $reverseOrder = true;
 
-    /**
-     * New items (or all items)
-     */
     public $newItems = true;
 
-    /**
-     * Expanded view (or list view)
-     */
     public $expandedView = true;
 
-    /**
-     * Default view (show, reader)
-     */
     public $defaultView = 'show';
 
-    /**
-     * Public/private feed reader
-     */
     public $public = false;
 
-    /**
-     * Kriss_feed version
-     */
     public $version;
 
-    /**
-     * Constructor
-     *
-     * @param string $configFile Configuration file
-     * @param string $version    Kriss feed version
-     */
     public function __construct($configFile, $version)
     {
         $this->_file = $configFile;
@@ -131,9 +66,6 @@ class Feed_Conf
         }
     }
 
-    /**
-     * Installation of the configuration file
-     */
     private function _install()
     {
         if (!empty($_POST['setlogin']) && !empty($_POST['setpassword'])) {
@@ -190,11 +122,6 @@ class Feed_Conf
         exit();
     }
 
-    /**
-     * Hydate to set all configuration variables
-     *
-     * @param array $data List of variable to hydrate
-     */
     public function hydrate(array $data)
     {
         foreach ($data as $key => $value) {
@@ -208,131 +135,66 @@ class Feed_Conf
         }
     }
 
-    /**
-     * Login setter
-     *
-     * @param string $login New login
-     */
     public function setLogin($login)
     {
         $this->login = $login;
     }
 
-    /**
-     * Public setter
-     *
-     * @param string $public New public
-     */
     public function setPublic($public)
     {
         $this->public = $public;
     }
 
-    /**
-     * Hash setter
-     *
-     * @param string $pass New hash
-     */
     public function setHash($pass)
     {
         $this->hash = sha1($pass.$this->login.$this->salt);
     }
 
-    /**
-     * Salt setter
-     *
-     * @param string $salt New salt
-     */
     public function setSalt($salt)
     {
         $this->salt = $salt;
     }
 
-    /**
-     * Title setter
-     *
-     * @param string $title New title
-     */
     public function setTitle($title)
     {
         $this->title = $title;
     }
 
-    /**
-     * Redirector setter
-     *
-     * @param string $redirector New redirector
-     */
     public function setRedirector($redirector)
     {
         $this->redirector = $redirector;
     }
 
-    /**
-     * ByPage setter
-     *
-     * @param string $byPage New byPage
-     */
     public function setByPage($byPage)
     {
         $this->byPage = $byPage;
     }
 
-    /**
-     * Shaarli setter
-     *
-     * @param string $url New shaarli
-     */
     public function setShaarli($url)
     {
         $this->shaarli = $url;
     }
 
-    /**
-     * MaxUpdate setter
-     *
-     * @param string $max New maxUpdate
-     */
     public function setMaxUpdate($max)
     {
         $this->maxUpdate = $max;
     }
 
-    /**
-     * MaxItems setter
-     *
-     * @param string $max New maxItems
-     */
     public function setMaxItems($max)
     {
         $this->maxItems = $max;
     }
 
-    /**
-     * NewItems setter
-     *
-     * @param true|false $new New newItems
-     */
     public function setNewItems($new)
     {
         $this->newItems = $new;
     }
 
-    /**
-     * ExpandedView setter
-     *
-     * @param true|false $expandedView New expandedView
-     */
     public function setExpandedView($expandedView)
     {
         $this->expandedView = $expandedView;
     }
 
-    /**
-     * DefaultView setter
-     *
-     * @param string $defaultView New defaultView
-     */
     public function setDefaultView($defaultView)
     {
         if ($defaultView == 'show') {
@@ -342,21 +204,11 @@ class Feed_Conf
         }
     }
 
-    /**
-     * ReverseOrder setter
-     *
-     * @param string $reverseOrder New reverseOrder
-     */
     public function setReverseOrder($reverseOrder)
     {
         $this->reverseOrder = $reverseOrder;
     }
 
-    /**
-     * Write configuration file
-     *
-     * @return true|false True if file successfully saved, false otherwise
-     */
     public function write()
     {
         $data = array('login', 'hash', 'salt', 'title', 'redirector', 'public',
@@ -380,14 +232,8 @@ class Feed_Conf
     }
 }
 
-/**
- * Feed Page corresponds to a view class for html page generation.
- */
 class Feed_Page
 {
-    /**
-     * Default stylesheet
-     */
     private $_css = <<<CSS
 <style>
 .admin, .error {
@@ -626,11 +472,6 @@ img, video, iframe, object{
 </style>
 CSS;
 
-    /**
-     * Constructor
-     *
-     * @param string $cssFile String of the css file to check
-     */
     public function __construct($cssFile)
     {
         // We allow the user to have its own stylesheet
@@ -639,15 +480,6 @@ CSS;
         }
     }
 
-    /**
-     * Paragraph of the menu
-     *
-     * @param string    $type Type of the menu
-     * @param Feed_Conf $kfc  Kriss Feed Conf object
-     * @param string    $hash Current hash
-     *
-     * @return string HTML menu
-     */
     public function menu($type, $kfc, $hash = '')
     {
         $menu = '
@@ -754,11 +586,6 @@ CSS;
         return $menu;
     }
 
-    /**
-     * Status information (update, footer)
-     *
-     * @return string HTML corresponding to default status
-     */
     public function status()
     {
         return '<a href="http://github.com/tontof/kriss_feed">KrISS feed'
@@ -767,14 +594,6 @@ CSS;
             . '</span>. By <a href="http://tontof.net">Tontof</a>';
     }
 
-    /**
-     * Html page template
-     *
-     * @param string $title Title of the page
-     * @param string $body  Body of the page
-     *
-     * @return string HTML page
-     */
     public function htmlPage($title, $body)
     {
         return '<!DOCTYPE html>
@@ -793,13 +612,6 @@ CSS;
 </html>';
     }
 
-    /**
-     * Config page
-     *
-     * @param Feed_Conf $kfc Kriss Feed Conf object
-     *
-     * @return string HTML config page
-     */
     public function configPage($kfc)
     {
         $ref = '';
@@ -890,14 +702,6 @@ CSS;
     </div>';
     }
 
-    /**
-     * Edit folder page
-     *
-     * @param Feed   $kf     Kriss Feed object
-     * @param string $folder Folder name to edit
-     *
-     * @return string HTML edit folder page
-     */
     public function editFolderPage($kf, $folder)
     {
         $ref = '';
@@ -930,14 +734,6 @@ CSS;
     </div>';
     }
 
-    /**
-     * Edit feed page
-     *
-     * @param Feed  $kf   Kriss Feed object
-     * @param array $feed Feed to edit
-     *
-     * @return string HTML edit feed page
-     */
     public function editFeedPage($kf, $feed)
     {
         $ref = '';
@@ -1015,13 +811,6 @@ CSS;
     }
 
 
-    /**
-     * List of the feeds into folders
-     *
-     * @param Feed $kf Kriss Feed object
-     *
-     * @return string HTML ul listing feeds
-     */
     public function listFeeds($kf)
     {
         $str = '';
@@ -1108,15 +897,6 @@ CSS;
     }
 
 
-    /**
-     * Reader page
-     *
-     * @param Feed    $kf   Kriss Feed object
-     * @param string  $hash Hash representing item/feed/folder
-     * @param integer $page Page to show
-     *
-     * @return string HTML reader page
-     */
     public function readerPage($kf, $hash = '', $page = 1)
     {
         $list = $kf->getItems($hash);
@@ -1268,13 +1048,6 @@ $ajaxScript
 HTML;
     }
 
-    /**
-     * Show page
-     *
-     * @param Feed $kf Kriss Feed object
-     *
-     * @return string HTML show page
-     */
     public function showPage($kf)
     {
         $menu = $this->menu('show', $kf->kfc);
@@ -1301,13 +1074,6 @@ $ajaxscript
 HTML;
     }
 
-    /**
-     * Javascript for ajax request
-     *
-     * @param Feed $kf Kriss Feed object
-     *
-     * @return string Javascript
-     */
     public function ajaxScript($kf)
     {
         $redir = $kf->kfc->redirector;
@@ -1331,15 +1097,6 @@ var redirector = '$redir',
     updateTimer = null,
     status = '',
     shaarli = '$shaarli';
-/*
-   Provide the XMLHttpRequest constructor for Internet Explorer 5.x-6.x:
-   Other browsers (including Internet Explorer 7.x-9.x) do not redefine
-   XMLHttpRequest if it already exists.
-
-   This example is based on findings at:
-   http://blogs.msdn.com/xmlteam/archive/
-   2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
-*/
 if (typeof XMLHttpRequest == "undefined") {
   XMLHttpRequest = function () {
     try { return new ActiveXObject("Msxml2.XMLHTTP.6.0"); }
@@ -1965,11 +1722,6 @@ if (document.getElementById && document.createTextNode) {
 JS;
     }
 
-    /**
-     * Get the import page
-     *
-     * @return string HTML import page
-     */
     public function importPage()
     {
         $ref = '';
@@ -1998,44 +1750,20 @@ JS;
     }
 }
 
-/**
- * Feed class corresponds to a model class for feed manipulation.
- * Data corresponds to an array of feeds where each feeds contains
- * feed articles.
- */
 class Feed
 {
-    /**
-     * The file containing the feed entries
-     */
     public $file = '';
 
-    /**
-     * Feed_Conf object
-     */
     public $kfc;
 
-    /**
-     * Array with data
-     */
     private $_data = array();
 
-    /**
-     * constructor
-     *
-     * @param string    $dataFile File to store feed data
-     * @param Feed_Conf $kfc      Object corresponding to feed reader config
-     */
     public function __construct($dataFile, $kfc)
     {
         $this->kfc = $kfc;
         $this->file = $dataFile;
     }
 
-    /**
-     * Import feed from opml file (as exported by google reader,
-     * tiny tiny rss, rss lounge... using 
-     */
     public function importOpml()
     {
         $filename  = $_FILES['filetoupload']['name'];
@@ -2125,9 +1853,6 @@ class Feed
         }
     }
 
-    /**
-     * Export feeds to an opml file
-     */
     public function exportOpml()
     {
         $withoutFolder = array();
@@ -2250,14 +1975,6 @@ class Feed
         exit();
     }
 
-    /** 
-     * Convert opml xml node into array for import
-     * http://www.php.net/manual/en/class.domdocument.php#101014
-     *
-     * @param DOMDocument $node Node to convert into array
-     *
-     * @return array            Array corresponding to the given node
-     */
     public function getArrayFromXml($node)
     {
         $array = false;
@@ -2285,14 +2002,6 @@ class Feed
         return $array;
     }
 
-    /**
-     * Convert opml array into more convenient array with xmlUrl as key
-     *
-     * @param array $array       Array obtained from Opml file
-     * @param array $listFolders List of current folders
-     *
-     * @return array             New formated array
-     */
     public function convertOpmlArray($array, $listFolders = array())
     {
         $newArray = array();
@@ -2345,12 +2054,6 @@ class Feed
         return $newArray;
     }
 
-    /**
-     * Rename folder into items (delete folder is newFolder is empty)
-     *
-     * @param string $oldFolder Old folder name
-     * @param string $newFolder New folder name
-     */
     public function renameFolder($oldFolder, $newFolder)
     {
         $k = 0;
@@ -2366,11 +2069,6 @@ class Feed
         $this->writeData();
     }
 
-    /**
-     * Return list of folders used to categorize feeds
-     *
-     * @return array List of folders name
-     */
     public function getFolders()
     {
         $folders = array();
@@ -2385,13 +2083,6 @@ class Feed
         return $folders;
     }
 
-    /**
-     * Return folder name from a given folder hash
-     *
-     * @param string $hash Hash corresponding to a folder
-     * 
-     * @return string|false Folder name if exists, false otherwise
-     */
     public function getFolder($hash)
     {
         $folders = $this->getFolders();
@@ -2402,23 +2093,11 @@ class Feed
         return false;
     }
 
-    /**
-     * Return list of feeds
-     *
-     * @return array List of feeds stored into data
-     */
     public function getFeeds()
     {
         return $this->_data;
     }
 
-    /**
-     * Return a particular feed from a given hash feed
-     *
-     * @param string $hash Hash corresponding to a feed
-     *
-     * @return array|false Feed array if exists, false otherwise
-     */
     public function getFeed($hash)
     {
         if (isset($this->_data[$hash])) {
@@ -2428,11 +2107,6 @@ class Feed
         return false;
     }
 
-    /**
-     * Remove feed from a given hash feed
-     *
-     * @param string $feedHash Hash corresponding to a feed
-     */
     public function removeFeed($feedHash)
     {
         if (isset($this->_data[$feedHash])) {
@@ -2441,15 +2115,6 @@ class Feed
         }
     }
 
-    /**
-     * Edit a feed from given information
-     *
-     * @param string $feedHash    Hash corresponding to a feed
-     * @param string $title       New title of the feed
-     * @param string $description New description of the feed
-     * @param array  $folders     List of associated folders to the feed
-     * @param string $timeUpdate  Update config ('auto', 'max' or number of min)
-     */
     public function editFeed(
         $feedHash,
         $title,
@@ -2490,13 +2155,6 @@ class Feed
         }
     }
 
-    /**
-     * Format xml channel into array
-     *
-     * @param DOMDocument $channel DOMDocument of the channel feed
-     *
-     * @return array Array with extracted information channel
-     */
     public function formatChannel($channel)
     {
         $newChannel = array();
@@ -2529,13 +2187,6 @@ class Feed
         return $newChannel;
     }
 
-    /**
-     * return channel from xmlUrl
-     *
-     * @param DOMDocument $xml DOMDocument of the feed
-     *
-     * @return array Array with extracted information channel
-     */
     public function getChannelFromXml($xml)
     {
         $channel = array();
@@ -2558,14 +2209,6 @@ class Feed
         return $this->formatChannel($channel);
     }
 
-    /**
-     * format items into array
-     *
-     * @param DOMNodeList $items   DOMNodeList of items in a feed
-     * @param array       $formats List of information to extract
-     *
-     * @return array List of items with information
-     */
     public function formatItems($items, $formats)
     {
         $newItems = array();
@@ -2619,13 +2262,6 @@ class Feed
         return $newItems;
     }
 
-    /**
-     * Return array of items from xml
-     *
-     * @param DOMDocument $xml DOMDocument where to extract items
-     *
-     * @return array Array of items extracted from the DOMDocument
-     */
     public function getItemsFromXml ($xml)
     {
         $items = array();
@@ -2679,15 +2315,6 @@ class Feed
         return $this->formatItems($items, $formats);
     }
 
-    /**
-     * Search a namespaceURI into tags
-     * (used when namespaceURI are not defined in the root tag)
-     *
-     * @param DOMNode $feed DOMNode to look into
-     * @param string  $name String of the namespace to look for
-     *
-     * @return string The namespaceURI or empty string if not found
-     */
     public function getAttributeNS ($feed, $name)
     {
         $res = '';
@@ -2709,14 +2336,6 @@ class Feed
         return $res;
     }
 
-    /**
-     * Add a namespaceURI when format corresponds to a rdf tag.
-     *
-     * @param array   $formats Array of formats
-     * @param DOMNode $feed    DOMNode corresponding to the channel root
-     *
-     * @return array Array of new formated format with namespaceURI
-     */
     public function formatRDF($formats, $feed)
     {
         foreach ($formats as $format => $list) {
@@ -2737,13 +2356,6 @@ class Feed
         return $formats;
     }
 
-    /**
-     * Load an xml file through HTTP
-     *
-     * @param string $xmlUrl String corresponding to the XML URL
-     *
-     * @return DOMDocument DOMDocument corresponding to the XML URL
-     */
     public function loadXml($xmlUrl)
     {
         // set user agent
@@ -2761,13 +2373,6 @@ class Feed
         return @DOMDocument::load($xmlUrl);
     }
 
-    /**
-     * add channel
-     * 
-     * @param string $xmlUrl String corresponding to the XML URL
-     *
-     * @return true|false True if add is success, false otherwise
-     */
     public function addChannel($xmlUrl)
     {
         $feedHash = MyTool::smallHash($xmlUrl);
@@ -2807,11 +2412,6 @@ class Feed
         return false;
     }
 
-    /**
-     * List of feeds with update information and title
-     *
-     * @return array List of feeds for ajaxlist
-     */
     public function getFeedsUpdate()
     {
         $list = array();
@@ -2829,14 +2429,6 @@ class Feed
         return $list;
     }
 
-    /**
-     * Calculate automatic update (need improvements)
-     * 
-     * @param array      $feed Array of a feed information
-     * @param true|false $auto Used for old feed with no new items
-     *
-     * @return integer Number of automatic minute for update
-     */
     public function getAutoTimeUpdate($feed, $auto = true)
     {
         // auto with the last 7 items
@@ -2862,13 +2454,6 @@ class Feed
         }
     }
 
-    /**
-     * Calculate updates depending on timeUpdate feed information
-     *
-     * @param array $feed Array of a feed information
-     *
-     * @return integer Number of minutes between each update
-     */
     public function getTimeUpdate($feed)
     {
         $max = $feed['timeUpdate'];
@@ -2889,13 +2474,6 @@ class Feed
         return (int) $max;
     }
 
-    /**
-     * Check if feed needs an update
-     *
-     * @param array $feed Array of a feed information
-     *
-     * @return true|false True if feed needs update, false otherwise
-     */
     public function needUpdate($feed)
     {
         $diff = (int) (time()-$feed['lastUpdate']);
@@ -2906,13 +2484,6 @@ class Feed
         return false;
     }
 
-    /**
-     * Get human readable error
-     *
-     * @param integer $error Number of error occured during a feed update
-     *
-     * @return string String of the corresponding error
-     */
     public function getError($error)
     {
         switch ($error) {
@@ -2931,13 +2502,6 @@ class Feed
         }
     }
 
-    /**
-     * Update items from a channel channel
-     *
-     * @param string $feedHash Hash corresponding to a feed
-     *
-     * @return true|false True is update success, false otherwise
-     */
     public function updateChannelItems($feedHash)
     {
         if (isset($this->_data[$feedHash])) {
@@ -3034,13 +2598,6 @@ class Feed
         return false;
     }
 
-    /**
-     * return feeds hash in folder
-     *
-     * @param string $folderHash Hash corresponding to a folder
-     *
-     * @return array List of feed hash associated to the given folder
-     */
     public function getFeedsHashFromFolderHash($folderHash)
     {
         $list = array();
@@ -3057,14 +2614,6 @@ class Feed
         return array_unique($list);
     }
 
-    /**
-     * Get number of unread items depending on hash
-     *
-     * @param string $hash Hash may represent an item, a feed, a folder
-     *                     or all is ''
-     *
-     * @return integer Number of unread items depending on hash
-     */
     public function getUnread($hash = '')
     {
         $list = $this->getItems($hash);
@@ -3078,16 +2627,6 @@ class Feed
         return $unread;
     }
 
-    /**
-     * Mark items read/unread depending on the hash : item, feed, folder or ''
-     * force is used for not overwriting keep unread when mark as read.
-     *
-     * @param string  $hash  Hash may represent an item, a feed, a folder
-     * @param integer $read  KEEPUNREAD, UNREAD, READ
-     * @param boolean $force Force read setting
-     *
-     * @return void
-     */
     public function mark($hash, $read, $force = false)
     {
         $list = array_keys($this->getItems($hash, false));
@@ -3114,16 +2653,6 @@ class Feed
         $this->writeData();
     }
 
-    /**
-     * Get type of a hash : item, feed, folder or ''
-     *
-     * @param string $hash Hash may represent an item, a feed, a folder
-     *
-     * @return string String corresponding to '' is hash is empty, 'feed'
-     *                if hash corresponds to a feed hash, 'folder' if hash
-     *                corresponds to a folder hash or 'item' otherwise
-     *                (hash may not correspond to an item hash)
-     */
     public function hashType($hash)
     {
         $type = '';
@@ -3148,16 +2677,6 @@ class Feed
         return $type;
     }
 
-    /**
-     * Get array of items depending on hash and filter
-     *
-     * @param string $hash   Hash may represent an item, a feed, a folder
-     *                       if empty or 'all', return all items
-     * @param bool   $filter In order to specify a filter depending on newItems
-     *                       in config, if 'new' return all new items.
-     *
-     * @return array of filtered items depending on hash
-     */
     public function getItems($hash = '', $filter = true)
     {
         $list = array();
@@ -3211,14 +2730,6 @@ class Feed
         return $list;
     }
 
-    /**
-     * Compare two items depending on time (reverse order : newest first)
-     *
-     * @param array $a Array reprensenting the first item to compare
-     * @param array $b Array reprensenting the second item to compare
-     *
-     * @return -1|0|1
-     */
     public static function compItemsR($a, $b)
     {
         if ($a['time'] == $b['time']) {
@@ -3230,14 +2741,6 @@ class Feed
         }
     }
 
-    /**
-     * Compare two items depending on time (oldest first)
-     *
-     * @param array $a Array reprensenting the first item to compare
-     * @param array $b Array reprensenting the second item to compare
-     *
-     * @return -1|0|1
-     */
     public static function compItems($a, $b)
     {
         if ($a['time'] == $b['time']) {
@@ -3249,11 +2752,6 @@ class Feed
         }
     }
 
-    /**
-     * Load data file or create one if not exists
-     *
-     * @return void
-     */
     public function loadData()
     {
         if (file_exists($this->file)) {
@@ -3286,11 +2784,6 @@ class Feed
         }
     }
 
-    /**
-     * Write data file
-     *
-     * @return void
-     */
     public function writeData()
     {
         $write = @file_put_contents(
@@ -3306,23 +2799,8 @@ class Feed
     }
 }
 
-/**
- * Useful php snippets
- *
- * PHP version 5
- *
- * Features:
- * - initPHP, isUrl, isEmail, formatBBCode, formatText, getUrl, rrmdir,
- *   humanBytes, returnBytes, getMaxFileSize, smallHash
- * TODO:
- *
- */
 class MyTool
 {
-    /**
-     * Test if php version is greater than 5, set error reporting, deal
-     * with magic quotes for POST, GET and COOKIE and initialize bufferization
-     */
     public static function initPhp()
     {
         if (phpversion() < 5) {
@@ -3341,13 +2819,6 @@ class MyTool
         register_shutdown_function('ob_end_flush');
     }
 
-    /**
-     * Strip slashes when magic quotes is activated
-     *
-     * @param string|array $value Value to remove slashes
-     *
-     * @return string|array       Value with no slashes
-     */
     private function _stripslashesDeep($value)
     {
         return is_array($value)
@@ -3355,14 +2826,6 @@ class MyTool
             : stripslashes($value);
     }
 
-    /**
-     * Test if parameter is an URL
-     * use http://www.php.net/manual/en/function.filter-var.php instead ?
-     * 
-     * @param string $url Url to check
-     *
-     * @return true|false True if paramater is a URL, false otherwise
-     */
     public static function isUrl($url)
     {
         $pattern= "/^(https?:\/\/)(w{0}|w{3})\.?[A-Z0-9._-]+\.[A-Z]{2, 3}\$/i";
@@ -3370,14 +2833,6 @@ class MyTool
         return preg_match($pattern, $url);
     }
 
-    /**
-     * Test if parameter is an email
-     * use http://www.php.net/manual/en/function.filter-var.php instead ?
-     * 
-     * @param string $email Email to check
-     *
-     * @return true|false   True if paramater is an email, false otherwise
-     */
     public static function isEmail($email)
     {
         $pattern = "/^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2, 4}$/i";
@@ -3385,53 +2840,10 @@ class MyTool
         return (preg_match($pattern, $email));
     }
 
-    /**
-     * Format given text using BBCode with corresponding tags
-     *
-     * @param string $text BBCodeText to format
-     *
-     * @return string      Converted text
-     */
     public static function formatBBCode($text)
     {
         $replace = array(
             '/\[m\](.+?)\[\/m\]/is'
-            => '/* moderate */',
-            '/\[b\](.+?)\[\/b\]/is'
-            => '<strong>$1</strong>',
-            '/\[i\](.+?)\[\/i\]/is'
-            => '<em>$1</em>',
-            '/\[s\](.+?)\[\/s\]/is'
-            => '<del>$1</del>',
-            '/\[u\](.+?)\[\/u\]/is'
-            => '<span style="text-decoration: underline;">$1</span>',
-            '/\[url\](.+?)\[\/url]/is'
-            => '<a href="$1">$1</a>',
-            '/\[url=(\w+:\/\/[^\]]+)\](.+?)\[\/url]/is'
-            => '<a href="$1">$2</a>',
-            '/\[quote\](.+?)\[\/quote\]/is'
-            => '<blockquote>$1</blockquote>',
-            '/\[code\](.+?)\[\/code\]/is'
-            => '<code>$1</code>',
-            '/\[([^[]+)\|([^[]+)\]/is'
-            => '<a href="$2">$1</a>'
-            );
-        $text = preg_replace(
-            array_keys($replace),
-            array_values($replace),
-            $text
-        );
-
-        return $text;
-    }
-
-    /**
-     * Format text to emphasize html, php, URL and wikipedia URL
-     *
-     * @param string $text Original text to format
-     *
-     * @return string      Converted text
-     */
     public static function formatText($text)
     {
         $text = preg_replace_callback(
@@ -3475,11 +2887,6 @@ class MyTool
         return $text;
     }
 
-    /**
-     * Return URL website
-     *
-     * @return string URL website
-     */
     public static function getUrl()
     {
         $url = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
@@ -3488,11 +2895,6 @@ class MyTool
         return $url;
     }
 
-    /**
-     * Remove not empty directory using unlink
-     *
-     * @param $string $dir Directory to remove
-     */
     public static function rrmdir($dir)
     {
         if (is_dir($dir) && ($d = @opendir($dir))) {
@@ -3506,14 +2908,6 @@ class MyTool
         }
     }
 
-    /**
-     * Convert a number of bytes into human readable number of bytes
-     * http://www.php.net/manual/fr/function.disk-free-space.php#103382
-     * 
-     * @param integer $bytes Number of bytes to convert into human readable
-     *
-     * @return string        String of human readable number of bytes
-     */
     public static function humanBytes($bytes)
     {
         $siPrefix = array( 'bytes', 'KB', 'MB', 'GB', 'TB', 'EB', 'ZB', 'YB' );
@@ -3524,13 +2918,6 @@ class MyTool
         return $val . ' ' . $siPrefix[$class];
     }
 
-    /**
-     * Convert post_max_size/upload_max_filesize (eg.'16M') parameters to bytes.
-     *
-     * @param string $val Value to convert
-     *
-     * @return interg     Number of bytes corresponding to the given value
-     */
     public static function returnBytes($val)
     {
         $val  = trim($val);
@@ -3545,12 +2932,6 @@ class MyTool
         return $val;
     }
 
-    /**
-     * Try to determine max file size for uploads (POST).
-     * http://sebsauvage.net/wiki/doku.php?id=php:shaarli
-     *
-     * @return integer Number of bytes
-    */
     public static function getMaxFileSize()
     {
         $sizePostMax   = MyTool::returnBytes(ini_get('post_max_size'));
@@ -3560,20 +2941,6 @@ class MyTool
         return min($sizePostMax, $sizeUploadMax);
     }
 
-    /**
-     * Returns the small hash of a string
-     * http://sebsauvage.net/wiki/doku.php?id=php:shaarli
-     * eg. smallHash('20111006_131924') --> yZH23w
-     * Small hashes:
-     * - are unique (well, as unique as crc32, at last)
-     * - are always 6 characters long.
-     * - only use the following characters: a-z A-Z 0-9 - _ @
-     * - are NOT cryptographically secure (they CAN be forged)
-     *
-     * @param string $text Text to convert into small hash
-     *
-     * @return string      Small hash corresponding to the given text
-     */
     public static function smallHash($text)
     {
         $t = rtrim(base64_encode(hash('crc32', $text, true)), '=');
@@ -3587,51 +2954,12 @@ class MyTool
 
 }
 
-/**
- * Session management
- *
- * PHP version 5
- *
- * http://www.developpez.net/forums/d51943/php/langage/sessions/
- * http://sebsauvage.net/wiki/doku.php?id=php:session
- * http://sebsauvage.net/wiki/doku.php?id=php:shaarli
- *
- * Features:
- * - Everything is stored on server-side (we do not trust client-side data,
- *   such as cookie expiration)
- * - IP addresses + user agent are checked on each access to prevent session
- *   cookie hijacking (such as Firesheep)
- * - Session expires on user inactivity (Session expiration date is
- *   automatically updated everytime the user accesses a page.)
- * - A unique secret key is generated on server-side for this session
- *   (and never sent over the wire) which can be used
- *   to sign forms (HMAC) (See $_SESSION['uid'] )
- * - Token management to prevent XSRF attacks.
- *
- * TODO:
- * - log login fail
- * - prevent brute force (ban IP)
- *
- * HOWTOUSE:
- * - Just call Session::init(); to initialize session and
- *   check if connected with Session::isLogged()
- */
 class Session
 {
-    /**
-     * If the user does not access any page within this time,
-     * his/her session is considered expired (in seconds).
-     */
     public static $inactivityTimeout = 3600;
 
-    /**
-     * Static session
-     */
     private static $_instance;
 
-    /**
-     * constructor
-     */
     private function __construct()
     {
         // Use cookies to store session.
@@ -3645,9 +2973,6 @@ class Session
         }
     }
 
-    /**
-     * initialize private instance of session class
-     */
     public static function init()
     {
         if (!isset(self::$_instance)) {
@@ -3655,12 +2980,6 @@ class Session
         }
     }
 
-    /**
-     * Returns the IP address, user agent and language of the client
-     * (Used to prevent session cookie hijacking.)
-     *
-     * @return string Hash of all information
-     */
     private static function _allInfo()
     {
         $infos = $_SERVER["REMOTE_ADDR"];
@@ -3676,18 +2995,6 @@ class Session
         return sha1($infos);
     }
 
-    /**
-     * Check that user/password is correct and then init some SESSION variables.
-     *
-     * @param string $login        Login reference
-     * @param string $password     Password reference
-     * @param string $loginTest    Login to compare with login reference
-     * @param string $passwordTest Password to compare with password reference
-     * @param array  $pValues      Array of variables to store in SESSION
-     * 
-     * @return true|false          True if login and password are correct, false
-     *                             otherwise
-     */
     public static function login (
         $login,
         $password,
@@ -3714,19 +3021,11 @@ class Session
         return false;
     }
 
-    /**
-     * Unset SESSION variable to force logout
-     */
     public static function logout()
     {
         unset($_SESSION['uid'], $_SESSION['info'], $_SESSION['expires_on']);
     }
 
-    /**
-     * Make sure user is logged in.
-     *
-     * @return true|false True if user is logged in, false otherwise
-     */
     public static function isLogged()
     {
         if (!isset ($_SESSION['uid'])
@@ -3742,11 +3041,6 @@ class Session
         return true;
     }
 
-    /**
-     * Create a token, store it in SESSION and return it
-     *
-     * @return string Token created
-     */
     public static function getToken()
     {
         if (!isset($_SESSION['tokens'])) {
@@ -3759,13 +3053,6 @@ class Session
         return $rnd;
     }
 
-    /**
-     * Tells if a token is ok. Using this function will destroy the token.
-     *
-     * @param string $token Token to test
-     * 
-     * @return true|false   True if token is correct, false otherwise
-     */
     public static function isToken($token)
     {
         if (isset($_SESSION['tokens'][$token])) {
