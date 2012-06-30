@@ -5,6 +5,15 @@ A simple and smart (or stupid) feed reader.
 
 An example is available on [tontof.net](http://tontof.net/feed).
 
+Installation
+============
+* If you just want to use kriss feed, download index.php file and upload it
+on your server. Enjoy !
+
+* If you want to look at the source, look at the src directory.
+To generate index.php file, just run the command :
+bash generateIndex > index.php
+
 Features
 ========
 * version 1
@@ -24,7 +33,6 @@ TODOs
 * auto show if link is a image
 * improve reader view
 * save folder state (opened/closed)
-* fix some media feeds 
 * show new items first
 
 Licence
