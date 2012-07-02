@@ -11,6 +11,8 @@ define('STYLE_FILE', 'style.css');
 
 define('FEED_VERSION', 2);
 
+define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
+define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
 
 define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
 
@@ -1097,6 +1099,15 @@ var redirector = '$redir',
     updateTimer = null,
     status = '',
     shaarli = '$shaarli';
+/*
+   Provide the XMLHttpRequest constructor for Internet Explorer 5.x-6.x:
+   Other browsers (including Internet Explorer 7.x-9.x) do not redefine
+   XMLHttpRequest if it already exists.
+
+   This example is based on findings at:
+   http://blogs.msdn.com/xmlteam/archive/
+   2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
+*/
 if (typeof XMLHttpRequest == "undefined") {
   XMLHttpRequest = function () {
     try { return new ActiveXObject("Msxml2.XMLHTTP.6.0"); }
@@ -2844,6 +2855,35 @@ class MyTool
     {
         $replace = array(
             '/\[m\](.+?)\[\/m\]/is'
+            => '/* moderate */',
+            '/\[b\](.+?)\[\/b\]/is'
+            => '<strong>$1</strong>',
+            '/\[i\](.+?)\[\/i\]/is'
+            => '<em>$1</em>',
+            '/\[s\](.+?)\[\/s\]/is'
+            => '<del>$1</del>',
+            '/\[u\](.+?)\[\/u\]/is'
+            => '<span style="text-decoration: underline;">$1</span>',
+            '/\[url\](.+?)\[\/url]/is'
+            => '<a href="$1">$1</a>',
+            '/\[url=(\w+:\/\/[^\]]+)\](.+?)\[\/url]/is'
+            => '<a href="$1">$2</a>',
+            '/\[quote\](.+?)\[\/quote\]/is'
+            => '<blockquote>$1</blockquote>',
+            '/\[code\](.+?)\[\/code\]/is'
+            => '<code>$1</code>',
+            '/\[([^[]+)\|([^[]+)\]/is'
+            => '<a href="$2">$1</a>'
+            );
+        $text = preg_replace(
+            array_keys($replace),
+            array_values($replace),
+            $text
+        );
+
+        return $text;
+    }
+
     public static function formatText($text)
     {
         $text = preg_replace_callback(
