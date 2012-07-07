@@ -1,4 +1,4 @@
-kriss_blog (version 3)
+kriss_feed (version 2)
 ======================
 
 A simple and smart (or stupid) feed reader.
