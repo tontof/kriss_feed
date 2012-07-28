@@ -9,7 +9,7 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
-define('FEED_VERSION', 2);
+define('FEED_VERSION', 3);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
@@ -47,9 +47,9 @@ class Feed_Conf
 
     public $newItems = true;
 
-    public $expandedView = true;
+    public $mode = 'show';
 
-    public $defaultView = 'show';
+    public $view = 'expanded';
 
     public $public = false;
 
@@ -137,6 +137,32 @@ class Feed_Conf
         }
     }
 
+    public function getMode()
+    {
+        $mode = $this->mode;
+        if (isset($_GET['show']) && !isset($_GET['reader'])) {
+            $mode = 'show';
+        }
+        if (isset($_GET['reader']) && !isset($_GET['show'])) {
+            $mode = 'reader';
+        }
+
+        return $mode;
+    }
+
+    public function getView()
+    {
+        $view = $this->view;
+        if (isset($_GET['expanded']) && !isset($_GET['list'])) {
+            $view = 'expanded';
+        }
+        if (isset($_GET['list']) && !isset($_GET['expanded'])) {
+            $view = 'list';
+        }
+
+        return $view;
+    }
+
     public function setLogin($login)
     {
         $this->login = $login;
@@ -192,17 +218,21 @@ class Feed_Conf
         $this->newItems = $new;
     }
 
-    public function setExpandedView($expandedView)
+    public function setMode($mode)
     {
-        $this->expandedView = $expandedView;
+        if ($mode === 'show') {
+            $this->mode = 'show';
+        } elseif ($mode === 'reader') {
+            $this->mode = 'reader';
+        }
     }
 
-    public function setDefaultView($defaultView)
+    public function setView($view)
     {
-        if ($defaultView == 'show') {
-            $this->defaultView = 'show';
-        } elseif ($defaultView == 'reader') {
-            $this->defaultView = 'reader';
+        if ($view === 'expanded') {
+            $this->view = 'expanded';
+        } elseif ($view === 'list') {
+            $this->view = 'list';
         }
     }
 
@@ -215,7 +245,7 @@ class Feed_Conf
     {
         $data = array('login', 'hash', 'salt', 'title', 'redirector', 'public',
                       'byPage', 'reverseOrder', 'maxUpdate', 'shaarli',
-                      'maxItems', 'newItems', 'expandedView', 'defaultView');
+                      'maxItems', 'newItems', 'view', 'mode');
         $out = '<?php';
         $out .= "\n";
 
@@ -255,22 +285,22 @@ body {
   color: #000;
 }
 
-#config, #edit, #feeds, #import, #show {
+#config, #edit, #import, #show, #login {
   border: 2px solid #999;
   border-top: none;
   background: #fff;
-  width:800px;
-  margin:auto;
+  width: 800px;
+  margin: auto;
   padding: .2em;
 }
 
 #reader {
   background: #fff;
-  width:100%;
-  height:100%;
+  width: 100%;
+  height: 100%;
 }
 
-#list-feeds {
+#feeds {
   width: 250px;
   height: 100%;
   float: left;
@@ -281,40 +311,41 @@ body {
   background-color: #ccc;
 }
 
-#list-feeds ul {
+#list-feeds, #list-feeds ul, #list-items{
   font-size: .9em;
   list-style: none;
   margin: 0;
-  padding : 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 #container {
-  margin-left:250px;
+  margin-left: 250px;
   height: 100%;
   overflow: auto;
 }
 
 #extra {
-  position:absolute;
+  position: absolute;
   background: #fff;
   border: 1px dotted #999;
-  width:15px;
-  height:15px;
+  width: 15px;
+  height: 15px;
   overflow: hidden;
 }
 
 #extra:hover {
-  width:auto;
-  height:auto;
+  width: auto;
+  height: auto;
 }
 
-#title {
+#title, .article-title {
   margin: 0;
   color: #666;
   border-bottom: 1px dotted #999;
 }
 
-#subtitle {
+#subtitle, .article-subtitle {
   text-align: right;
   font-style: italic;
   margin: 0;
@@ -326,7 +357,7 @@ body {
   margin: 0;
   font-size: 0.7em;
   text-align: center;
-  clear:both;
+  clear: both;
   background: #fff;
   width: 100%;
 }
@@ -356,11 +387,45 @@ body {
   font-size: 1.2em;
 }
 
-#article, .article, .comment{
+#new-items, #article, .article, .comment{
   border: 1px dotted #999;
   padding: .5em;
   margin: 1.5em 0;
   overflow: auto;
+  background-color: #fff;
+  white-space: normal;
+}
+
+#new-items {
+  text-align: center;
+}
+
+.item, .item-feed, .item-title {
+  line-height: 1.1em;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor:pointer;
+}
+
+.item {
+  border-top: 1px solid #ccc;
+}
+
+.item-info {
+  display: inline-block;
+  width: 100%;
+}
+
+.item-feed {
+  display: block;
+  float: left;
+  width: 11em;
+  font-size: 0.9em;
+}
+
+.item-title {
+    font-weight: bold;
+    font-size: 0.9em;
 }
 
 .title {
@@ -377,11 +442,11 @@ body {
 }
 
 .content{
-  padding:.5em;
+  padding: .5em;
 }
 
 .description{
-  padding:.5em;
+  padding: .5em;
 }
 
 .link {
@@ -405,12 +470,12 @@ legend {
   padding: 0 .42em;
 }
 
-input[type=text], textarea{
+input[type=text], input[type=password], textarea{
   border: 1px solid #000;
   margin: .2em 0;
   padding: .2em;
   font-size: 1em;
-  width:100%;
+  width: 100%;
 }
 
 button{
@@ -427,17 +492,17 @@ a:hover {
 }
 
 ul, ol {
-  margin-left:1em;
-  margin-bottom:.2em;
-  padding-left:0;
+  margin-left: 1em;
+  margin-bottom: .2em;
+  padding-left: 0;
 }
 
 li {
-  margin-bottom:.2em;
+  margin-bottom: .2em;
 }
 
 #plusmenu li {
-  display:inline;
+  display: inline;
 }
 
 @media (max-width: 800px) {
@@ -446,13 +511,24 @@ body{
   height: 100%;
 }
 
-#config, #edit, #feeds, #import, #show, #reader, #list-feeds, #container {
+#config, #edit, #feeds, #import, #show, #reader, #container {
   width: auto;
   height: auto;
 }
 
-#list-feeds {
+#feeds {
   float: none;
+}
+
+.item{
+  display: block;
+  border: 1px solid black;
+  margin: .2em;
+  background-color: #ccc;
+}
+
+.item-title{
+  white-space: normal;
 }
 
 #container {
@@ -460,15 +536,15 @@ body{
 }
 
 img, video, iframe, object{
-  max-width:100%;
-  height:auto;
+  max-width: 100%;
+  height: auto;
 }
 
 #plusmenu li {
-  display:block;
+  display: block;
 }
 .nomobile{
-  display:none;
+  display: none !important;
 }
 }
 </style>
@@ -482,27 +558,71 @@ CSS;
         }
     }
 
+
+    public function loginPage()
+    {
+        $ref = '';
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $ref = $_SERVER['HTTP_REFERER'];
+        }
+        $token = Session::getToken();
+        $status = $this->status();
+
+        return <<<HTML
+<div id="login">
+<form method="post" action="?login" name="loginform">
+  <fieldset>
+  <legend>Welcome to KrISS feed</legend>
+  <input type="hidden" name="returnurl" value="$ref">
+  <input type="hidden" name="token" value="$token">
+  <label>Login: <input type="text" name="login" tabindex="1"/></label>
+  <label>Password: <input type="password" name="password" tabindex="2"/></label>
+  <label>
+    <input type="checkbox" name="longlastingsession" tabindex="3">
+    &nbsp;Stay signed in (Do not check on public computers)
+  </label>
+  <input type="submit" value="OK" class="submit" tabindex="4">
+  </fieldset>
+</form>
+<div>
+<div id="status">
+$status
+</div>
+<script>
+document.loginform.login.focus();
+</script>
+HTML;
+
+    }
+
     public function menu($type, $kfc, $hash = '')
     {
+        if ($hash == 'all') {
+            $hash = '';
+        }
+        $view = $kfc->getView();
         $menu = '
       <p>';
         switch($type) {
         case 'show':
             $menu .= '
         <button onclick="previousItem();">&lt;</button>
-        <button onclick="plusMenu();" id="butplusmenu">+</button>
+        <button onclick="plusMenu(false);" id="butplusmenu">+</button>
         <button onclick="nextItem();">&gt;</button>
         <ul id="plusmenu" style="display:none">
-          <li><a href="?show" title="Show view">Show</a></li>
-          <li><a href="?reader" title="Reader view">Reader</a></li>
+          <li><a href="?show" title="Show mode">Show</a></li>
+          <li><a href="?reader" title="Reader mode">Reader</a></li>';
+            if ($view === 'expanded') {
+                $menu .= '
+          <li><a href="?show&list" title="List view">List</a></li>';
+            } else {
+                $menu .= '
+          <li><a href="?show&expanded" title="Expanded view">Expanded</a></li>';
+            }
+            $menu .= '
           <li>
             <a href="#" onclick="shareItem();" title="Share item on shaarli">
               Shaarli
-            </a>
-          </li>
-          <li>
-            <a href="#" onclick="forceUpdate();" title="Update manually">
-              Update
             </a>
           </li>
           <li>
@@ -512,6 +632,10 @@ CSS;
             if (Session::isLogged()) {
                 $menu .= '
           <li>
+            <a href="#" class="admin" onclick="forceUpdate();" title="Update manually">Update</a>
+          </li>
+          <li>
+            <a href="?read" class="admin" title="Mark as read">Read all</a>
             <a href="?config" class="admin" title="Configuration">
               Configuration
             </a>
@@ -525,32 +649,36 @@ CSS;
 ';
             }
             break;
-        case 'edit':
-            $menu .= '
-        <a href="?show" title="Show view">Show</a>
-      | <a href="?reader" title="Reader view">Reader</a>';
-            if (Session::isLogged()) {
-                $menu .= '
-      | <a href="?config" class="admin" title="Configuration">Configuration</a>
-      | <a href="?logout" class="admin" title="Logout">Logout</a>';
-            }
-            break;
         case 'reader':
+            $sep = '';
+            if ($hash != '') {
+                $sep = '=';
+            }
             $menu .= '
-        <a href="?show" title="Show view">Show</a>
-      | <a href="?reader" title="Reader view">Reader</a>';
-
+        <a href="?show" title="Show mode">Show</a>
+      | <a href="?reader" title="Reader mode">Reader</a>';
+            if ($view === 'expanded') {
+                $menu .= '
+      | <a href="?reader'
+                    . $sep . $hash . '&list" title="List view">List</a>';
+            } else {
+                $menu .= '
+      | <a href="?reader'
+                    . $sep . $hash
+                    . '&expanded" title="Expanded view">Expanded</a>';
+            }
             if (Session::isLogged()) {
-                $sep = '';
                 if ($hash != '') {
-                    $sep = '=';
                     $menu .= '
-      | <a href="?edit'.$sep.$hash.'" class="admin">Edit</a>';
+      | <a href="?edit' . $sep . $hash . '" class="admin">Edit</a>
+      | <a href="?update'
+                          . $sep . $hash
+                          . '" class="admin" title="Manual update">Update</a>';
+                } else {
+                    $menu .= '
+      | <a href="#" onclick="forceUpdate();" title="Update manually">Update</a>';
                 }
                 $menu .= '
-      | <a href="?update'.$sep.$hash.'" class="admin" title="Manual update">
-          Update
-        </a>
       | <a href="?read'.$sep.$hash.'" class="admin" title="Mark as read">
           Read
         </a>
@@ -564,10 +692,20 @@ CSS;
       | <a href="?login">login</a>';
             }
             break;
+        case 'edit':
+            $menu .= '
+        <a href="?show" title="Show mode">Show</a>
+      | <a href="?reader" title="Reader mode">Reader</a>';
+            if (Session::isLogged()) {
+                $menu .= '
+      | <a href="?config" class="admin" title="Configuration">Configuration</a>
+      | <a href="?logout" class="admin" title="Logout">Logout</a>';
+            }
+            break;
         case 'config':
             $menu .= '
-        <a href="?show" title="Show view">Show</a>
-      | <a href="?reader" title="Reader view">Reader</a>';
+        <a href="?show" title="Show mode">Show</a>
+      | <a href="?reader" title="Reader mode">Reader</a>';
             if (Session::isLogged()) {
                 $menu .= '
       | <a href="?import" class="admin" title="Import OPML file">Import</a>
@@ -592,7 +730,7 @@ CSS;
     {
         return '<a href="http://github.com/tontof/kriss_feed">KrISS feed'
             . ' ' . FEED_VERSION . '</a><span class="nomobile">'
-            . '- A simple and smart (or stupid) feed reader'
+            . ' - A simple and smart (or stupid) feed reader'
             . '</span>. By <a href="http://tontof.net">Tontof</a>';
     }
 
@@ -643,14 +781,22 @@ CSS;
             <input type="radio" id="privateReader" name="public" value="0" '
             . (!$kfc->public? 'checked="checked"' : '')
             . ' /><label for="privateReader">Private kriss feed</label><br>
-            <label for="showView">- Default view</label><br>
-            <input type="radio" id="showView" name="defaultView" value="show" '
-            . ($kfc->defaultView=='show' ? 'checked="checked"' : '')
-            . ' /><label for="showView">Show view</label><br>
-            <input type="radio" id="readerView" name="defaultView"'
+            <label for="showMode">- Default mode</label><br>
+            <input type="radio" id="showMode" name="mode" value="show" '
+            . ($kfc->mode === 'show' ? 'checked="checked"' : '')
+            . ' /><label for="showMode">Show mode</label><br>
+            <input type="radio" id="readerMode" name="mode"'
             . ' value="reader" '
-            . ($kfc->defaultView=='reader' ? 'checked="checked"' : '')
-            . ' /><label for="readerView">Reader view</label><br>
+            . ($kfc->mode === 'reader' ? 'checked="checked"' : '')
+            . ' /><label for="readerMode">Reader mode</label><br>
+            <label for="view">- Expanded or list view</label><br>
+            <input type="radio" id="expandedView" name="view" value="expanded" '
+            . ($kfc->view === 'expanded' ? 'checked="checked"' : '')
+            . ' /><label for="expandedView">Expanded view</label><br>
+            <input type="radio" id="listView" name="view"'
+            . ' value="list" '
+            . ($kfc->view === 'list' ? 'checked="checked"' : '')
+            . ' /><label for="listView">List view</label><br>
             <label>- Shaarli url</label><br>
             <input type="text" name="shaarli" value="'
             . htmlspecialchars($kfc->shaarli) . '"><br>
@@ -662,7 +808,7 @@ CSS;
           </fieldset>
           <fieldset>
             <legend>Feed reader preferences</legend>
-            <label>- Number of entries by page</label><br>
+            <label>- Number of entries to load when scroll</label><br>
             <input type="text" maxlength="3" name="byPage" value="'
             . (int) $kfc->byPage . '"><br>
             <label>- Maximum number of entries by channel</label><br>
@@ -672,15 +818,8 @@ CSS;
             . '</label><br>
             <input type="text" maxlength="4" name="maxUpdate" value="'
             . (int) $kfc->maxUpdate . '"><br>
-            <label for="expandedview">- Item view'
-            . '(<strong>not implemented yet</strong>)</label><br>
-            <input type="radio" id="expandedview" name="expandedView"'
-            . ' value="1" ' . ($kfc->expandedView ? 'checked="checked"' : '')
-            . ' /><label for="expandedview">Expanded view</label><br>
-            <input type="radio" id="listview" name="expandedView" value="0" '
-            . (!$kfc->expandedView ? 'checked="checked"' : '')
-            . ' /><label for="listview">List view</label><br>
-            <label for="newitems">- Items selection</label><br>
+            <label for="newitems">- Items selection '
+            . '(only for <a href="?reader">reader</a> mode)</label><br>
             <input type="radio" id="newitems" name="newItems" value="1" '
             . ($kfc->newItems ? 'checked="checked"' : '')
             . ' /><label for="newitems">New items</label><br>
@@ -698,6 +837,10 @@ CSS;
             . ' from the newest to the latest</label><br>
             <input type="submit" name="cancel" value="Cancel"/>
             <input type="submit" name="save" value="Save" />
+          </fieldset>
+          <fieldset>
+            <legend>Configuration du cron</legend>
+            '.MyTool::getUrl().'?update&cron='.sha1($kfc->salt.$kfc->hash).'
           </fieldset>
         </form><br>
       </div>
@@ -825,10 +968,10 @@ CSS;
             $unread = ' ('.$unread.')';
         }
         $str .= '
-          <ul>
+          <ul id="list-feeds">
           <li><h3 class="title">'
             . '<button onclick="toggle(\'all-subscriptions\', this)">-</button>'
-            .' <a href="?reader">Subscriptions</a>'.$unread.'</h3>
+            .' <a href="?reader=all">Subscriptions</a>'.$unread.'</h3>
             <ul id="all-subscriptions">';
         foreach ($feeds as $hashUrl => $arrayInfo) {
             if (empty($arrayInfo['folders'])) {
@@ -843,7 +986,8 @@ CSS;
                     $atitle = trim(htmlspecialchars($arrayInfo['title']));
                 }
                 $str .= '
-            <li> - <strong><a href="?reader=' . $hashUrl . '"'
+            <li> - <strong><a id="feed-'
+                . $hashUrl . '" href="?reader=' . $hashUrl . '"'
                     . (isset($arrayInfo['error'])
                        ?' class="error" title="'
                        . $kf->getError($arrayInfo['error']).'"'
@@ -878,7 +1022,8 @@ CSS;
                         $atitle = trim(htmlspecialchars($arrayInfo['title']));
                     }
                     $str .= '
-              <li> - <strong><a href="?reader=' . $hashUrl . '"'
+              <li> - <strong><a id="feed-'
+                    . $hashUrl . '" href="?reader=' . $hashUrl . '"'
                         . (isset($arrayInfo['error'])
                            ?' class="error" title="'
                            . $kf->getError($arrayInfo['error']) . '"'
@@ -901,112 +1046,36 @@ CSS;
 
     public function readerPage($kf, $hash = '', $page = 1)
     {
-        $list = $kf->getItems($hash);
-        $type = $kf->hashType($hash);
+        $pagination = '';
+        $expanded = $kf->kfc->getView();
+        if (isset($_GET['expanded']) && !isset($_GET['list'])) {
+            $expanded = true;
+        }
+        if (isset($_GET['list']) && !isset($_GET['expanded'])) {
+            $expanded = false;
+        }
 
         // create menu
         $menu = $this->menu('reader', $kf->kfc, $hash);
-
-        // create pagination
-        $pagination = '';
-
-        $begin = ($page - 1) * $kf->kfc->byPage;
-        $pages = (count($list) <= $kf->kfc->byPage)
-            ?''
-            :ceil(count($list) / $kf->kfc->byPage);
-
-        if (!empty($pages)) {
-            $previousPage = $page-1;
-            $nextPage = $page+1;
-            if ($previousPage < 1) {
-                $previousPage = 1;
-            }
-            if ($nextPage > $pages) {
-                $nextPage = $pages;
-            }
-            $pagination .= '
-        <p class="pagination">
-        ';
-            $reader='reader';
-            if (!empty($hash)) {
-                $reader='reader='.$hash;
-            }
-            $pagination .= '
-          <a href="?'.$reader.'&page='.$previousPage.'">previous</a>
-          ';
-
-            for ($p = 1; $p <= $pages; $p++) {
-                $pagination .= ' <a href="?' . $reader . '&page=' . $p . '" '
-                    . ($page == $p
-                       ? ' class="selected"'
-                       : '')
-                    . '>' . $p . '</a> ';
-            }
-
-            $pagination .= '
-          <a href="?' . $reader . '&page=' . $nextPage . '">next</a>
-        </p>';
-        }
 
         // create status
         $status = $this->status();
 
         // select items on the page
-        $list = array_slice($list, $begin, $kf->kfc->byPage, true);
+        $newItems = '';
         $listItems = '';
-        if (empty($list)) {
-            $listItems .= '
-        <div class="article"><p>No item.</p></div>';
-        } else {
-            $i=0;
-            foreach ($list as $itemHash => $item) {
-                $read = '';
-                $markAs = '';
-                if ($item['read']==1) {
-                    $read = ' read';
-                }
-                if (Session::isLogged()) {
-                    $markAs = ' (<a href="?read='
-                        . $itemHash . '">Mark as read</a>)';
-                    if ($item['read']==1) {
-                        $markAs = ' (<a href="?unread='
-                            . $itemHash . '">Mark as unread</a>)';
-                    }
-                }
-
-                $listItems .= '
-        <div class="article'.$read.'">
-          <h3 class="title"><a href="'
-                    . $kf->kfc->redirector . htmlspecialchars($item['link'])
-                    . '">'
-                    . htmlspecialchars(
-                        html_entity_decode(
-                            $item['title'],
-                            ENT_QUOTES, 'UTF-8'
-                        )
-                    )
-                    . '</a>' . $markAs . '</h3>
-          <h4 class="subtitle">from <a href="'
-                    . $kf->kfc->redirector.htmlspecialchars($item['xmlUrl'])
-                    . '">' . htmlspecialchars($item['author']) . '</a></h4>
-          <div class="content">
-           '
-                    . preg_replace(
-                        '/<a(.*?)href=["\'](.*?)["\'](.*?)>/',
-                        '<a$1href="' . $kf->kfc->redirector . '$2"$3>',
-                        preg_replace(
-                            '/<script\b[^>]*>(.*?)<\/script>/is',
-                            "",
-                            $item['content']
-                        )
-                    )
-                    .'
-          </div>
-        </div>';
-                $i++;
-            }
-        }
-
+        $list = $kf->getItems($hash);
+        $newItems .= '
+        <div id="new-items">
+          <button id="butplusmenu" onclick="loadUnreadItems();">
+             0 new item(s)
+          </button>
+        </div>
+';
+        $listItems .= '
+        <ul id="list-items">
+        </ul>
+';
         // list of feeds
         $listFeeds = $this->listFeeds($kf);
 
@@ -1018,7 +1087,9 @@ CSS;
            <input type="hidden" name="token" value="'.Session::getToken().'">
            <label for="newfeed">- New feed</label>
            <input type="submit" name="add" value="Subscribe">
-           <input type="text" name="newfeed" id="newfeed">
+           <input type="text" name="newfeed" id="newfeed"
+              onfocus="removeEvent(window, \'keypress\', checkKey);"
+              onblur="addEvent(window, \'keypress\', checkKey);">
           </form>
         </div>';
         }
@@ -1028,7 +1099,7 @@ CSS;
 
         return <<<HTML
     <div id="reader">
-      <div id="list-feeds">
+      <div id="feeds" class="nomobile">
 $addNewFeed
 $listFeeds
       </div>
@@ -1041,6 +1112,7 @@ $menu
         </div>
 $pagination
         <div id="section">
+$newItems
 $listItems
         </div>
 $pagination
@@ -1055,21 +1127,40 @@ HTML;
         $menu = $this->menu('show', $kf->kfc);
         $status = $this->status();
         $ajaxscript = $this->ajaxScript($kf);
+        $section = '';
+        $expanded = $kf->kfc->getView();
+        if (isset($_GET['expanded']) && !isset($_GET['list'])) {
+            $expanded = true;
+        }
+        if (isset($_GET['list']) && !isset($_GET['expanded'])) {
+            $expanded = false;
+        }
 
-        return <<<HTML
-    <div id="show">
-      <div id="nav">
-$menu
-      </div>
-      <div id="section">
+        if ($expanded) {
+$section .= '
         <div id="article">
           <h3 id="title"></h3>
           <h4 id="subtitle"></h4>
           <div id="content"></div>
         </div>
-      </div>
+';
+        } else {
+         $section .= '
+        <ul id="list-items">
+        </ul>
+';
+        }
+
+        return <<<HTML
+    <div id="show">
       <div id="status">
 $status
+      </div>
+      <div id="nav">
+$menu
+      </div>
+      <div id="section">
+$section
       </div>
     </div>
 $ajaxscript
@@ -1080,59 +1171,97 @@ HTML;
     {
         $redir = $kf->kfc->redirector;
         $shaarli = $kf->kfc->shaarli;
+        $mode = $kf->kfc->getMode();
+        $view = $kf->kfc->getView();
+        $currentHash = 'all';
+        if ($mode === 'reader' && isset($_GET['reader'])) {
+            $currentHash = $_GET['reader'];
+        }
+        $currentFilter = '';
+        if ($mode === 'show' || $kf->kfc->newItems) {
+            $currentFilter = 'unread';
+        }
+        $unreadItems = array_keys($kf->getItems($currentHash, $currentFilter));
+        $numInitItems = 0;
+        if ($mode === 'show') {
+            $numInitItems = count($unreadItems);
+        } else {
+            $numInitItems = count(array_keys($kf->getItems($currentHash)));
+        }
+        $listUnreadItems = json_encode($unreadItems);
+        $listFeeds = json_encode($kf->getListFeeds());
+        $doUpdate = (Session::isLogged() ? 'true' : 'false');
 
-        return <<<JS
+        return <<<JAVASCRIPT
 <script>
 var redirector = '$redir',
-    title = '',
-    listFeedsHash = []
-    listItemsHash = [],
-    itemsUnread = 0,
-    currentItemInd = 0,
-    previous = '',
-    current = '',
-    next = '',
+    shaarli = '$shaarli',
+    mode = '$mode',
+    view = '$view',
+    currentHash = '$currentHash',
+    currentFilter = '$currentFilter',
+    numInitItems = $numInitItems,
+    numLoadedItems = 0,
+    titlePage = '',
+    updatingFeeds = false,
+    updatingCurrentFeed = false,
+    updateFeedTimer = null,
+    listItems = [],
+    currentItemInd = -1,
+    listFeeds = [],
+    currentFeedInd = -1,
+    unreadHashItems = [],
+    currentUnreadItems = 0,
+    status = '',
     working = false,
     workingsave = '',
-    currentFeedInd = 0,
-    updatingFeed = false,
-    updateTimer = null,
-    status = '',
-    shaarli = '$shaarli';
-/*
-   Provide the XMLHttpRequest constructor for Internet Explorer 5.x-6.x:
-   Other browsers (including Internet Explorer 7.x-9.x) do not redefine
-   XMLHttpRequest if it already exists.
+    currentPage = 1,
+    hist = [],
+    cache = {};
 
-   This example is based on findings at:
-   http://blogs.msdn.com/xmlteam/archive/
-   2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
-*/
-if (typeof XMLHttpRequest == "undefined") {
-  XMLHttpRequest = function () {
-    try { return new ActiveXObject("Msxml2.XMLHTTP.6.0"); }
-      catch (e) {}
-    try { return new ActiveXObject("Msxml2.XMLHTTP.3.0"); }
-      catch (e) {}
-    try { return new ActiveXObject("Microsoft.XMLHTTP"); }
-      catch (e) {}
-    //Microsoft.XMLHTTP points to Msxml2.XMLHTTP and is redundant
-    throw new Error("This browser does not support XMLHttpRequest.");
-  };
+function removeElement(elt) {
+    if (elt && elt.parentNode) {
+        elt.parentNode.removeChild(elt);
+    }
 }
 
-Object.size = function(obj) {
-    var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
+function removeAllChild(elt) {
+    while (elt && elt.firstChild) {
+        elt.removeChild(elt.firstChild);
     }
-    return size;
-};
+}
 
-function removeAllChild(el) {
-    while (el.firstChild) {
-        el.removeChild(el.firstChild);
+function addClass(elt, cls) {
+    if (!hasClass(elt, cls)) {
+        if (elt.className === '') {
+            elt.className = cls;
+        } else {
+            elt.className += ' ' + cls;
+        }
     }
+}
+
+function hasClass(elt, cls) {
+    if ((' ' + elt.className + ' ').indexOf(' ' + cls + ' ') > -1) {
+        return true;
+    }
+    return false;
+}
+
+function toggle(id, el) {
+  var e = document.getElementById(id);
+
+  if (e.style.display == '') {
+      e.style.display = 'none';
+      if (el) {
+          el.innerHTML = '+';
+      }
+  } else {
+      e.style.display = '';
+      if (el) {
+          el.innerHTML = '-';
+      }
+  }
 }
 
 // http://stackoverflow.com/questions/1912501
@@ -1142,232 +1271,310 @@ function htmlDecode(input) {
   return e.childNodes.length === 0 ? "" : e.firstChild.nodeValue;
 }
 
-// http://papermashup.com/read-url-get-variables-withjavascript/
-function getUrlVars() {
-    var vars = {};
-    var parts = window.location.href.replace(
-        /[?&]+([^=&]+)=([^&]*)/gi,
-        function(m, key, value) {
-            vars[key] = value;
-        }
-    );
-    return vars;
-}
-
-function changePage(direction) {
-    var currentPage = getUrlVars()['page'];
-    var currentHash = getUrlVars()['reader'];
-
-    if (typeof(currentPage) == 'undefined' || parseInt(currentPage) <= 0) {
-        currentPage = 1;
-    }
-    var nextPage = parseInt(currentPage) + direction;
-    if (nextPage == 0) {
-        nextPage = 1;
-    }
-
-    if (typeof(currentHash) == 'undefined') {
-        window.location.href = '?reader&page='+nextPage;
-    } else {
-        window.location.href = '?reader='+currentHash+'&page='+nextPage;
-    }
-}
-
-function nextPage() {
-    changePage(1);
-}
-
-function previousPage() {
-    changePage(-1);
-}
-
-function unloadItem() {
-    var title = document.getElementById('title');
-    var subtitle = document.getElementById('subtitle');
-    var content = document.getElementById('content');
-
-    removeAllChild(title);
-    removeAllChild(subtitle);
-    removeAllChild(content);
-}
-
-function shareItem() {
-    if (shaarli != '') {
-        var url = current['link'];
-        var title = current['title'];
-        var opt = 'menubar=no, height=390, width=600, toolbar=no,'
-                + ' scrollbars=no, status=no';
-        window.open(
-            shaarli + '/index.php?post=' + encodeURIComponent(url)
-            + '&title=' + encodeURIComponent(title)
-            + '&source=bookmarklet',
-            '_blank',
-            opt
-        );
-    } else {
-        alert('please configure your shaarli on config page !');
-    }
-}
-
-function setTitle() {
-    if (title === '') {
-        title = document.title
-    }
-    document.title = title + ' ('+itemsUnread+')';
-
-    var but = document.getElementById('butplusmenu');
-    but.textContent = itemsUnread+' item(s)';
-
-}
-
-function anonymize(el) {
-    var a_to_anon = el.getElementsByTagName("a");
+function anonymize(elt) {
+    var a_to_anon = elt.getElementsByTagName("a");
     for (var i = 0; i < a_to_anon.length; i++) {
         a_to_anon[i].href = redirector+a_to_anon[i].href;
     }
 }
 
-function loadItem(item) {
-    unloadItem();
-    if (item !== '') {
-        var article = document.getElementById('article');
-        if (item['read']==1) {
-            article.setAttribute('class', 'read');
+function shareItem(){
+    if (shaarli != ''){
+        var current = cache['item-' + listItems[currentItemInd]];
+        if (current) {
+	    var url = current['link'];
+	    var title = current['title'];
+	    window.open(shaarli+'/index.php?post=' + encodeURIComponent(url) + '&title='
+                        + encodeURIComponent(title)
+                        + '&source=bookmarklet'
+                        ,'_blank'
+                        ,'menubar=no,height=390,width=600,toolbar=no,scrollbars=no,status=no');
         } else {
-            article.setAttribute('class', '');
+            alert('Problem with current article !');
         }
-        if (document.getElementById('keepunread') != 'null') {
-            if (item['read']==-1) {
+    } else {
+	alert('please configure your shaarli on config page !');
+    }
+}
+
+function toggleKeepUnread() {
+    if (document.getElementById('keepunread').checked) {
+        document.getElementById('keepunread').checked = false;
+    } else {
+        document.getElementById('keepunread').checked = true;
+    }
+}
+
+function plusMenu(openMenu) {;
+    if (mode === 'show' && view === 'expanded' || openMenu) {
+        var pm = document.getElementById('plusmenu');
+        var but = document.getElementById('butplusmenu');
+        if (pm.getAttribute('style') == 'display:none') {
+            pm.setAttribute('style', 'display:block;list-style:none;');
+        } else {
+            pm.setAttribute('style', 'display:none');
+        }
+    } else {
+        loadUnreadItems();
+    }
+}
+
+function setStatus(text) {
+    document.getElementById('status').innerHTML = text;
+}
+
+function setTitle() {
+    if (titlePage === '') {
+        titlePage = document.title;
+    }
+    document.title = titlePage + ' ('+currentUnreadItems+')';
+
+    var but = document.getElementById('butplusmenu');
+    if  (but) {
+        if (mode === 'show' && view === 'expanded') {
+            but.textContent = unreadHashItems.length + ' new item(s)';
+        } else {
+            but.textContent = currentUnreadItems + ' new item(s)';
+        }
+    }
+}
+
+function addUnreadItems(listHashItems) {
+    for (var i = 0; i < listHashItems.length; i++) {
+        if (unreadHashItems.indexOf(listHashItems[i]) == -1) {
+            unreadHashItems.push(listHashItems[i]);
+            if (mode === 'show' && view === 'expanded') {
+                listItems.push(listHashItems[i]);
+            }
+            currentUnreadItems++;
+        }
+    }
+    setTitle();
+}
+
+function forceUpdate(i) {
+    if (typeof(i) == "undefined") {
+        i = 0;
+    }
+    if (i < listFeeds.length) {
+        setStatus("updating : "+listFeeds[i][1]);
+        var xhr     = new XMLHttpRequest(),
+            timeout = null,
+            aborted = false
+            url     = '?ajaxupdate='+listFeeds[i][0];
+
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function() {
+            // Everything OK
+            if (xhr.readyState == 4) {
+                clearTimeout(timeout);
+                if (aborted) {
+                    listFeeds[i][2] = getTimeMin();
+                    setTimeout(forceUpdate, 1000, i+1);
+                } else {
+                    if (xhr.status == 200) {
+                        res = JSON.parse(xhr.responseText);
+                        addUnreadItems(res);
+                        listFeeds[i][2] = getTimeMin();
+                        setTimeout(forceUpdate, 200, i+1);
+                    } else if (xhr.status == 500) {
+
+                    }
+                }
+            }
+        }
+        xhr.send(null);
+        timeout = setTimeout(function() {
+            aborted = true;
+            xhr.abort();
+          }, 3000);
+    } else {
+        setStatus(status);
+    }
+}
+
+function update(feed) {
+    var xhr = new XMLHttpRequest();
+    var url = '?ajaxupdate='+feed;
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+        // Everything OK
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                res = JSON.parse(xhr.responseText);
+                addUnreadItems(res);
+            }
+            listFeeds[currentFeedInd][2] = getTimeMin();
+            updatingCurrentFeed = false;
+            currentFeedInd++;
+        }
+    }
+    xhr.send(null);
+}
+
+function updateCurrentFeed() {
+    if (!updatingCurrentFeed) {
+        if (currentFeedInd >= listFeeds.length) {
+            updatingFeeds = false;
+            currentFeedInd = 0;
+            window.clearInterval(updateFeedTimer);
+            setStatus(status);
+        } else {
+            updatingCurrentFeed = true;
+            if (getTimeMin() - listFeeds[currentFeedInd][2] > listFeeds[currentFeedInd][3]) {
+                setStatus("updating : "+listFeeds[currentFeedInd][1]);
+                update(listFeeds[currentFeedInd][0]);
+            } else {
+                updatingCurrentFeed = false;
+                currentFeedInd++;
+            }
+        }
+    }
+}
+
+function updateFeeds() {
+    if (!updatingFeeds) {
+        currentFeedInd = 0;
+        updateTimer = window.setInterval(updateCurrentFeed, 200);
+    }
+}
+
+function getTimeMin() {
+    return Math.round((new Date().getTime()) / 1000 / 60);
+}
+
+function hideArticle() {
+    removeAllChild(document.getElementById('title'));
+    removeAllChild(document.getElementById('subtitle'));
+    removeAllChild(document.getElementById('content'));
+    removeElement(document.getElementById('title'));
+    removeElement(document.getElementById('subtitle'));
+    removeElement(document.getElementById('content'));
+}
+
+function loadArticle(item) {
+    hideArticle();
+    var article = document.getElementById('article');
+    if (article === null) {
+        article = document.createElement('div');
+        article.id = 'article';
+    }
+    var title = document.createElement('div'),
+        subtitle = document.createElement('div'),
+        content = document.createElement('div');
+    title.id = 'title';
+    subtitle.id = 'subtitle';
+    content.id = 'content';
+    article.appendChild(title);
+    article.appendChild(subtitle);
+    article.appendChild(content);
+
+    if (item['read'] === 1 && view !== 'list') {
+        addClass(article, 'read');
+    }
+    var link = document.createElement('a');
+    link.href = htmlDecode(item['link']);
+    link.title = htmlDecode(item['title']);
+    link.textContent = htmlDecode(item['title']);
+
+    title.appendChild(link);
+    subtitle.textContent = 'from ';
+
+    var author = document.createElement('a');
+    author.href = htmlDecode(item['xmlUrl']);
+    author.title = htmlDecode(item['author']);
+    author.textContent = htmlDecode(item['author']);
+    subtitle.appendChild(author);
+
+    content.innerHTML = item['content'];
+    anonymize(article);
+    return article;
+}
+
+function showArticle(hashItem, markAsReadWhenLoad) {
+    if (cache['item-' + hashItem]) {
+        // load item
+        var article = loadArticle(cache['item-' + hashItem]);
+
+        if (document.getElementById('keepunread')) {
+            if (cache['item-' + hashItem]['read']===-1) {
                 document.getElementById('keepunread').checked = true;
             } else {
                 document.getElementById('keepunread').checked = false;
             }
         }
-        var title = document.getElementById('title');
-        var subtitle = document.getElementById('subtitle');
-        var content = document.getElementById('content');
 
-        var link = document.createElement('a');
-        link.href = htmlDecode(item['link']);
-        link.title = htmlDecode(item['title']);
-        link.textContent = htmlDecode(item['title']);
-
-        title.appendChild(link);
-        subtitle.textContent = 'from ';
-
-        var author = document.createElement('a');
-        author.href = htmlDecode(item['xmlUrl']);
-        author.title = htmlDecode(item['author']);
-        author.textContent = htmlDecode(item['author']);
-        subtitle.appendChild(author);
-
-        content.innerHTML = item['content'];
-        anonymize(article);
-    }
-}
-
-function nextItem() {
-    if (current == '') {
-        getCurrentItem();
-    }
-    if (!working) {
-        markAsRead();
-        if (next != '') {
-            working=true;
-            previous = current;
-            current = next;
-            currentItemInd++;
-            next = '';
-        }
-        loadItem(current);
-        getNextItem();
-    } else {
-        workingsave = 'next';
-    }
-}
-
-function previousItem() {
-    if (!working) {
-        if (previous != '') {
-            working=true;
-            next = current;
-            current = previous;
-            currentItemInd--;
-            previous = '';
-            loadItem(current);
-            getPreviousItem();
-        }
-    } else {
-        workingsave = 'previous';
-    }
-}
-
-function plusMenu() {;
-    var pm = document.getElementById('plusmenu');
-    var but = document.getElementById('butplusmenu');
-    if (pm.getAttribute('style') == 'display:none') {
-        pm.setAttribute('style', 'display:block;list-style:none;');
-    } else {
-        pm.setAttribute('style', 'display:none');
-    }
-}
-
-
-function markAsRead() {
-    keepunread = false;
-    if (document.getElementById('keepunread')!= null) {
-        if (document.getElementById('keepunread').checked) {
-            keepunread = true;
-        }
-    }
-    if (current!='' && current['read']!==1 && !keepunread) {
-        var xhr = new XMLHttpRequest();
-        var hash = listItemsHash[currentItemInd];
-        var url = '?ajaxread='+hash;
-        xhr.open('GET', url, true);
-        xhr.onreadystatechange = function() {
-            // Everything OK
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200) {
-                    var res = JSON.parse(xhr.responseText);
-                    if (res) {
-                        itemsUnread--;
-                        setTitle();
+        currentItemInd = listItems.indexOf(hashItem);
+        if (mode === 'show') {
+            if (view === 'expanded') {
+                if (cache['item-' + hashItem]['read'] === 1) {
+                    article.className = 'read';
+                } else {
+                    article.className = '';
+                }
+                window.scrollTo(0,0);
+            } else { // list
+                addClass(document.getElementById('item-'+hashItem).parentNode.firstChild, 'read');
+                cache['item-' + hashItem]
+                if (!document.getElementById('item-'+hashItem).hasChildNodes()) {
+                    document.getElementById('item-' + hashItem).appendChild(article);
+                    if (working) {
+                        var rect = document.getElementById('item-' + listItems[currentItemInd]).getBoundingClientRect();
+                        window.scrollTo(0, rect.top + window.scrollY);
                     }
+                } else {
+                    removeElement(article);
                 }
             }
-        };
-        xhr.send(null);
-        current['read']=1;
-    } else {
-        if (keepunread) {
-            if (current['read']===1) {
-                var xhr = new XMLHttpRequest();
-                var hash = listItemsHash[currentItemInd];
-                var url = '?ajaxkeepunread='+hash;
-                xhr.open('GET', url, true);
-                xhr.onreadystatechange = function() {
-                    // Everything OK
-                    if (xhr.readyState == 4) {
-                        if (xhr.status == 200) {
-                            var res = JSON.parse(xhr.responseText);
-                            if (res) {
-                                itemsUnread++;
-                                setTitle();
-                            }
-                        }
+        } else { // reader
+            if (view === 'expanded') {
+                // if (!document.getElementById('item-'+hashItem).hasChildNodes()) {
+                    var info = document.getElementById('item-'+hashItem).previousSibling;
+                    info.className = 'item-info';
+                    if (cache['item-' + hashItem]['read'] === -1) {
+                        info.innerHTML = 'mark as <button onclick="readItem(\''
+                            + hashItem + '\')">read</button>';
+                    } else if (cache['item-' + hashItem]['read'] === 0) {
+                        info.innerHTML = 'mark as <button onclick="readItem(\''
+                            + hashItem + '\')">read</button>, <button onclick="keepUnreadItem(\''
+                            + hashItem + '\')">keepunread</button>';
+                    } else if (cache['item-' + hashItem]['read'] === 1) {
+                        info.innerHTML = 'mark as <button onclick="keepUnreadItem(\''
+                            + hashItem + '\')">keepunread</button>';
                     }
-                };
-                xhr.send(null);
-                current['read']=-1;
-            } else if (current['read']===0) {
-                var xhr = new XMLHttpRequest();
-                var hash = listItemsHash[currentItemInd];
-                var url = '?ajaxkeepunread='+hash;
-                xhr.open('GET', url, true);
-                xhr.send(null);
-                current['read']=-1;
+
+                    removeAllChild(document.getElementById('item-' + hashItem));
+                    document.getElementById('item-' + hashItem).appendChild(article);
+                    article.id = '';
+                    addClass(article, 'article');
+                    article = document.getElementById('title');
+                    article.id = '';
+                    addClass(article, 'article-title');
+                    article = document.getElementById('subtitle');
+                    article.id = '';
+                    addClass(article, 'article-subtitle');
+                    article = document.getElementById('content');
+                    article.id = '';
+
+                    // }
+            } else { // list
+                addClass(document.getElementById('item-'+hashItem).parentNode.firstChild, 'read');
+                if (!document.getElementById('item-'+hashItem).hasChildNodes()) {
+                    document.getElementById('item-' + hashItem).appendChild(article);
+                    if (working) {
+                        var rect = document.getElementById('item-' + listItems[currentItemInd]).getBoundingClientRect();
+                        document.getElementById('container').scrollTop += rect.top;
+                    }
+                } else {
+                    removeElement(article);
+                }
             }
+        }
+    } else {
+        if (markAsReadWhenLoad) {
+            loadItem(hashItem, false, hashItem, false, true);
+        } else {
+            loadItem(hashItem, false, false, false, true);
         }
     }
 }
@@ -1389,217 +1596,431 @@ function finishWorking() {
     }
 }
 
-function getPreviousItem() {
-    if (currentItemInd > 0) {
-        var xhr        = new XMLHttpRequest(),
-            hash       = listItemsHash[currentItemInd-1],
-            url        = '?ajaxitem='+hash;
+function markAsRead(hashItem) {
+    var index = unreadHashItems.indexOf(hashItem);
+    if (index > -1) {
+        unreadHashItems.splice(index, 1);
+    }
+    if (mode === 'show' && view === 'expanded') {
+        currentUnreadItems = unreadHashItems.length;
+        setTitle();
+    }
+    if (cache['item-' + hashItem]) {
+        cache['item-' + hashItem]['read'] = 1;
+    }
+}
 
-        xhr.open('GET', url, true);
-        xhr.onreadystatechange = function() {
-            // Everything OK
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200) {
-                    previous = JSON.parse(xhr.responseText);
-                }
-                finishWorking();
+function markAsKeepUnread(hashItem) {
+    var index = unreadHashItems.indexOf(hashItem);
+    if (index === -1) {
+        unreadHashItems.push(hashItem);
+    }
+    if (mode === 'show' && view === 'expanded') {
+        currentUnreadItems = unreadHashItems.length;
+        setTitle();
+    }
+    if (cache['item-' + hashItem]) {
+        cache['item-' + hashItem]['read'] = -1;
+    }
+}
+
+function readItem(hashItem) {
+    loadItem(false, false, hashItem, false, false);
+}
+
+function keepUnreadItem(hashItem) {
+    loadItem(false, false, false, hashItem, false);
+}
+
+function loadItem(hashItemToLoad, hashItemToPreload, hashItemToRead, hashItemToKeepUnread, show) {
+    var url = '?';
+
+    if (hashItemToLoad) {
+        if (cache['item-' + hashItemToLoad]) {
+            if (show) {
+                showArticle(hashItemToLoad, false);
+                show = false;
             }
+            hashItemToLoad = false;
+        } else {
+            url += (url !== '?' ? '&' : '');
+            url += 'ajaxitem=' + hashItemToLoad;
         }
-        xhr.send(null);
     } else {
-        finishWorking();
-    }
-}
-
-function getNextItem() {
-    if (currentItemInd < listItemsHash.length-1) {
-        var xhr = new XMLHttpRequest();
-        var hash = listItemsHash[currentItemInd+1];
-        var url = '?ajaxitem='+hash;
-        xhr.open('GET', url, true);
-        xhr.onreadystatechange = function() {
-            // Everything OK
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200) {
-                    next = JSON.parse(xhr.responseText);
-                    if (current['read']==1 && next['read']!=1) {
-                        workingsave = 'next';
-                    }
-                }
-                finishWorking();
+        if (show) {
+            hideArticle();
+            if (view === 'list') {
+                removeElement(document.getElementById('article'));
             }
         }
-        xhr.send(null);
-    } else {
-        finishWorking();
     }
-}
-
-function getCurrentItem() {
-    if (currentItemInd < listItemsHash.length) {
-        var xhr = new XMLHttpRequest();
-        var hash = listItemsHash[currentItemInd];
-        var url = '?ajaxitem='+hash;
-        xhr.open('GET', url, true);
-        xhr.onreadystatechange = function() {
-            // Everything OK
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                current = JSON.parse(xhr.responseText);
-                loadItem(current);
-            }
-        }
-        xhr.send(null);
-    }
-}
-
-function addItems(res) {
-    for (var i = 0, len = res.length; i < len; i++) {
-        if (listItemsHash.indexOf(res[i]) == -1) {
-            listItemsHash.push(res[i]);
-            itemsUnread++;
+    if (hashItemToLoad === false && hashItemToPreload !== false) {
+        if (cache['item-' + hashItemToPreload]) {
+            hashItemToPreload = false;
+        } else {
+            hashItemToLoad = hashItemToPreload;
+            hashItemToPreload = false;
+            url += (url !== '?' ? '&' : '');
+            url += 'ajaxitem=' + hashItemToLoad;
         }
     }
-    setTitle();
-}
-
-function forceUpdate(i) {
-    if (typeof(i) == "undefined") {
-        i = 0;
-    }
-    if (i < listFeedsHash.length) {
-        setStatus("updating : "+listFeedsHash[i][2]);
-        var xhr     = new XMLHttpRequest(),
-            timeout = null,
-            aborted = false
-            url     = '?ajaxupdate='+listFeedsHash[i][1];
-
-        xhr.open('GET', url, true);
-        xhr.onreadystatechange = function() {
-            // Everything OK
-            if (xhr.readyState == 4) {
-                clearTimeout(timeout);
-                if (aborted) {
-                    listFeedsHash[i][3] =
-                        Math.round((new Date().getTime())/1000);
-                    setTimeout(forceUpdate, 1000, i+1);
+    // if (hashItemToLoad === false && hashItemToPreload === false) {
+    if (hashItemToLoad === false && hashItemToPreload === false) {
+        if (hashItemToRead && !hashItemToKeepUnread) {
+            if (cache['item-' + hashItemToRead]) {
+                if (cache['item-' + hashItemToRead]['read'] !== 1) {
+                    cache['item-' + hashItemToRead]['read'] = 1;
+                    url += (url !== '?' ? '&' : '');
+                    url += 'ajaxread=' + hashItemToRead;
                 } else {
-                    if (xhr.status == 200) {
-                        res = JSON.parse(xhr.responseText);
-                        addItems(res);
-                        listFeedsHash[i][3] =
-                        Math.round((new Date().getTime())/1000);
-                        forceUpdate(i+1);
-                    } else if (xhr.status == 500) {
-
-                    }
+                    hashItemToRead = false;
+                }
+            } else {
+                if (unreadHashItems.indexOf(hashItemToRead) !== -1) {
+                    url += (url !== '?' ? '&' : '');
+                    url += 'ajaxread=' + hashItemToRead;
+                } else {
+                    hashItemToRead = false;
                 }
             }
         }
+        if (hashItemToKeepUnread) {
+            if (cache['item-' + hashItemToKeepUnread]) {
+                if (cache['item-' + hashItemToKeepUnread]['read'] !== -1) {
+                    cache['item-' + hashItemToKeepUnread]['read'] = -1;
+                    url += (url !== '?' ? '&' : '');
+                    url += 'ajaxkeepunread=' + hashItemToKeepUnread;
+                } else {
+                    hashItemToKeepUnread = false;
+                }
+            } else {
+                url += (url !== '?' ? '&' : '');
+                url += 'ajaxkeepunread=' + hashItemToKeepUnread;
+            }
+        }
+        //    }
+    }
+    if (url !== '?') {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function() {
+            // Everything OK
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    if (hashItemToLoad) {
+                        if (hist.indexOf(hashItemToLoad) == -1) {
+                            hist.push(hashItemToLoad);
+                            if (hist.length > 10) {
+                                delete cache['item-' + hist.shift()];
+                            }
+                        }
+                        cache['item-' + hashItemToLoad] = JSON.parse(xhr.responseText);
+                        if (show) {
+                            showArticle(hashItemToLoad, false);
+                        }
+                    }
+                    if (hashItemToRead && /ajaxread/.test(url)) {
+                        markAsRead(hashItemToRead);
+                        if (mode === 'reader' && view === 'expanded') {
+                            showArticle(hashItemToRead, false);
+                        }
+                    }
+                    if (hashItemToKeepUnread && /ajaxkeepunread/.test(url)) {
+                        markAsKeepUnread(hashItemToKeepUnread);
+                        if (mode === 'reader' && view === 'expanded') {
+                            showArticle(hashItemToKeepUnread, false);
+                        }
+                    }
+                    if (hashItemToPreload !== false) {
+                        // loadItem(hashItemToPreload, false, hashItemToRead, hashItemToKeepUnread, false);
+                        loadItem(hashItemToPreload, false, hashItemToRead, hashItemToKeepUnread, false);
+                        //loadItem(hashItemToPreload, false, false, false, false);
+                    } else {
+                        // loadItem(false, false, hashItemToRead, hashItemToKeepUnread, false);
+                        loadItem(false, false, hashItemToRead, hashItemToKeepUnread, false);
+                    }
+                }
+                // finishWorking();
+            }
+        }
         xhr.send(null);
-        timeout = setTimeout(function() {
-            aborted = true;
-            xhr.abort();
-          }, 2000);
     } else {
-        setStatus(status);
+        finishWorking();
     }
 }
 
-function update(feed) {
+// next/previous item Show/Reader list
+function nextItemList() {
+    var hashCurrentToRead = false,
+        hashCurrentToKeepUnread = false,
+        hashNextToLoad = false,
+        hashNextToPreload = false;
+    if (currentItemInd < listItems.length) {
+        currentItemInd++;
+        hashCurrentToRead = listItems[currentItemInd];
+        hashNextToLoad = listItems[currentItemInd];
+    }
+    loadItem(hashNextToLoad, hashNextToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+}
+
+function previousItemList() {
+    var hashCurrentToRead = false,
+        hashCurrentToKeepUnread = false,
+        hashPreviousToLoad = false,
+        hashPreviousToPreload = false;
+    if (currentItemInd > 0) {
+        currentItemInd--;
+        hashCurrentToRead = listItems[currentItemInd];
+        hashPreviousToLoad = listItems[currentItemInd];
+    } else {
+        currentItemInd = -1;
+    }
+    loadItem(hashPreviousToLoad, hashPreviousToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+}
+
+// Show expanded
+function nextItemShowExpanded() {
+    var hashCurrentToRead = false,
+        hashCurrentToKeepUnread = false,
+        hashNextToLoad = false,
+        hashNextToPreload = false;
+    if (currentItemInd >= 0 && currentItemInd < listItems.length) {
+        hashCurrentToRead = listItems[currentItemInd];
+    }
+    currentItemInd++;
+    if (currentItemInd < listItems.length) {
+        hashNextToLoad = listItems[currentItemInd];
+        if (currentItemInd + 1 < listItems.length) {
+            hashNextToPreload = listItems[currentItemInd + 1];
+        }
+    } else {
+        currentItemInd--;
+        // uncomment if you don't want to hide the last article
+        // hashNextToLoad = listItems[currentItemInd];
+    }
+    if (document.getElementById('keepunread')!= null) {
+        if (document.getElementById('keepunread').checked) {
+            hashCurrentToKeepUnread = hashCurrentToRead;
+        }
+    }
+    loadItem(hashNextToLoad, hashNextToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+}
+
+
+function previousItemShowExpanded() {
+    var hashCurrentToRead = false,
+        hashCurrentToKeepUnread = false,
+        hashPreviousToLoad = false,
+        hashPreviousToPreload = false;
+    if (currentItemInd >= 0 && currentItemInd < listItems.length) {
+        hashCurrentToRead = listItems[currentItemInd];
+    }
+    currentItemInd--;
+    if (currentItemInd >= 0) {
+        hashPreviousToLoad = listItems[currentItemInd];
+        if (currentItemInd - 1 >= 0) {
+            hashPreviousToPreload = listItems[currentItemInd - 1];
+        }
+    } else {
+        currentItemInd++;
+        hashPreviousToLoad = listItems[currentItemInd];
+    }
+    if (document.getElementById('keepunread')!= null) {
+        if (document.getElementById('keepunread').checked) {
+            hashCurrentToKeepUnread = hashCurrentToRead;
+        }
+    }
+    loadItem(hashPreviousToLoad, hashPreviousToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+}
+
+// next/previous item
+function nextItem() {
+    if (!working) {
+        working = true;
+        if (mode === 'show') {
+            if (view === 'list') {
+                nextItemList();
+            } else {
+                nextItemShowExpanded();
+            }
+        } else if (mode === 'reader') {
+            if (view === 'list') {
+                nextItemList();
+            } else {
+                nextItemReaderExpanded();
+            }
+        }
+    } else {
+        workingsave = 'next';
+    }
+}
+
+function previousItem() {
+    if (!working) {
+        working = true;
+        if (mode === 'show') {
+            if (view === 'list') {
+                previousItemList();
+            } else {
+                previousItemShowExpanded();
+            }
+        } else if (mode === 'reader') {
+            if (view === 'list') {
+                previousItemList();
+            } else {
+                previousItemReaderExpanded();
+            }
+        }
+    } else {
+        workingsave = 'previous';
+    }
+}
+
+function getAuthor(feedHash) {
+    for (feed in listFeeds) {
+        if (listFeeds[feed][0] === feedHash) {
+            return listFeeds[feed][1];
+        }
+    }
+    return '';
+}
+
+function addItemsToList(list, where) {
+    var newList = [],
+        listUl = document.getElementById('list-items');
+
+    for (item in list) {
+        var itemHash = item.substr(5,12);
+        if (listItems.indexOf(itemHash) === -1) {
+            listItems.push(itemHash);
+            if (where === 'bottom') {
+                newList.push(itemHash);
+            } else {
+                newList.unshift(itemHash);
+            }
+        }
+    }
+
+    for (var i = 0; i < newList.length; i++) {
+        var item = 'item-' + newList[i];
+        feedHash = item.substr(5,6);
+        itemLi = document.createElement('li');
+        itemLi.className = 'item';
+        span = document.createElement('span');
+        span.className = 'item-info';
+        if (list[item][3]) {
+            addClass(span, 'read');
+        }
+        if (view === 'list') {
+            span.onclick= function () { showArticle(this.parentNode.lastChild.id.substr(5,12), true); };
+        }
+        spanfeed = document.createElement('span');
+        spanfeed.className = 'item-feed nomobile';
+        spanfeed.innerHTML = ' - ' + getAuthor(feedHash);
+        spantitle = document.createElement('span');
+        spantitle.className = 'item-title';
+        spantitle.innerHTML = '&nbsp;' + list[item][0];
+        spandescription = document.createElement('span');
+        spandescription.className = 'item-description nomobile';
+        spandescription.innerHTML = '&nbsp;' + list[item][1];
+        divitem = document.createElement('div');
+        divitem.id = item;
+        span.appendChild(spanfeed);
+        span.appendChild(spantitle);
+        span.appendChild(spandescription);
+        itemLi.appendChild(span);
+        itemLi.appendChild(divitem);
+        if (where === 'bottom') {
+            listUl.appendChild(itemLi);
+        } else {
+            listUl.insertBefore(itemLi, listUl.firstChild);
+        }
+        if (mode === 'reader' && view === 'expanded') {
+            var cacheItem = {};
+            cacheItem['title'] = list[item][0];
+            cacheItem['description'] = list[item][1];
+            cacheItem['time'] = list[item][2];
+            cacheItem['read'] = list[item][3];
+            cacheItem['link'] = list[item][4];
+            cacheItem['author'] = list[item][5];
+            cacheItem['content'] = list[item][6];
+            cacheItem['xmlUrl'] = list[item][7];
+
+            cache[item] = cacheItem;
+            showArticle(newList[i], false);
+        }
+    }
+    return newList.length;
+}
+
+function loadUnreadItems() {
+    if (currentUnreadItems !== 0) {
+        loadItems('', '', 'top', 'unread');
+    }
+}
+
+function loadItems(page, numInitItems, where, filter) {
     var xhr = new XMLHttpRequest();
-    var url = '?ajaxupdate='+feed;
+    var url = '?ajaxlist';
+    if (currentHash !== '') {
+        url += '=' + currentHash;
+    }
+    if (currentFilter !== '' && filter === '') {
+        url += '&filter=' + currentFilter;
+    }
+    if (filter !== '') {
+        url += '&filter=' + filter;
+    }
+    if (view !== '') {
+        url += '&view=' + view;
+    }
+    if (page !== '') {
+        url += '&page=' + page;
+    }
+    if (numInitItems !== '') {
+        url += '&numInitItems=' + numInitItems;
+    }
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
         // Everything OK
-        if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-                res = JSON.parse(xhr.responseText);
-                addItems(res);
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            var numAddedItems = addItemsToList(JSON.parse(xhr.responseText), where);
+            if (page !== '') {
+                numLoadedItems += numAddedItems;
+                currentPage = page;
+                checkScroll();
+            } else {
+                currentUnreadItems = 0;
             }
-            listFeedsHash[currentFeedInd][3] =
-            Math.round((new Date().getTime())/1000);
-            updatingFeed = false;
-            currentFeedInd++;
+            setTitle();
         }
     }
     xhr.send(null);
 }
 
-function updateCurrentFeed() {
-    if (!updatingFeed) {
-        updatingFeed = true;
-        if (currentFeedInd >= listFeedsHash.length) {
-            updatingFeed = false;
-            currentFeedInd = 0;
-            window.clearInterval(updateTimer);
-            setStatus(status);
-        } else {
-            if ((Math.round( ( new Date().getTime() ) / 1000 )
-                 - listFeedsHash[currentFeedInd][3])
-                / 60
-                >
-                listFeedsHash[currentFeedInd][4]
-            ) {
-                setStatus("updating : "+listFeedsHash[currentFeedInd][2]);
-                update(listFeedsHash[currentFeedInd][1]);
-            } else {
-                updatingFeed = false;
-                currentFeedInd++;
-            }
-        }
+//http://scottandrew.com/weblog/articles/cbs-events
+function addEvent(obj, evType, fn, useCapture) {
+    if (obj.addEventListener) {
+        obj.addEventListener(evType, fn, useCapture);
+        return true;
+    } else if (obj.attachEvent) {
+        var r = obj.attachEvent("on"+evType, fn);
+        return r;
+    } else {
+        alert("Handler could not be attached");
     }
 }
 
-function updateFeeds() {
-    if (!updatingFeed) {
-        currentFeedInd = 0;
-        updateTimer = window.setInterval(updateCurrentFeed, 200);
+function removeEvent(obj, evType, fn, useCapture) {
+    if (obj.removeEventListener) {
+        obj.removeEventListener(evType, fn, useCapture);
+        return true;
+    } else if (obj.detachEvent) {
+        var r = obj.detachEvent("on"+evType, fn);
+        return r;
+    } else {
+        alert("Handler could not be removed");
     }
-}
-
-function setStatus(text) {
-    document.getElementById('status').innerHTML = text;
-}
-
-function initAjax() {
-    show = document.getElementById('show');
-    if (show) {
-        status = document.getElementById('status').innerHTML;
-        var xhr = new XMLHttpRequest();
-        var url = '?ajaxlist';
-        xhr.open('GET', url, true);
-        xhr.onreadystatechange = function() {
-            // Everything OK
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                res = JSON.parse(xhr.responseText);
-                listItemsHash = res.items;
-                listFeedsHash = res.feeds;
-                itemsUnread = res.unread;
-                if (listItemsHash.length>0) {
-                    getCurrentItem();
-                }
-                if (listItemsHash.length>1) {
-                    getNextItem();
-                }
-                setTitle();
-                updateFeeds();
-                window.setInterval(updateFeeds, 60000);
-            }
-        }
-        xhr.send(null);
-    }
-}
-
-function toggle(id, el) {
-  var e = document.getElementById(id);
-
-  if (e.style.display == '') {
-      e.style.display = 'none';
-      el.innerHTML = '+';
-  } else {
-      e.style.display = '';
-      el.innerHTML = '-';
-  }
 }
 
 function checkKey(e) {
@@ -1609,27 +2030,25 @@ function checkKey(e) {
         if (e.keyCode) code = e.keyCode;
         else if (e.which) code = e.which;
         switch(code) {
+        case 85: // 'U'
+        case 117: // 'u'
+            if (mode === 'show') {
+                toggleKeepUnread();
+            }
+            break;
         case 39: // right arrow
         case 110: // 'n'
         case 78: // 'N'
         case 106: // 'j'
         case 74: // 'J'
-            if (document.getElementById('show')!=null) {
-                nextItem();
-            } else if (document.getElementById('reader')!=null) {
-                nextPage();
-            }
+            nextItem();
             break;
         case 37: // left arrow
         case 112: // 'p'
         case 80 : // 'P'
         case 107: // 'k'
         case 75: // 'K'
-            if (document.getElementById('show')!=null) {
-                previousItem();
-            } else if (document.getElementById('reader')!=null) {
-                previousPage();
-            }
+            previousItem();
             break;
         case 115: // 's'
         case 83: // 'S'
@@ -1699,38 +2118,111 @@ function checkMove(e) {
     }
 }
 
-//http://scottandrew.com/weblog/articles/cbs-events
-function addEvent(obj, evType, fn, useCapture) {
-    if (obj.addEventListener) {
-        obj.addEventListener(evType, fn, useCapture);
-        return true;
-    } else if (obj.attachEvent) {
-        var r = obj.attachEvent("on"+evType, fn);
-        return r;
+function checkScroll() {
+    var elt = null;
+    if (mode === 'show') {
+        if (view === 'list') {
+            elt = document.documentElement;
+        }
     } else {
-        alert("Handler could not be attached");
+        var container = document.getElementById('container');
+        if (container) {
+            elt = container;
+        }
+
+        if (document.getElementById('feeds')
+            && window.getComputedStyle(document.getElementById('feeds'), null).getPropertyValue('display') === 'none') {
+            // mobile version
+            elt = document.documentElement;
+        }
     }
-}
-function removeEvent(obj, evType, fn, useCapture) {
-    if (obj.removeEventListener) {
-        obj.removeEventListener(evType, fn, useCapture);
-        return true;
-    } else if (obj.detachEvent) {
-        var r = obj.detachEvent("on"+evType, fn);
-        return r;
-    } else {
-        alert("Handler could not be removed");
+    if (elt != null) {
+        if (elt.scrollTop == 0) {
+            //console.log('top');
+        }
+        if (elt.scrollHeight
+            <=
+            elt.scrollTop
+            + elt.offsetHeight
+            + Math.round(elt.scrollHeight / 10)) {
+            //console.log('bottom');
+            if (currentPage != -1) {
+                var page = currentPage;
+                currentPage = -1;
+                if (numLoadedItems < numInitItems) {
+                    loadItems(page + 1, numInitItems, 'bottom', '');
+                }
+            }
+        }
     }
 }
 
-// when document is loaded animated images
+// add some usefful events
 if (document.getElementById && document.createTextNode) {
-    addEvent(window, 'load', initAjax);
+    addEvent(window, 'load', _init);
     addEvent(window, 'keypress', checkKey);
     addEvent(window, 'touchstart', checkMove);
+    addEvent(window, 'scroll', checkScroll);
+    var container = document.getElementById('container');
+    if (container != null) {
+        addEvent(container, 'scroll', checkScroll);
+    }
 }
+
+
+// init function when document is loaded
+function _init() {
+    window.scrollTo(0,0);
+    currentPage = 1;
+    unreadHashItems = $listUnreadItems;
+    currentUnreadItems = unreadHashItems.length;
+    listFeeds = $listFeeds;
+    status = document.getElementById('status').innerHTML;
+
+    for (var i = 0; i < listFeeds.length; i++) {
+        // if time differs between server and client
+        listFeeds[i][2] = getTimeMin() - listFeeds[i][2];
+    }
+
+    if (mode === 'show') { // show mode
+        if (view === 'list') { // list view
+            plusMenu(true);
+            if (currentUnreadItems !== 0) {
+                loadItems(currentPage, numInitItems, 'top', '');
+            }
+            currentUnreadItems = 0;
+        } else { // expanded view
+            var load = (unreadHashItems.length > 0)
+                ? unreadHashItems[0]
+                : false,
+                preload = (unreadHashItems.length > 1)
+                ? unreadHashItems[1]
+                : false;
+            loadItem(load, preload, false, false, true);
+            if (load) {
+                currentItemInd = 0;
+            }
+            listItems = unreadHashItems.slice(0);
+        }
+    } else { // reader mode
+        if (view === 'list') { // list view
+            loadItems(currentPage, numInitItems, 'top', '');
+            currentUnreadItems = 0;
+        } else { // expanded view
+            loadItems(currentPage, numInitItems, 'top', '');
+            currentUnreadItems = 0;
+        }
+    }
+    setTitle();
+
+    if ($doUpdate) {
+        updateFeeds();
+        window.setInterval(updateFeeds, 60000);
+    }
+}
+
 </script>
-JS;
+JAVASCRIPT;
     }
 
     public function importPage()
@@ -1808,8 +2300,8 @@ class Feed
                         );
                     }
                 }
-                $timeupdate = 'Auto';
-                $lastupdate = 0;
+                $timeUpdate = 'auto';
+                $lastUpdate = 0;
                 $items = array();
                 $xmlUrl = '';
                 if (isset($arrayInfo['xmlUrl'])) {
@@ -2262,9 +2754,10 @@ class Feed
                     : time();
                 $newItems[$hashUrl]['link'] = $tmpItem['link'];
                 $newItems[$hashUrl]['author'] = $tmpItem['author'];
-                $newItems[$hashUrl]['description'] = substr(
+                mb_internal_encoding("UTF-8");
+                $newItems[$hashUrl]['description'] = mb_substr(
                     strip_tags($tmpItem['description']), 0, 500
-                ) . "...";
+                );
                 $newItems[$hashUrl]['content'] = $tmpItem['content'];
                 $newItems[$hashUrl]['read'] = 0;
             }
@@ -2423,46 +2916,30 @@ class Feed
         return false;
     }
 
-    public function getFeedsUpdate()
+    public function getListFeeds()
     {
         $list = array();
         foreach (array_keys($this->_data) as $feedHash) {
+            $item = current($this->_data[$feedHash]['items']);
+            $sortInfo = time()-$item['time'];
             $list[] = array(
-                $this->getAutoTimeUpdate($this->_data[$feedHash], false),
+                $sortInfo,
                 $feedHash,
                 $this->_data[$feedHash]['title'],
-                $this->_data[$feedHash]['lastUpdate'],
+                (int) ((time() - $this->_data[$feedHash]['lastUpdate']) / 60),
                 $this->getTimeUpdate($this->_data[$feedHash])
             );
         }
+
         sort($list);
 
-        return $list;
-    }
+        // Remove sortInfo
+        $shift = function(&$array) {
+            array_shift($array); return $array;
+        };
+        $list = array_map($shift, $list);
 
-    public function getAutoTimeUpdate($feed, $auto = true)
-    {
-        // auto with the last 7 items
-        $items = array_slice($feed['items'], 0, 7, true);
-        $sum = 0;
-        $firstTime = 0;
-        $nbItems = 0;
-        foreach ($items as $item) {
-            if ($firstTime == 0) {
-                $firstTime = $item['time'];
-            }
-            $sum += $firstTime-$item['time'];
-            $nbItems++;
-        }
-        $freq = 0;
-        if ($nbItems!=0) {
-            $freq = (int) (($sum / $nbItems) / 60);
-        }
-        if ($auto) {
-            return $freq;
-        } else {
-            return time()-$firstTime;
-        }
+        return $list;
     }
 
     public function getTimeUpdate($feed)
@@ -2470,7 +2947,22 @@ class Feed
         $max = $feed['timeUpdate'];
 
         if ($max == 'auto') {
-            $freq = $this->getAutoTimeUpdate($feed);
+            // auto with the last 7 items
+            $items = array_slice($feed['items'], 0, 7, true);
+            $sum = 0;
+            $firstTime = 0;
+            $nbItems = 0;
+            foreach ($items as $item) {
+                if ($firstTime == 0) {
+                    $firstTime = $item['time'];
+                }
+                $sum += $firstTime-$item['time'];
+                $nbItems++;
+            }
+            $freq = 0;
+            if ($nbItems!=0) {
+                $freq = (int) (($sum / $nbItems) / 60);
+            }
             if ($freq >= MIN_TIME_UPDATE && $freq < $this->kfc->maxUpdate) {
                 $max = $freq;
             } else {
@@ -2478,7 +2970,8 @@ class Feed
             }
         } elseif ($max == 'max') {
             $max = $this->kfc->maxUpdate;
-        } elseif ((int) $max < 0 && (int) $max > $this->kfc->maxUpdate) {
+        } elseif ((int) $max < MIN_TIME_UPDATE
+                  || (int) $max > $this->kfc->maxUpdate) {
             $max = $this->kfc->maxUpdate;
         }
 
@@ -2563,7 +3056,10 @@ class Feed
                             . $newItems[$itemHash]['author'] . ')';
                     }
                     $newItems[$itemHash]['xmlUrl'] = $xmlUrl;
+                    $newItems[$feedHash . $itemHash] = $newItems[$itemHash];
+                    unset($newItems[$itemHash]);
                 }
+
 
                 $this->_data[$feedHash]['items']
                     = array_merge($newItems, $oldItems);
@@ -2579,6 +3075,7 @@ class Feed
                 }
 
                 uasort($this->_data[$feedHash]['items'], "Feed::compItemsR");
+
                 // Check if quota exceeded
                 if ($countAll > $this->kfc->maxItems) {
                     $this->_data[$feedHash]['items']
@@ -2641,21 +3138,21 @@ class Feed
     public function mark($hash, $read, $force = false)
     {
         $list = array_keys($this->getItems($hash, false));
-        foreach ($this->_data as $feedHash => $feed) {
-            foreach ($feed['items'] as $itemHash => $item) {
-                $current =& $this->_data[$feedHash]['items'];
-                if (in_array($itemHash, $list)) {
-                    if ($force) {
-                        $current[$itemHash]['read'] = $read;
-                    } else {
-                        if ($read == 1) {
-                            $isRead = $current[$itemHash]['read'];
-                            if ($isRead != -1) {
-                                $current[$itemHash]['read'] = $read;
-                            }
-                        } else {
-                            $current[$itemHash]['read'] = $read;
+
+        foreach ($list as $itemHash) {
+            $feedHash = substr($itemHash, 0, 6);
+            if (isset($this->_data[$feedHash]['items'][$itemHash])) {
+                $current = &$this->_data[$feedHash]['items'][$itemHash];
+                if ($force) {
+                    $current['read'] = $read;
+                } else {
+                    if ($read == 1) {
+                        $isRead = $current['read'];
+                        if ($isRead != -1) {
+                            $current['read'] = $read;
                         }
+                    } else {
+                        $current['read'] = $read;
                     }
                 }
             }
@@ -2667,7 +3164,7 @@ class Feed
     public function hashType($hash)
     {
         $type = '';
-        if (empty($hash)) {
+        if (empty($hash) || $hash=='all') {
             $type = '';
         } else {
             if (isset($this->_data[$hash])) {
@@ -2712,18 +3209,17 @@ class Feed
                     }
                 } else {
                     // should be an item
-                    foreach ($this->_data as $xmlUrl => $arrayInfo) {
-                        if (isset($arrayInfo['items'][$hash])) {
-                            $list[$hash] = $arrayInfo['items'][$hash];
-                            break;
-                        }
+                    $feedHash = substr($hash, 0, 6);
+                    if (isset($this->_data[$feedHash]['items'][$hash])) {
+                        $list[$hash] = $this->_data[$feedHash]['items'][$hash];
                     }
                 }
             }
         }
 
         // remove useless items
-        if (($filter === true && $this->kfc->newItems) || $filter === 'new') {
+        if (($filter === true && $this->kfc->newItems)
+            || $filter === 'unread') {
             foreach ($list as $itemHash => $item) {
                 if ($item['read'] == 1) {
                     unset($list[$itemHash]);
@@ -2929,10 +3425,17 @@ class MyTool
 
     public static function getUrl()
     {
-        $url = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-        $url = preg_replace('/([?&].*)$/', '', $url);
+        $https = (!empty($_SERVER['HTTPS'])
+                  && (strtolower($_SERVER['HTTPS']) == 'on'))
+            || $_SERVER["SERVER_PORT"] == '443'; // HTTPS detection.
+        $serverport = ($_SERVER["SERVER_PORT"] == '80'
+                       || ($https && $_SERVER["SERVER_PORT"] == '443')
+                       ? ''
+                       : ':' . $_SERVER["SERVER_PORT"]);
 
-        return $url;
+        return 'http' . ($https ? 's' : '') . '://'
+            . $_SERVER["SERVER_NAME"] . $serverport . $_SERVER['SCRIPT_NAME'];
+
     }
 
     public static function rrmdir($dir)
@@ -3117,14 +3620,28 @@ if (isset($_GET['login'])) {
     if (!empty($_POST['login'])
         && !empty($_POST['password'])
     ) {
+        if (!Session::isToken($_POST['token'])) {
+            die('Wrong token.');
+        }
         if (Session::login(
             $kfc->login,
             $kfc->hash,
             $_POST['login'],
             sha1($_POST['password'].$_POST['login'].$kfc->salt)
         )) {
+            if (!empty($_POST['longlastingsession'])) {
+                // (31536000 seconds = 1 year)
+                $_SESSION['longlastingsession'] = 31536000;
+                $_SESSION['expires_on'] =
+                    time() + $_SESSION['longlastingsession'];
+                session_set_cookie_params($_SESSION['longlastingsession']);
+            } else {
+                session_set_cookie_params(0); // when browser closes
+            }
+            session_regenerate_id(true);
+
             $rurl = $_POST['returnurl'];
-            if (empty($rurl)) {
+            if (empty($rurl) || strpos($rurl, '?login') !== false) {
                 $rurl = MyTool::getUrl();
             }
             header('Location: '.$rurl);
@@ -3132,23 +3649,46 @@ if (isset($_GET['login'])) {
         }
         die("Login failed !");
     } else {
-        $ref = '';
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            $ref = $_SERVER['HTTP_REFERER'];
-        }
-        echo '
-<h1>Login</h1>
-<form method="post" action="?login">
-  <input type="hidden" name="returnurl" value="'.$ref.'" />
-  <p><label>Login: <input type="text" name="login" /></label></p>
-  <p><label>Password: <input type="password" name="password" /></label></p>
-  <p><input type="submit" value="OK" class="submit" /></p>
-</form>';
+        echo $kfp->htmlPage('Login', $kfp->loginPage());
     }
 } elseif (isset($_GET['logout'])) {
     //Logout
     Session::logout();
     $rurl = (empty($_SERVER['HTTP_REFERER']) ? '?' : $_SERVER['HTTP_REFERER']);
+    header('Location: '.$rurl);
+    exit();
+} elseif (isset($_GET['update'])
+          && (Session::isLogged()
+              || (isset($_GET['cron'])
+                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash)))) {
+    // Update
+    $kf->loadData();
+    $hash = substr(trim($_GET['update'], '/'), 0, 6);
+    $type = $kf->hashType($hash);
+    switch($type) {
+    case 'feed':
+        $kf->updateChannelItems($hash);
+        break;
+    case 'folder':
+        $feedsHash = $kf->getFeedsHashFromFolderHash($hash);
+        foreach ($feedsHash as $feedHash) {
+            $kf->updateChannelItems($feedHash);
+        }
+        break;
+    case '':
+        $feedsHash = array_keys($kf->getFeeds());
+        foreach ($feedsHash as $feedHash) {
+            $kf->updateChannelItems($feedHash);
+        }
+        break;
+    case 'item':
+    default:
+        break;
+    }
+    $rurl = MyTool::getUrl();
+    if (isset($_SERVER['HTTP_REFERER'])) {
+        $rurl = $_SERVER['HTTP_REFERER'];
+    }
     header('Location: '.$rurl);
     exit();
 } elseif (isset($_GET['config']) && Session::isLogged()) {
@@ -3225,13 +3765,13 @@ if (isset($_GET['login'])) {
     if ($kf->addChannel($_GET['newfeed'])) {
         // Add success
         header(
-            'Location: ' . MyTool::getUrl() . '?' . $kfc->defaultView
+            'Location: ' . MyTool::getUrl() . '/?' . $kfc->getView()
             . '=' . MyTool::smallHash($_GET['newfeed'])
         );
         exit();
     } else {
         $returnurl = empty($_SERVER['HTTP_REFERER'])
-            ? '?' . $kfc->defaultView
+            ? MyTool::getUrl() . '/?' . $kfc->getView()
             : $_SERVER['HTTP_REFERER'];
         echo '<script>alert("The feed you are trying to add already exists'
             . ' or is wrong. Check your feed or try again later.");'
@@ -3240,18 +3780,23 @@ if (isset($_GET['login'])) {
         exit;
         // Add fail
     }
-} elseif ((isset($_GET['read']) || isset($_GET['unread']))
+} elseif ((isset($_GET['read'])
+           || isset($_GET['unread'])
+           || isset($_GET['keepunread']))
           && Session::isLogged()) {
     // mark all as read : item, feed, folder, all
     $kf->loadData();
     $hash = '';
     $read = 1;
     if (isset($_GET['read'])) {
-        $hash = substr(trim($_GET['read'], '/'), 0, 6);
+        $hash = $_GET['read'];
         $read = 1;
-    } else {
-        $hash = substr(trim($_GET['unread'], '/'), 0, 6);
+    } elseif (isset($_GET['unread'])) {
+        $hash = $_GET['unread'];
         $read = 0;
+    } else {
+        $hash = $_GET['keepunread'];
+        $read = -1;
     }
     $kf->mark($hash, $read);
     $rurl = MyTool::getUrl();
@@ -3299,11 +3844,7 @@ if (isset($_GET['login'])) {
 
             $kf->removeFeed($hash);
 
-            $rurl = MyTool::getUrl();
-            if (isset($_POST['returnurl'])) {
-                $rurl = $_POST['returnurl'];
-            }
-            header('Location: '.$rurl);
+            header('Location: ?'.$kfc->getMode());
             exit();
         } elseif (isset($_POST['cancel'])) {
             if (!Session::isToken($_POST['token'])) {
@@ -3380,42 +3921,12 @@ if (isset($_GET['login'])) {
         $kfp->readerPage($kf)
     );
     exit;
-} elseif (isset($_GET['update']) && Session::isLogged()) {
-    // Update
-    $kf->loadData();
-    $hash = substr(trim($_GET['update'], '/'), 0, 6);
-    $type = $kf->hashType($hash);
-    switch($type) {
-    case 'feed':
-        $kf->updateChannelItems($hash);
-        break;
-    case 'folder':
-        $feedsHash = $kf->getFeedsHashFromFolderHash($hash);
-        foreach ($feedsHash as $feedHash) {
-            $kf->updateChannelItems($feedHash);
-        }
-        break;
-    case '':
-        $feedsHash = array_keys($kf->getFeeds());
-        foreach ($feedsHash as $feedHash) {
-            $kf->updateChannelItems($feedHash);
-        }
-        break;
-    case 'item':
-    default:
-        break;
-    }
-    $rurl = MyTool::getUrl();
-    if (isset($_SERVER['HTTP_REFERER'])) {
-        $rurl = $_SERVER['HTTP_REFERER'];
-    }
-    header('Location: '.$rurl);
-    exit();
-} elseif (isset($_GET['ajaxlist'])
-          || isset($_GET['ajaxupdate'])
-          || isset($_GET['ajaxitem'])
-          || isset($_GET['ajaxread'])
-          || isset($_GET['ajaxkeepunread'])
+} elseif ((isset($_GET['ajaxlist'])
+           || isset($_GET['ajaxupdate'])
+           || isset($_GET['ajaxitem'])
+           || isset($_GET['ajaxread'])
+           || isset($_GET['ajaxkeepunread']))
+          && (Session::isLogged() || $kfc->public)
 ) {
     // Ajax
     $kf->loadData();
@@ -3425,20 +3936,56 @@ if (isset($_GET['login'])) {
     header('Content-type: application/json; charset=UTF-8');
 
     if (isset($_GET['ajaxlist'])) {
-        $list = $kf->getItems('all', 'new');
-        $feedsUpdate = array();
-        if (Session::isLogged()) {
-            $feedsUpdate = $kf->getFeedsUpdate();
+        $hash = $_GET['ajaxlist'];
+        if (empty($hash)) {
+            $hash = 'all';
         }
-        echo json_encode(
-            array(
-                'items' => array_keys($list),
-                'feeds' => $feedsUpdate,
-                'unread' => $kf->getUnread()
-            )
-        );
-        exit;
-    } elseif (isset($_GET['ajaxupdate'])) {
+        $filter = $kfc->newItems ? 'unread' : 'all';
+        if (isset($_GET['filter'])) {
+            $filter = $_GET['filter'];
+        }
+
+        $list = $kf->getItems($hash, $filter);
+
+        if (isset($_GET['numInitItems'])) {
+            $num = $_GET['numInitItems'];
+            $list = array_slice($list, count($list)-$num, $num, true);
+        }
+
+        if (isset($_GET['page'])) {
+            $page = $_GET['page'];
+            $begin = ($page - 1) * $kf->kfc->byPage;
+            $list = array_slice($list, $begin, $kf->kfc->byPage, true);
+        }
+
+        $listInfo = array();
+        foreach (array_keys($list) as $hashItem) {
+            $feedHash = substr($hashItem, 0, 6);
+            if (isset($_GET['view']) && $_GET['view'] === 'expanded') {
+                $listInfo['item-' . $hashItem] =
+                    array(
+                        $list[$hashItem]['title'],
+                        $list[$hashItem]['description'],
+                        $list[$hashItem]['time'],
+                        $list[$hashItem]['read'],
+                        $list[$hashItem]['link'],
+                        $list[$hashItem]['author'],
+                        $list[$hashItem]['content'],
+                        $list[$hashItem]['xmlUrl']
+                    );
+            } else {
+                $listInfo['item-' . $hashItem] =
+                    array(
+                        $list[$hashItem]['title'],
+                        $list[$hashItem]['description'],
+                        $list[$hashItem]['time'],
+                        $list[$hashItem]['read']
+                    );
+            }
+        }
+        echo json_encode($listInfo);
+        exit();
+    } elseif (isset($_GET['ajaxupdate']) && Session::isLogged()) {
         $kf->loadData();
         $hash = substr(trim($_GET['ajaxupdate'], '/'), 0, 6);
         $type = $kf->hashType($hash);
@@ -3462,36 +4009,33 @@ if (isset($_GET['login'])) {
         default:
             break;
         }
-        $list = $kf->getItems('all', 'new');
+        $list = $kf->getItems($hash, 'unread');
         echo json_encode(array_keys($list));
         exit;
-    } elseif (isset($_GET['ajaxitem'])) {
-        if (!empty($_GET['ajaxitem'])) {
-            $hash = substr(trim($_GET['ajaxitem'], '/'), 0, 6);
-        }
+    }
+
+    if (isset($_GET['ajaxitem'])) {
+        $hash = $_GET['ajaxitem'];
         if ($kf->hashType($hash)=='item') {
             $list = $kf->getItems($hash, false);
-            echo json_encode($list[$hash]);
-            exit;
-        }
-    } elseif (isset($_GET['ajaxread']) && Session::isLogged()) {
-        if (!empty($_GET['ajaxread'])) {
-            $hash = substr(trim($_GET['ajaxread'], '/'), 0, 6);
-            $kf->mark($hash, 1, true);
-            echo json_encode(true);
-            exit;
-        }
-    } elseif (isset($_GET['ajaxkeepunread']) && Session::isLogged()) {
-        if (!empty($_GET['ajaxkeepunread'])) {
-            $hash = substr(trim($_GET['ajaxkeepunread'], '/'), 0, 6);
-            $kf->mark($hash, -1);
-            echo json_encode(true);
-            exit;
+            if (isset($list[$hash])) {
+                echo json_encode($list[$hash]);
+            }
         }
     }
-    echo json_encode(false);
+    if (isset($_GET['ajaxread']) && Session::isLogged()) {
+        if (!empty($_GET['ajaxread'])) {
+             $kf->mark($_GET['ajaxread'], 1, true);
+        }
+    }
+    if (isset($_GET['ajaxkeepunread']) && Session::isLogged()) {
+        if (!empty($_GET['ajaxkeepunread'])) {
+             $kf->mark($_GET['ajaxkeepunread'], -1, true);
+        }
+    }
     exit;
-} elseif (isset($_GET['reader']) || isset($_GET['page'])) {
+} elseif ((isset($_GET['reader']) || isset($_GET['page']))
+          && (Session::isLogged() || $kfc->public)) {
     // List items : all, folder, feed or entry
     $hash = '';
     if (!empty($_GET['reader'])) {
@@ -3511,7 +4055,7 @@ if (isset($_GET['login'])) {
         ),
         $kfp->readerPage($kf, $hash, $page)
     );
-} elseif (isset($_GET['show'])) {
+} elseif ((isset($_GET['show'])) && (Session::isLogged() || $kfc->public)) {
     // show, read article by article as Google reader
     // using 'n' and 'p' with ajax
     $kf->loadData();
@@ -3523,6 +4067,10 @@ if (isset($_GET['login'])) {
     );
     exit();
 } else {
-    header('Location: ?'.$kfc->defaultView);
+    if (Session::isLogged() || $kfc->public) {
+        header('Location: ?'.$kfc->getMode());
+    } else {
+        header('Location: ?login');
+    }
     exit();
 }

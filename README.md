@@ -1,4 +1,4 @@
-kriss_feed (version 2)
+kriss_feed (version 3)
 ======================
 
 A simple and smart (or stupid) feed reader.
@@ -28,12 +28,18 @@ Features
   * simple share with shaarli
   * auto update in show view
 
+* version 3
+  * new format : item hash -> feedHash + itemHash
+  * list/expanded view
+  * autoupdate in reader view
+  * auto cache 10 last downloaded articles
+  * automatic load when scroll
+
 TODOs
 =====
-* auto show if link is a image
-* improve reader view
+* auto show if link is a image/media
 * save folder state (opened/closed)
-* show new items first
+* show new items first (when all items)
 
 Licence
 =======
