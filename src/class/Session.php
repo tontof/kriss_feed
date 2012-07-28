@@ -96,7 +96,7 @@ class Session
      * @param string $loginTest    Login to compare with login reference
      * @param string $passwordTest Password to compare with password reference
      * @param array  $pValues      Array of variables to store in SESSION
-     * 
+     *
      * @return true|false          True if login and password are correct, false
      *                             otherwise
      */
@@ -175,7 +175,7 @@ class Session
      * Tells if a token is ok. Using this function will destroy the token.
      *
      * @param string $token Token to test
-     * 
+     *
      * @return true|false   True if token is correct, false otherwise
      */
     public static function isToken($token)

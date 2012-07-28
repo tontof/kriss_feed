@@ -66,14 +66,14 @@ class Feed_Conf
     public $newItems = true;
 
     /**
-     * Expanded view (or list view)
+     * Default mode (show, reader)
      */
-    public $expandedView = true;
+    public $mode = 'show';
 
     /**
-     * Default view (show, reader)
+     * Dafault view (expanded or list)
      */
-    public $defaultView = 'show';
+    public $view = 'expanded';
 
     /**
      * Public/private feed reader
@@ -179,6 +179,42 @@ class Feed_Conf
                 $this->$method($value);
             }
         }
+    }
+
+    /**
+     * Get current mode (show or reader)
+     *
+     * @return string 'show' or 'reader'
+     */
+    public function getMode()
+    {
+        $mode = $this->mode;
+        if (isset($_GET['show']) && !isset($_GET['reader'])) {
+            $mode = 'show';
+        }
+        if (isset($_GET['reader']) && !isset($_GET['show'])) {
+            $mode = 'reader';
+        }
+
+        return $mode;
+    }
+
+    /**
+     * Get current view (expanded or list)
+     *
+     * @return string 'expanded' or 'list'
+     */
+    public function getView()
+    {
+        $view = $this->view;
+        if (isset($_GET['expanded']) && !isset($_GET['list'])) {
+            $view = 'expanded';
+        }
+        if (isset($_GET['list']) && !isset($_GET['expanded'])) {
+            $view = 'list';
+        }
+
+        return $view;
     }
 
     /**
@@ -292,26 +328,30 @@ class Feed_Conf
     }
 
     /**
-     * ExpandedView setter
+     * Mode setter
      *
-     * @param true|false $expandedView New expandedView
+     * @param string $mode New mode
      */
-    public function setExpandedView($expandedView)
+    public function setMode($mode)
     {
-        $this->expandedView = $expandedView;
+        if ($mode === 'show') {
+            $this->mode = 'show';
+        } elseif ($mode === 'reader') {
+            $this->mode = 'reader';
+        }
     }
 
     /**
-     * DefaultView setter
+     * View setter
      *
-     * @param string $defaultView New defaultView
+     * @param stringn $view New view
      */
-    public function setDefaultView($defaultView)
+    public function setView($view)
     {
-        if ($defaultView == 'show') {
-            $this->defaultView = 'show';
-        } elseif ($defaultView == 'reader') {
-            $this->defaultView = 'reader';
+        if ($view === 'expanded') {
+            $this->view = 'expanded';
+        } elseif ($view === 'list') {
+            $this->view = 'list';
         }
     }
 
@@ -334,7 +374,7 @@ class Feed_Conf
     {
         $data = array('login', 'hash', 'salt', 'title', 'redirector', 'public',
                       'byPage', 'reverseOrder', 'maxUpdate', 'shaarli',
-                      'maxItems', 'newItems', 'expandedView', 'defaultView');
+                      'maxItems', 'newItems', 'view', 'mode');
         $out = '<?php';
         $out .= "\n";
 

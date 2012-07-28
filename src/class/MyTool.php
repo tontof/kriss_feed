@@ -51,7 +51,7 @@ class MyTool
     /**
      * Test if parameter is an URL
      * use http://www.php.net/manual/en/function.filter-var.php instead ?
-     * 
+     *
      * @param string $url Url to check
      *
      * @return true|false True if paramater is a URL, false otherwise
@@ -66,7 +66,7 @@ class MyTool
     /**
      * Test if parameter is an email
      * use http://www.php.net/manual/en/function.filter-var.php instead ?
-     * 
+     *
      * @param string $email Email to check
      *
      * @return true|false   True if paramater is an email, false otherwise
@@ -169,16 +169,26 @@ class MyTool
     }
 
     /**
-     * Return URL website
+     * Returns the server URL (including port and http/https), without path.
+     * eg. "http://myserver.com:8080"
+     * You can append $_SERVER['SCRIPT_NAME'] to get the current script URL.
+     * http://sebsauvage.net/wiki/doku.php?id=php:shaarli
      *
      * @return string URL website
      */
     public static function getUrl()
     {
-        $url = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-        $url = preg_replace('/([?&].*)$/', '', $url);
+        $https = (!empty($_SERVER['HTTPS'])
+                  && (strtolower($_SERVER['HTTPS']) == 'on'))
+            || $_SERVER["SERVER_PORT"] == '443'; // HTTPS detection.
+        $serverport = ($_SERVER["SERVER_PORT"] == '80'
+                       || ($https && $_SERVER["SERVER_PORT"] == '443')
+                       ? ''
+                       : ':' . $_SERVER["SERVER_PORT"]);
 
-        return $url;
+        return 'http' . ($https ? 's' : '') . '://'
+            . $_SERVER["SERVER_NAME"] . $serverport . $_SERVER['SCRIPT_NAME'];
+
     }
 
     /**
@@ -202,7 +212,7 @@ class MyTool
     /**
      * Convert a number of bytes into human readable number of bytes
      * http://www.php.net/manual/fr/function.disk-free-space.php#103382
-     * 
+     *
      * @param integer $bytes Number of bytes to convert into human readable
      *
      * @return string        String of human readable number of bytes

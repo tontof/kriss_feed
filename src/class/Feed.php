@@ -35,7 +35,7 @@ class Feed
 
     /**
      * Import feed from opml file (as exported by google reader,
-     * tiny tiny rss, rss lounge... using 
+     * tiny tiny rss, rss lounge... using
      */
     public function importOpml()
     {
@@ -70,8 +70,8 @@ class Feed
                         );
                     }
                 }
-                $timeupdate = 'Auto';
-                $lastupdate = 0;
+                $timeUpdate = 'auto';
+                $lastUpdate = 0;
                 $items = array();
                 $xmlUrl = '';
                 if (isset($arrayInfo['xmlUrl'])) {
@@ -251,7 +251,7 @@ class Feed
         exit();
     }
 
-    /** 
+    /**
      * Convert opml xml node into array for import
      * http://www.php.net/manual/en/class.domdocument.php#101014
      *
@@ -390,7 +390,7 @@ class Feed
      * Return folder name from a given folder hash
      *
      * @param string $hash Hash corresponding to a folder
-     * 
+     *
      * @return string|false Folder name if exists, false otherwise
      */
     public function getFolder($hash)
@@ -609,9 +609,10 @@ class Feed
                     : time();
                 $newItems[$hashUrl]['link'] = $tmpItem['link'];
                 $newItems[$hashUrl]['author'] = $tmpItem['author'];
-                $newItems[$hashUrl]['description'] = substr(
+                mb_internal_encoding("UTF-8");
+                $newItems[$hashUrl]['description'] = mb_substr(
                     strip_tags($tmpItem['description']), 0, 500
-                ) . "...";
+                );
                 $newItems[$hashUrl]['content'] = $tmpItem['content'];
                 $newItems[$hashUrl]['read'] = 0;
             }
@@ -764,7 +765,7 @@ class Feed
 
     /**
      * add channel
-     * 
+     *
      * @param string $xmlUrl String corresponding to the XML URL
      *
      * @return true|false True if add is success, false otherwise
@@ -811,56 +812,36 @@ class Feed
     /**
      * List of feeds with update information and title
      *
-     * @return array List of feeds for ajaxlist
+     * @return array List of feeds
+     *         [0] hash
+     *         [1] title
+     *         [2] last update time
+     *         [3] update interval time
      */
-    public function getFeedsUpdate()
+    public function getListFeeds()
     {
         $list = array();
         foreach (array_keys($this->_data) as $feedHash) {
+            $item = current($this->_data[$feedHash]['items']);
+            $sortInfo = time()-$item['time'];
             $list[] = array(
-                $this->getAutoTimeUpdate($this->_data[$feedHash], false),
+                $sortInfo,
                 $feedHash,
                 $this->_data[$feedHash]['title'],
-                $this->_data[$feedHash]['lastUpdate'],
+                (int) ((time() - $this->_data[$feedHash]['lastUpdate']) / 60),
                 $this->getTimeUpdate($this->_data[$feedHash])
             );
         }
+
         sort($list);
 
-        return $list;
-    }
+        // Remove sortInfo
+        $shift = function(&$array) {
+            array_shift($array); return $array;
+        };
+        $list = array_map($shift, $list);
 
-    /**
-     * Calculate automatic update (need improvements)
-     * 
-     * @param array      $feed Array of a feed information
-     * @param true|false $auto Used for old feed with no new items
-     *
-     * @return integer Number of automatic minute for update
-     */
-    public function getAutoTimeUpdate($feed, $auto = true)
-    {
-        // auto with the last 7 items
-        $items = array_slice($feed['items'], 0, 7, true);
-        $sum = 0;
-        $firstTime = 0;
-        $nbItems = 0;
-        foreach ($items as $item) {
-            if ($firstTime == 0) {
-                $firstTime = $item['time'];
-            }
-            $sum += $firstTime-$item['time'];
-            $nbItems++;
-        }
-        $freq = 0;
-        if ($nbItems!=0) {
-            $freq = (int) (($sum / $nbItems) / 60);
-        }
-        if ($auto) {
-            return $freq;
-        } else {
-            return time()-$firstTime;
-        }
+        return $list;
     }
 
     /**
@@ -875,7 +856,22 @@ class Feed
         $max = $feed['timeUpdate'];
 
         if ($max == 'auto') {
-            $freq = $this->getAutoTimeUpdate($feed);
+            // auto with the last 7 items
+            $items = array_slice($feed['items'], 0, 7, true);
+            $sum = 0;
+            $firstTime = 0;
+            $nbItems = 0;
+            foreach ($items as $item) {
+                if ($firstTime == 0) {
+                    $firstTime = $item['time'];
+                }
+                $sum += $firstTime-$item['time'];
+                $nbItems++;
+            }
+            $freq = 0;
+            if ($nbItems!=0) {
+                $freq = (int) (($sum / $nbItems) / 60);
+            }
             if ($freq >= MIN_TIME_UPDATE && $freq < $this->kfc->maxUpdate) {
                 $max = $freq;
             } else {
@@ -883,7 +879,8 @@ class Feed
             }
         } elseif ($max == 'max') {
             $max = $this->kfc->maxUpdate;
-        } elseif ((int) $max < 0 && (int) $max > $this->kfc->maxUpdate) {
+        } elseif ((int) $max < MIN_TIME_UPDATE
+                  || (int) $max > $this->kfc->maxUpdate) {
             $max = $this->kfc->maxUpdate;
         }
 
@@ -989,7 +986,10 @@ class Feed
                             . $newItems[$itemHash]['author'] . ')';
                     }
                     $newItems[$itemHash]['xmlUrl'] = $xmlUrl;
+                    $newItems[$feedHash . $itemHash] = $newItems[$itemHash];
+                    unset($newItems[$itemHash]);
                 }
+
 
                 $this->_data[$feedHash]['items']
                     = array_merge($newItems, $oldItems);
@@ -1005,6 +1005,7 @@ class Feed
                 }
 
                 uasort($this->_data[$feedHash]['items'], "Feed::compItemsR");
+
                 // Check if quota exceeded
                 if ($countAll > $this->kfc->maxItems) {
                     $this->_data[$feedHash]['items']
@@ -1036,7 +1037,7 @@ class Feed
     }
 
     /**
-     * return feeds hash in folder
+     * return list of feeds hash which are in a specific folder
      *
      * @param string $folderHash Hash corresponding to a folder
      *
@@ -1092,21 +1093,21 @@ class Feed
     public function mark($hash, $read, $force = false)
     {
         $list = array_keys($this->getItems($hash, false));
-        foreach ($this->_data as $feedHash => $feed) {
-            foreach ($feed['items'] as $itemHash => $item) {
-                $current =& $this->_data[$feedHash]['items'];
-                if (in_array($itemHash, $list)) {
-                    if ($force) {
-                        $current[$itemHash]['read'] = $read;
-                    } else {
-                        if ($read == 1) {
-                            $isRead = $current[$itemHash]['read'];
-                            if ($isRead != -1) {
-                                $current[$itemHash]['read'] = $read;
-                            }
-                        } else {
-                            $current[$itemHash]['read'] = $read;
+
+        foreach ($list as $itemHash) {
+            $feedHash = substr($itemHash, 0, 6);
+            if (isset($this->_data[$feedHash]['items'][$itemHash])) {
+                $current = &$this->_data[$feedHash]['items'][$itemHash];
+                if ($force) {
+                    $current['read'] = $read;
+                } else {
+                    if ($read == 1) {
+                        $isRead = $current['read'];
+                        if ($isRead != -1) {
+                            $current['read'] = $read;
                         }
+                    } else {
+                        $current['read'] = $read;
                     }
                 }
             }
@@ -1128,7 +1129,7 @@ class Feed
     public function hashType($hash)
     {
         $type = '';
-        if (empty($hash)) {
+        if (empty($hash) || $hash=='all') {
             $type = '';
         } else {
             if (isset($this->_data[$hash])) {
@@ -1155,7 +1156,7 @@ class Feed
      * @param string $hash   Hash may represent an item, a feed, a folder
      *                       if empty or 'all', return all items
      * @param bool   $filter In order to specify a filter depending on newItems
-     *                       in config, if 'new' return all new items.
+     *                       in config, if 'unread' return all unread items.
      *
      * @return array of filtered items depending on hash
      */
@@ -1183,18 +1184,17 @@ class Feed
                     }
                 } else {
                     // should be an item
-                    foreach ($this->_data as $xmlUrl => $arrayInfo) {
-                        if (isset($arrayInfo['items'][$hash])) {
-                            $list[$hash] = $arrayInfo['items'][$hash];
-                            break;
-                        }
+                    $feedHash = substr($hash, 0, 6);
+                    if (isset($this->_data[$feedHash]['items'][$hash])) {
+                        $list[$hash] = $this->_data[$feedHash]['items'][$hash];
                     }
                 }
             }
         }
 
         // remove useless items
-        if (($filter === true && $this->kfc->newItems) || $filter === 'new') {
+        if (($filter === true && $this->kfc->newItems)
+            || $filter === 'unread') {
             foreach ($list as $itemHash => $item) {
                 if ($item['read'] == 1) {
                     unset($list[$itemHash]);

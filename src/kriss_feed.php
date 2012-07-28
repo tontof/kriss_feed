@@ -9,7 +9,7 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
-define('FEED_VERSION', 2);
+define('FEED_VERSION', 3);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
@@ -42,14 +42,28 @@ if (isset($_GET['login'])) {
     if (!empty($_POST['login'])
         && !empty($_POST['password'])
     ) {
+        if (!Session::isToken($_POST['token'])) {
+            die('Wrong token.');
+        }
         if (Session::login(
             $kfc->login,
             $kfc->hash,
             $_POST['login'],
             sha1($_POST['password'].$_POST['login'].$kfc->salt)
         )) {
+            if (!empty($_POST['longlastingsession'])) {
+                // (31536000 seconds = 1 year)
+                $_SESSION['longlastingsession'] = 31536000;
+                $_SESSION['expires_on'] =
+                    time() + $_SESSION['longlastingsession'];
+                session_set_cookie_params($_SESSION['longlastingsession']);
+            } else {
+                session_set_cookie_params(0); // when browser closes
+            }
+            session_regenerate_id(true);
+
             $rurl = $_POST['returnurl'];
-            if (empty($rurl)) {
+            if (empty($rurl) || strpos($rurl, '?login') !== false) {
                 $rurl = MyTool::getUrl();
             }
             header('Location: '.$rurl);
@@ -57,23 +71,46 @@ if (isset($_GET['login'])) {
         }
         die("Login failed !");
     } else {
-        $ref = '';
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            $ref = $_SERVER['HTTP_REFERER'];
-        }
-        echo '
-<h1>Login</h1>
-<form method="post" action="?login">
-  <input type="hidden" name="returnurl" value="'.$ref.'" />
-  <p><label>Login: <input type="text" name="login" /></label></p>
-  <p><label>Password: <input type="password" name="password" /></label></p>
-  <p><input type="submit" value="OK" class="submit" /></p>
-</form>';
+        echo $kfp->htmlPage('Login', $kfp->loginPage());
     }
 } elseif (isset($_GET['logout'])) {
     //Logout
     Session::logout();
     $rurl = (empty($_SERVER['HTTP_REFERER']) ? '?' : $_SERVER['HTTP_REFERER']);
+    header('Location: '.$rurl);
+    exit();
+} elseif (isset($_GET['update'])
+          && (Session::isLogged()
+              || (isset($_GET['cron'])
+                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash)))) {
+    // Update
+    $kf->loadData();
+    $hash = substr(trim($_GET['update'], '/'), 0, 6);
+    $type = $kf->hashType($hash);
+    switch($type) {
+    case 'feed':
+        $kf->updateChannelItems($hash);
+        break;
+    case 'folder':
+        $feedsHash = $kf->getFeedsHashFromFolderHash($hash);
+        foreach ($feedsHash as $feedHash) {
+            $kf->updateChannelItems($feedHash);
+        }
+        break;
+    case '':
+        $feedsHash = array_keys($kf->getFeeds());
+        foreach ($feedsHash as $feedHash) {
+            $kf->updateChannelItems($feedHash);
+        }
+        break;
+    case 'item':
+    default:
+        break;
+    }
+    $rurl = MyTool::getUrl();
+    if (isset($_SERVER['HTTP_REFERER'])) {
+        $rurl = $_SERVER['HTTP_REFERER'];
+    }
     header('Location: '.$rurl);
     exit();
 } elseif (isset($_GET['config']) && Session::isLogged()) {
@@ -150,13 +187,13 @@ if (isset($_GET['login'])) {
     if ($kf->addChannel($_GET['newfeed'])) {
         // Add success
         header(
-            'Location: ' . MyTool::getUrl() . '?' . $kfc->defaultView
+            'Location: ' . MyTool::getUrl() . '/?' . $kfc->getView()
             . '=' . MyTool::smallHash($_GET['newfeed'])
         );
         exit();
     } else {
         $returnurl = empty($_SERVER['HTTP_REFERER'])
-            ? '?' . $kfc->defaultView
+            ? MyTool::getUrl() . '/?' . $kfc->getView()
             : $_SERVER['HTTP_REFERER'];
         echo '<script>alert("The feed you are trying to add already exists'
             . ' or is wrong. Check your feed or try again later.");'
@@ -165,18 +202,23 @@ if (isset($_GET['login'])) {
         exit;
         // Add fail
     }
-} elseif ((isset($_GET['read']) || isset($_GET['unread']))
+} elseif ((isset($_GET['read'])
+           || isset($_GET['unread'])
+           || isset($_GET['keepunread']))
           && Session::isLogged()) {
     // mark all as read : item, feed, folder, all
     $kf->loadData();
     $hash = '';
     $read = 1;
     if (isset($_GET['read'])) {
-        $hash = substr(trim($_GET['read'], '/'), 0, 6);
+        $hash = $_GET['read'];
         $read = 1;
-    } else {
-        $hash = substr(trim($_GET['unread'], '/'), 0, 6);
+    } elseif (isset($_GET['unread'])) {
+        $hash = $_GET['unread'];
         $read = 0;
+    } else {
+        $hash = $_GET['keepunread'];
+        $read = -1;
     }
     $kf->mark($hash, $read);
     $rurl = MyTool::getUrl();
@@ -224,11 +266,7 @@ if (isset($_GET['login'])) {
 
             $kf->removeFeed($hash);
 
-            $rurl = MyTool::getUrl();
-            if (isset($_POST['returnurl'])) {
-                $rurl = $_POST['returnurl'];
-            }
-            header('Location: '.$rurl);
+            header('Location: ?'.$kfc->getMode());
             exit();
         } elseif (isset($_POST['cancel'])) {
             if (!Session::isToken($_POST['token'])) {
@@ -305,42 +343,12 @@ if (isset($_GET['login'])) {
         $kfp->readerPage($kf)
     );
     exit;
-} elseif (isset($_GET['update']) && Session::isLogged()) {
-    // Update
-    $kf->loadData();
-    $hash = substr(trim($_GET['update'], '/'), 0, 6);
-    $type = $kf->hashType($hash);
-    switch($type) {
-    case 'feed':
-        $kf->updateChannelItems($hash);
-        break;
-    case 'folder':
-        $feedsHash = $kf->getFeedsHashFromFolderHash($hash);
-        foreach ($feedsHash as $feedHash) {
-            $kf->updateChannelItems($feedHash);
-        }
-        break;
-    case '':
-        $feedsHash = array_keys($kf->getFeeds());
-        foreach ($feedsHash as $feedHash) {
-            $kf->updateChannelItems($feedHash);
-        }
-        break;
-    case 'item':
-    default:
-        break;
-    }
-    $rurl = MyTool::getUrl();
-    if (isset($_SERVER['HTTP_REFERER'])) {
-        $rurl = $_SERVER['HTTP_REFERER'];
-    }
-    header('Location: '.$rurl);
-    exit();
-} elseif (isset($_GET['ajaxlist'])
-          || isset($_GET['ajaxupdate'])
-          || isset($_GET['ajaxitem'])
-          || isset($_GET['ajaxread'])
-          || isset($_GET['ajaxkeepunread'])
+} elseif ((isset($_GET['ajaxlist'])
+           || isset($_GET['ajaxupdate'])
+           || isset($_GET['ajaxitem'])
+           || isset($_GET['ajaxread'])
+           || isset($_GET['ajaxkeepunread']))
+          && (Session::isLogged() || $kfc->public)
 ) {
     // Ajax
     $kf->loadData();
@@ -350,20 +358,56 @@ if (isset($_GET['login'])) {
     header('Content-type: application/json; charset=UTF-8');
 
     if (isset($_GET['ajaxlist'])) {
-        $list = $kf->getItems('all', 'new');
-        $feedsUpdate = array();
-        if (Session::isLogged()) {
-            $feedsUpdate = $kf->getFeedsUpdate();
+        $hash = $_GET['ajaxlist'];
+        if (empty($hash)) {
+            $hash = 'all';
         }
-        echo json_encode(
-            array(
-                'items' => array_keys($list),
-                'feeds' => $feedsUpdate,
-                'unread' => $kf->getUnread()
-            )
-        );
-        exit;
-    } elseif (isset($_GET['ajaxupdate'])) {
+        $filter = $kfc->newItems ? 'unread' : 'all';
+        if (isset($_GET['filter'])) {
+            $filter = $_GET['filter'];
+        }
+
+        $list = $kf->getItems($hash, $filter);
+
+        if (isset($_GET['numInitItems'])) {
+            $num = $_GET['numInitItems'];
+            $list = array_slice($list, count($list)-$num, $num, true);
+        }
+
+        if (isset($_GET['page'])) {
+            $page = $_GET['page'];
+            $begin = ($page - 1) * $kf->kfc->byPage;
+            $list = array_slice($list, $begin, $kf->kfc->byPage, true);
+        }
+
+        $listInfo = array();
+        foreach (array_keys($list) as $hashItem) {
+            $feedHash = substr($hashItem, 0, 6);
+            if (isset($_GET['view']) && $_GET['view'] === 'expanded') {
+                $listInfo['item-' . $hashItem] =
+                    array(
+                        $list[$hashItem]['title'],
+                        $list[$hashItem]['description'],
+                        $list[$hashItem]['time'],
+                        $list[$hashItem]['read'],
+                        $list[$hashItem]['link'],
+                        $list[$hashItem]['author'],
+                        $list[$hashItem]['content'],
+                        $list[$hashItem]['xmlUrl']
+                    );
+            } else {
+                $listInfo['item-' . $hashItem] =
+                    array(
+                        $list[$hashItem]['title'],
+                        $list[$hashItem]['description'],
+                        $list[$hashItem]['time'],
+                        $list[$hashItem]['read']
+                    );
+            }
+        }
+        echo json_encode($listInfo);
+        exit();
+    } elseif (isset($_GET['ajaxupdate']) && Session::isLogged()) {
         $kf->loadData();
         $hash = substr(trim($_GET['ajaxupdate'], '/'), 0, 6);
         $type = $kf->hashType($hash);
@@ -387,36 +431,33 @@ if (isset($_GET['login'])) {
         default:
             break;
         }
-        $list = $kf->getItems('all', 'new');
+        $list = $kf->getItems($hash, 'unread');
         echo json_encode(array_keys($list));
         exit;
-    } elseif (isset($_GET['ajaxitem'])) {
-        if (!empty($_GET['ajaxitem'])) {
-            $hash = substr(trim($_GET['ajaxitem'], '/'), 0, 6);
-        }
+    }
+
+    if (isset($_GET['ajaxitem'])) {
+        $hash = $_GET['ajaxitem'];
         if ($kf->hashType($hash)=='item') {
             $list = $kf->getItems($hash, false);
-            echo json_encode($list[$hash]);
-            exit;
-        }
-    } elseif (isset($_GET['ajaxread']) && Session::isLogged()) {
-        if (!empty($_GET['ajaxread'])) {
-            $hash = substr(trim($_GET['ajaxread'], '/'), 0, 6);
-            $kf->mark($hash, 1, true);
-            echo json_encode(true);
-            exit;
-        }
-    } elseif (isset($_GET['ajaxkeepunread']) && Session::isLogged()) {
-        if (!empty($_GET['ajaxkeepunread'])) {
-            $hash = substr(trim($_GET['ajaxkeepunread'], '/'), 0, 6);
-            $kf->mark($hash, -1);
-            echo json_encode(true);
-            exit;
+            if (isset($list[$hash])) {
+                echo json_encode($list[$hash]);
+            }
         }
     }
-    echo json_encode(false);
+    if (isset($_GET['ajaxread']) && Session::isLogged()) {
+        if (!empty($_GET['ajaxread'])) {
+             $kf->mark($_GET['ajaxread'], 1, true);
+        }
+    }
+    if (isset($_GET['ajaxkeepunread']) && Session::isLogged()) {
+        if (!empty($_GET['ajaxkeepunread'])) {
+             $kf->mark($_GET['ajaxkeepunread'], -1, true);
+        }
+    }
     exit;
-} elseif (isset($_GET['reader']) || isset($_GET['page'])) {
+} elseif ((isset($_GET['reader']) || isset($_GET['page']))
+          && (Session::isLogged() || $kfc->public)) {
     // List items : all, folder, feed or entry
     $hash = '';
     if (!empty($_GET['reader'])) {
@@ -436,7 +477,7 @@ if (isset($_GET['login'])) {
         ),
         $kfp->readerPage($kf, $hash, $page)
     );
-} elseif (isset($_GET['show'])) {
+} elseif ((isset($_GET['show'])) && (Session::isLogged() || $kfc->public)) {
     // show, read article by article as Google reader
     // using 'n' and 'p' with ajax
     $kf->loadData();
@@ -448,6 +489,10 @@ if (isset($_GET['login'])) {
     );
     exit();
 } else {
-    header('Location: ?'.$kfc->defaultView);
+    if (Session::isLogged() || $kfc->public) {
+        header('Location: ?'.$kfc->getMode());
+    } else {
+        header('Location: ?login');
+    }
     exit();
 }
