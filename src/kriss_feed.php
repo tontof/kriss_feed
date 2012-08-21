@@ -71,7 +71,7 @@ if (isset($_GET['login'])) {
         }
         die("Login failed !");
     } else {
-        echo $kfp->htmlPage('Login', $kfp->loginPage());
+        echo $kfp->htmlPage('Login', $kfp->loginPage($kfc));
     }
 } elseif (isset($_GET['logout'])) {
     //Logout

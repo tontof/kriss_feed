@@ -559,11 +559,13 @@ CSS;
     }
 
 
-    public function loginPage()
+    public function loginPage($kfc)
     {
         $ref = '';
         if (isset($_SERVER['HTTP_REFERER'])) {
             $ref = $_SERVER['HTTP_REFERER'];
+        }else {
+            $ref = '?'.$kfc->getMode();
         }
         $token = Session::getToken();
         $status = $this->status();
@@ -2709,7 +2711,10 @@ class Feed
             }
         }
 
-        return $this->formatChannel($channel);
+        if (!empty($channel)){ 
+            $channel = $this->formatChannel($channel);
+        }
+        return $channel;
     }
 
     public function formatItems($items, $formats)
@@ -3649,7 +3654,7 @@ if (isset($_GET['login'])) {
         }
         die("Login failed !");
     } else {
-        echo $kfp->htmlPage('Login', $kfp->loginPage());
+        echo $kfp->htmlPage('Login', $kfp->loginPage($kfc));
     }
 } elseif (isset($_GET['logout'])) {
     //Logout

@@ -310,11 +310,13 @@ CSS;
      *
      * @return string HTML corresponding to the login page
      */
-    public function loginPage()
+    public function loginPage($kfc)
     {
         $ref = '';
         if (isset($_SERVER['HTTP_REFERER'])) {
             $ref = $_SERVER['HTTP_REFERER'];
+        }else {
+            $ref = '?'.$kfc->getMode();
         }
         $token = Session::getToken();
         $status = $this->status();
