@@ -26,7 +26,7 @@ body {
   color: #000;
 }
 
-#config, #edit, #import, #show, #login {
+#config, #edit, #import, #show, #login, #install {
   border: 2px solid #999;
   border-top: none;
   background: #fff;
@@ -304,20 +304,41 @@ CSS;
         }
     }
 
+     /**
+     * Install page
+     *
+     * @return string HTML corresponding to the login page
+     */
+    public function installPage()
+    {
+        return <<<HTML
+<div id="install">
+  <h1>Welcome to KrISS feed</h1>
+  <form method="post" action="" name="installform">
+    <fieldset>
+    <legend>Feed reader installation</legend>
+    <p><label>Login: <input type="text" name="setlogin" /></label></p>
+    <p><label>Password: <input type="password" name="setpassword" /></label></p>
+    <p><input type="submit" value="OK" class="submit" /></p>
+    </fieldset>
+  </form>
+  <script>
+  document.installform.setlogin.focus();
+  </script>
+</div>
+HTML;
+    }
 
     /**
      * Login page
+     *
+     * @param Feed_Conf $kfc  Kriss Feed Conf object
      *
      * @return string HTML corresponding to the login page
      */
     public function loginPage($kfc)
     {
-        $ref = '';
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            $ref = $_SERVER['HTTP_REFERER'];
-        }else {
-            $ref = '?'.$kfc->getMode();
-        }
+        $ref = '?'.$kfc->getMode();
         $token = Session::getToken();
         $status = $this->status();
 

@@ -33,8 +33,8 @@ function __autoload($className)
 MyTool::initPhp();
 Session::init();
 
-$kfc = new Feed_Conf(CONFIG_FILE, FEED_VERSION);
 $kfp = new Feed_Page(STYLE_FILE);
+$kfc = new Feed_Conf(CONFIG_FILE, FEED_VERSION, $kfp);
 $kf = new Feed(DATA_FILE, $kfc);
 
 if (isset($_GET['login'])) {

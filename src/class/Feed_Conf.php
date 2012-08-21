@@ -86,15 +86,21 @@ class Feed_Conf
     public $version;
 
     /**
+     * Kriss_feed page for install page
+     */
+    public $kfp;
+
+    /**
      * Constructor
      *
      * @param string $configFile Configuration file
      * @param string $version    Kriss feed version
      */
-    public function __construct($configFile, $version)
+    public function __construct($configFile, $version, $kfp)
     {
         $this->_file = $configFile;
         $this->version = $version;
+        $this->kfp = $kfp;
 
         // Loading user config
         if (file_exists($this->_file)) {
@@ -121,6 +127,7 @@ class Feed_Conf
  alert("Error: can not create '.DATA_DIR.' directory, check permissions");
  document.location=window.location.href;
 </script>';
+                    exit();
                 }
                 @chmod(DATA_DIR, 0755);
                 if (!is_file(DATA_DIR.'/.htaccess')) {
@@ -133,6 +140,7 @@ class Feed_Conf
  alert("Can not protect '.DATA_DIR.'");
  document.location=window.location.href;
 </script>';
+                    exit();
                     }
                 }
             }
@@ -143,24 +151,20 @@ class Feed_Conf
  alert("Your simple and smart (or stupid) feed reader is now configured.");
  document.location=window.location.href;
 </script>';
+                    exit();
             } else {
                 echo '
 <script>
  alert("Error: can not write config and data files.");
  document.location=window.location.href;
 </script>';
+                    exit();
             }
             Session::logout();
         } else {
-            echo '
-<h1>Feed reader installation</h1>
-<form method="post" action="">
-  <p><label>Login: <input type="text" name="setlogin" /></label></p>
-  <p><label>Password: <input type="password" name="setpassword" /></label></p>
-  <p><input type="submit" value="OK" class="submit" /></p>
-</form>';
+            echo $this->kfp->htmlPage('KrISS feed installation', $this->kfp->installPage());
+            exit();
         }
-        exit();
     }
 
     /**
