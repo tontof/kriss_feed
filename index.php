@@ -98,7 +98,7 @@ class Feed_Conf
  alert("Can not protect '.DATA_DIR.'");
  document.location=window.location.href;
 </script>';
-                    exit();
+                        exit();
                     }
                 }
             }
@@ -581,12 +581,7 @@ HTML;
 
     public function loginPage($kfc)
     {
-        $ref = '';
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            $ref = $_SERVER['HTTP_REFERER'];
-        }else {
-            $ref = '?'.$kfc->getMode();
-        }
+        $ref = '?'.$kfc->getMode();
         $token = Session::getToken();
         $status = $this->status();
 

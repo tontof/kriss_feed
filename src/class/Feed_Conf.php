@@ -140,7 +140,7 @@ class Feed_Conf
  alert("Can not protect '.DATA_DIR.'");
  document.location=window.location.href;
 </script>';
-                    exit();
+                        exit();
                     }
                 }
             }
