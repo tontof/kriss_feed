@@ -2902,6 +2902,8 @@ class Feed
                             . $items[$itemHash]['author'] . ')';
                     }
                     $items[$itemHash]['xmlUrl'] = $xmlUrl;
+                    $items[$feedHash . $itemHash] = $items[$itemHash];
+                    unset($items[$itemHash]);
                 }
 
                 $channel['xmlUrl'] = $xmlUrl;
