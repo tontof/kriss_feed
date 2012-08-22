@@ -149,7 +149,9 @@ class Session
             return false;
         }
         // User accessed a page : Update his/her session expiration date.
-        $_SESSION['expires_on']=time()+Session::$inactivityTimeout;
+        if (time()+Session::$inactivityTimeout > $_SESSION['expires_on']) {
+            $_SESSION['expires_on'] = time()+Session::$inactivityTimeout;
+        }
 
         return true;
     }

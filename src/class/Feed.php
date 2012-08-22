@@ -556,9 +556,10 @@ class Feed
             }
         }
 
-        if (!empty($channel)){ 
+        if (!empty($channel)) {
             $channel = $this->formatChannel($channel);
         }
+
         return $channel;
     }
 

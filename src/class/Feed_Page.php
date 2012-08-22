@@ -332,7 +332,7 @@ HTML;
     /**
      * Login page
      *
-     * @param Feed_Conf $kfc  Kriss Feed Conf object
+     * @param Feed_Conf $kfc Kriss Feed Conf object
      *
      * @return string HTML corresponding to the login page
      */

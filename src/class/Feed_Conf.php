@@ -93,8 +93,9 @@ class Feed_Conf
     /**
      * Constructor
      *
-     * @param string $configFile Configuration file
-     * @param string $version    Kriss feed version
+     * @param string    $configFile Configuration file
+     * @param string    $version    Kriss feed version
+     * @param Feed_Page $kfp        Kriss Feed Page
      */
     public function __construct($configFile, $version, $kfp)
     {

@@ -2726,9 +2726,10 @@ class Feed
             }
         }
 
-        if (!empty($channel)){ 
+        if (!empty($channel)) {
             $channel = $this->formatChannel($channel);
         }
+
         return $channel;
     }
 
@@ -3601,7 +3602,9 @@ class Session
             return false;
         }
         // User accessed a page : Update his/her session expiration date.
-        $_SESSION['expires_on']=time()+Session::$inactivityTimeout;
+        if (time()+Session::$inactivityTimeout > $_SESSION['expires_on']) {
+            $_SESSION['expires_on'] = time()+Session::$inactivityTimeout;
+        }
 
         return true;
     }
@@ -3787,13 +3790,13 @@ if (isset($_GET['login'])) {
     if ($kf->addChannel($_GET['newfeed'])) {
         // Add success
         header(
-            'Location: ' . MyTool::getUrl() . '/?' . $kfc->getView()
+            'Location: ' . MyTool::getUrl() . '?' . $kfc->getView()
             . '=' . MyTool::smallHash($_GET['newfeed'])
         );
         exit();
     } else {
         $returnurl = empty($_SERVER['HTTP_REFERER'])
-            ? MyTool::getUrl() . '/?' . $kfc->getView()
+            ? MyTool::getUrl() . '?' . $kfc->getView()
             : $_SERVER['HTTP_REFERER'];
         echo '<script>alert("The feed you are trying to add already exists'
             . ' or is wrong. Check your feed or try again later.");'
