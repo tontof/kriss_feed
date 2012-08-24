@@ -582,22 +582,6 @@ HTML;
             <input type="radio" id="privateReader" name="public" value="0" '
             . (!$kfc->public? 'checked="checked"' : '')
             . ' /><label for="privateReader">Private kriss feed</label><br>
-            <label for="showMode">- Default mode</label><br>
-            <input type="radio" id="showMode" name="mode" value="show" '
-            . ($kfc->mode === 'show' ? 'checked="checked"' : '')
-            . ' /><label for="showMode">Show mode</label><br>
-            <input type="radio" id="readerMode" name="mode"'
-            . ' value="reader" '
-            . ($kfc->mode === 'reader' ? 'checked="checked"' : '')
-            . ' /><label for="readerMode">Reader mode</label><br>
-            <label for="view">- Expanded or list view</label><br>
-            <input type="radio" id="expandedView" name="view" value="expanded" '
-            . ($kfc->view === 'expanded' ? 'checked="checked"' : '')
-            . ' /><label for="expandedView">Expanded view</label><br>
-            <input type="radio" id="listView" name="view"'
-            . ' value="list" '
-            . ($kfc->view === 'list' ? 'checked="checked"' : '')
-            . ' /><label for="listView">List view</label><br>
             <label>- Shaarli url</label><br>
             <input type="text" name="shaarli" value="'
             . htmlspecialchars($kfc->shaarli) . '"><br>
