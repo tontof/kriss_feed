@@ -456,8 +456,7 @@ if (isset($_GET['login'])) {
         }
     }
     exit;
-} elseif ((isset($_GET['reader']) || isset($_GET['page']))
-          && (Session::isLogged() || $kfc->public)) {
+} elseif (isset($_GET['reader']) && (Session::isLogged() || $kfc->public)) {
     // List items : all, folder, feed or entry
     $hash = '';
     if (!empty($_GET['reader'])) {

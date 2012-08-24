@@ -393,7 +393,6 @@ HTML;
         <button onclick="plusMenu(false);" id="butplusmenu">+</button>
         <button onclick="nextItem();">&gt;</button>
         <ul id="plusmenu" style="display:none">
-          <li><a href="?show" title="Show mode">Show</a></li>
           <li><a href="?reader" title="Reader mode">Reader</a></li>';
             if ($view === 'expanded') {
                 $menu .= '
@@ -438,8 +437,7 @@ HTML;
                 $sep = '=';
             }
             $menu .= '
-        <a href="?show" title="Show mode">Show</a>
-      | <a href="?reader" title="Reader mode">Reader</a>';
+        <a href="?show" title="Show mode">Show</a>';
             if ($view === 'expanded') {
                 $menu .= '
       | <a href="?reader'

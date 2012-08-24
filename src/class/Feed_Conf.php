@@ -109,6 +109,21 @@ class Feed_Conf
         } else {
             $this->_install();
         }
+
+        if (Session::isLogged()) {
+            $save = false;
+            if ($this->mode != $this->getMode()) {
+                $this->mode = $this->getMode();
+                $save = true;
+            }
+            if ($this->view != $this->getView()) {
+                $this->view = $this->getView();
+                $save = true;
+            }
+            if ($save) {
+                $this->write();
+            }
+        }
     }
 
     /**

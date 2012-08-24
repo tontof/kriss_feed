@@ -69,6 +69,21 @@ class Feed_Conf
         } else {
             $this->_install();
         }
+
+        if (Session::isLogged()) {
+            $save = false;
+            if ($this->mode != $this->getMode()) {
+                $this->mode = $this->getMode();
+                $save = true;
+            }
+            if ($this->view != $this->getView()) {
+                $this->view = $this->getView();
+                $save = true;
+            }
+            if ($save) {
+                $this->write();
+            }
+        }
     }
 
     private function _install()
@@ -627,7 +642,6 @@ HTML;
         <button onclick="plusMenu(false);" id="butplusmenu">+</button>
         <button onclick="nextItem();">&gt;</button>
         <ul id="plusmenu" style="display:none">
-          <li><a href="?show" title="Show mode">Show</a></li>
           <li><a href="?reader" title="Reader mode">Reader</a></li>';
             if ($view === 'expanded') {
                 $menu .= '
@@ -672,8 +686,7 @@ HTML;
                 $sep = '=';
             }
             $menu .= '
-        <a href="?show" title="Show mode">Show</a>
-      | <a href="?reader" title="Reader mode">Reader</a>';
+        <a href="?show" title="Show mode">Show</a>';
             if ($view === 'expanded') {
                 $menu .= '
       | <a href="?reader'
@@ -4059,8 +4072,7 @@ if (isset($_GET['login'])) {
         }
     }
     exit;
-} elseif ((isset($_GET['reader']) || isset($_GET['page']))
-          && (Session::isLogged() || $kfc->public)) {
+} elseif (isset($_GET['reader']) && (Session::isLogged() || $kfc->public)) {
     // List items : all, folder, feed or entry
     $hash = '';
     if (!empty($_GET['reader'])) {
