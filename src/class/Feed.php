@@ -611,6 +611,11 @@ class Feed
                 $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
                     ? strtotime($tmpItem['time'])
                     : time();
+                if (MyTool::isUrl($tmpItem['via']) && $tmpItem['via'] != $tmpItem['link']) {
+                    $newItems[$hashUrl]['via'] = $tmpItem['via'];
+                } else {
+                    $newItems[$hashUrl]['via'] = '';
+                }
                 $newItems[$hashUrl]['link'] = $tmpItem['link'];
                 $newItems[$hashUrl]['author'] = $tmpItem['author'];
                 mb_internal_encoding("UTF-8");
@@ -673,6 +678,7 @@ class Feed
                                'summary', 'subtitle'),
             'description' => array('description', 'summary', 'subtitle',
                                    'content', 'content:encoded'),
+            'via'        => array('guid', 'id'),
             'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
             'time'        => array('pubDate', 'updated', 'lastBuildDate',
                                    'published', 'dc:date', 'date'),
@@ -786,6 +792,9 @@ class Feed
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
                 foreach (array_keys($items) as $itemHash) {
+                    if (empty($items[$itemHash]['via'])) {
+                        $items[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                    }
                     if (empty($items[$itemHash]['author'])) {
                         $items[$itemHash]['author'] = $channel['title'];
                     } else {
@@ -983,6 +992,9 @@ class Feed
 
                 $newItems = $this->getItemsFromXml($xml);
                 foreach (array_keys($newItems) as $itemHash) {
+                    if (empty($newItems[$itemHash]['via'])) {
+                        $newItems[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                    }
                     if (empty($newItems[$itemHash]['author'])) {
                         $newItems[$itemHash]['author']
                             = $this->_data[$feedHash]['title'];

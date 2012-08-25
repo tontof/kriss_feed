@@ -284,6 +284,46 @@ class Feed_Page
 {
     private $_css = <<<CSS
 <style>
+/* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
+.icon {
+position: relative;
+margin-left:16px;
+right:16px;
+width:16px;
+height:16px;
+}
+.icon-feed-dot {
+background-color: #000;
+width: 4px;
+height: 4px;
+border-radius: 3px;
+position: absolute;
+bottom: 2px;
+left: 2px;
+}
+.icon-feed-circle-1 {
+border: #000 2px solid;
+border-bottom-color: transparent;
+border-left-color: transparent;
+width: 6px;
+height: 6px;
+border-radius: 6px;
+position: absolute;
+bottom: 0;
+left: 0;
+}
+.icon-feed-circle-2 {
+border: #000 2px solid;
+border-bottom-color: transparent;
+border-left-color: transparent;
+width: 9px;
+height: 9px;
+border-radius: 4px 7px;
+position: absolute;
+bottom: 0;
+left: 0;
+}
+
 .admin, .error {
   color: red !important;
   font-size: 1.1em !important;
@@ -1495,10 +1535,32 @@ function loadArticle(item) {
     subtitle.textContent = 'from ';
 
     var author = document.createElement('a');
-    author.href = htmlDecode(item['xmlUrl']);
+    if (item['via']) {
+        author.href = htmlDecode(item['via']);
+    } else {
+        author.href = htmlDecode(item['xmlUrl']);
+    }
     author.title = htmlDecode(item['author']);
-    author.textContent = htmlDecode(item['author']);
+    author.textContent = htmlDecode(item['author']+"&nbsp;");
+
+    var feed = document.createElement('a'),
+        feedIcon = document.createElement('span'),
+        feedDot = document.createElement('div'),
+        feedCircle1 = document.createElement('div'),
+        feedCircle2 = document.createElement('div');
+    feedIcon.className = "icon";
+    feedDot.className = "icon-feed-dot";
+    feedCircle1.className = "icon-feed-circle-1";
+    feedCircle2.className = "icon-feed-circle-2";
+    feedIcon.appendChild(feedDot);
+    feedIcon.appendChild(feedCircle1);
+    feedIcon.appendChild(feedCircle2);
+    feed.href = htmlDecode(item['xmlUrl']);
+    feed.title = htmlDecode(item['author']);    
+    feed.appendChild(feedIcon);
     subtitle.appendChild(author);
+    subtitle.appendChild(feed);
+    
 
     content.innerHTML = item['content'];
     anonymize(article);
@@ -2770,6 +2832,11 @@ class Feed
                 $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
                     ? strtotime($tmpItem['time'])
                     : time();
+                if (MyTool::isUrl($tmpItem['via']) && $tmpItem['via'] != $tmpItem['link']) {
+                    $newItems[$hashUrl]['via'] = $tmpItem['via'];
+                } else {
+                    $newItems[$hashUrl]['via'] = '';
+                }
                 $newItems[$hashUrl]['link'] = $tmpItem['link'];
                 $newItems[$hashUrl]['author'] = $tmpItem['author'];
                 mb_internal_encoding("UTF-8");
@@ -2825,6 +2892,7 @@ class Feed
                                'summary', 'subtitle'),
             'description' => array('description', 'summary', 'subtitle',
                                    'content', 'content:encoded'),
+            'via'        => array('guid', 'id'),
             'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
             'time'        => array('pubDate', 'updated', 'lastBuildDate',
                                    'published', 'dc:date', 'date'),
@@ -2907,6 +2975,9 @@ class Feed
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
                 foreach (array_keys($items) as $itemHash) {
+                    if (empty($items[$itemHash]['via'])) {
+                        $items[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                    }
                     if (empty($items[$itemHash]['author'])) {
                         $items[$itemHash]['author'] = $channel['title'];
                     } else {
@@ -3067,6 +3138,9 @@ class Feed
 
                 $newItems = $this->getItemsFromXml($xml);
                 foreach (array_keys($newItems) as $itemHash) {
+                    if (empty($newItems[$itemHash]['via'])) {
+                        $newItems[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                    }
                     if (empty($newItems[$itemHash]['author'])) {
                         $newItems[$itemHash]['author']
                             = $this->_data[$feedHash]['title'];
@@ -3355,8 +3429,8 @@ class MyTool
 
     public static function isUrl($url)
     {
-        $pattern= "/^(https?:\/\/)(w{0}|w{3})\.?[A-Z0-9._-]+\.[A-Z]{2, 3}\$/i";
-
+        // http://neo22s.com/check-if-url-exists-and-is-online-php/
+        $pattern='|^http(s)?://[a-z0-9-]+(.[a-z0-9-]+)*(:[0-9]+)?(/.*)?$|i';
         return preg_match($pattern, $url);
     }
 

@@ -58,8 +58,8 @@ class MyTool
      */
     public static function isUrl($url)
     {
-        $pattern= "/^(https?:\/\/)(w{0}|w{3})\.?[A-Z0-9._-]+\.[A-Z]{2, 3}\$/i";
-
+        // http://neo22s.com/check-if-url-exists-and-is-online-php/
+        $pattern='|^http(s)?://[a-z0-9-]+(.[a-z0-9-]+)*(:[0-9]+)?(/.*)?$|i';
         return preg_match($pattern, $url);
     }
 
