@@ -793,7 +793,7 @@ class Feed
                 $items = $this->getItemsFromXml($xml);
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
-                        $items[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                        $items[$itemHash]['via'] = $channel['htmlUrl'];
                     }
                     if (empty($items[$itemHash]['author'])) {
                         $items[$itemHash]['author'] = $channel['title'];

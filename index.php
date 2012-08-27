@@ -1504,6 +1504,9 @@ function hideArticle() {
     removeElement(document.getElementById('title'));
     removeElement(document.getElementById('subtitle'));
     removeElement(document.getElementById('content'));
+    if (view === 'list') {
+        removeElement(document.getElementById('article'));
+    }
 }
 
 function loadArticle(item) {
@@ -1725,9 +1728,6 @@ function loadItem(hashItemToLoad, hashItemToPreload, hashItemToRead, hashItemToK
     } else {
         if (show) {
             hideArticle();
-            if (view === 'list') {
-                removeElement(document.getElementById('article'));
-            }
         }
     }
     if (hashItemToLoad === false && hashItemToPreload !== false) {
@@ -1888,10 +1888,13 @@ function previousItemShowExpanded() {
         hashCurrentToKeepUnread = false,
         hashPreviousToLoad = false,
         hashPreviousToPreload = false;
-    if (currentItemInd >= 0 && currentItemInd < listItems.length) {
-        hashCurrentToRead = listItems[currentItemInd];
+    // uncomment if you want to mark as read article when previous
+    //if (currentItemInd >= 0 && currentItemInd < listItems.length) {
+    //    hashCurrentToRead = listItems[currentItemInd];
+    //}
+    if (!!document.getElementById('title')) {
+        currentItemInd--;
     }
-    currentItemInd--;
     if (currentItemInd >= 0) {
         hashPreviousToLoad = listItems[currentItemInd];
         if (currentItemInd - 1 >= 0) {
@@ -2976,7 +2979,7 @@ class Feed
                 $items = $this->getItemsFromXml($xml);
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
-                        $items[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                        $items[$itemHash]['via'] = $channel['htmlUrl'];
                     }
                     if (empty($items[$itemHash]['author'])) {
                         $items[$itemHash]['author'] = $channel['title'];
