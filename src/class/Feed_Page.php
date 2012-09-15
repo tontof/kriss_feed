@@ -454,13 +454,18 @@ HTML;
             if (Session::isLogged()) {
                 $menu .= '
           <li>
-            <a href="#" class="admin" onclick="forceUpdate();" title="Update manually">Update</a>
+            <a href="#" class="admin" onclick="forceUpdate();"
+               title="Update manually">Update</a>
           </li>
           <li>
             <a href="?read" class="admin" title="Mark as read">Read all</a>
-            <a href="?config" class="admin" title="Configuration">
-              Configuration
-            </a>
+          </li>
+          <li>
+            <a href="?edit" class="admin" title="Edit">Edit</a>
+          </li>
+          <li>
+            <a href="?config" class="admin"
+               title="Configuration">Configuration</a>
           </li>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
         </ul>
@@ -491,15 +496,16 @@ HTML;
             if (Session::isLogged()) {
                 if ($hash != '') {
                     $menu .= '
-      | <a href="?edit' . $sep . $hash . '" class="admin">Edit</a>
       | <a href="?update'
                           . $sep . $hash
                           . '" class="admin" title="Manual update">Update</a>';
                 } else {
                     $menu .= '
-      | <a href="#" onclick="forceUpdate();" title="Update manually">Update</a>';
+      | <a href="#" onclick="forceUpdate();"
+           title="Update manually">Update</a>';
                 }
                 $menu .= '
+      | <a href="?edit' . $sep . $hash . '" class="admin">Edit</a>
       | <a href="?read'.$sep.$hash.'" class="admin" title="Mark as read">
           Read
         </a>
@@ -670,6 +676,141 @@ HTML;
         </form><br>
       </div>
     </div>';
+    }
+
+    /**
+     * Edit feeds page
+     *
+     * @param Feed $kf Kriss Feed object
+     *
+     * @return string HTML edit feeds page
+     */
+    public function editFeedsPage($kf)
+    {
+        $ref = '';
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $ref = htmlspecialchars($_SERVER['HTTP_REFERER']);
+        }
+        $menu = $this->menu('edit', $kf->kfc);
+        $token = Session::getToken();
+
+        $folders = $kf->getFolders();
+
+        $feeds = '';
+        $listFeeds = $kf->getFeeds();
+
+        uasort(
+            $listFeeds,
+            function ($a, $b) {
+                return strnatcasecmp($a['title'], $b['title']);
+            }
+        );
+
+        $inputFolders = '
+        <fieldset><legend>Add selected folders to selected feeds</legend>';
+        foreach ($folders as $hash => $folder) {
+            $inputFolders .= '<label><input type="checkbox" name="addfolders[]"'
+                . ' value="' . $hash . '">- '
+                . htmlspecialchars($folder)
+                . '</label> (<a href="?edit='.$hash.'">edit</a>)<br>';
+        }
+        $inputFolders .= '<input type="text" name="addnewfolder" value=""'
+            . ' placeholder="New folder"></fieldset><br>';
+
+        $feeds .= $inputFolders;
+
+        $inputFolders = '
+        <fieldset><legend>Remove selected folders to selected feeds</legend>';
+        foreach ($folders as $hash => $folder) {
+            $inputFolders .= '<label>'
+                . '<input type="checkbox" name="removefolders[]"'
+                . ' value="' . $hash . '">- '
+                . htmlspecialchars($folder)
+                . '</label> (<a href="?edit=' . $hash . '">edit</a>)<br>';
+        }
+        $inputFolders .= '</fieldset><br>';
+
+        $feeds .= $inputFolders;
+
+        $feeds .= '<fieldset><legend>List of feeds</legend>';
+
+        $feeds .= '
+<input type="button"
+onclick="var feeds = document.getElementsByName(\'feeds[]\');
+for (var i = 0; i < feeds.length; i++) {
+  feeds[i].checked = true;
+}" value="Select all">
+<input type="button"
+onclick="var feeds = document.getElementsByName(\'feeds[]\');
+for (var i = 0; i < feeds.length; i++) {
+  feeds[i].checked = false;
+}" value="Unselect all">';
+
+        $feeds .= '<ul>';
+
+        foreach ($listFeeds as $feedHash => $feed) {
+            $feeds .= '
+          <li>
+          <input type="hidden" name="timeupdate_'
+            . $feedHash . '" value="' . $feed['timeUpdate'] . '">
+          <label><input type="checkbox" name="feeds[]" value="'
+            . $feedHash . '"> ' . $feed['title'] . '</label>
+          <span
+onmouseover="this.getElementsByTagName(\'fieldset\')[0].style.display=\'block\'"
+onmouseout="this.getElementsByTagName(\'fieldset\')[0].style.display=\'none\'">+
+          <fieldset style="display:none">
+            <legend><a href="'
+            . $feed['xmlUrl'] . '">'
+            . $feed['xmlUrl'] . '</a> (<a href="?edit='
+            . $feedHash . '">edit</a>)</legend>
+
+            <input type="text" name="title_' . $feedHash . '" value="'
+            . htmlspecialchars($feed['title']) . '"><br>
+            <input type="text" name="description_' . $feedHash . '" value="'
+            . htmlspecialchars($feed['description']) . '"><br>';
+
+            $inputFolders = '';
+            foreach ($folders as $hash => $folder) {
+                $checked = '';
+                if (in_array($folder, $feed['folders'])) {
+                    $checked = ' checked="checked"';
+                }
+                $inputFolders .= '<label><input type="checkbox" name="folders_'
+                    . $feedHash . '[]"'
+                    . $checked . ' value="' . $hash . '">- '
+                    . htmlspecialchars($folder) . '</label><br>';
+            }
+            $inputFolders .= '<input type="text" name="newfolder_'
+                . $feedHash . '" value=""'
+                . ' placeholder="New folder"><br>';
+
+            $feeds .= $inputFolders;
+            $feeds .= '
+          </fieldset>
+          </span>
+          </li>';
+        }
+        $feeds .= '</ul></fieldset>';
+
+
+        return <<<HTML
+    <div id="edit">
+      <div id="nav">
+        $menu
+      </div>
+      <div id="section">
+        <form method="post" action="">
+          <input type="hidden" name="returnurl" value="$ref" />
+          <input type="hidden" name="token" value="$token">
+          <input type="submit" name="cancel" value="Cancel"/>
+          <input type="submit" name="delete" value="Delete selected"
+        onclick="return confirm('Do really want to delete all selected ?');"/>
+          <input type="submit" name="save" value="Save selected" />
+            $feeds
+        </form><br>
+      </div>
+    </div>
+HTML;
     }
 
     /**
@@ -1161,11 +1302,16 @@ function shareItem(){
         if (current) {
 	    var url = current['link'];
 	    var title = current['title'];
-	    window.open(shaarli+'/index.php?post=' + encodeURIComponent(url) + '&title='
-                        + encodeURIComponent(title)
-                        + '&source=bookmarklet'
-                        ,'_blank'
-                        ,'menubar=no,height=390,width=600,toolbar=no,scrollbars=no,status=no');
+	    window.open(
+            shaarli
+            + '/index.php?post='
+            + encodeURIComponent(url)
+            + '&title='
+            + encodeURIComponent(title)
+            + '&source=bookmarklet'
+            , '_blank'
+            , 'menubar=no, height=390, width=600, '
+            + 'toolbar=no, scrollbars=no, status=no');
         } else {
             alert('Problem with current article !');
         }
@@ -1298,7 +1444,10 @@ function updateCurrentFeed() {
             setStatus(status);
         } else {
             updatingCurrentFeed = true;
-            if (getTimeMin() - listFeeds[currentFeedInd][2] > listFeeds[currentFeedInd][3]) {
+            if (
+                getTimeMin() - listFeeds[currentFeedInd][2]
+                > listFeeds[currentFeedInd][3]
+            ) {
                 setStatus("updating : "+listFeeds[currentFeedInd][1]);
                 update(listFeeds[currentFeedInd][0]);
             } else {
@@ -1416,12 +1565,21 @@ function showArticle(hashItem, markAsReadWhenLoad) {
                 }
                 window.scrollTo(0,0);
             } else { // list
-                addClass(document.getElementById('item-'+hashItem).parentNode.firstChild, 'read');
+                addClass(
+                    document.getElementById('item-'+hashItem)
+                    .parentNode
+                    .firstChild,
+                    'read'
+                );
                 cache['item-' + hashItem]
-                if (!document.getElementById('item-'+hashItem).hasChildNodes()) {
-                    document.getElementById('item-' + hashItem).appendChild(article);
+                if (!document.getElementById('item-' + hashItem)
+                    .hasChildNodes()) {
+                    document.getElementById('item-' + hashItem)
+                        .appendChild(article);
                     if (working) {
-                        var rect = document.getElementById('item-' + listItems[currentItemInd]).getBoundingClientRect();
+                        var rect = document.getElementById(
+                            'item-' + listItems[currentItemInd]
+                        ).getBoundingClientRect();
                         window.scrollTo(0, rect.top + window.scrollY);
                     }
                 } else {
@@ -1430,42 +1588,54 @@ function showArticle(hashItem, markAsReadWhenLoad) {
             }
         } else { // reader
             if (view === 'expanded') {
-                // if (!document.getElementById('item-'+hashItem).hasChildNodes()) {
-                    var info = document.getElementById('item-'+hashItem).previousSibling;
-                    info.className = 'item-info';
-                    if (cache['item-' + hashItem]['read'] === -1) {
-                        info.innerHTML = 'mark as <button onclick="readItem(\''
-                            + hashItem + '\')">read</button>';
-                    } else if (cache['item-' + hashItem]['read'] === 0) {
-                        info.innerHTML = 'mark as <button onclick="readItem(\''
-                            + hashItem + '\')">read</button>, <button onclick="keepUnreadItem(\''
-                            + hashItem + '\')">keepunread</button>';
-                    } else if (cache['item-' + hashItem]['read'] === 1) {
-                        info.innerHTML = 'mark as <button onclick="keepUnreadItem(\''
-                            + hashItem + '\')">keepunread</button>';
-                    }
-
-                    removeAllChild(document.getElementById('item-' + hashItem));
-                    document.getElementById('item-' + hashItem).appendChild(article);
-                    article.id = '';
-                    addClass(article, 'article');
-                    article = document.getElementById('title');
-                    article.id = '';
-                    addClass(article, 'article-title');
-                    article = document.getElementById('subtitle');
-                    article.id = '';
-                    addClass(article, 'article-subtitle');
-                    article = document.getElementById('content');
-                    article.id = '';
-
-                    // }
+                // if (!document.getElementById('item-'+hashItem).
+                // hasChildNodes()) {
+                var info = document.getElementById('item-'+hashItem)
+                    .previousSibling;
+                info.className = 'item-info';
+                if (cache['item-' + hashItem]['read'] === -1) {
+                    info.innerHTML = 'mark as <button onclick="readItem(\''
+                        + hashItem + '\')">read</button>';
+                } else if (cache['item-' + hashItem]['read'] === 0) {
+                    info.innerHTML = 'mark as <button onclick="readItem(\''
+                        + hashItem + '\')">read</button>, '
+                        + '<button onclick="keepUnreadItem(\''
+                        + hashItem + '\')">keepunread</button>';
+                } else if (cache['item-' + hashItem]['read'] === 1) {
+                    info.innerHTML = 'mark as <button'
+                        + 'onclick="keepUnreadItem(\''
+                        + hashItem + '\')">keepunread</button>';
+                }
+                
+                removeAllChild(document.getElementById('item-' + hashItem));
+                document.getElementById('item-' + hashItem)
+                    .appendChild(article);
+                article.id = '';
+                addClass(article, 'article');
+                article = document.getElementById('title');
+                article.id = '';
+                addClass(article, 'article-title');
+                article = document.getElementById('subtitle');
+                article.id = '';
+                addClass(article, 'article-subtitle');
+                article = document.getElementById('content');
+                article.id = '';
+                
+                // }
             } else { // list
-                addClass(document.getElementById('item-'+hashItem).parentNode.firstChild, 'read');
-                if (!document.getElementById('item-'+hashItem).hasChildNodes()) {
-                    document.getElementById('item-' + hashItem).appendChild(article);
+                addClass(document.getElementById('item-'+hashItem)
+                         .parentNode.firstChild, 'read');
+                if (!document.getElementById('item-'+hashItem)
+                    .hasChildNodes()) {
+                    document.getElementById('item-' + hashItem)
+                        .appendChild(article);
                     if (working) {
-                        var rect = document.getElementById('item-' + listItems[currentItemInd]).getBoundingClientRect();
-                        document.getElementById('container').scrollTop += rect.top;
+                        var rect = document.getElementById(
+                            'item-'
+                            + listItems[currentItemInd])
+                            .getBoundingClientRect();
+                        document.getElementById('container')
+                            .scrollTop += rect.top;
                     }
                 } else {
                     removeElement(article);
@@ -1534,7 +1704,13 @@ function keepUnreadItem(hashItem) {
     loadItem(false, false, false, hashItem, false);
 }
 
-function loadItem(hashItemToLoad, hashItemToPreload, hashItemToRead, hashItemToKeepUnread, show) {
+function loadItem(
+    hashItemToLoad,
+    hashItemToPreload,
+    hashItemToRead,
+    hashItemToKeepUnread,
+    show
+) {
     var url = '?';
 
     if (hashItemToLoad) {
@@ -1613,7 +1789,8 @@ function loadItem(hashItemToLoad, hashItemToPreload, hashItemToRead, hashItemToK
                                 delete cache['item-' + hist.shift()];
                             }
                         }
-                        cache['item-' + hashItemToLoad] = JSON.parse(xhr.responseText);
+                        cache['item-' + hashItemToLoad] =
+                        JSON.parse(xhr.responseText);
                         if (show) {
                             showArticle(hashItemToLoad, false);
                         }
@@ -1631,12 +1808,27 @@ function loadItem(hashItemToLoad, hashItemToPreload, hashItemToRead, hashItemToK
                         }
                     }
                     if (hashItemToPreload !== false) {
-                        // loadItem(hashItemToPreload, false, hashItemToRead, hashItemToKeepUnread, false);
-                        loadItem(hashItemToPreload, false, hashItemToRead, hashItemToKeepUnread, false);
-                        //loadItem(hashItemToPreload, false, false, false, false);
+                        // loadItem(hashItemToPreload, false,
+                        // hashItemToRead, hashItemToKeepUnread, false);
+                        loadItem(
+                            hashItemToPreload,
+                            false,
+                            hashItemToRead,
+                            hashItemToKeepUnread,
+                            false
+                        );
+                        //loadItem(hashItemToPreload, false,
+                        //false, false, false);
                     } else {
-                        // loadItem(false, false, hashItemToRead, hashItemToKeepUnread, false);
-                        loadItem(false, false, hashItemToRead, hashItemToKeepUnread, false);
+                        // loadItem(false, false, hashItemToRead,
+                        // hashItemToKeepUnread, false);
+                        loadItem(
+                            false,
+                            false,
+                            hashItemToRead,
+                            hashItemToKeepUnread,
+                            false
+                        );
                     }
                 }
                 // finishWorking();
@@ -1659,7 +1851,13 @@ function nextItemList() {
         hashCurrentToRead = listItems[currentItemInd];
         hashNextToLoad = listItems[currentItemInd];
     }
-    loadItem(hashNextToLoad, hashNextToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+    loadItem(
+        hashNextToLoad,
+        hashNextToPreload,
+        hashCurrentToRead,
+        hashCurrentToKeepUnread,
+        true
+    );
 }
 
 function previousItemList() {
@@ -1674,7 +1872,13 @@ function previousItemList() {
     } else {
         currentItemInd = -1;
     }
-    loadItem(hashPreviousToLoad, hashPreviousToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+    loadItem(
+        hashPreviousToLoad,
+        hashPreviousToPreload,
+        hashCurrentToRead,
+        hashCurrentToKeepUnread,
+        true
+    );
 }
 
 // Show expanded
@@ -1702,7 +1906,13 @@ function nextItemShowExpanded() {
             hashCurrentToKeepUnread = hashCurrentToRead;
         }
     }
-    loadItem(hashNextToLoad, hashNextToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+    loadItem(
+        hashNextToLoad,
+        hashNextToPreload,
+        hashCurrentToRead,
+        hashCurrentToKeepUnread,
+        true
+    );
 }
 
 
@@ -1732,7 +1942,13 @@ function previousItemShowExpanded() {
             hashCurrentToKeepUnread = hashCurrentToRead;
         }
     }
-    loadItem(hashPreviousToLoad, hashPreviousToPreload, hashCurrentToRead, hashCurrentToKeepUnread, true);
+    loadItem(
+        hashPreviousToLoad,
+        hashPreviousToPreload,
+        hashCurrentToRead,
+        hashCurrentToKeepUnread,
+        true
+    );
 }
 
 // next/previous item
@@ -1814,7 +2030,9 @@ function addItemsToList(list, where) {
             addClass(span, 'read');
         }
         if (view === 'list') {
-            span.onclick= function () { showArticle(this.parentNode.lastChild.id.substr(5,12), true); };
+            span.onclick= function () {
+                showArticle(this.parentNode.lastChild.id.substr(5,12), true);
+            };
         }
         spanfeed = document.createElement('span');
         spanfeed.className = 'item-feed nomobile';
@@ -1886,7 +2104,10 @@ function loadItems(page, numInitItems, where, filter) {
     xhr.onreadystatechange = function() {
         // Everything OK
         if (xhr.readyState == 4 && xhr.status == 200) {
-            var numAddedItems = addItemsToList(JSON.parse(xhr.responseText), where);
+            var numAddedItems = addItemsToList(
+                JSON.parse(xhr.responseText),
+                where
+            );
             if (page !== '') {
                 numLoadedItems += numAddedItems;
                 currentPage = page;
@@ -2033,7 +2254,8 @@ function checkScroll() {
         }
 
         if (document.getElementById('feeds')
-            && window.getComputedStyle(document.getElementById('feeds'), null).getPropertyValue('display') === 'none') {
+            && window.getComputedStyle(document.getElementById('feeds'), null)
+            .getPropertyValue('display') === 'none') {
             // mobile version
             elt = document.documentElement;
         }

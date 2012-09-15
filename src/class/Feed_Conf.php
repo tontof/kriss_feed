@@ -178,7 +178,10 @@ class Feed_Conf
             }
             Session::logout();
         } else {
-            echo $this->kfp->htmlPage('KrISS feed installation', $this->kfp->installPage());
+            echo $this->kfp->htmlPage(
+                'KrISS feed installation',
+                $this->kfp->installPage()
+            );
             exit();
         }
     }

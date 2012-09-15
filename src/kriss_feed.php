@@ -9,7 +9,7 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
-define('FEED_VERSION', 3);
+define('FEED_VERSION', 4);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
@@ -227,9 +227,8 @@ if (isset($_GET['login'])) {
     }
     header('Location: '.$rurl);
     exit();
-} elseif (isset($_GET['edit']) && !empty($_GET['edit'])
-          && Session::isLogged()) {
-    // Edit feed, folder
+} elseif (isset($_GET['edit']) && Session::isLogged()) {
+    // Edit feed, folder, all
     $kf->loadData();
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
     $type = $kf->hashType($hash);
@@ -243,8 +242,10 @@ if (isset($_GET['login'])) {
             $title = $_POST['title'];
             $description = $_POST['description'];
             $folders = array();
-            foreach ($_POST['folders'] as $hashFolder) {
-                $folders[] = $kf->getFolder($hashFolder);
+            if (!empty($_POST['folders'])) {
+                foreach ($_POST['folders'] as $hashFolder) {
+                    $folders[] = $kf->getFolder($hashFolder);
+                }
             }
             if (!empty($_POST['newfolder'])) {
                 $folders[] = $_POST['newfolder'];
@@ -252,6 +253,7 @@ if (isset($_GET['login'])) {
             $timeUpdate = $_POST['timeUpdate'];
 
             $kf->editFeed($hash, $title, $description, $folders, $timeUpdate);
+            $this->writeData();
 
             $rurl = MyTool::getUrl();
             if (isset($_POST['returnurl'])) {
@@ -265,6 +267,7 @@ if (isset($_GET['login'])) {
             }
 
             $kf->removeFeed($hash);
+            $kf->writeData();
 
             header('Location: ?'.$kfc->getMode());
             exit();
@@ -332,17 +335,107 @@ if (isset($_GET['login'])) {
             exit;
         }
         break;
+    case 'all':
+        if (isset($_POST['save'])) {
+            if (!Session::isToken($_POST['token'])) {
+                die('Wrong token.');
+            }
+
+            $feeds = array();
+            foreach ($_POST['feeds'] as $hashFeed) {
+                $feeds[] = $hashFeed;
+            }
+
+            foreach ($feeds as $hashFeed) {
+                $title = $_POST['title_'.$hashFeed];
+                $description = $_POST['description_'.$hashFeed];
+                $timeUpdate = $_POST['timeupdate_'.$hashFeed];
+
+
+                $folders = array();
+                if (!empty($_POST['addfolders'])) {
+                    foreach ($_POST['addfolders'] as $hashFolder) {
+                        $folders[] = $kf->getFolder($hashFolder);
+                    }
+                }
+                if (!empty($_POST['addnewfolder'])) {
+                    $folders[] = $_POST['addnewfolder'];
+                }
+                if (!empty($_POST['folders_'.$hashFeed])) {
+                    foreach ($_POST['folders_'.$hashFeed] as $hashFolder) {
+                        $folders[] = $kf->getFolder($hashFolder);
+                    }
+                }
+                if (!empty($_POST['newfolder_'.$hashFeed])) {
+                    $folders[] = $_POST['newfolder_'.$hashFeed];
+                }
+                $removeFolders = array();
+                if (!empty($_POST['removefolders'])) {
+                    foreach ($_POST['removefolders'] as $hashFolder) {
+                        $removeFolders[] = $kf->getFolder($hashFolder);
+                    }
+                }
+                $folders = array_diff($folders, $removeFolders);
+                $kf->editFeed(
+                    $hashFeed,
+                    $title,
+                    $description,
+                    $folders,
+                    $timeUpdate
+                );
+            }
+            $kf->writeData();
+
+            $rurl = MyTool::getUrl();
+            if (isset($_POST['returnurl'])) {
+                $rurl = $_POST['returnurl'];
+            }
+            header('Location: '.$rurl);
+            exit();
+        } elseif (isset($_POST['delete'])) {
+            if (!Session::isToken($_POST['token'])) {
+                die('Wrong token.');
+            }
+
+            $feeds = array();
+            foreach ($_POST['feeds'] as $hashFeed) {
+                $kf->removeFeed($hashFeed);
+            }
+            $kf->writeData();
+
+            $rurl = MyTool::getUrl();
+            if (isset($_POST['returnurl'])) {
+                $rurl = $_POST['returnurl'];
+            }
+            header('Location: '.$rurl);
+            exit();
+        } elseif (isset($_POST['cancel'])) {
+            if (!Session::isToken($_POST['token'])) {
+                die('Wrong token.');
+            }
+
+            $rurl = MyTool::getUrl();
+            if (isset($_POST['returnurl'])) {
+                $rurl = $_POST['returnurl'];
+            }
+            header('Location: '.$rurl);
+            exit();
+        } else {
+            echo $kfp->htmlPage(
+                strip_tags(
+                    MyTool::formatText($kf->kfc->title)
+                ),
+                $kfp->editFeedsPage($kf)
+            );
+            exit;
+        }
+        break;
     case 'item':
     default:
         break;
     }
-    echo $kfp->htmlPage(
-        strip_tags(
-            MyTool::formatText($kf->kfc->title)
-        ),
-        $kfp->readerPage($kf)
-    );
-    exit;
+    header('Location: ?'.$kfc->getMode());
+    exit();
 } elseif ((isset($_GET['ajaxlist'])
            || isset($_GET['ajaxupdate'])
            || isset($_GET['ajaxitem'])

@@ -438,7 +438,6 @@ class Feed
     {
         if (isset($this->_data[$feedHash])) {
             unset($this->_data[$feedHash]);
-            $this->writeData();
         }
     }
 
@@ -486,8 +485,6 @@ class Feed
                     }
                 }
             }
-
-            $this->writeData();
         }
     }
 
@@ -611,7 +608,8 @@ class Feed
                 $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
                     ? strtotime($tmpItem['time'])
                     : time();
-                if (MyTool::isUrl($tmpItem['via']) && $tmpItem['via'] != $tmpItem['link']) {
+                if (MyTool::isUrl($tmpItem['via'])
+                    && $tmpItem['via'] != $tmpItem['link']) {
                     $newItems[$hashUrl]['via'] = $tmpItem['via'];
                 } else {
                     $newItems[$hashUrl]['via'] = '';
@@ -993,7 +991,8 @@ class Feed
                 $newItems = $this->getItemsFromXml($xml);
                 foreach (array_keys($newItems) as $itemHash) {
                     if (empty($newItems[$itemHash]['via'])) {
-                        $newItems[$itemHash]['via'] = $this->_data[$feedHash]['htmlUrl'];
+                        $newItems[$itemHash]['via']
+                            = $this->_data[$feedHash]['htmlUrl'];
                     }
                     if (empty($newItems[$itemHash]['author'])) {
                         $newItems[$itemHash]['author']
@@ -1148,7 +1147,7 @@ class Feed
     {
         $type = '';
         if (empty($hash) || $hash=='all') {
-            $type = '';
+            $type = 'all';
         } else {
             if (isset($this->_data[$hash])) {
                 // a feed

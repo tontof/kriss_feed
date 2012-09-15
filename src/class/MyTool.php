@@ -60,6 +60,7 @@ class MyTool
     {
         // http://neo22s.com/check-if-url-exists-and-is-online-php/
         $pattern='|^http(s)?://[a-z0-9-]+(.[a-z0-9-]+)*(:[0-9]+)?(/.*)?$|i';
+
         return preg_match($pattern, $url);
     }
 
