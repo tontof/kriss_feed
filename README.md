@@ -1,4 +1,4 @@
-kriss_feed (version 3)
+kriss_feed (version 4)
 ======================
 
 A simple and smart (or stupid) feed reader.
@@ -34,6 +34,11 @@ Features
   * autoupdate in reader view
   * auto cache 10 last downloaded articles
   * automatic load when scroll
+
+* version 4
+  * edit feeds
+  * add via url (shaarli, blogotext links)
+  * automatic save mode/view
 
 TODOs
 =====
