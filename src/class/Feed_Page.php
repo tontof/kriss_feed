@@ -1602,7 +1602,7 @@ function showArticle(hashItem, markAsReadWhenLoad) {
                         + '<button onclick="keepUnreadItem(\''
                         + hashItem + '\')">keepunread</button>';
                 } else if (cache['item-' + hashItem]['read'] === 1) {
-                    info.innerHTML = 'mark as <button'
+                    info.innerHTML = 'mark as <button '
                         + 'onclick="keepUnreadItem(\''
                         + hashItem + '\')">keepunread</button>';
                 }
