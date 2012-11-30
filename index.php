@@ -860,7 +860,7 @@ HTML;
             <input type="radio" id="privateReader" name="public" value="0" '
             . (!$kfc->public? 'checked="checked"' : '')
             . ' /><label for="privateReader">Private kriss feed</label><br>
-            <label>- Shaarli url</label><br>
+            <label>- Shaarli/KrISS link url</label><br>
             <input type="text" name="shaarli" value="'
             . htmlspecialchars($kfc->shaarli) . '"><br>
             <label>- Feed reader redirector (only for links,'
@@ -1475,12 +1475,22 @@ function shareItem(){
         if (current) {
 	    var url = current['link'];
 	    var title = current['title'];
+	    var via = current['via'];
+            var domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+            var domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+            if (domainUrl !== domainVia) {
+                via = 'via ' + via;
+            } else {
+                via = '';
+            }
 	    window.open(
             shaarli
             + '/index.php?post='
             + encodeURIComponent(url)
             + '&title='
             + encodeURIComponent(title)
+            + '&description='
+            + encodeURIComponent(via)
             + '&source=bookmarklet'
             , '_blank'
             , 'menubar=no, height=390, width=600, '
@@ -3827,6 +3837,7 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
+            session_name('kriss');
             session_start();
         }
     }

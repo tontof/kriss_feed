@@ -53,6 +53,7 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
+            session_name('kriss');
             session_start();
         }
     }
