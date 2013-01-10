@@ -253,7 +253,7 @@ if (isset($_GET['login'])) {
             $timeUpdate = $_POST['timeUpdate'];
 
             $kf->editFeed($hash, $title, $description, $folders, $timeUpdate);
-            $this->writeData();
+            $kf->writeData();
 
             $rurl = MyTool::getUrl();
             if (isset($_POST['returnurl'])) {
