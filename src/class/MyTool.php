@@ -18,6 +18,8 @@ class MyTool
      */
     public static function initPhp()
     {
+        define('START_TIME', microtime(true));
+
         if (phpversion() < 5) {
             die("Argh you don't have PHP 5 !");
         }
@@ -30,7 +32,7 @@ class MyTool
             $_COOKIE = array_map('MyTool::_stripslashesDeep', $_COOKIE);
         }
 
-        ob_start('ob_gzhandler');
+        ob_start();
         register_shutdown_function('ob_end_flush');
     }
 
@@ -187,8 +189,10 @@ class MyTool
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
+        $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
+
         return 'http' . ($https ? 's' : '') . '://'
-            . $_SERVER["SERVER_NAME"] . $serverport . $_SERVER['SCRIPT_NAME'];
+            . $_SERVER["SERVER_NAME"] . $serverport . $scriptname;
 
     }
 
@@ -289,4 +293,42 @@ class MyTool
         return $t;
     }
 
+    public static function renderJson($data)
+    {
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+        header('Content-type: application/json; charset=UTF-8');
+
+        echo json_encode($data);
+        exit();
+    }
+    /**
+     * Redirect depending on returnurl form or REFERER
+     *
+     * @param string $rurl Url to be redirected to
+     */
+    public static function redirect($rurl = '')
+    {
+        if ($rurl === '') {
+            // if (!empty($_SERVER['HTTP_REFERER']) && strcmp(parse_url($_SERVER['HTTP_REFERER'],PHP_URL_HOST),$_SERVER['SERVER_NAME'])==0)
+            $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
+            if (!empty($_POST)) {
+                $rurl = $_POST['returnurl'];
+                if (empty($rurl) || strpos($rurl, '?login') !== false) {
+                    $rurl = MyTool::getUrl();
+                }
+            }
+        }
+
+        header('Location: '.$rurl);
+        exit();
+    }
+
+    /**
+     * From Simplie Pie
+     */
+    public static function silence_errors($num, $str)
+    {
+	// No-op                                                       
+    }
 }

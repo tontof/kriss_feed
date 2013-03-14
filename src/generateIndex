@@ -6,12 +6,36 @@ function removeComments {
  sed -e '/\/\*\*/,/*\//d;'
 }
 
+delim1="<\?php include\(\""
+delim2="\"); \?>"
+
+# Thanks Fred 
+function includeFile {
+  while IFS='' read -r line
+  do
+    if [[ $line =~ ${delim1} ]]
+    then
+        fic1=${line##*${delim1}}
+        fic2=${fic1%${delim2}*}
+        if [ -f $fic2 ]
+        then
+          cat $fic2
+        else
+          cat class/$fic2
+        fi
+    else
+        printf "%s\n" "$line"
+    fi
+  done
+}
+
 head -n $((${n} - 1)) ${file} | removeComments
 
+# includeFile twice for templates that also include file
 for i in class/*.php
 do
  echo -n "del>"
- cat $i
+ cat $i | includeFile | includeFile
 done | sed -e 's:del><?php::g' | removeComments
 
 tail -n $(( ${nt} - $((${n} + 3)) )) ${file} | removeComments

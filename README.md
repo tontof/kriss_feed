@@ -7,7 +7,7 @@ An example is available on [tontof.net](http://tontof.net/feed).
 
 Installation
 ============
-* If you just want to use kriss feed, download index.php file and upload it
+* If you just want to use kriss feed, download [index.php](https://raw.github.com/tontof/kriss_feed/master/index.php) file and upload it
 on your server. Enjoy !
 
 * If you want to look at the source, look at the src directory.
@@ -40,11 +40,10 @@ Features
   * add via url (shaarli, blogotext links)
   * automatic save mode/view
 
-TODOs
-=====
-* auto show if link is a image/media
-* save folder state (opened/closed)
-* show new items first (when all items)
+* version 5
+  * new data structure
+  * bootstrap css
+  * fully usable without javascript
 
 Licence
 =======
