@@ -48,6 +48,6 @@ Features
 Licence
 =======
 kriss_feed simple and smart (or stupid) feed reader
-Copyleft (C) 2012 Tontof - http://tontof.net
+Copyleft (ɔ) 2012 Tontof - http://tontof.net
 use KrISS feed at your own risk
 
