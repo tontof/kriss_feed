@@ -4392,8 +4392,10 @@ class Feed
             // (after opml import, description is often empty)
             if (empty($this->_data['feeds'][$feedHash]['description'])) {
                 $channel = $this->getChannelFromXml($xml);
-                $this->_data['feeds'][$feedHash]['description']
-                    = $channel['description'];
+                if (isset($channel['description'])) {
+                    $this->_data['feeds'][$feedHash]['description']
+                        = $channel['description'];
+                }
                 // Check description only the first time description is empty
                 if (empty($this->_data['feeds'][$feedHash]['description'])) {
                     $this->_data['feeds'][$feedHash]['description'] = ' ';
