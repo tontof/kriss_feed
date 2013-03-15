@@ -11,11 +11,11 @@
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
           <div id="paging-up">
-            <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
           <?php FeedPage::listItemsTpl(); ?>
           <div id="paging-down">
-          <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
         </div>
         <div id="minor-container" class="span3 full-height minor-container">
@@ -26,11 +26,11 @@
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
           <div id="paging-up">
-            <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
           <?php FeedPage::listItemsTpl(); ?>
           <div id="paging-down">
-            <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
         </div>
         <?php } ?>
