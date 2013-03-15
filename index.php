@@ -79,6 +79,7 @@ class FeedConf
     public $menuUnread = 7;
     public $menuEdit = 8;
     public $menuAdd = 9;
+    public $menuHelp = 10;
 
     public $pagingItem = 1;
     public $pagingPage = 2;
@@ -430,6 +431,9 @@ class FeedConf
         if ($this->menuAdd != 0) {
             $menu['menuAdd'] = $this->menuAdd;
         }
+        if ($this->menuHelp != 0) {
+            $menu['menuHelp'] = $this->menuHelp;
+        }
 
         asort($menu);
 
@@ -500,6 +504,11 @@ class FeedConf
         $this->menuAdd = $menuAdd;
     }
 
+    public function setMenuHelp($menuHelp)
+    {
+        $this->menuHelp = $menuHelp;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -522,7 +531,7 @@ class FeedConf
                       'maxItems', 'locale', 'autoreadItem', 'autoreadPage',
                       'autohide', 'listFeeds', 'view', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd',
+                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
                       'pagingItem', 'pagingPage', 'pagingByPage');
         $out = '<?php';
         $out .= "\n";
@@ -722,7 +731,7 @@ dl {
   margin-bottom: 0px !important;
 }
 
-dd {
+.item-info {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1055,6 +1064,11 @@ dd {
             <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">Add a new feed</a>
           </li>
           <?php break; ?>
+          <?php case 'menuHelp': ?>
+          <li>
+            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed">Help</a>
+          </li>
+          <?php break; ?>
           <?php default: ?>
           <?php break; ?>
           <?php } ?>
@@ -1323,6 +1337,13 @@ dd {
                     </div>
                   </div>
                   <div class="control-group">
+                    <label class="control-label" for="menuHelp">Help</label>
+                    <div class="controls">
+                      <input type="text" id="menuHelp" name="menuHelp" value="<?php echo empty($kfcmenu['menuHelp'])?'0':$kfcmenu['menuHelp']; ?>">
+                      <span class="help-block">If you want to add a link to the help</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
                       <input class="btn" type="submit" name="save" value="Save" />
@@ -1375,6 +1396,71 @@ dd {
                   </div>
                 </fieldset>
               </form><br>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<?php
+    }
+
+    public static function helpTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head><?php FeedPage::includesTpl(); ?></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span6 offset3">
+          <div id="config">
+            <?php FeedPage::navTpl(); ?>
+            <div id="section">
+              <h2>Keyboard shortcut</h2>
+              <dl class="dl-horizontal">
+                <dt>'space' or 't'</dt>
+                <dd>When viewing items as list, let you open or close current item ('t'oggle current item)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'m'</dt>
+                <dd>'M'ark current item as read if unread or unread if read</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'n' or right arrow</dt>
+                <dd>Go to 'n'ext item</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'p' or left arrow</dt>
+                <dd>Go to 'p'revious item</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'shift' + 'n'</dt>
+                <dd>Go to 'n'ext page</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'shit' + 'p'</dt>
+                <dd>Go to 'p'revious page</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'j'</dt>
+                <dd>Go to 'n'ext item and open it (in list view)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'k'</dt>
+                <dd>Go to 'p'revious item and open it (in list view)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'o'</dt>
+                <dd>'O'pen current item in new tab</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'s'</dt>
+                <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
+              </dl>
             </div>
           </div>
         </div>
@@ -5615,6 +5701,9 @@ if (isset($_GET['login'])) {
         $kf->writeData();
     }
     MyTool::renderJson($result);
+} elseif (isset($_GET['help'])) {
+    $pb->assign('pagetitle', 'Help for KrISS feed');
+    $pb->renderPage('help');
 } elseif (isset($_GET['update'])
           && (Session::isLogged()
               || (isset($_GET['cron'])
