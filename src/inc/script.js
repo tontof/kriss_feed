@@ -318,7 +318,7 @@
    element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length > 1) {
       title = getTitleItem(itemHash);
-      url = getUrlItem(itemHash);
+      url = getUrlItem(itemHash).replace(redirector,'');
       via = getViaItem(itemHash);
       domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
