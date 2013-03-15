@@ -185,6 +185,9 @@ if (isset($_GET['login'])) {
         $kf->writeData();
     }
     MyTool::renderJson($result);
+} elseif (isset($_GET['help'])) {
+    $pb->assign('pagetitle', 'Help for KrISS feed');
+    $pb->renderPage('help');
 } elseif (isset($_GET['update'])
           && (Session::isLogged()
               || (isset($_GET['cron'])

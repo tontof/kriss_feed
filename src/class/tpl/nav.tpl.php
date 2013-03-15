@@ -81,6 +81,11 @@
             <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">Add a new feed</a>
           </li>
           <?php break; ?>
+          <?php case 'menuHelp': ?>
+          <li>
+            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed">Help</a>
+          </li>
+          <?php break; ?>
           <?php default: ?>
           <?php break; ?>
           <?php } ?>

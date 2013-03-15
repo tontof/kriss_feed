@@ -212,6 +212,13 @@
                     </div>
                   </div>
                   <div class="control-group">
+                    <label class="control-label" for="menuHelp">Help</label>
+                    <div class="controls">
+                      <input type="text" id="menuHelp" name="menuHelp" value="<?php echo empty($kfcmenu['menuHelp'])?'0':$kfcmenu['menuHelp']; ?>">
+                      <span class="help-block">If you want to add a link to the help</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
                       <input class="btn" type="submit" name="save" value="Save" />

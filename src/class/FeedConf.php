@@ -132,6 +132,7 @@ class FeedConf
     public $menuUnread = 7;
     public $menuEdit = 8;
     public $menuAdd = 9;
+    public $menuHelp = 10;
 
     /**
      * paging personnalization
@@ -610,6 +611,9 @@ class FeedConf
         if ($this->menuAdd != 0) {
             $menu['menuAdd'] = $this->menuAdd;
         }
+        if ($this->menuHelp != 0) {
+            $menu['menuHelp'] = $this->menuHelp;
+        }
 
         asort($menu);
 
@@ -680,6 +684,11 @@ class FeedConf
         $this->menuAdd = $menuAdd;
     }
 
+    public function setMenuHelp($menuHelp)
+    {
+        $this->menuHelp = $menuHelp;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -707,7 +716,7 @@ class FeedConf
                       'maxItems', 'locale', 'autoreadItem', 'autoreadPage',
                       'autohide', 'listFeeds', 'view', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd',
+                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
                       'pagingItem', 'pagingPage', 'pagingByPage');
         $out = '<?php';
         $out .= "\n";

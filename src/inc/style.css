@@ -156,7 +156,7 @@ dl {
   margin-bottom: 0px !important;
 }
 
-dd {
+.item-info {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
