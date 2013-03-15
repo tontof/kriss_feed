@@ -190,6 +190,22 @@ class Feed
     }
 
     /**
+     * Return html url of the feed
+     *
+     * @param string $feedHash Hash corresponding to a feed
+     *
+     * @return string|false html url if exists, false otherwise
+     */
+    public function getFeedHtmlUrl($feedHash)
+    {
+        if (isset($this->_data['feeds'][$feedHash]['htmlUrl'])) {
+            return $this->_data['feeds'][$feedHash]['htmlUrl'];
+        }
+
+        return false;
+    }
+
+    /**
      * Return title of a particular feed from a given hash feed
      *
      * @param string $feedHash Hash corresponding to a feed

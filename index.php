@@ -3797,6 +3797,15 @@ class Feed
         return false;
     }
 
+    public function getFeedHtmlUrl($feedHash)
+    {
+        if (isset($this->_data['feeds'][$feedHash]['htmlUrl'])) {
+            return $this->_data['feeds'][$feedHash]['htmlUrl'];
+        }
+
+        return false;
+    }
+
     public function getFeedTitle($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash]['title'])) {
@@ -6142,7 +6151,7 @@ $type = $kf->hashType($currentHash);
             $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
             break;
         case 'feed':
-            $hashView = 'Feed ('.$kf->getFeedTitle($currentHash).'): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
             break;
         case 'folder':
             $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
