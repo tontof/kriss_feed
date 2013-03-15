@@ -572,8 +572,12 @@ $type = $kf->hashType($currentHash);
                 $unread++;
             }
         }
+
         // pagination
         $currentPage = (int) ($index/$byPage)+1;
+        if ($currentPage <= 0) {
+            $currentPage = 1;
+        }
         $begin = ($currentPage - 1) * $byPage;
         $maxPage = (count($listItems) <= $byPage) ? '1' : ceil(count($listItems) / $byPage);
         $nbItems = count($listItems);

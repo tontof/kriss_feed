@@ -1056,10 +1056,6 @@
   function nextItem() {
     var nextItemIndex = listItemsHash.indexOf(currentItemHash) + 1, nextCurrentItemHash;
 
-    if (listItemsHash.length == 0) {
-      nextPage();
-    }
-
     closeCurrentItem();
     if (autoreadItem && isCurrentUnread()) {
       markAsCurrentItem();
