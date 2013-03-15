@@ -5307,7 +5307,7 @@ class Session
         // Force cookie path (but do not change lifetime)
         $cookie=session_get_cookie_params();
         // Default cookie expiration and path.
-        session_set_cookie_params($cookie['lifetime'], dirname($_SERVER["SCRIPT_NAME"]).'/');
+        session_set_cookie_params($cookie['lifetime'], dirname($_SERVER["SCRIPT_NAME"]));
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
