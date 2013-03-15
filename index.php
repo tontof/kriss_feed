@@ -78,6 +78,7 @@ class FeedConf
     public $menuRead = 6;
     public $menuUnread = 7;
     public $menuEdit = 8;
+    public $menuAdd = 9;
 
     public $pagingItem = 1;
     public $pagingPage = 2;
@@ -426,6 +427,9 @@ class FeedConf
         if ($this->menuEdit != 0) {
             $menu['menuEdit'] = $this->menuEdit;
         }
+        if ($this->menuAdd != 0) {
+            $menu['menuAdd'] = $this->menuAdd;
+        }
 
         asort($menu);
 
@@ -491,6 +495,11 @@ class FeedConf
         $this->menuEdit = $menuEdit;
     }
 
+    public function setMenuAdd($menuAdd)
+    {
+        $this->menuAdd = $menuAdd;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -513,8 +522,8 @@ class FeedConf
                       'maxItems', 'locale', 'autoreadItem', 'autoreadPage',
                       'autohide', 'listFeeds', 'view', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'pagingItem',
-                      'pagingPage', 'pagingByPage');
+                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd',
+                      'pagingItem', 'pagingPage', 'pagingByPage');
         $out = '<?php';
         $out .= "\n";
 
@@ -1041,6 +1050,11 @@ dd {
             <a href="<?php echo $query.'edit='.$currentHash; ?>" class="admin" title="Edit <?php echo $currentHashType; ?>">Edit <?php echo $currentHashType; ?></a>
           </li>
           <?php break; ?>
+          <?php case 'addFeed': ?>
+          <li>
+            <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">Add a new feed</a>
+          </li>
+          <?php break; ?>
           <?php default: ?>
           <?php break; ?>
           <?php } ?>
@@ -1299,6 +1313,13 @@ dd {
                     <div class="controls">
                       <input type="text" id="menuEdit" name="menuEdit" value="<?php echo empty($kfcmenu['menuEdit'])?'0':$kfcmenu['menuEdit']; ?>">
                       <span class="help-block">If you want to edit all, folder or a feed</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuAdd">Add</label>
+                    <div class="controls">
+                      <input type="text" id="menuAdd" name="menuAdd" value="<?php echo empty($kfcmenu['menuAdd'])?'0':$kfcmenu['menuAdd']; ?>">
+                      <span class="help-block">If you want to add a feed</span>
                     </div>
                   </div>
                   <div class="control-group">
@@ -5650,27 +5671,29 @@ if (isset($_GET['login'])) {
     // Export
     $kf->loadData();
     Opml::exportOpml($kf->getFeeds(), $kf->getFolders());
-} elseif (isset($_POST['newfeed'])
-          && !empty($_POST['newfeed'])
-          && Session::isLogged()
-    ) {
-    // Add channel
+} elseif (isset($_GET['add']) && Session::isLogged()) {
+    // Add feed
     $kf->loadData();
-    
-    if ($kf->addChannel($_POST['newfeed'])) {
-        // Add success
-        MyTool::redirect();
-    } else {
-        // Add fail
-        $returnurl = empty($_SERVER['HTTP_REFERER'])
-            ? MyTool::getUrl()
-            : $_SERVER['HTTP_REFERER'];
-        echo '<script>alert("The feed you are trying to add already exists'
-            . ' or is wrong. Check your feed or try again later.");'
-            . 'document.location=\'' . htmlspecialchars($returnurl)
-            . '\';</script>';
-        exit;
+
+    if (isset($_POST['newfeed']) && !empty($_POST['newfeed'])) {
+        if ($kf->addChannel($_POST['newfeed'])) {
+            // Add success
+            MyTool::redirect();
+        } else {
+            // Add fail
+            $returnurl = empty($_SERVER['HTTP_REFERER'])
+                ? MyTool::getUrl()
+                : $_SERVER['HTTP_REFERER'];
+            echo '<script>alert("The feed you are trying to add already exists'
+                . ' or is wrong. Check your feed or try again later.");'
+                . 'document.location=\'' . htmlspecialchars($returnurl)
+                . '\';</script>';
+            exit;
+        }
     }
+    $pb->assign('page', 'add');
+    $pb->assign('pagetitle', 'add');
+
 } elseif (isset($_GET['toggleFolder']) && Session::isLogged()) {
     $kf->loadData();
     if (isset($_GET['toggleFolder'])) {
@@ -5841,7 +5864,7 @@ $type = $kf->hashType($currentHash);
             $listFeeds = $kf->getFeeds();
             uasort(
                 $listFeeds,
-                Feed::sortByTitle
+                'Feed::sortByTitle'
             );
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);
