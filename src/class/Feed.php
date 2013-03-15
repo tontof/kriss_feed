@@ -1019,6 +1019,11 @@ class Feed
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
+
+                uasort(
+                    $this->_data['feeds'],
+                    'Feed::sortByTitle'
+                    );
                 return true;
             }
         }
