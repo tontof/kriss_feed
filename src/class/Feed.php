@@ -1012,41 +1012,6 @@ class Feed
     }
 
     /**
-     * List of feeds with update information and title
-     *
-     * @return array List of feeds
-     *         [0] hash
-     *         [1] title
-     *         [2] last update time
-     *         [3] update interval time
-     */
-    public function getOrderedFeedsList()
-    {
-        $list = array();
-        foreach (array_keys($this->_data) as $feedHash) {
-            $item = current($this->_data[$feedHash]['items']);
-            $sortInfo = time()-$item['time'];
-            $list[] = array(
-                $sortInfo,
-                $feedHash,
-                $this->_data[$feedHash]['title'],
-                (int) ((time() - $this->_data[$feedHash]['lastUpdate']) / 60),
-                $this->getTimeUpdate($this->_data[$feedHash])
-            );
-        }
-
-        sort($list);
-
-        // Remove sortInfo
-        $shift = function(&$array) {
-            array_shift($array); return $array;
-        };
-        $list = array_map($shift, $list);
-
-        return $list;
-    }
-
-    /**
      * Calculate updates depending on timeUpdate feed information
      *
      * @param array $feed Array of a feed information

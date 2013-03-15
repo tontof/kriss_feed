@@ -4295,32 +4295,6 @@ class Feed
         return false;
     }
 
-    public function getOrderedFeedsList()
-    {
-        $list = array();
-        foreach (array_keys($this->_data) as $feedHash) {
-            $item = current($this->_data[$feedHash]['items']);
-            $sortInfo = time()-$item['time'];
-            $list[] = array(
-                $sortInfo,
-                $feedHash,
-                $this->_data[$feedHash]['title'],
-                (int) ((time() - $this->_data[$feedHash]['lastUpdate']) / 60),
-                $this->getTimeUpdate($this->_data[$feedHash])
-            );
-        }
-
-        sort($list);
-
-        // Remove sortInfo
-        $shift = function(&$array) {
-            array_shift($array); return $array;
-        };
-        $list = array_map($shift, $list);
-
-        return $list;
-    }
-
     public function getTimeUpdate($feed)
     {
         $max = $feed['timeUpdate'];
