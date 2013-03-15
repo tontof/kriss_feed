@@ -279,6 +279,7 @@ if (isset($_GET['login'])) {
         
         $kf->loadData();
         $kf->setData(Opml::importOpml($kf->getData()));
+        $kf->sortFeeds();
         $kf->writeData();
         exit;
     } else if (isset($_POST['cancel'])) {
@@ -311,6 +312,7 @@ if (isset($_GET['login'])) {
             }
             $hash = MyTool::smallHash($_POST['newfeed']);
             $kf->editFeed($hash, '', '', $folders, '');
+            $kf->sortFeeds();
             $kf->writeData();
             MyTool::redirect('?currentHash='.$hash);
         } else {
@@ -504,10 +506,6 @@ $type = $kf->hashType($currentHash);
         } else {
             $folders = $kf->getFolders();
             $listFeeds = $kf->getFeeds();
-            uasort(
-                $listFeeds,
-                'Feed::sortByTitle'
-            );
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);
             $pb->renderPage('editAll');

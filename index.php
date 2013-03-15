@@ -3755,6 +3755,14 @@ class Feed
         return $this->_data['feeds'];
     }
 
+    public function sortFeeds()
+    {
+        uasort(
+            $this->_data['feeds'],
+            'Feed::sortByTitle'
+            );
+    }
+
     public function getFeedsView()
     {
         $feedsView = array('all' => array('title' => 'All feeds', 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
@@ -4456,10 +4464,6 @@ class Feed
 
                 $this->writeFeed($feedHash, $items);
 
-                uasort(
-                    $this->_data['feeds'],
-                    'Feed::sortByTitle'
-                    );
                 return true;
             }
         }
@@ -5817,6 +5821,7 @@ if (isset($_GET['login'])) {
         
         $kf->loadData();
         $kf->setData(Opml::importOpml($kf->getData()));
+        $kf->sortFeeds();
         $kf->writeData();
         exit;
     } else if (isset($_POST['cancel'])) {
@@ -5849,6 +5854,7 @@ if (isset($_GET['login'])) {
             }
             $hash = MyTool::smallHash($_POST['newfeed']);
             $kf->editFeed($hash, '', '', $folders, '');
+            $kf->sortFeeds();
             $kf->writeData();
             MyTool::redirect('?currentHash='.$hash);
         } else {
@@ -6042,10 +6048,6 @@ $type = $kf->hashType($currentHash);
         } else {
             $folders = $kf->getFolders();
             $listFeeds = $kf->getFeeds();
-            uasort(
-                $listFeeds,
-                'Feed::sortByTitle'
-            );
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);
             $pb->renderPage('editAll');

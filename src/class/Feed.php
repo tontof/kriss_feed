@@ -135,6 +135,17 @@ class Feed
     }
 
     /**
+     * Sort alphabetically  list of feeds
+     */
+    public function sortFeeds()
+    {
+        uasort(
+            $this->_data['feeds'],
+            'Feed::sortByTitle'
+            );
+    }
+
+    /**
      * Return feeds with folders and read/unread information
      * array('title', 'feeds', 'nbUnread', 'nbAll', 'folders')
      *
@@ -1020,10 +1031,6 @@ class Feed
 
                 $this->writeFeed($feedHash, $items);
 
-                uasort(
-                    $this->_data['feeds'],
-                    'Feed::sortByTitle'
-                    );
                 return true;
             }
         }
