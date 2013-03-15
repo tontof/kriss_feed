@@ -1926,11 +1926,11 @@ dd {
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
           <div id="paging-up">
-            <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
           <?php FeedPage::listItemsTpl(); ?>
           <div id="paging-down">
-          <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
         </div>
         <div id="minor-container" class="span3 full-height minor-container">
@@ -1941,11 +1941,11 @@ dd {
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
           <div id="paging-up">
-            <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
           <?php FeedPage::listItemsTpl(); ?>
           <div id="paging-down">
-            <?php empty($paging)?:FeedPage::pagingTpl(); ?>
+            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
           </div>
         </div>
         <?php } ?>
@@ -2959,10 +2959,6 @@ dd {
 
   function nextItem() {
     var nextItemIndex = listItemsHash.indexOf(currentItemHash) + 1, nextCurrentItemHash;
-
-    if (listItemsHash.length == 0) {
-      nextPage();
-    }
 
     closeCurrentItem();
     if (autoreadItem && isCurrentUnread()) {
@@ -5959,8 +5955,12 @@ $type = $kf->hashType($currentHash);
                 $unread++;
             }
         }
+
         // pagination
         $currentPage = (int) ($index/$byPage)+1;
+        if ($currentPage <= 0) {
+            $currentPage = 1;
+        }
         $begin = ($currentPage - 1) * $byPage;
         $maxPage = (count($listItems) <= $byPage) ? '1' : ceil(count($listItems) / $byPage);
         $nbItems = count($listItems);
