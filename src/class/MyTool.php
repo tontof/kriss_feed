@@ -26,28 +26,20 @@ class MyTool
 
         error_reporting(E_ALL);
 
+        function stripslashesDeep($value) {
+            return is_array($value)
+                ? array_map('stripslashesDeep', $value)
+                : stripslashes($value);
+        }
+
         if (get_magic_quotes_gpc()) {
-            $_POST = array_map('MyTool::_stripslashesDeep', $_POST);
-            $_GET = array_map('MyTool::_stripslashesDeep', $_GET);
-            $_COOKIE = array_map('MyTool::_stripslashesDeep', $_COOKIE);
+            $_POST = array_map('stripslashesDeep', $_POST);
+            $_GET = array_map('stripslashesDeep', $_GET);
+            $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
         }
 
         ob_start();
         register_shutdown_function('ob_end_flush');
-    }
-
-    /**
-     * Strip slashes when magic quotes is activated
-     *
-     * @param string|array $value Value to remove slashes
-     *
-     * @return string|array       Value with no slashes
-     */
-    private function _stripslashesDeep($value)
-    {
-        return is_array($value)
-            ? array_map('MyTool::_stripslashesDeep', $value)
-            : stripslashes($value);
     }
 
     /**

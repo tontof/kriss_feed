@@ -479,9 +479,7 @@ $type = $kf->hashType($currentHash);
             $listFeeds = $kf->getFeeds();
             uasort(
                 $listFeeds,
-                function ($a, $b) {
-                    return strnatcasecmp($a['title'], $b['title']);
-                }
+                Feed::sortByTitle
             );
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);

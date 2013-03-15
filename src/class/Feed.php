@@ -1477,5 +1477,16 @@ class Feed
 
         return $type;
     }
+
+    /** 
+     * Sort function by title (feed, folder)
+     * Used with uasort
+     *
+     * @param mixed $a a feed or a folder
+     * @param mixed $b a feed or a folder
+     */
+    public static function sortByTitle($a, $b) {
+        return strnatcasecmp($a['title'], $b['title']);
+    }
 }
 
