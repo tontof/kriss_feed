@@ -90,6 +90,18 @@ class FeedPage
     }
 
     /**
+     * addTpl : Add a new feed
+     * 
+     */
+    public static function addFeedTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/add_feed.tpl.php"); ?>
+<?php
+    }
+
+    /**
      * editAllTpl : Edit all feed page
      * 
      */

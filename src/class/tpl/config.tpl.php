@@ -205,6 +205,13 @@
                     </div>
                   </div>
                   <div class="control-group">
+                    <label class="control-label" for="menuAdd">Add</label>
+                    <div class="controls">
+                      <input type="text" id="menuAdd" name="menuAdd" value="<?php echo empty($kfcmenu['menuAdd'])?'0':$kfcmenu['menuAdd']; ?>">
+                      <span class="help-block">If you want to add a feed</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
                       <input class="btn" type="submit" name="save" value="Save" />

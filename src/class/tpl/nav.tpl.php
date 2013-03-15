@@ -76,6 +76,11 @@
             <a href="<?php echo $query.'edit='.$currentHash; ?>" class="admin" title="Edit <?php echo $currentHashType; ?>">Edit <?php echo $currentHashType; ?></a>
           </li>
           <?php break; ?>
+          <?php case 'menuAdd': ?>
+          <li>
+            <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">Add a new feed</a>
+          </li>
+          <?php break; ?>
           <?php default: ?>
           <?php break; ?>
           <?php } ?>

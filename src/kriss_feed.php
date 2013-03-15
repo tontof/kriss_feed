@@ -288,27 +288,51 @@ if (isset($_GET['login'])) {
     // Export
     $kf->loadData();
     Opml::exportOpml($kf->getFeeds(), $kf->getFolders());
-} elseif (isset($_POST['newfeed'])
-          && !empty($_POST['newfeed'])
-          && Session::isLogged()
-    ) {
-    // Add channel
+} elseif (isset($_GET['add']) && Session::isLogged()) {
+    // Add feed
     $kf->loadData();
-    
-    if ($kf->addChannel($_POST['newfeed'])) {
-        // Add success
-        MyTool::redirect();
-    } else {
-        // Add fail
-        $returnurl = empty($_SERVER['HTTP_REFERER'])
-            ? MyTool::getUrl()
-            : $_SERVER['HTTP_REFERER'];
-        echo '<script>alert("The feed you are trying to add already exists'
-            . ' or is wrong. Check your feed or try again later.");'
-            . 'document.location=\'' . htmlspecialchars($returnurl)
-            . '\';</script>';
-        exit;
+
+    if (isset($_POST['newfeed']) && !empty($_POST['newfeed'])) {
+        if ($kf->addChannel($_POST['newfeed'])) {
+            // Add success
+            $folders = array();
+            if (!empty($_POST['folders'])) {
+                foreach ($_POST['folders'] as $hashFolder) {
+                    $folders[] = $hashFolder;
+                }
+            }
+            if (!empty($_POST['newfolder'])) {
+                $newFolderHash = MyTool::smallHash($_POST['newfolder']);
+                $kf->addFolder($_POST['newfolder'], $newFolderHash);
+                $folders[] = $newFolderHash;
+            }
+            $hash = MyTool::smallHash($_POST['newfeed']);
+            $kf->editFeed($hash, '', '', $folders, '');
+            $kf->writeData();
+            MyTool::redirect('?currentHash='.$hash);
+        } else {
+            // Add fail
+            $returnurl = empty($_SERVER['HTTP_REFERER'])
+                ? MyTool::getUrl()
+                : $_SERVER['HTTP_REFERER'];
+            echo '<script>alert("The feed you are trying to add already exists'
+                . ' or is wrong. Check your feed or try again later.");'
+                . 'document.location=\'' . htmlspecialchars($returnurl)
+                . '\';</script>';
+            exit;
+        }
     }
+
+    $newfeed = '';
+    if (isset($_GET['newfeed'])) {
+        $newfeed = htmlspecialchars($_GET['newfeed']);
+    }
+    $pb->assign('page', 'add');
+    $pb->assign('pagetitle', 'Add a new feed');
+    $pb->assign('newfeed', $newfeed);
+    $pb->assign('folders', $kf->getFolders());
+    
+    $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && Session::isLogged()) {
     $kf->loadData();
     if (isset($_GET['toggleFolder'])) {
@@ -479,7 +503,7 @@ $type = $kf->hashType($currentHash);
             $listFeeds = $kf->getFeeds();
             uasort(
                 $listFeeds,
-                Feed::sortByTitle
+                'Feed::sortByTitle'
             );
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);

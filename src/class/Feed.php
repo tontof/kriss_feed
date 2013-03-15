@@ -1003,7 +1003,6 @@ class Feed
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
-                $this->writeData();
                 return true;
             }
         }

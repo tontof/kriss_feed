@@ -1050,7 +1050,7 @@ dd {
             <a href="<?php echo $query.'edit='.$currentHash; ?>" class="admin" title="Edit <?php echo $currentHashType; ?>">Edit <?php echo $currentHashType; ?></a>
           </li>
           <?php break; ?>
-          <?php case 'addFeed': ?>
+          <?php case 'menuAdd': ?>
           <li>
             <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">Add a new feed</a>
           </li>
@@ -1385,6 +1385,68 @@ dd {
 <?php
     }
 
+    public static function addFeedTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <?php FeedPage::includesTpl(); ?>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="edit-all" class="span6 offset3">
+          <?php FeedPage::statusTpl(); ?>
+          <?php FeedPage::navTpl(); ?>
+          <form class="form-horizontal" action="?add" method="POST">
+            <fieldset>
+              <legend>Add a new feed</legend>
+              <div class="control-group">
+                <label class="control-label" > </label>
+                <div class="controls">
+                  <input type="text" id="newfeed" name="newfeed" value="<?php echo $newfeed; ?>">                  
+                </div>
+                <div class="controls">
+                  <input class="btn" type="submit" name="add" value="Add new feed"/>
+                  <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Add selected folders to selected feeds</legend>
+              <div class="control-group">
+                <div class="controls">
+                  <?php foreach ($folders as $hash => $folder) { ?>
+                  <label for="add-folder-<?php echo $hash; ?>">
+                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="folders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                  </label>
+                  <?php } ?>
+                </div>
+                <div class="controls">
+                  <input type="text" name="newfolder" value="" placeholder="New folder">
+                </div>
+                <div class="controls">
+                  <input class="btn" type="submit" name="add" value="Add new feed"/>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Add new feed using a bookmarklet</legend>
+              <div id="add-feed-bookmarklet" class="text-center">
+                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=no,status=no,dialog=1');})();"><b>Add KF</b></a>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<?php
+    }
+
     public static function editAllTpl()
     {
         extract(FeedPage::$var);
@@ -1400,24 +1462,6 @@ dd {
         <div id="edit-all" class="span6 offset3">
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
-          <?php if (Session::isLogged()) { ?>
-          <form class="form-horizontal" action="?" method="POST">
-            <fieldset>
-              <legend>Add a new feed</legend>
-              <div class="control-group">
-                <label class="control-label" > </label>
-                <div class="controls">
-                  <input type="text" id="newfeed" name="newfeed" id="newfeed"/>
-                  
-                </div>
-                <div class="controls">
-                  <input class="btn" type="submit" name="add" value="Add new feed"/>
-                  <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-                </div>
-              </div>
-            </fieldset>
-          </form>
-          <?php } ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
               <legend>Add selected folders to selected feeds</legend>
@@ -4308,7 +4352,6 @@ class Feed
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
-                $this->writeData();
                 return true;
             }
         }
@@ -5678,7 +5721,21 @@ if (isset($_GET['login'])) {
     if (isset($_POST['newfeed']) && !empty($_POST['newfeed'])) {
         if ($kf->addChannel($_POST['newfeed'])) {
             // Add success
-            MyTool::redirect();
+            $folders = array();
+            if (!empty($_POST['folders'])) {
+                foreach ($_POST['folders'] as $hashFolder) {
+                    $folders[] = $hashFolder;
+                }
+            }
+            if (!empty($_POST['newfolder'])) {
+                $newFolderHash = MyTool::smallHash($_POST['newfolder']);
+                $kf->addFolder($_POST['newfolder'], $newFolderHash);
+                $folders[] = $newFolderHash;
+            }
+            $hash = MyTool::smallHash($_POST['newfeed']);
+            $kf->editFeed($hash, '', '', $folders, '');
+            $kf->writeData();
+            MyTool::redirect('?currentHash='.$hash);
         } else {
             // Add fail
             $returnurl = empty($_SERVER['HTTP_REFERER'])
@@ -5691,9 +5748,17 @@ if (isset($_GET['login'])) {
             exit;
         }
     }
-    $pb->assign('page', 'add');
-    $pb->assign('pagetitle', 'add');
 
+    $newfeed = '';
+    if (isset($_GET['newfeed'])) {
+        $newfeed = htmlspecialchars($_GET['newfeed']);
+    }
+    $pb->assign('page', 'add');
+    $pb->assign('pagetitle', 'Add a new feed');
+    $pb->assign('newfeed', $newfeed);
+    $pb->assign('folders', $kf->getFolders());
+    
+    $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && Session::isLogged()) {
     $kf->loadData();
     if (isset($_GET['toggleFolder'])) {

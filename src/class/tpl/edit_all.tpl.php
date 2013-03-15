@@ -9,24 +9,6 @@
         <div id="edit-all" class="span6 offset3">
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
-          <?php if (Session::isLogged()) { ?>
-          <form class="form-horizontal" action="?" method="POST">
-            <fieldset>
-              <legend>Add a new feed</legend>
-              <div class="control-group">
-                <label class="control-label" > </label>
-                <div class="controls">
-                  <input type="text" id="newfeed" name="newfeed" id="newfeed"/>
-                  
-                </div>
-                <div class="controls">
-                  <input class="btn" type="submit" name="add" value="Add new feed"/>
-                  <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-                </div>
-              </div>
-            </fieldset>
-          </form>
-          <?php } ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
               <legend>Add selected folders to selected feeds</legend>
