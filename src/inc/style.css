@@ -187,12 +187,16 @@ dl {
   font-size: 85%;
 }
 
-.item-toggle {
+.item-toggle-plus {
   float: right;
 }
 
 .item-info-end {
   float: right;
+}
+
+.item-description {
+  text-decoration: none;
 }
 
 .folder-toggle:focus, .folder-toggle:hover, .folder-toggle:active, .item-toggle:focus, .item-toggle:hover, .item-toggle:active {

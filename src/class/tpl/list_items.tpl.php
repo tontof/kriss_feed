@@ -6,7 +6,7 @@
   <li id="item-<?php echo $itemHash; ?>" class="<?php echo ($view==='expanded'?'item-expanded':'item-list'); ?><?php echo ($item['read']==1?' read':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
 
     <?php if ($view==='list') { ?>
-    <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
+    <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
       <span class="ico">
         <span class="ico-circle"></span>
         <span class="ico-line-h"></span>
@@ -30,7 +30,11 @@
             <?php echo $item['title']; ?>
           </a>
         </span>
-        <span class="item-description"><?php echo $item['description']; ?></span>
+        <span class="item-description">
+          <a class="item-toggle muted" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
+            <?php echo $item['description']; ?>
+          </a>
+        </span>
       </dd>
     </dl>
     <?php } ?>
