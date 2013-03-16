@@ -37,4 +37,4 @@
   <?php } ?>
   <?php } ?>
 </ul>
-
+<div class="clear"></div>

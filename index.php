@@ -802,7 +802,7 @@ dl {
 
 /* Landscape phone to portrait tablet */
 @media (max-width: 767px) {
-    .full-height {
+    html, body, .full-height {
         height: auto;
     }
 }
@@ -2064,7 +2064,7 @@ dl {
   <?php } ?>
   <?php } ?>
 </ul>
-
+<div class="clear"></div>
 <?php
     }
 
