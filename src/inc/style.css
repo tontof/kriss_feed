@@ -191,6 +191,10 @@ dl {
   float: right;
 }
 
+.item-title {
+  margin-bottom: 10px;
+}
+
 .item-info-end {
   float: right;
 }
