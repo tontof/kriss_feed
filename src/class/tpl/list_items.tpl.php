@@ -58,7 +58,6 @@
               <span class="ico-feed-circle-2"></span>
             </span>
           </a>
-          at <?php echo date("l, j F Y h:i:s A", $item['time']); ?>
         </div>
       </div>
       <div class="clear"></div>
