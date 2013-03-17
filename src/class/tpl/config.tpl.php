@@ -125,6 +125,20 @@
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Auto focus option</label>
+                    <div class="controls">
+                      <label for="donotautofocus">
+                        <input type="radio" id="donotautofocus" name="autofocus" value="0" <?php echo (!$kfcautofocus ? 'checked="checked"' : ''); ?>/>
+                        Do not automatically jump to current item when it changes
+                      </label>
+                      <label for="autofocus">
+                        <input type="radio" id="autofocus" name="autofocus" value="1" <?php echo ($kfcautofocus ? 'checked="checked"' : ''); ?>/>
+                        Automatically jump to the current item position
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">

@@ -14,6 +14,7 @@
       currentPage = 1, // data-current-page
       currentNbItems = 0, // data-nb-items
       autoupdate = false, // data-autoupdate
+      autofocus = false, // data-autofocus
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -1001,7 +1002,7 @@
    * Navigation
    */
   function setWindowLocation() {
-    if (currentItemHash != '') {
+    if (currentItemHash != '' && autofocus) {
       window.location = '#item-' + currentItemHash;
     }
   }
@@ -1503,6 +1504,10 @@
     if (elementIndex.hasAttribute('data-autohide')) {
       autohide = parseInt(elementIndex.getAttribute('data-autohide'), 10);
       autohide = (autohide === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autofocus')) {
+      autofocus = parseInt(elementIndex.getAttribute('data-autofocus'), 10);
+      autofocus = (autofocus === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-autoupdate')) {
       autoupdate = parseInt(elementIndex.getAttribute('data-autoupdate'), 10);

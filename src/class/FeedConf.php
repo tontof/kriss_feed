@@ -81,6 +81,11 @@ class FeedConf
     public $autohide = false;
 
     /**
+     * Focus automatically to current item
+     */
+    public $autofocus = false;
+
+    /**
      * Public/private feed reader
      */
     public $public = false;
@@ -541,6 +546,16 @@ class FeedConf
     }
 
     /**
+     * Autofocus setter
+     *
+     * @param string $autofocus
+     */
+    public function setAutofocus($autofocus)
+    {
+        $this->autofocus = $autofocus;
+    }
+
+    /**
      * Shaarli setter
      *
      * @param string $url New shaarli
@@ -712,9 +727,9 @@ class FeedConf
     public function write()
     {
         $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'maxUpdate', 'public', 'filter',
-                      'maxItems', 'locale', 'autoreadItem', 'autoreadPage',
-                      'autohide', 'listFeeds', 'view', 'autoUpdate', 'menuView',
+                      'byPage', 'order', 'public', 'filter', 'view','locale',
+                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
                       'pagingItem', 'pagingPage', 'pagingByPage');
