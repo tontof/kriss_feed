@@ -1152,11 +1152,15 @@
     updatePageButton();
   }
 
-  function openCurrentItem() {
+  function openCurrentItem(blank) {
     var url;
 
     url = getUrlItem(currentItemHash);
-    window.open(url);
+    if (blank) {
+      window.location.href = url;
+    } else {
+      window.open(url);
+    }
   }
 
   // http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
@@ -1244,7 +1248,11 @@
         }
         break;
         case 79: // 'O'
-        openCurrentItem();
+        if (e.shiftKey) {
+          openCurrentItem(true);
+        } else {
+          openCurrentItem(false);
+        }
         break;
         case 37: // left arrow
         case 80 : // 'P'
