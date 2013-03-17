@@ -125,6 +125,10 @@ li.feed {
   font-weight: normal;
 }
 
+li.feed.hasUnread {
+  font-weight: bold;
+}
+
 li.folder {
   font-weight: bold;
 }
