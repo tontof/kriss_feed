@@ -49,16 +49,17 @@
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
         <a class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
-      </div>
-      <div class="item-info-end">
-        from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
-        <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
-          <span class="ico">
-            <span class="ico-feed-dot"></span>
-            <span class="ico-feed-circle-1"></span>
-            <span class="ico-feed-circle-2"></span>
-          </span>
-        </a>
+        <div class="item-info-end">
+          from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
+          <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
+            <span class="ico">
+              <span class="ico-feed-dot"></span>
+              <span class="ico-feed-circle-1"></span>
+              <span class="ico-feed-circle-2"></span>
+            </span>
+          </a>
+          at <?php echo date("l, j F Y h:i:s A", $item['time']); ?>
+        </div>
       </div>
       <div class="clear"></div>
       <div class="item-content">
