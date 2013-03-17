@@ -1228,6 +1228,9 @@
         case 32: // 'space'
         toggleCurrentItem();
         break;
+        case 72: // 'H'
+        window.location.href = document.getElementById('nav-home').href;
+        break;
         case 74: // 'J'
         nextItem();
         toggleCurrentItem();

@@ -6,7 +6,7 @@
       <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse">
         menu
       </a>
-      <a class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
+      <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
         <span class="ico ico-navbar">
           <span class="ico-square"></span>
           <span class="ico-triangle-up"></span>

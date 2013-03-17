@@ -30,7 +30,7 @@
                 <dd>Go to 'n'ext page</dd>
               </dl>
               <dl class="dl-horizontal">
-                <dt>'shit' + 'p'</dt>
+                <dt>'shift' + 'p'</dt>
                 <dd>Go to 'p'revious page</dd>
               </dl>
               <dl class="dl-horizontal">
@@ -44,10 +44,16 @@
               <dl class="dl-horizontal">
                 <dt>'o'</dt>
                 <dd>'O'pen current item in new tab</dd>
+                <dt>'shift' + 'o'</dt>
+                <dd>'O'pen current item in current window</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
                 <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'h'</dt>
+                <dd>Go to 'H'ome page</dd>
               </dl>
             </div>
           </div>
