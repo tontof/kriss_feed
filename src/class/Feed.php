@@ -789,6 +789,10 @@ class Feed
                         );
                     } else {
                         $tag = $item->getElementsByTagName($list[$i]);
+                        // wrong detection : e.g. media:content for content
+                        if ($tag->length != 0 && $tag->item(0)->tagName != $list[$i]) {
+                            $tag = new DOMNodeList;
+                        }
                     }
                     if ($tag->length != 0) {
                         // we find a correspondence for the current format
