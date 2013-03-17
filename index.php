@@ -54,6 +54,8 @@ class FeedConf
 
     public $autohide = false;
 
+    public $autofocus = false;
+
     public $public = false;
 
     public $version;
@@ -380,6 +382,11 @@ class FeedConf
         $this->autohide = $autohide;
     }
 
+    public function setAutofocus($autofocus)
+    {
+        $this->autofocus = $autofocus;
+    }
+
     public function setShaarli($url)
     {
         $this->shaarli = $url;
@@ -527,9 +534,9 @@ class FeedConf
     public function write()
     {
         $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'maxUpdate', 'public', 'filter',
-                      'maxItems', 'locale', 'autoreadItem', 'autoreadPage',
-                      'autohide', 'listFeeds', 'view', 'autoUpdate', 'menuView',
+                      'byPage', 'order', 'public', 'filter', 'view','locale',
+                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
                       'pagingItem', 'pagingPage', 'pagingByPage');
@@ -1254,6 +1261,20 @@ dl {
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Auto focus option</label>
+                    <div class="controls">
+                      <label for="donotautofocus">
+                        <input type="radio" id="donotautofocus" name="autofocus" value="0" <?php echo (!$kfcautofocus ? 'checked="checked"' : ''); ?>/>
+                        Do not automatically jump to current item when it changes
+                      </label>
+                      <label for="autofocus">
+                        <input type="radio" id="autofocus" name="autofocus" value="1" <?php echo ($kfcautofocus ? 'checked="checked"' : ''); ?>/>
+                        Automatically jump to the current item position
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">
@@ -1494,18 +1515,14 @@ dl {
             <fieldset>
               <legend>Add a new feed</legend>
               <div class="control-group">
-                <label class="control-label" > </label>
+                <label class="control-label" > Feed url</label>
                 <div class="controls">
                   <input type="text" id="newfeed" name="newfeed" value="<?php echo $newfeed; ?>">                  
-                </div>
-                <div class="controls">
-                  <input class="btn" type="submit" name="add" value="Add new feed"/>
-                  <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Add selected folders to selected feeds</legend>
+              <legend>Add selected folders to feed</legend>
               <div class="control-group">
                 <div class="controls">
                   <?php foreach ($folders as $hash => $folder) { ?>
@@ -1514,20 +1531,27 @@ dl {
                   </label>
                   <?php } ?>
                 </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" >Add to a new folder</label>
                 <div class="controls">
-                  <input type="text" name="newfolder" value="" placeholder="New folder">
+                  <input type="text" name="newfolder" value="">
                 </div>
+              </div>
+              <div class="control-group">
                 <div class="controls">
                   <input class="btn" type="submit" name="add" value="Add new feed"/>
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Add new feed using a bookmarklet</legend>
+              <legend>Use bookmarklet to add a new feed</legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=no,status=no,dialog=1');})();"><b>Add KF</b></a>
+                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>Add KF</b></a>
               </div>
             </fieldset>
+            <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+            <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
           </form>
         </div>
       </div>
@@ -2078,7 +2102,7 @@ dl {
     <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>">
+    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>">
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -2130,6 +2154,7 @@ dl {
       currentPage = 1, // data-current-page
       currentNbItems = 0, // data-nb-items
       autoupdate = false, // data-autoupdate
+      autofocus = false, // data-autofocus
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -3064,7 +3089,7 @@ dl {
   }
 
   function setWindowLocation() {
-    if (currentItemHash != '') {
+    if (currentItemHash != '' && autofocus) {
       window.location = '#item-' + currentItemHash;
     }
   }
@@ -3563,6 +3588,10 @@ dl {
     if (elementIndex.hasAttribute('data-autohide')) {
       autohide = parseInt(elementIndex.getAttribute('data-autohide'), 10);
       autohide = (autohide === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autofocus')) {
+      autofocus = parseInt(elementIndex.getAttribute('data-autofocus'), 10);
+      autofocus = (autofocus === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-autoupdate')) {
       autoupdate = parseInt(elementIndex.getAttribute('data-autoupdate'), 10);
@@ -5621,6 +5650,7 @@ $pb->assign('shaarli', htmlspecialchars($kfc->shaarli));
 $pb->assign('autoreadItem', $kfc->autoreadItem);
 $pb->assign('autoreadPage', $kfc->autoreadPage);
 $pb->assign('autohide', $kfc->autohide);
+$pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
@@ -5795,6 +5825,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautoreadpage', (int) $kfc->autoreadPage);
         $pb->assign('kfcautoupdate', (int) $kfc->autoUpdate);
         $pb->assign('kfcautohide', (int) $kfc->autohide);
+        $pb->assign('kfcautofocus', (int) $kfc->autofocus);
 
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);

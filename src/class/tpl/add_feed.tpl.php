@@ -45,9 +45,11 @@
             <fieldset>
               <legend>Use bookmarklet to add a new feed</legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=no,status=no,dialog=1');})();"><b>Add KF</b></a>
+                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>Add KF</b></a>
               </div>
             </fieldset>
+            <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+            <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
           </form>
         </div>
       </div>
