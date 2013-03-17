@@ -707,6 +707,10 @@ li.feed {
   font-weight: normal;
 }
 
+li.feed.has-unread {
+  font-weight: bold;
+}
+
 li.folder {
   font-weight: bold;
 }
@@ -771,6 +775,10 @@ dl {
 
 .item-toggle-plus {
   float: right;
+}
+
+.item-title {
+  margin-bottom: 10px;
 }
 
 .item-info-end {
@@ -873,7 +881,8 @@ dl {
     float: left;
     border-radius: 4px !important;
   }
-}</style>
+}
+</style>
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
 <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
@@ -964,7 +973,7 @@ dl {
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <label for="longlastingsession"><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;Stay signed in (Do not check on public computers)</label>
+                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;Stay signed in (Do not check on public computers)</label>
                   </div>
                 </div>
                 
@@ -1000,7 +1009,7 @@ dl {
       <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse">
         menu
       </a>
-      <a class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
+      <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
         <span class="ico ico-navbar">
           <span class="ico-square"></span>
           <span class="ico-triangle-up"></span>
@@ -1467,7 +1476,7 @@ dl {
                 <dd>Go to 'n'ext page</dd>
               </dl>
               <dl class="dl-horizontal">
-                <dt>'shit' + 'p'</dt>
+                <dt>'shift' + 'p'</dt>
                 <dd>Go to 'p'revious page</dd>
               </dl>
               <dl class="dl-horizontal">
@@ -1481,10 +1490,16 @@ dl {
               <dl class="dl-horizontal">
                 <dt>'o'</dt>
                 <dd>'O'pen current item in new tab</dd>
+                <dt>'shift' + 'o'</dt>
+                <dd>'O'pen current item in current window</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
                 <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'h'</dt>
+                <dd>Go to 'H'ome page</dd>
               </dl>
             </div>
           </div>
@@ -1901,7 +1916,7 @@ dl {
         ?>
         
         <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
-        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed">
+        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
           - <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
         </li>
@@ -1938,7 +1953,7 @@ dl {
             ?>
             <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
 
-            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed">
+            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
               - <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>
             <?php } ?>
@@ -2013,16 +2028,16 @@ dl {
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
         <a class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
-      </div>
-      <div class="item-info-end">
-        from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
-        <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
-          <span class="ico">
-            <span class="ico-feed-dot"></span>
-            <span class="ico-feed-circle-1"></span>
-            <span class="ico-feed-circle-2"></span>
-          </span>
-        </a>
+        <div class="item-info-end">
+          from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
+          <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
+            <span class="ico">
+              <span class="ico-feed-dot"></span>
+              <span class="ico-feed-circle-1"></span>
+              <span class="ico-feed-circle-2"></span>
+            </span>
+          </a>
+        </div>
       </div>
       <div class="clear"></div>
       <div class="item-content">
@@ -3239,11 +3254,15 @@ dl {
     updatePageButton();
   }
 
-  function openCurrentItem() {
+  function openCurrentItem(blank) {
     var url;
 
     url = getUrlItem(currentItemHash);
-    window.open(url);
+    if (blank) {
+      window.location.href = url;
+    } else {
+      window.open(url);
+    }
   }
 
   // http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
@@ -3311,6 +3330,9 @@ dl {
         case 32: // 'space'
         toggleCurrentItem();
         break;
+        case 72: // 'H'
+        window.location.href = document.getElementById('nav-home').href;
+        break;
         case 74: // 'J'
         nextItem();
         toggleCurrentItem();
@@ -3331,7 +3353,11 @@ dl {
         }
         break;
         case 79: // 'O'
-        openCurrentItem();
+        if (e.shiftKey) {
+          openCurrentItem(true);
+        } else {
+          openCurrentItem(false);
+        }
         break;
         case 37: // left arrow
         case 80 : // 'P'
@@ -4289,6 +4315,10 @@ class Feed
                         );
                     } else {
                         $tag = $item->getElementsByTagName($list[$i]);
+                        // wrong detection : e.g. media:content for content
+                        if ($tag->length != 0 && $tag->item(0)->tagName != $list[$i]) {
+                            $tag = new DOMNodeList;
+                        }
                     }
                     if ($tag->length != 0) {
                         // we find a correspondence for the current format
@@ -5221,7 +5251,8 @@ class Opml
         } else {
             echo '<script>alert("File ' . $filename . ' ('
                 . MyTool::humanBytes($filesize) . ') has an unknown'
-                . ' file format. Nothing was imported.");'
+                . ' file format. Check encoding, try to remove accents'
+                . ' and try again. Nothing was imported.");'
                 . 'document.location=\'?\';</script>';
             exit;
         }
