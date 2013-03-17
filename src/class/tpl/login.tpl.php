@@ -25,7 +25,7 @@
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <label for="longlastingsession"><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;Stay signed in (Do not check on public computers)</label>
+                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;Stay signed in (Do not check on public computers)</label>
                   </div>
                 </div>
                 
