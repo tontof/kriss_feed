@@ -125,7 +125,7 @@ li.feed {
   font-weight: normal;
 }
 
-li.feed.hasUnread {
+li.feed.has-unread {
   font-weight: bold;
 }
 
