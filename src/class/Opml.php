@@ -107,7 +107,8 @@ class Opml
         } else {
             echo '<script>alert("File ' . $filename . ' ('
                 . MyTool::humanBytes($filesize) . ') has an unknown'
-                . ' file format. Nothing was imported.");'
+                . ' file format. Check encoding, try to remove accents'
+                . ' and try again. Nothing was imported.");'
                 . 'document.location=\'?\';</script>';
             exit;
         }
