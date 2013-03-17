@@ -5073,10 +5073,12 @@ class MyTool
             $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
             if (!empty($_POST)) {
                 $rurl = $_POST['returnurl'];
-                if (empty($rurl) || strpos($rurl, '?login') !== false) {
-                    $rurl = MyTool::getUrl();
-                }
             }
+        }
+
+        // prevent loop
+        if (empty($rurl) || parse_url($rurl, PHP_URL_QUERY) === $_SERVER['QUERY_STRING']) {
+            $rurl = MyTool::getUrl();
         }
 
         header('Location: '.$rurl);
@@ -6187,7 +6189,11 @@ $type = $kf->hashType($currentHash);
 
         $pb->renderPage('index');
     } else {
-        MyTool::redirect('?login');
+        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            $pb->assign('referer', MyTool::getUrl().'?'.$_SERVER['QUERY_STRING']);
+        }
+        $pb->renderPage('login');
     }
 }
 //print(number_format(microtime(true)-START_TIME,3).' secondes');

@@ -306,10 +306,12 @@ class MyTool
             $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
             if (!empty($_POST)) {
                 $rurl = $_POST['returnurl'];
-                if (empty($rurl) || strpos($rurl, '?login') !== false) {
-                    $rurl = MyTool::getUrl();
-                }
             }
+        }
+
+        // prevent loop
+        if (empty($rurl) || parse_url($rurl, PHP_URL_QUERY) === $_SERVER['QUERY_STRING']) {
+            $rurl = MyTool::getUrl();
         }
 
         header('Location: '.$rurl);

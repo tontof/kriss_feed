@@ -645,7 +645,11 @@ $type = $kf->hashType($currentHash);
 
         $pb->renderPage('index');
     } else {
-        MyTool::redirect('?login');
+        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            $pb->assign('referer', MyTool::getUrl().'?'.$_SERVER['QUERY_STRING']);
+        }
+        $pb->renderPage('login');
     }
 }
 //print(number_format(microtime(true)-START_TIME,3).' secondes');
