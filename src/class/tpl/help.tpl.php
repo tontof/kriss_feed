@@ -42,10 +42,10 @@
                 <dd>Go to 'p'revious item and open it (in list view)</dd>
               </dl>
               <dl class="dl-horizontal">
-                <dt>'o'</dt>
-                <dd>'O'pen current item in new tab</dd>
-                <dt>'shift' + 'o'</dt>
-                <dd>'O'pen current item in current window</dd>
+                <dt>'o' or 'v'</dt>
+                <dd>'O'pen/'V'iew current item in new tab</dd>
+                <dt>'shift' + 'o' or 'shift' + 'v'</dt>
+                <dd>'O'pen/'V'iew current item in current window</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>

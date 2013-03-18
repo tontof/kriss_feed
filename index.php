@@ -54,7 +54,7 @@ class FeedConf
 
     public $autohide = false;
 
-    public $autofocus = false;
+    public $autofocus = true;
 
     public $public = false;
 
@@ -3353,6 +3353,7 @@ dl {
         }
         break;
         case 79: // 'O'
+        case 86: // 'V' as in RSS lounge
         if (e.shiftKey) {
           openCurrentItem(true);
         } else {

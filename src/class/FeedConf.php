@@ -83,7 +83,7 @@ class FeedConf
     /**
      * Focus automatically to current item
      */
-    public $autofocus = false;
+    public $autofocus = true;
 
     /**
      * Public/private feed reader
