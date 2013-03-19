@@ -1478,6 +1478,7 @@ dl {
             <?php FeedPage::navTpl(); ?>
             <div id="section">
               <h2>Keyboard shortcut</h2>
+              <h3>Items navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'space' or 't'</dt>
                 <dd>When viewing items as list, let you open or close current item ('t'oggle current item)</dd>
@@ -1511,18 +1512,43 @@ dl {
                 <dd>Go to 'p'revious item and open it (in list view)</dd>
               </dl>
               <dl class="dl-horizontal">
-                <dt>'o' or 'v'</dt>
-                <dd>'O'pen/'V'iew current item in new tab</dd>
-                <dt>'shift' + 'o' or 'shift' + 'v'</dt>
-                <dd>'O'pen/'V'iew current item in current window</dd>
+                <dt>'o'</dt>
+                <dd>'O'pen current item in new tab</dd>
+                <dt>'shift' + 'o'</dt>
+                <dd>'O'pen current item in current window</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
                 <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
               </dl>
+              <h3>Menu navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'h'</dt>
                 <dd>Go to 'H'ome page</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'v'</dt>
+                <dd>Change 'v'iew as list or expanded</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'f'</dt>
+                <dd>Show or hide list of 'f'eeds/'f'olders</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'e'</dt>
+                <dd>'E'dit current selection (all, folder or feed)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'u'</dt>
+                <dd>'U'pdate current selection (all, folder or feed)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'r'</dt>
+                <dd>'R'eload the page as the 'F5' key in most of browsers</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'?' or 'F1'</dt>
+                <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
               </dl>
             </div>
           </div>
@@ -3357,6 +3383,19 @@ dl {
         case 32: // 'space'
         toggleCurrentItem();
         break;
+        case 67: // 'C'
+        window.location.href = '?config';
+        break;
+        case 69: // 'E'
+        window.location.href = (currentHash==''?'?edit':'?edit='+currentHash);
+        break;
+        case 70: // 'F'
+        if (listFeeds =='show') {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+        } else {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+        }
+        break;
         case 72: // 'H'
         window.location.href = document.getElementById('nav-home').href;
         break;
@@ -3380,7 +3419,6 @@ dl {
         }
         break;
         case 79: // 'O'
-        case 86: // 'V' as in RSS lounge
         if (e.shiftKey) {
           openCurrentItem(true);
         } else {
@@ -3395,11 +3433,29 @@ dl {
           previousItem();
         }
         break;
+        case 82: // 'R'
+        window.location.reload(true);
+        break;
         case 83: // 'S'
         shaarliCurrentItem();
         break;
         case 84: // 'T'
         toggleCurrentItem();
+        break;
+        case 85: // 'U'
+        window.location.href = (currentHash==''?'?update':'?update='+currentHash);
+        break;
+        case 86: // 'V'
+        if (view == 'list') {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+        } else {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
+        }
+        break;
+        case 112: // 'F1'
+        case 188: // '?'
+        case 191: // '?'
+        window.location.href = '?help';
         break;
         default:
         break;
@@ -3699,7 +3755,7 @@ dl {
 
     initAnonyme();
 
-    addEvent(window, 'keyup', checkKey);
+    addEvent(window, 'keydown', checkKey);
     addEvent(window, 'touchstart', checkMove);
 
     if (autoupdate) {
@@ -3733,11 +3789,6 @@ dl {
     }
   }
 
-  function test() {
-    alert(JSON.stringify(listItemsHash));
-
-  }
-
   // when document is loaded init KrISS feed
   if (document.getElementById && document.createTextNode) {
     addEvent(window, 'load', initKF);
@@ -3746,7 +3797,6 @@ dl {
   window.checkKey = checkKey;
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
-  window.test = test;
 })();    </script>
     <?php } ?>
   </body>

@@ -9,6 +9,7 @@
             <?php FeedPage::navTpl(); ?>
             <div id="section">
               <h2>Keyboard shortcut</h2>
+              <h3>Items navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'space' or 't'</dt>
                 <dd>When viewing items as list, let you open or close current item ('t'oggle current item)</dd>
@@ -42,18 +43,43 @@
                 <dd>Go to 'p'revious item and open it (in list view)</dd>
               </dl>
               <dl class="dl-horizontal">
-                <dt>'o' or 'v'</dt>
-                <dd>'O'pen/'V'iew current item in new tab</dd>
-                <dt>'shift' + 'o' or 'shift' + 'v'</dt>
-                <dd>'O'pen/'V'iew current item in current window</dd>
+                <dt>'o'</dt>
+                <dd>'O'pen current item in new tab</dd>
+                <dt>'shift' + 'o'</dt>
+                <dd>'O'pen current item in current window</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
                 <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
               </dl>
+              <h3>Menu navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'h'</dt>
                 <dd>Go to 'H'ome page</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'v'</dt>
+                <dd>Change 'v'iew as list or expanded</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'f'</dt>
+                <dd>Show or hide list of 'f'eeds/'f'olders</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'e'</dt>
+                <dd>'E'dit current selection (all, folder or feed)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'u'</dt>
+                <dd>'U'pdate current selection (all, folder or feed)</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'r'</dt>
+                <dd>'R'eload the page as the 'F5' key in most of browsers</dd>
+              </dl>
+              <dl class="dl-horizontal">
+                <dt>'?' or 'F1'</dt>
+                <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
               </dl>
             </div>
           </div>

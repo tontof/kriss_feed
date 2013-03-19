@@ -1230,6 +1230,19 @@
         case 32: // 'space'
         toggleCurrentItem();
         break;
+        case 67: // 'C'
+        window.location.href = '?config';
+        break;
+        case 69: // 'E'
+        window.location.href = (currentHash==''?'?edit':'?edit='+currentHash);
+        break;
+        case 70: // 'F'
+        if (listFeeds =='show') {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+        } else {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+        }
+        break;
         case 72: // 'H'
         window.location.href = document.getElementById('nav-home').href;
         break;
@@ -1253,7 +1266,6 @@
         }
         break;
         case 79: // 'O'
-        case 86: // 'V' as in RSS lounge
         if (e.shiftKey) {
           openCurrentItem(true);
         } else {
@@ -1268,11 +1280,29 @@
           previousItem();
         }
         break;
+        case 82: // 'R'
+        window.location.reload(true);
+        break;
         case 83: // 'S'
         shaarliCurrentItem();
         break;
         case 84: // 'T'
         toggleCurrentItem();
+        break;
+        case 85: // 'U'
+        window.location.href = (currentHash==''?'?update':'?update='+currentHash);
+        break;
+        case 86: // 'V'
+        if (view == 'list') {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+        } else {
+          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
+        }
+        break;
+        case 112: // 'F1'
+        case 188: // '?'
+        case 191: // '?'
+        window.location.href = '?help';
         break;
         default:
         break;
@@ -1575,7 +1605,7 @@
 
     initAnonyme();
 
-    addEvent(window, 'keyup', checkKey);
+    addEvent(window, 'keydown', checkKey);
     addEvent(window, 'touchstart', checkMove);
 
     if (autoupdate) {
@@ -1609,11 +1639,6 @@
     }
   }
 
-  function test() {
-    alert(JSON.stringify(listItemsHash));
-
-  }
-
   // when document is loaded init KrISS feed
   if (document.getElementById && document.createTextNode) {
     addEvent(window, 'load', initKF);
@@ -1622,5 +1647,4 @@
   window.checkKey = checkKey;
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
-  window.test = test;
 })();
