@@ -4550,6 +4550,9 @@ class Feed
 
     public function loadXml($xmlUrl)
     {
+        // hide warning/error
+        set_error_handler(array('MyTool', 'silence_errors'));
+
         // set user agent
         // http://php.net/manual/en/function.libxml-set-streams-context.php
         $opts = array(
@@ -4558,14 +4561,29 @@ class Feed
                 'user_agent' => 'KrISS feed agent '.$this->kfc->version.' by Tontof.net http://github.com/tontof/kriss_feed',
                 )
             );
-
-        $context = stream_context_create($opts);
-        libxml_set_streams_context($context);
-
-        // request a file through HTTP
         $document = false;
-        set_error_handler(array('MyTool', 'silence_errors'));
-        $document = DOMDocument::load($xmlUrl);
+
+        if  (in_array('curl', get_loaded_extensions())) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $xmlUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
+            curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+            $output = curl_exec($ch);
+            curl_close($ch);
+
+            $document = DOMDocument::loadXML($output);
+        } else {
+            // try using libxml
+            $context = stream_context_create($opts);
+            libxml_set_streams_context($context);
+
+            // request a file through HTTP
+            $document = DOMDocument::load($xmlUrl);
+        }
+        // show back warning/error
         restore_error_handler();
 
         return $document;
@@ -4840,7 +4858,7 @@ class Feed
         foreach ($feedsHash as $feedHash) {
             $i++;
             $feed = $this->getFeed($feedHash);
-            $str = '<li>'.number_format(microtime(true)-$start,3).' seconds ('.$i.'/'.count($feedsHash).'): Updating: <span class="text-info">'.$feed['title'].'</span></li>';
+            $str = '<li>'.number_format(microtime(true)-$start,3).' seconds ('.$i.'/'.count($feedsHash).'): Updating: <a href="?currentHash='.$feedHash.'">'.$feed['title'].'</a></li>';
             echo ($format==='html'?$str:strip_tags($str)).str_pad('',4096)."\n";
             ob_flush();
             flush();
