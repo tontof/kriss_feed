@@ -19,10 +19,9 @@
         
         <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
         <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-          <?php if ($addFavicon) { 
-grab_image('http://getfavicon.appspot.com/'.$feed['htmlUrl'],md5($feedHash).'.ico');
-echo '<img src="./favicon/'. md5($feedHash).'.ico" height="16px" width="16px" title="favicon" alt="favicon"/>';
-} ?>
+          <?php if ($addFavicon) { ?>
+          <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+          <?php } ?>
 <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
         </li>
@@ -60,11 +59,11 @@ echo '<img src="./favicon/'. md5($feedHash).'.ico" height="16px" width="16px" ti
             <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
 
             <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-                        <?php if ($addFavicon) { 
-grab_image('http://getfavicon.appspot.com/'.$feed['htmlUrl'],md5($feedHash).'.ico');
-echo '<img src="./favicon/'. md5($feedHash).'.ico" height="16px" width="16px" title="favicon" alt="favicon"/>';
-} ?>
-<a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+              
+              <?php if ($addFavicon) { ?>
+              <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+              <?php } ?>
+              <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>
             <?php } ?>
             <?php } ?>

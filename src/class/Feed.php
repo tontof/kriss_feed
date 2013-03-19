@@ -983,7 +983,7 @@ class Feed
             );
         $document = false;
 
-        if  (in_array('curl', get_loaded_extensions())) {
+        if (in_array('curl', get_loaded_extensions())) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $xmlUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

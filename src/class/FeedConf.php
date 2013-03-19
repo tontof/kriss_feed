@@ -169,6 +169,20 @@ class FeedConf
             $this->_install();
         }
 
+        if ($this->addFavicon) {
+            /* favicon dir */
+            if (!is_dir(INC_DIR)) {
+                if (!@mkdir(INC_DIR, 0755)) {
+                    die("Can not create inc dir: ".INC_DIR);
+                }
+            }
+            if (!is_dir(FAVICON_DIR)) {
+                if (!@mkdir(FAVICON_DIR, 0755)) {
+                    die("Can not create inc dir: ".FAVICON_DIR);
+                }
+            }
+        }
+
         if (Session::isLogged()) {
             unset($_SESSION['view']);
             unset($_SESSION['listFeeds']);

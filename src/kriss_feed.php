@@ -3,7 +3,9 @@
 // 2012 - Copyleft - Tontof - http://tontof.net
 // use KrISS feed at your own risk
 define('DATA_DIR', 'data');
+define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
+define('FAVICON_DIR', INC_DIR.'/favicon');
 
 define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
@@ -20,41 +22,30 @@ define('ERROR_NO_ERROR', 0);
 define('ERROR_NO_XML', 1);
 define('ERROR_ITEMS_MISSED', 2);
 define('ERROR_LAST_UPDATE', 3);
-/*favicon dir*/
-if (!is_dir('./favicon/')) {
-    mkdir('./favicon/');
-}
-/*function grab_image*/
-function grab_image($url,$saveto){
-    if(!file_exists('./favicon/'.$saveto)){
-    $ch = curl_init ($url);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
-    $raw=curl_exec($ch);
-    curl_close ($ch);
-    $fp = fopen('./favicon/'.$saveto,'x');
-    fwrite($fp, $raw);
-    fclose($fp);
-    }
-}
 
-/*favicon dir*/
-if (!is_dir('./favicon/')) {
-    mkdir('./favicon/');
-}
-/*function grab_image*/
-function grab_image($url,$saveto){
-    if(!file_exists('./favicon/'.$saveto)){
-    $ch = curl_init ($url);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
-    $raw=curl_exec($ch);
-    curl_close ($ch);
-    $fp = fopen('./favicon/'.$saveto,'x');
-    fwrite($fp, $raw);
-    fclose($fp);
+/* function grabFavicon */
+function grabFavicon($url, $feedHash){
+    $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';
+    $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
+
+    if(!file_exists($file) && in_array('curl', get_loaded_extensions()) && Session::isLogged()){
+        $ch = curl_init ($url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
+        $raw = curl_exec($ch);
+        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
+            $fp = fopen($file, 'x');
+            fwrite($fp, $raw);
+            fclose($fp);
+        }
+        curl_close ($ch);
+    }
+
+    if (file_exists($file)) {
+        return $file;
+    } else {
+        return $url;
     }
 }
 

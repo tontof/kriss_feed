@@ -3,7 +3,9 @@
 // 2012 - Copyleft - Tontof - http://tontof.net
 // use KrISS feed at your own risk
 define('DATA_DIR', 'data');
+define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
+define('FAVICON_DIR', INC_DIR.'/favicon');
 
 define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
@@ -20,6 +22,32 @@ define('ERROR_NO_ERROR', 0);
 define('ERROR_NO_XML', 1);
 define('ERROR_ITEMS_MISSED', 2);
 define('ERROR_LAST_UPDATE', 3);
+
+/* function grabFavicon */
+function grabFavicon($url, $feedHash){
+    $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';
+    $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
+
+    if(!file_exists($file) && in_array('curl', get_loaded_extensions()) && Session::isLogged()){
+        $ch = curl_init ($url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
+        $raw = curl_exec($ch);
+        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
+            $fp = fopen($file, 'x');
+            fwrite($fp, $raw);
+            fclose($fp);
+        }
+        curl_close ($ch);
+    }
+
+    if (file_exists($file)) {
+        return $file;
+    } else {
+        return $url;
+    }
+}
 
 
 class FeedConf
@@ -99,6 +127,20 @@ class FeedConf
             include_once $this->_file;
         } else {
             $this->_install();
+        }
+
+        if ($this->addFavicon) {
+            /* favicon dir */
+            if (!is_dir(INC_DIR)) {
+                if (!@mkdir(INC_DIR, 0755)) {
+                    die("Can not create inc dir: ".INC_DIR);
+                }
+            }
+            if (!is_dir(FAVICON_DIR)) {
+                if (!@mkdir(FAVICON_DIR, 0755)) {
+                    die("Can not create inc dir: ".FAVICON_DIR);
+                }
+            }
         }
 
         if (Session::isLogged()) {
@@ -1299,7 +1341,7 @@ dl {
                       </label>
                       <label for="addfavicon">
                         <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php echo ($kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
-                                                Add favicon next to feed on list of feeds<br><strong>Warning: It depends on http://getfavicon.appspot.com/</strong>
+                        Add favicon next to feed on list of feeds<br><strong>Warning: It depends on http://getfavicon.appspot.com/ <?php if (in_array('curl', get_loaded_extensions())) { echo 'but it will cache favicon on your server'; } ?></strong>
                       </label>
                     </div>
                   </div>
@@ -1969,7 +2011,10 @@ dl {
         
         <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
         <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-          <?php if ($addFavicon) { ?><img src="http://getfavicon.appspot.com/<?php echo $feed['htmlUrl'] ?>" height="16px" width="16px" title="favicon" alt="favicon"/> <?php } ?><a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+          <?php if ($addFavicon) { ?>
+          <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+          <?php } ?>
+<a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
         </li>
         <?php } ?>
@@ -2006,7 +2051,11 @@ dl {
             <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
 
             <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-              <?php if ($addFavicon) { ?><img src="http://getfavicon.appspot.com/<?php echo $feed['htmlUrl'] ?>" height="16px" width="16px" title="favicon" alt="favicon"/> <?php } ?><a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+              
+              <?php if ($addFavicon) { ?>
+              <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+              <?php } ?>
+              <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>
             <?php } ?>
             <?php } ?>
@@ -4563,7 +4612,7 @@ class Feed
             );
         $document = false;
 
-        if  (in_array('curl', get_loaded_extensions())) {
+        if (in_array('curl', get_loaded_extensions())) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $xmlUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
