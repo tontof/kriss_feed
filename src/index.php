@@ -56,6 +56,8 @@ class FeedConf
 
     public $autofocus = true;
 
+    public $addFavicon = false;
+
     public $public = false;
 
     public $version;
@@ -387,6 +389,11 @@ class FeedConf
         $this->autofocus = $autofocus;
     }
 
+    public function setAddFavicon($addFavicon)
+    {
+        $this->addFavicon = $addFavicon;
+    }
+
     public function setShaarli($url)
     {
         $this->shaarli = $url;
@@ -539,7 +546,7 @@ class FeedConf
                       'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage');
+                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon');
         $out = '<?php';
         $out .= "\n";
 
@@ -1284,6 +1291,20 @@ dl {
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Add favicon option</label>
+                    <div class="controls">
+                      <label for="donotaddfavicon">
+                        <input type="radio" id="donotaddfavicon" name="addFavicon" value="0" <?php echo (!$kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
+                        Do not add favicon next to feed on list of feeds
+                      </label>
+                      <label for="addfavicon">
+                        <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php echo ($kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
+                                                Add favicon next to feed on list of feeds<br><strong>Warning: It depends on http://getfavicon.appspot.com/</strong>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">
@@ -1919,7 +1940,7 @@ dl {
         
         <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
         <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-          - <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+          <?php if ($addFavicon) { ?><img src="http://getfavicon.appspot.com/<?php echo $feed['htmlUrl'] ?>" height="16px" width="16px" title="favicon" alt="favicon"/> <?php } ?><a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
         </li>
         <?php } ?>
@@ -1956,7 +1977,7 @@ dl {
             <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
 
             <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-              - <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+              <?php if ($addFavicon) { ?><img src="http://getfavicon.appspot.com/<?php echo $feed['htmlUrl'] ?>" height="16px" width="16px" title="favicon" alt="favicon"/> <?php } ?><a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>
             <?php } ?>
             <?php } ?>
@@ -5692,6 +5713,7 @@ $pb->assign('autoreadPage', $kfc->autoreadPage);
 $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
+$pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
 
@@ -5873,6 +5895,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautoupdate', (int) $kfc->autoUpdate);
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
+        $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
 
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);

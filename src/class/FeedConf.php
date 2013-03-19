@@ -86,6 +86,11 @@ class FeedConf
     public $autofocus = true;
 
     /**
+     * Add favicon next to feed
+     */
+    public $addFavicon = false;
+
+    /**
      * Public/private feed reader
      */
     public $public = false;
@@ -556,6 +561,16 @@ class FeedConf
     }
 
     /**
+     * Add favicon setter
+     *
+     * @param string $addFavicon
+     */
+    public function setAddFavicon($addFavicon)
+    {
+        $this->addFavicon = $addFavicon;
+    }
+
+    /**
      * Shaarli setter
      *
      * @param string $url New shaarli
@@ -732,7 +747,7 @@ class FeedConf
                       'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage');
+                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon');
         $out = '<?php';
         $out .= "\n";
 

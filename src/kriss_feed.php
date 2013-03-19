@@ -79,6 +79,7 @@ $pb->assign('autoreadPage', $kfc->autoreadPage);
 $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
+$pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
 
@@ -260,6 +261,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautoupdate', (int) $kfc->autoUpdate);
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
+        $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
 
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);

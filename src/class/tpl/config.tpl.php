@@ -139,6 +139,20 @@
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Add favicon option</label>
+                    <div class="controls">
+                      <label for="donotaddfavicon">
+                        <input type="radio" id="donotaddfavicon" name="addFavicon" value="0" <?php echo (!$kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
+                        Do not add favicon next to feed on list of feeds
+                      </label>
+                      <label for="addfavicon">
+                        <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php echo ($kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
+                                                Add favicon next to feed on list of feeds<br><strong>Warning: It depends on http://getfavicon.appspot.com/</strong>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">
