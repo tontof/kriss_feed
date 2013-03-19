@@ -1,0 +1,37 @@
+/* Custom P3ter 
+ * http://p3ter.fr (CC-BY-V3)
+ */
+
+/*--- SUBSCRIPTIONS LIST ----*/
+#minor-container{
+	padding-right: 20px;
+}
+
+ul {
+	list-style-type: none !important;
+}
+
+.feed {
+	border: none !important;
+}
+
+/*---- SUBSCRIPTIONS CONTENT ---*/
+#main-container {
+	padding-right: 20px;
+}
+
+li.item-list {
+	border: none !important;
+}
+
+.dl-horizontal {
+	background-color: #ECECEC;
+}
+
+.current {
+	border: none !important;
+}
+
+.well {
+	background-color: #FFF;
+}
