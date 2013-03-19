@@ -3670,7 +3670,8 @@ dl {
   }
 
   function initKF() {
-    var listLinkFolders = [],
+    var listItems,
+        listLinkFolders = [],
         listLinkItems = [];
 
     initOptions();
@@ -3700,6 +3701,9 @@ dl {
     if (autoupdate) {
       initUpdate();
     }
+
+    listItems = getListItems();
+    listItems.focus();
   }
 
   //http://scottandrew.com/weblog/articles/cbs-events
