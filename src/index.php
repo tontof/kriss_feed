@@ -1419,9 +1419,11 @@ dl {
                   <code><?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?></code>
                   You can use <code>&force</code> to force update.<br>
                   To update every 15 minutes
-                  <code>*/15 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code>
+                  <code>*/15 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code><br>
                   To update every hour
-                  <code>0 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code>
+                  <code>0 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code><br>
+                  If you can not use wget, you may try php command line :
+                  <code>0 * * * * php -f <?php echo $_SERVER["SCRIPT_FILENAME"].' update '.$kfccron; ?> > /tmp/kf.cron</code>
                   <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
@@ -4744,6 +4746,7 @@ class Feed
         $feedsHash = $this->orderFeedsForUpdate($feedsHash);
 
         ob_end_flush();
+        if (ob_get_level() == 0) ob_start();
         $start = microtime(true);
         foreach ($feedsHash as $feedHash) {
             $i++;
@@ -5047,17 +5050,22 @@ class MyTool
     {
         $https = (!empty($_SERVER['HTTPS'])
                   && (strtolower($_SERVER['HTTPS']) == 'on'))
-            || $_SERVER["SERVER_PORT"] == '443'; // HTTPS detection.
-        $serverport = ($_SERVER["SERVER_PORT"] == '80'
+            || (isset($_SERVER["SERVER_PORT"])
+                && $_SERVER["SERVER_PORT"] == '443'); // HTTPS detection.
+        $serverport = (!isset($_SERVER["SERVER_PORT"])
+                       || $_SERVER["SERVER_PORT"] == '80'
                        || ($https && $_SERVER["SERVER_PORT"] == '443')
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
         $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
 
+        if (!isset($_SERVER["SERVER_NAME"])) {
+            return $scriptname;
+        }
+
         return 'http' . ($https ? 's' : '') . '://'
             . $_SERVER["SERVER_NAME"] . $serverport . $scriptname;
-
     }
 
     public static function rrmdir($dir)
@@ -5794,10 +5802,14 @@ if (isset($_GET['login'])) {
 } elseif (isset($_GET['help'])) {
     $pb->assign('pagetitle', 'Help for KrISS feed');
     $pb->renderPage('help');
-} elseif (isset($_GET['update'])
+} elseif ((isset($_GET['update'])
           && (Session::isLogged()
               || (isset($_GET['cron'])
-                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash)))) {
+                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash))))
+          || (isset($argv)
+              && count($argv) >= 3
+              && $argv[1] == 'update'
+              && $argv[2] == sha1($kfc->salt.$kfc->hash))) {
     // Update
     $kf->loadData();
     $forceUpdate = false;
@@ -5805,7 +5817,10 @@ if (isset($_GET['login'])) {
         $forceUpdate = true;
     }
     $feedsHash = array();
-    $hash = $_GET['update'];
+    $hash = 'all';
+    if (isset($_GET['update'])) {
+        $hash = $_GET['update'];
+    }
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     switch($type) {
@@ -5823,7 +5838,7 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
-    if (isset($_GET['cron'])) {
+    if (isset($_GET['cron']) || isset($argv)) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
         $pb->assign('kf', $kf);

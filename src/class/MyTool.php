@@ -175,17 +175,22 @@ class MyTool
     {
         $https = (!empty($_SERVER['HTTPS'])
                   && (strtolower($_SERVER['HTTPS']) == 'on'))
-            || $_SERVER["SERVER_PORT"] == '443'; // HTTPS detection.
-        $serverport = ($_SERVER["SERVER_PORT"] == '80'
+            || (isset($_SERVER["SERVER_PORT"])
+                && $_SERVER["SERVER_PORT"] == '443'); // HTTPS detection.
+        $serverport = (!isset($_SERVER["SERVER_PORT"])
+                       || $_SERVER["SERVER_PORT"] == '80'
                        || ($https && $_SERVER["SERVER_PORT"] == '443')
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
         $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
 
+        if (!isset($_SERVER["SERVER_NAME"])) {
+            return $scriptname;
+        }
+
         return 'http' . ($https ? 's' : '') . '://'
             . $_SERVER["SERVER_NAME"] . $serverport . $scriptname;
-
     }
 
     /**

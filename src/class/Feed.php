@@ -1292,6 +1292,7 @@ class Feed
         $feedsHash = $this->orderFeedsForUpdate($feedsHash);
 
         ob_end_flush();
+        if (ob_get_level() == 0) ob_start();
         $start = microtime(true);
         foreach ($feedsHash as $feedHash) {
             $i++;

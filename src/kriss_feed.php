@@ -189,10 +189,14 @@ if (isset($_GET['login'])) {
 } elseif (isset($_GET['help'])) {
     $pb->assign('pagetitle', 'Help for KrISS feed');
     $pb->renderPage('help');
-} elseif (isset($_GET['update'])
+} elseif ((isset($_GET['update'])
           && (Session::isLogged()
               || (isset($_GET['cron'])
-                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash)))) {
+                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash))))
+          || (isset($argv)
+              && count($argv) >= 3
+              && $argv[1] == 'update'
+              && $argv[2] == sha1($kfc->salt.$kfc->hash))) {
     // Update
     $kf->loadData();
     $forceUpdate = false;
@@ -200,7 +204,10 @@ if (isset($_GET['login'])) {
         $forceUpdate = true;
     }
     $feedsHash = array();
-    $hash = $_GET['update'];
+    $hash = 'all';
+    if (isset($_GET['update'])) {
+        $hash = $_GET['update'];
+    }
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     switch($type) {
@@ -218,7 +225,7 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
-    if (isset($_GET['cron'])) {
+    if (isset($_GET['cron']) || isset($argv)) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
         $pb->assign('kf', $kf);
