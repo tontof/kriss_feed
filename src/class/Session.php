@@ -85,14 +85,10 @@ class Session
     private static function _allInfo()
     {
         $infos = $_SERVER["REMOTE_ADDR"];
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $infos.=$_SERVER['HTTP_X_FORWARDED_FOR'];
-        }
-        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
-            $infos.='_'.$_SERVER['HTTP_CLIENT_IP'];
-        }
-        $infos.='_'.$_SERVER['HTTP_USER_AGENT'];
-        $infos.='_'.$_SERVER['HTTP_ACCEPT_LANGUAGE'];
+        $infos.= isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? '_'.$_SERVER['HTTP_X_FORWARDED_FOR'] : '';
+        $infos.= isset($_SERVER['HTTP_CLIENT_IP']) ? '_'.$_SERVER['HTTP_CLIENT_IP'] : '';
+        $infos.= isset($_SERVER['HTTP_USER_AGENT']) ? '_'.$_SERVER['HTTP_USER_AGENT'] : '';
+        $infos.= isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? '_'.$_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
 
         return sha1($infos);
     }
