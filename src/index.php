@@ -2009,6 +2009,7 @@ dl {
 
     <?php if ($view==='list') { ?>
     <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
+      <?php echo $item['time']['list']; ?>
       <span class="ico">
         <span class="ico-circle"></span>
         <span class="ico-line-h"></span>
@@ -2053,6 +2054,7 @@ dl {
         <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
         <div class="item-info-end">
           from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
+          <?php echo $item['time']['expanded']; ?>
           <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
             <span class="ico">
               <span class="ico-feed-dot"></span>
@@ -2849,8 +2851,9 @@ dl {
       '<div class="item-info-end">' +
       'from <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
-      '</a>' +
-      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
+      '</a> ' +
+      item['time']['expanded'] +
+      ' <a class="item-xml" href="' + item['xmlUrl'] + '">' +
       '<span class="ico">' +
       '<span class="ico-feed-dot"></span>' +
       '<span class="ico-feed-circle-1"></span>' +
@@ -2880,8 +2883,9 @@ dl {
       markAs = 'unread';
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
-      '<span class="ico">' +
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      item['time']['list'] +
+      ' <span class="ico">' +
       '<span class="ico-circle"></span>' +
       '<span class="ico-line-h"></span>' +
       '<span class="ico-line-v item-toggle-close"></span>' +
@@ -4219,6 +4223,13 @@ class Feed
 
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
+            $time = $item['time'];
+            if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
+                // Today
+                $item['time'] = array('list' => utf8_encode(strftime('%R %p', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+            } else {
+                $item['time'] = array('list' => utf8_encode(strftime('%b %e, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));                
+            }
             if (isset($this->_data['items'][$itemHash])) {
                 $item['read'] = $this->_data['items'][$itemHash][1];
 

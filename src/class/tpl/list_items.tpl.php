@@ -7,6 +7,7 @@
 
     <?php if ($view==='list') { ?>
     <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
+      <?php echo $item['time']['list']; ?>
       <span class="ico">
         <span class="ico-circle"></span>
         <span class="ico-line-h"></span>
@@ -51,6 +52,7 @@
         <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
         <div class="item-info-end">
           from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
+          <?php echo $item['time']['expanded']; ?>
           <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
             <span class="ico">
               <span class="ico-feed-dot"></span>
