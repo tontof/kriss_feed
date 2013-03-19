@@ -16,7 +16,9 @@
                   <?php $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')?>
                 </ul>
                 <a class="btn" href="?">Go home</a>
+                <?php if (!empty($referer)) { ?>
                 <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
+                <?php } ?>
               </div>
             </div>
           </div>
