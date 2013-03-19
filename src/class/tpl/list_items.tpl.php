@@ -26,7 +26,7 @@
           <?php } else { ?>
           <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
           <?php } ?>
-          <a class="item-link" href="<?php echo $redirector.$item['link']; ?>">
+          <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>">
             <?php echo $item['title']; ?>
           </a>
         </span>
@@ -48,7 +48,7 @@
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
-        <a class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
+        <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
         <div class="item-info-end">
           from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
           <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
