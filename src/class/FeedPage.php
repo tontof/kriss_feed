@@ -12,7 +12,7 @@ class FeedPage
      *
      * @param array $var list of useful variables for template
      */
-    public function init($var)
+    public static function init($var)
     {
         FeedPage::$var = $var;
     }

@@ -570,7 +570,7 @@ class FeedPage
     public static $var = array();
     private static $_instance;
 
-    public function init($var)
+    public static function init($var)
     {
         FeedPage::$var = $var;
     }
