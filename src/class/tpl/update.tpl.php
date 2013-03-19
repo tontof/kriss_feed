@@ -15,6 +15,7 @@
                 <ul class="unstyled">
                   <?php $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')?>
                 </ul>
+                <a class="btn" href="?">Go home</a>
                 <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
               </div>
             </div>
