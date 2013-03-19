@@ -39,6 +39,25 @@ function grab_image($url,$saveto){
     }
 }
 
+/*favicon dir*/
+if (!is_dir('./favicon/')) {
+    mkdir('./favicon/');
+}
+/*function grab_image*/
+function grab_image($url,$saveto){
+    if(!file_exists('./favicon/'.$saveto)){
+    $ch = curl_init ($url);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
+    $raw=curl_exec($ch);
+    curl_close ($ch);
+    $fp = fopen('./favicon/'.$saveto,'x');
+    fwrite($fp, $raw);
+    fclose($fp);
+    }
+}
+
 /**
  * autoload class
  *
