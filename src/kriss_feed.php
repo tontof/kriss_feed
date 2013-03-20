@@ -33,9 +33,9 @@ function grabFavicon($url, $feedHash){
 
     if(!file_exists($file) && in_array('curl', get_loaded_extensions()) && Session::isLogged()){
         $ch = curl_init ($url);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
         $raw = curl_exec($ch);
         if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
             $fp = fopen($file, 'x');
