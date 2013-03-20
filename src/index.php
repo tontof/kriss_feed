@@ -23,6 +23,9 @@ define('ERROR_NO_XML', 1);
 define('ERROR_ITEMS_MISSED', 2);
 define('ERROR_LAST_UPDATE', 3);
 
+// fix some warning
+date_default_timezone_set('Europe/Paris'); 
+
 /* function grabFavicon */
 function grabFavicon($url, $feedHash){
     $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';
