@@ -1264,7 +1264,7 @@ dl {
                     <label class="control-label" for="redirector">Feed reader redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)</label>
                     <div class="controls">
                       <input type="text" id="redirector" name="redirector" value="<?php echo $kfcredirector; ?>">
-                      <span class="help-block">(e.g. http://anonym.to/? will mask the HTTP_REFERER)</span>
+                      <span class="help-block"><strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property</span>
                     </div>
                   </div>
 
@@ -2129,7 +2129,7 @@ dl {
           <?php } else { ?>
           <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
           <?php } ?>
-          <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>">
+          <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
             <?php echo $item['title']; ?>
           </a>
         </span>
@@ -2151,11 +2151,11 @@ dl {
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
-        <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
+        <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
         <div class="item-info-end">
-          from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
+          from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
           <?php echo $item['time']['expanded']; ?>
-          <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
+          <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
             <span class="ico">
               <span class="ico-feed-dot"></span>
               <span class="ico-feed-circle-1"></span>
@@ -2513,7 +2513,11 @@ dl {
       for (var i = 0; i < a_to_anon.length; i++) {
         domain = a_to_anon[i].href.replace('http://','').replace('https://','').split(/[/?#]/)[0];
         if (domain !== window.location.host) {
-          a_to_anon[i].href = redirector+a_to_anon[i].href;
+          if (redirector !== 'noreferrer') {
+            a_to_anon[i].href = redirector+a_to_anon[i].href;
+          } else {
+            a_to_anon[i].setAttribute('rel', 'noreferrer');
+          }
         }
       }
     }
@@ -2567,7 +2571,10 @@ dl {
    element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length > 1) {
       title = getTitleItem(itemHash);
-      url = getUrlItem(itemHash).replace(redirector,'');
+      url = getUrlItem(itemHash);
+      if (redirector != 'noreferrer') {
+        url = url.replace(redirector,'');
+      }
       via = getViaItem(itemHash);
       domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];

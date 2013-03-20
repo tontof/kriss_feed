@@ -259,7 +259,11 @@
       for (var i = 0; i < a_to_anon.length; i++) {
         domain = a_to_anon[i].href.replace('http://','').replace('https://','').split(/[/?#]/)[0];
         if (domain !== window.location.host) {
-          a_to_anon[i].href = redirector+a_to_anon[i].href;
+          if (redirector !== 'noreferrer') {
+            a_to_anon[i].href = redirector+a_to_anon[i].href;
+          } else {
+            a_to_anon[i].setAttribute('rel', 'noreferrer');
+          }
         }
       }
     }
@@ -319,7 +323,10 @@
    element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length > 1) {
       title = getTitleItem(itemHash);
-      url = getUrlItem(itemHash).replace(redirector,'');
+      url = getUrlItem(itemHash);
+      if (redirector != 'noreferrer') {
+        url = url.replace(redirector,'');
+      }
       via = getViaItem(itemHash);
       domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];

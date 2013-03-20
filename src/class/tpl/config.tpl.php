@@ -53,7 +53,7 @@
                     <label class="control-label" for="redirector">Feed reader redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)</label>
                     <div class="controls">
                       <input type="text" id="redirector" name="redirector" value="<?php echo $kfcredirector; ?>">
-                      <span class="help-block">(e.g. http://anonym.to/? will mask the HTTP_REFERER)</span>
+                      <span class="help-block"><strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property</span>
                     </div>
                   </div>
 
