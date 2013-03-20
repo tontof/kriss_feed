@@ -1010,7 +1010,7 @@ class Feed
      *
      * http://stackoverflow.com/questions/2511410/curl-follow-location-error
      */
-    function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
+    public function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
         if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
             curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
@@ -1030,7 +1030,7 @@ class Feed
                     break;
                 $header_start = strpos($data, "\r\n")+2;
                 $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
-                if (!preg_match("!\r\n(?:Location|URI): *(.*?) *\r\n!", $headers, $matches))
+                if (!preg_match("!\r\n(?:Location|location|URI): *(.*?) *\r\n!", $headers, $matches))
                     break;
                 curl_setopt($ch, CURLOPT_URL, $matches[1]);
             } while (--$redirects);
@@ -1063,18 +1063,18 @@ class Feed
                 'user_agent' => 'KrISS feed agent '.$this->kfc->version.' by Tontof.net http://github.com/tontof/kriss_feed',
                 )
             );
-        $document = false;
+        $document = new DOMDocument();
 
         if (in_array('curl', get_loaded_extensions())) {
             $output = $this->loadUrl($xmlUrl, $opts);
-            $document = DOMDocument::loadXML($output);
+            $document->loadXML($output);
         } else {
             // try using libxml
             $context = stream_context_create($opts);
             libxml_set_streams_context($context);
 
             // request a file through HTTP
-            $document = DOMDocument::load($xmlUrl);
+            $document->load($xmlUrl);
         }
         // show back warning/error
         restore_error_handler();
