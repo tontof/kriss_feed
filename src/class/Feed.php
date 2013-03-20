@@ -164,7 +164,7 @@ class Feed
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
             } else {
-                foreach ($feed['foldersHash'] as $folderHash ) {
+                foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
                     if ($folder !== false) {
                         if (!isset($feedsView['folders'][$folderHash]['title'])) {
@@ -797,8 +797,13 @@ class Feed
                     } else {
                         $tag = $item->getElementsByTagName($list[$i]);
                         // wrong detection : e.g. media:content for content
-                        if ($tag->length != 0 && $tag->item(0)->tagName != $list[$i]) {
-                            $tag = new DOMNodeList;
+                        if ($tag->length != 0) {
+                            for ($j = $tag->length; --$j >= 0;) {
+                                $elt = &$tag->item($j);
+                                if ($tag->item($j)->tagName != $list[$i]) {
+                                    $elt->parentNode->removeChild($elt);
+                                }
+                            }
                         }
                     }
                     if ($tag->length != 0) {
@@ -806,8 +811,18 @@ class Feed
                         // select first item (item(0)), (may not work)
                         // stop to search for another one
                         if ($format == 'link') {
-                            $tmpItem[$format]
-                                = $tag->item(0)->getAttribute('href');
+                            $tmpItem[$format] = '';
+                            for ($j = 0; $j < $tag->length; $j++) {
+                                if ($tag->item($j)->hasAttribute('rel') && $tag->item($j)->getAttribute('rel') == 'alternate') {
+                                    $tmpItem[$format]
+                                        = $tag->item($j)->getAttribute('href');
+                                    $j = $tag->length;
+                                }
+                            }
+                            if ($tmpItem[$format] == '') {
+                                $tmpItem[$format]
+                                    = $tag->item(0)->getAttribute('href');
+                            }
                         }
                         if (empty($tmpItem[$format])) {
                             $tmpItem[$format] = $tag->item(0)->textContent;
