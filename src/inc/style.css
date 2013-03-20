@@ -170,6 +170,9 @@ dl {
   opacity: 0.4;
 }
 
+.autohide-feed,.autohide-folder {
+  display: none;
+}
 
 #main-container {
   float: right;

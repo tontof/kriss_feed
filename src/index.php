@@ -814,6 +814,9 @@ dl {
   opacity: 0.4;
 }
 
+.autohide-feed,.autohide-folder {
+  display: none;
+}
 
 #main-container {
   float: right;
@@ -2031,15 +2034,13 @@ dl {
         }
         ?>
         
-        <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
-        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
+        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
           <?php if ($addFavicon) { ?>
           <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
           <?php } ?>
 <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
         </li>
-        <?php } ?>
 
         <?php
            }
@@ -2047,7 +2048,7 @@ dl {
         $isOpen = $folder['isOpen'];
         ?>
         
-        <li id="folder-<?php echo $hashFolder; ?>" class="folder">
+        <li id="folder-<?php echo $hashFolder; ?>" class="folder<?php if ($autohide and $folder['nbUnread']== 0) { echo ' autohide-folder';} ?>">
           <h5>
             <a class="mark-as" href="<?php echo $query.'read='.$hashFolder; ?>"><span class="label"><?php echo $folder['nbUnread']; ?></span></a>
             <a class="folder-toggle" href="<?php echo $query.'toggleFolder='.$hashFolder; ?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $hashFolder; ?>">
@@ -2070,16 +2071,14 @@ dl {
             $atitle = $feed['error'];
             }
             ?>
-            <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
 
-            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
+            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
               
               <?php if ($addFavicon) { ?>
               <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
               <?php } ?>
               <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>
-            <?php } ?>
             <?php } ?>
           </ul>
         </li>
