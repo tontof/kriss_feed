@@ -155,6 +155,7 @@ class FeedConf
     public $pagingItem = 1;
     public $pagingPage = 2;
     public $pagingByPage = 3;
+    public $pagingMarkAs = 4;
 
     /**
      * Constructor
@@ -694,6 +695,9 @@ class FeedConf
         if ($this->pagingByPage != 0) {
             $paging['pagingByPage'] = $this->pagingByPage;
         }
+        if ($this->pagingMarkAs != 0) {
+            $paging['pagingMarkAs'] = $this->pagingMarkAs;
+        }
 
         asort($paging);
 
@@ -765,6 +769,11 @@ class FeedConf
         $this->pagingByPage = $pagingByPage;
     }
 
+    public function setPagingMarkAs($pagingMarkAs)
+    {
+        $this->pagingMarkAs = $pagingMarkAs;
+    }
+
     /**
      * Write configuration file
      *
@@ -779,7 +788,7 @@ class FeedConf
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
                       'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                      'disableSessionProtection');
+                      'pagingMarkAs', 'disableSessionProtection');
         $out = '<?php';
         $out .= "\n";
 

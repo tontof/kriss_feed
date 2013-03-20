@@ -286,6 +286,13 @@
                     </div>
                   </div>
                   <div class="control-group">
+                    <label class="control-label" for="pagingMarkAs">Mark as read</label>
+                    <div class="controls">
+                      <input type="text" id="pagingMarkAs" name="pagingMarkAs" value="<?php echo empty($kfcpaging['pagingMarkAs'])?'0':$kfcpaging['pagingMarkAs']; ?>">
+                      <span class="help-block">If you add a mark as read button into paging</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
                       <input class="btn" type="submit" name="save" value="Save" />

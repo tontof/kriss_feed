@@ -9,6 +9,13 @@
     </div>
   </li>
   <?php break; ?>
+  <?php case 'pagingMarkAs': ?>
+  <li>
+    <div class="btn-group">
+      <a class="btn btn-info" href="<?php echo $query.'read='.$currentHash; ?>">Mark as read</a>
+    </div>
+  </li>
+  <?php break; ?>
   <?php case 'pagingPage': ?>
   <li>
     <div class="btn-group">

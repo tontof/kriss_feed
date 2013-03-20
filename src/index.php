@@ -121,6 +121,7 @@ class FeedConf
     public $pagingItem = 1;
     public $pagingPage = 2;
     public $pagingByPage = 3;
+    public $pagingMarkAs = 4;
 
     public function __construct($configFile, $version)
     {
@@ -521,6 +522,9 @@ class FeedConf
         if ($this->pagingByPage != 0) {
             $paging['pagingByPage'] = $this->pagingByPage;
         }
+        if ($this->pagingMarkAs != 0) {
+            $paging['pagingMarkAs'] = $this->pagingMarkAs;
+        }
 
         asort($paging);
 
@@ -592,6 +596,11 @@ class FeedConf
         $this->pagingByPage = $pagingByPage;
     }
 
+    public function setPagingMarkAs($pagingMarkAs)
+    {
+        $this->pagingMarkAs = $pagingMarkAs;
+    }
+
     public function write()
     {
         $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
@@ -601,7 +610,7 @@ class FeedConf
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
                       'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                      'disableSessionProtection');
+                      'pagingMarkAs', 'disableSessionProtection');
         $out = '<?php';
         $out .= "\n";
 
@@ -1497,6 +1506,13 @@ dl {
                     </div>
                   </div>
                   <div class="control-group">
+                    <label class="control-label" for="pagingMarkAs">Mark as read</label>
+                    <div class="controls">
+                      <input type="text" id="pagingMarkAs" name="pagingMarkAs" value="<?php echo empty($kfcpaging['pagingMarkAs'])?'0':$kfcpaging['pagingMarkAs']; ?>">
+                      <span class="help-block">If you add a mark as read button into paging</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
                       <input class="btn" type="submit" name="save" value="Save" />
@@ -2197,6 +2213,13 @@ dl {
     <div class="btn-group">
       <a class="btn btn-info previous-item" href="<?php echo $query.'previous='.$currentItemHash; ?>">Previous item</a>
       <a class="btn btn-info next-item" href="<?php echo $query.'next='.$currentItemHash; ?>">Next item</a>
+    </div>
+  </li>
+  <?php break; ?>
+  <?php case 'pagingMarkAs': ?>
+  <li>
+    <div class="btn-group">
+      <a class="btn btn-info" href="<?php echo $query.'read='.$currentHash; ?>">Mark as read</a>
     </div>
   </li>
   <?php break; ?>
