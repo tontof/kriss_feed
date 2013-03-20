@@ -27,7 +27,7 @@
           <?php } else { ?>
           <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
           <?php } ?>
-          <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>">
+          <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
             <?php echo $item['title']; ?>
           </a>
         </span>
@@ -49,11 +49,11 @@
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
-        <a target="_blank" class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
+        <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
         <div class="item-info-end">
-          from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
+          from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
           <?php echo $item['time']['expanded']; ?>
-          <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
+          <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
             <span class="ico">
               <span class="ico-feed-dot"></span>
               <span class="ico-feed-circle-1"></span>

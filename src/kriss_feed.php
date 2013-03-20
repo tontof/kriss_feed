@@ -72,6 +72,7 @@ if (!empty($_POST)) {
         die('Wrong token.');
     }
 }
+unset($_SESSION['tokens']);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
@@ -93,7 +94,7 @@ $currentHash = $kfc->getCurrentHash();
 // Query
 $query = '?';
 if (!empty($currentHash) and $currentHash !== 'all') {
-    $query = '?currentHash='.$currentHash.'&';
+    $query = '?currentHash='.$currentHash.'&amp;';
 }
 
 $pb->assign('view', $view);
@@ -257,7 +258,7 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
-    if (isset($_GET['cron']) || isset($argv)) {
+    if (isset($_GET['cron']) || isset($argv) && count($argv) >= 3) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
         $pb->assign('kf', $kf);
@@ -455,7 +456,7 @@ $type = $kf->hashType($currentHash);
             $kf->removeFeed($hash);
             $kf->writeData();
 
-            MyTool::redirect();
+            MyTool::redirect('?');
         } elseif (isset($_POST['cancel'])) {
             MyTool::redirect();
         } else {
@@ -669,7 +670,7 @@ $type = $kf->hashType($currentHash);
             $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
             break;
         default:
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span> unread items';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
             break;
         }
 
