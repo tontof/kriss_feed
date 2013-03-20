@@ -1635,6 +1635,20 @@ dl {
                 <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
               </dl>
             </div>
+
+            <div id="section">
+              <h2>Check configuration</h2>
+              <dl class="dl-horizontal">
+                <dt>open_ssl</dt>
+                <dd>
+                  <?php if (extension_loaded('openssl')) { ?>
+                  <span class="text-success">You should be able to load https:// rss links.</span>
+                  <?php } else { ?>
+                  <span class="text-error">You may have problems using https:// rss links.</span>
+                  <?php } ?>
+                </dd>
+              </dl>
+            </div>
           </div>
         </div>
       </div>
@@ -4017,7 +4031,7 @@ class Feed
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
             } else {
-                foreach ($feed['foldersHash'] as $folderHash ) {
+                foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
                     if ($folder !== false) {
                         if (!isset($feedsView['folders'][$folderHash]['title'])) {
@@ -4509,8 +4523,13 @@ class Feed
                     } else {
                         $tag = $item->getElementsByTagName($list[$i]);
                         // wrong detection : e.g. media:content for content
-                        if ($tag->length != 0 && $tag->item(0)->tagName != $list[$i]) {
-                            $tag = new DOMNodeList;
+                        if ($tag->length != 0) {
+                            for ($j = $tag->length; --$j >= 0;) {
+                                $elt = &$tag->item($j);
+                                if ($tag->item($j)->tagName != $list[$i]) {
+                                    $elt->parentNode->removeChild($elt);
+                                }
+                            }
                         }
                     }
                     if ($tag->length != 0) {
@@ -4518,8 +4537,18 @@ class Feed
                         // select first item (item(0)), (may not work)
                         // stop to search for another one
                         if ($format == 'link') {
-                            $tmpItem[$format]
-                                = $tag->item(0)->getAttribute('href');
+                            $tmpItem[$format] = '';
+                            for ($j = 0; $j < $tag->length; $j++) {
+                                if ($tag->item($j)->hasAttribute('rel') && $tag->item($j)->getAttribute('rel') == 'alternate') {
+                                    $tmpItem[$format]
+                                        = $tag->item($j)->getAttribute('href');
+                                    $j = $tag->length;
+                                }
+                            }
+                            if ($tmpItem[$format] == '') {
+                                $tmpItem[$format]
+                                    = $tag->item(0)->getAttribute('href');
+                            }
                         }
                         if (empty($tmpItem[$format])) {
                             $tmpItem[$format] = $tag->item(0)->textContent;

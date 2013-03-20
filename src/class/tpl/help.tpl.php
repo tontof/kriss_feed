@@ -82,6 +82,20 @@
                 <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
               </dl>
             </div>
+
+            <div id="section">
+              <h2>Check configuration</h2>
+              <dl class="dl-horizontal">
+                <dt>open_ssl</dt>
+                <dd>
+                  <?php if (extension_loaded('openssl')) { ?>
+                  <span class="text-success">You should be able to load https:// rss links.</span>
+                  <?php } else { ?>
+                  <span class="text-error">You may have problems using https:// rss links.</span>
+                  <?php } ?>
+                </dd>
+              </dl>
+            </div>
           </div>
         </div>
       </div>
