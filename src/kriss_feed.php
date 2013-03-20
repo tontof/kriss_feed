@@ -72,6 +72,7 @@ if (!empty($_POST)) {
         die('Wrong token.');
     }
 }
+unset($_SESSION['tokens']);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
