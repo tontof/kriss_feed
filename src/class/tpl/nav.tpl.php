@@ -15,6 +15,7 @@
         &nbsp;
         &nbsp;
       </a>
+
       <?php if (isset($currentHashView)) { ?>
       <span class="brand">
         <?php echo $currentHashView ?>

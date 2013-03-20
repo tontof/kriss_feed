@@ -94,7 +94,7 @@ $currentHash = $kfc->getCurrentHash();
 // Query
 $query = '?';
 if (!empty($currentHash) and $currentHash !== 'all') {
-    $query = '?currentHash='.$currentHash.'&';
+    $query = '?currentHash='.$currentHash.'&amp;';
 }
 
 $pb->assign('view', $view);
@@ -670,7 +670,7 @@ $type = $kf->hashType($currentHash);
             $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
             break;
         default:
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span> unread items';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
             break;
         }
 
