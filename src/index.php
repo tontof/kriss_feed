@@ -2592,7 +2592,7 @@ dl {
     collapseElement(this);
   }
 
-  function initCollapse (list) {
+  function initCollapse(list) {
     var i = 0;
 
     for (i = 0; i < list.length; i += 1) {
@@ -3144,7 +3144,7 @@ dl {
     var i = 0;
 
     for (i = 0; i < listItems.length; i += 1) {
-      if (hasClass(listItems[i], 'item-toggle')) {
+      if (hasClass(listItems[i], 'item-toggle-plus')) {
         listItems[i].onclick = toggleClickItem;
       }
       if (hasClass(listItems[i], 'item-mark-as')) {
