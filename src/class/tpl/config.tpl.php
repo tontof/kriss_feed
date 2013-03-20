@@ -56,6 +56,15 @@
                       <span class="help-block">(e.g. http://anonym.to/? will mask the HTTP_REFERER)</span>
                     </div>
                   </div>
+
+                  <div class="control-group">
+                    <label class="control-label" for="disablesessionprotection">Session protection</label>
+                    <div class="controls">
+                      <label><input type="checkbox" id="disablesessionprotection" name="disableSessionProtection"<?php echo ($kfcdisablesessionprotection ? ' checked="checked"' : ''); ?>>Disable session cookie hijacking protection</label>
+                      <span class="help-block">Check this if you get disconnected often or if your IP address changes often.</span>
+                    </div>
+                  </div>
+
                   <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>

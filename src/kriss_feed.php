@@ -269,6 +269,11 @@ if (isset($_GET['login'])) {
 } elseif (isset($_GET['config']) && Session::isLogged()) {
     // Config
     if (isset($_POST['save'])) {
+        if (isset($_POST['disableSessionProtection'])) {
+            $_POST['disableSessionProtection'] = '1';
+        } else {
+            $_POST['disableSessionProtection'] = '0';
+        }
         $kfc->hydrate($_POST);
         MyTool::redirect();
     } elseif (isset($_POST['cancel'])) {
@@ -293,7 +298,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
-
+        $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
 

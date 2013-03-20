@@ -61,6 +61,8 @@ class FeedConf
 
     public $hash = '';
 
+    public $disableSessionProtection = false;
+
     public $salt = '';
 
     public $title = "Kriss feed";
@@ -131,6 +133,8 @@ class FeedConf
         } else {
             $this->_install();
         }
+
+        Session::$disableSessionProtection = $this->disableSessionProtection;
 
         if ($this->addFavicon) {
             /* favicon dir */
@@ -374,6 +378,11 @@ class FeedConf
         return $currentPage;
     }
 
+    public function setDisableSessionProtection($disableSessionProtection)
+    {
+        $this->disableSessionProtection = $disableSessionProtection;
+    }
+
     public function setLogin($login)
     {
         $this->login = $login;
@@ -591,7 +600,8 @@ class FeedConf
                       'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon');
+                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                      'disableSessionProtection');
         $out = '<?php';
         $out .= "\n";
 
@@ -1253,6 +1263,15 @@ dl {
                       <span class="help-block">(e.g. http://anonym.to/? will mask the HTTP_REFERER)</span>
                     </div>
                   </div>
+
+                  <div class="control-group">
+                    <label class="control-label" for="disablesessionprotection">Session protection</label>
+                    <div class="controls">
+                      <label><input type="checkbox" id="disablesessionprotection" name="disableSessionProtection"<?php echo ($kfcdisablesessionprotection ? ' checked="checked"' : ''); ?>>Disable session cookie hijacking protection</label>
+                      <span class="help-block">Check this if you get disconnected often or if your IP address changes often.</span>
+                    </div>
+                  </div>
+
                   <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
@@ -5685,6 +5704,8 @@ class Session
 {
     public static $inactivityTimeout = 3600;
 
+    public static $disableSessionProtection = false;
+
     private static $_instance;
 
     private function __construct()
@@ -5716,15 +5737,13 @@ class Session
         }
     }
 
-    private static function _allInfo()
+    private static function _allIPs()
     {
-        $infos = $_SERVER["REMOTE_ADDR"];
-        $infos.= isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? '_'.$_SERVER['HTTP_X_FORWARDED_FOR'] : '';
-        $infos.= isset($_SERVER['HTTP_CLIENT_IP']) ? '_'.$_SERVER['HTTP_CLIENT_IP'] : '';
-        $infos.= isset($_SERVER['HTTP_USER_AGENT']) ? '_'.$_SERVER['HTTP_USER_AGENT'] : '';
-        $infos.= isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? '_'.$_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $ip.= isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? '_'.$_SERVER['HTTP_X_FORWARDED_FOR'] : '';
+        $ip.= isset($_SERVER['HTTP_CLIENT_IP']) ? '_'.$_SERVER['HTTP_CLIENT_IP'] : '';
 
-        return sha1($infos);
+        return $ip;
     }
 
     public static function login (
@@ -5737,10 +5756,10 @@ class Session
         if ($login == $loginTest && $password==$passwordTest) {
             // Generate unique random number to sign forms (HMAC)
             $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
-            $_SESSION['info']=Session::_allInfo();
-            $_SESSION['username']=$login;
+            $_SESSION['ip'] = Session::_allIPs();
+            $_SESSION['username'] = $login;
             // Set session expiration.
-            $_SESSION['expires_on']=time()+Session::$inactivityTimeout;
+            $_SESSION['expires_on'] = time() + Session::$inactivityTimeout;
 
             foreach ($pValues as $key => $value) {
                 $_SESSION[$key] = $value;
@@ -5755,13 +5774,14 @@ class Session
 
     public static function logout()
     {
-        unset($_SESSION['uid'], $_SESSION['info'], $_SESSION['expires_on']);
+        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on']);
     }
 
     public static function isLogged()
     {
         if (!isset ($_SESSION['uid'])
-            || $_SESSION['info']!=Session::_allInfo()
+            || (Session::$disableSessionProtection == false
+                && $_SESSION['ip']!=Session::_allIPs())
             || time()>=$_SESSION['expires_on']) {
             Session::logout();
 
@@ -6006,6 +6026,11 @@ if (isset($_GET['login'])) {
 } elseif (isset($_GET['config']) && Session::isLogged()) {
     // Config
     if (isset($_POST['save'])) {
+        if (isset($_POST['disableSessionProtection'])) {
+            $_POST['disableSessionProtection'] = '1';
+        } else {
+            $_POST['disableSessionProtection'] = '0';
+        }
         $kfc->hydrate($_POST);
         MyTool::redirect();
     } elseif (isset($_POST['cancel'])) {
@@ -6030,7 +6055,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
-
+        $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
 

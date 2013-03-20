@@ -20,6 +20,11 @@ class FeedConf
     public $hash = '';
 
     /**
+     * Disable session protection
+     */
+    public $disableSessionProtection = false;
+
+    /**
      * Salt
      */
     public $salt = '';
@@ -168,6 +173,8 @@ class FeedConf
         } else {
             $this->_install();
         }
+
+        Session::$disableSessionProtection = $this->disableSessionProtection;
 
         if ($this->addFavicon) {
             /* favicon dir */
@@ -452,6 +459,16 @@ class FeedConf
         }
 
         return $currentPage;
+    }
+
+    /**
+     * Disable session protection setter
+     *
+     * @param string $disableSessionProtection Disable session protection
+     */
+    public function setDisableSessionProtection($disableSessionProtection)
+    {
+        $this->disableSessionProtection = $disableSessionProtection;
     }
 
     /**
@@ -761,7 +778,8 @@ class FeedConf
                       'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                       'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                       'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon');
+                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                      'disableSessionProtection');
         $out = '<?php';
         $out .= "\n";
 

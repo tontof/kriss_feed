@@ -37,6 +37,12 @@ class Session
     public static $inactivityTimeout = 3600;
 
     /**
+     * If you get disconnected often or if your IP address changes often.
+     * Let you disable session cookie hijacking protection
+     */
+    public static $disableSessionProtection = false;
+
+    /**
      * Static session
      */
     private static $_instance;
@@ -77,20 +83,18 @@ class Session
     }
 
     /**
-     * Returns the IP address, user agent and language of the client
+     * Returns the IP address
      * (Used to prevent session cookie hijacking.)
      *
-     * @return string Hash of all information
+     * @return string IP address
      */
-    private static function _allInfo()
+    private static function _allIPs()
     {
-        $infos = $_SERVER["REMOTE_ADDR"];
-        $infos.= isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? '_'.$_SERVER['HTTP_X_FORWARDED_FOR'] : '';
-        $infos.= isset($_SERVER['HTTP_CLIENT_IP']) ? '_'.$_SERVER['HTTP_CLIENT_IP'] : '';
-        $infos.= isset($_SERVER['HTTP_USER_AGENT']) ? '_'.$_SERVER['HTTP_USER_AGENT'] : '';
-        $infos.= isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? '_'.$_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $ip.= isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? '_'.$_SERVER['HTTP_X_FORWARDED_FOR'] : '';
+        $ip.= isset($_SERVER['HTTP_CLIENT_IP']) ? '_'.$_SERVER['HTTP_CLIENT_IP'] : '';
 
-        return sha1($infos);
+        return $ip;
     }
 
     /**
@@ -115,10 +119,10 @@ class Session
         if ($login == $loginTest && $password==$passwordTest) {
             // Generate unique random number to sign forms (HMAC)
             $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
-            $_SESSION['info']=Session::_allInfo();
-            $_SESSION['username']=$login;
+            $_SESSION['ip'] = Session::_allIPs();
+            $_SESSION['username'] = $login;
             // Set session expiration.
-            $_SESSION['expires_on']=time()+Session::$inactivityTimeout;
+            $_SESSION['expires_on'] = time() + Session::$inactivityTimeout;
 
             foreach ($pValues as $key => $value) {
                 $_SESSION[$key] = $value;
@@ -136,7 +140,7 @@ class Session
      */
     public static function logout()
     {
-        unset($_SESSION['uid'], $_SESSION['info'], $_SESSION['expires_on']);
+        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on']);
     }
 
     /**
@@ -147,7 +151,8 @@ class Session
     public static function isLogged()
     {
         if (!isset ($_SESSION['uid'])
-            || $_SESSION['info']!=Session::_allInfo()
+            || (Session::$disableSessionProtection == false
+                && $_SESSION['ip']!=Session::_allIPs())
             || time()>=$_SESSION['expires_on']) {
             Session::logout();
 
