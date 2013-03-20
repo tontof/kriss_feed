@@ -963,7 +963,6 @@ class Feed
 
     /** 
      * loadUrl
-     * http://www.edmondscommerce.co.uk/curl/php-curl-curlopt_followlocation-and-open_basedir-or-safe-mode/
      *
      * @param string url to load
      * @param $opt to create context
@@ -971,7 +970,6 @@ class Feed
      * @return string content
      */
     public function loadUrl($url, $opts = array()){
-        $output = '';
         $ch = curl_init($url);
         if (!empty($opts)) {
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
@@ -983,82 +981,52 @@ class Feed
         curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
         curl_setopt($ch, CURLOPT_URL, $url);
 
-        // follow on location problems
-        if (ini_get('open_basedir') == '') {
-             curl_setopt ($ch, CURLOPT_FOLLOWLOCATION, $l);
-             $output = curl_exec($ch);
-        } else {
-             $output = $this->curl_redir_exec($ch);
-        }
+        $output = $this->curl_exec_follow($ch);
+
         curl_close($ch);
 
         return $output;
     }
  
- 
-
-    /** 
-     * curl_redir_exec
+    /**
+     * @param resource $ch curl
+     * @param integer  $redirects max number of redirects
+     * @param boolean  $curloptHeader
      *
-     * @param $ch curl
-     *
-     * @return string content
+     * http://stackoverflow.com/questions/2511410/curl-follow-location-error
      */
-    public function curl_redir_exec($ch)
-    {
-        static $curl_loops = 0;
-        static $curl_max_loops = 5;
- 
-        if ($curl_loops++ >= $curl_max_loops) {
-            $curl_loops = 0;
- 
-            return '';
-        }
- 
-        curl_setopt($ch, CURLOPT_HEADER, true);
-        $data = curl_exec($ch);
- 
-        list($header, $data) = explode("\n\n", $data, 2);
- 
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
- 
-        if ($http_code == 301 || $http_code == 302) {
-             $matches = array();
-             preg_match('/Location:(.*?)\n/', $header, $matches);
-             $url = @parse_url(trim(array_pop($matches)));
- 
-             if (!$url) {
-                 // couldn't process the url to redirect to
-                 $curl_loops = 0;
-                 return $data;
-             }
- 
-            $last_url = parse_url(curl_getinfo($ch, CURLINFO_EFFECTIVE_URL));
-            
-            if (!$url['scheme']) {
-                $url['scheme'] = $last_url['scheme'];
-            }
- 
-            if (!$url['host']) {
-                 $url['host'] = $last_url['host'];
-            }
-            
-            if (!$url['path']) {
-                 $url['path'] = $last_url['path'];
-            }
- 
-            $new_url = $url['scheme'] . '://' . $url['host'] . $url['path'] . ($url['query']?'?'.$url['query']:'');
- 
-            curl_setopt($ch, CURLOPT_URL, $new_url);
- 
-            return $this->curl_redir_exec($ch);
- 
+    function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
+        if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
+            curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
+            return curl_exec($ch);
         } else {
-            $curl_loops = 0;
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_FORBID_REUSE, false);
+
+            do {
+                $data = curl_exec($ch);
+                if (curl_errno($ch))
+                    break;
+                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($code != 301 && $code != 302 && $code!=303)
+                    break;
+                $header_start = strpos($data, "\r\n")+2;
+                $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
+                if (!preg_match("!\r\n(?:Location|URI): *(.*?) *\r\n!", $headers, $matches))
+                    break;
+                curl_setopt($ch, CURLOPT_URL, $matches[1]);
+            } while (--$redirects);
+            if (!$redirects)
+                trigger_error('Too many redirects. When following redirects, libcurl hit the maximum amount.', E_USER_WARNING);
+            if (!$curloptHeader)
+                $data = substr($data, strpos($data, "\r\n\r\n")+4);
+
             return $data;
         }
     }
-
 
     /**
      * Load an xml file through HTTP
