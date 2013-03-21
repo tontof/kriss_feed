@@ -241,31 +241,6 @@ class FeedConf
             $this->setLogin($_POST['setlogin']);
             $this->setHash($_POST['setpassword']);
 
-            if (!is_dir(DATA_DIR)) {
-                if (!@mkdir(DATA_DIR, 0755)) {
-                    echo '
-<script>
- alert("Error: can not create '.DATA_DIR.' directory, check permissions");
- document.location=window.location.href;
-</script>';
-                    exit();
-                }
-                @chmod(DATA_DIR, 0755);
-                if (!is_file(DATA_DIR.'/.htaccess')) {
-                    if (!@file_put_contents(
-                        DATA_DIR.'/.htaccess',
-                        "Allow from none\nDeny from all\n"
-                    )) {
-                        echo '
-<script>
- alert("Can not protect '.DATA_DIR.'");
- document.location=window.location.href;
-</script>';
-                        exit();
-                    }
-                }
-            }
-
             if ($this->write()) {
                 echo '
 <script>
@@ -430,7 +405,7 @@ class FeedConf
     {
         $currentHash = $this->currentHash;
         if (isset($_GET['currentHash'])) {
-            $currentHash = substr(trim($_GET['currentHash'], '/'), 0, 6);
+            $currentHash = preg_replace('/[^a-zA-Z0-9-_@]/', '', substr(trim($_GET['currentHash'], '/'), 0, 6));
         }
 
         if (empty($currentHash)) {

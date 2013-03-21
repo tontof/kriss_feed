@@ -28,6 +28,31 @@ define('ERROR_LAST_UPDATE', 3);
 // fix some warning
 date_default_timezone_set('Europe/Paris'); 
 
+if (!is_dir(DATA_DIR)) {
+    if (!@mkdir(DATA_DIR, 0755)) {
+        echo '
+<script>
+ alert("Error: can not create '.DATA_DIR.' directory, check permissions");
+ document.location=window.location.href;
+</script>';
+        exit();
+    }
+    @chmod(DATA_DIR, 0755);
+    if (!is_file(DATA_DIR.'/.htaccess')) {
+        if (!@file_put_contents(
+                DATA_DIR.'/.htaccess',
+                "Allow from none\nDeny from all\n"
+                )) {
+            echo '
+<script>
+ alert("Can not protect '.DATA_DIR.'");
+ document.location=window.location.href;
+</script>';
+            exit();
+        }
+    }
+}
+
 /* function grabFavicon */
 function grabFavicon($url, $feedHash){
     $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';
@@ -200,31 +225,6 @@ class FeedConf
             $this->setLogin($_POST['setlogin']);
             $this->setHash($_POST['setpassword']);
 
-            if (!is_dir(DATA_DIR)) {
-                if (!@mkdir(DATA_DIR, 0755)) {
-                    echo '
-<script>
- alert("Error: can not create '.DATA_DIR.' directory, check permissions");
- document.location=window.location.href;
-</script>';
-                    exit();
-                }
-                @chmod(DATA_DIR, 0755);
-                if (!is_file(DATA_DIR.'/.htaccess')) {
-                    if (!@file_put_contents(
-                        DATA_DIR.'/.htaccess',
-                        "Allow from none\nDeny from all\n"
-                    )) {
-                        echo '
-<script>
- alert("Can not protect '.DATA_DIR.'");
- document.location=window.location.href;
-</script>';
-                        exit();
-                    }
-                }
-            }
-
             if ($this->write()) {
                 echo '
 <script>
@@ -354,7 +354,7 @@ class FeedConf
     {
         $currentHash = $this->currentHash;
         if (isset($_GET['currentHash'])) {
-            $currentHash = substr(trim($_GET['currentHash'], '/'), 0, 6);
+            $currentHash = preg_replace('/[^a-zA-Z0-9-_@]/', '', substr(trim($_GET['currentHash'], '/'), 0, 6));
         }
 
         if (empty($currentHash)) {
@@ -4068,6 +4068,8 @@ class Feed
     public function getFeed($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
+            $this->_data['feeds'][$feedHash]['xmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['xmlUrl']);
+            $this->_data['feeds'][$feedHash]['htmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['htmlUrl']);
             return $this->_data['feeds'][$feedHash];
         }
 
@@ -4414,8 +4416,6 @@ class Feed
             }
             if (isset($this->_data['items'][$itemHash])) {
                 $item['read'] = $this->_data['items'][$itemHash][1];
-
-                return $item;
             } else if (isset($this->_data['newItems'][$itemHash])) {
                 $item['read'] = $this->_data['newItems'][$itemHash][1];
 
@@ -4429,12 +4429,17 @@ class Feed
                 } else {
                     $_SESSION['lastNewItemsHash'] = $itemHash;
                 }
-
-                return $item;
             } else {
                 // FIX: data may be corrupted
                 return false;
             }
+            
+            $item['author'] = htmlspecialchars(strip_tags($item['author']));
+            $item['title'] = htmlspecialchars(strip_tags($item['title']));
+            $item['link'] = htmlspecialchars($item['link']);
+            $item['via'] = htmlspecialchars($item['via']);
+            
+            return $item;
         }
 
         return false;
@@ -5443,6 +5448,12 @@ class MyTool
             $rurl = MyTool::getUrl();
         }
 
+        if (substr($rurl, 0, 1) !== '?') {
+            $ref = MyTool::getUrl();
+            if (substr($rurl, 0, strlen($ref)) != $ref) {
+                $rurl = $ref;
+            }
+        }
         header('Location: '.$rurl);
         exit();
     }
@@ -5543,7 +5554,7 @@ class Opml
             }
 
             echo '<script>alert("File '
-                . $filename . ' (' . MyTool::humanBytes($filesize)
+                . htmlspecialchars($filename) . ' (' . MyTool::humanBytes($filesize)
                 . ') was successfully processed: ' . $importCount
                 . ' links imported.");document.location=\'?\';</script>';
 
@@ -5552,7 +5563,7 @@ class Opml
 
             return $kfData;
         } else {
-            echo '<script>alert("File ' . $filename . ' ('
+            echo '<script>alert("File ' . htmlspecialchars($filename) . ' ('
                 . MyTool::humanBytes($filesize) . ') has an unknown'
                 . ' file format. Check encoding, try to remove accents'
                 . ' and try again. Nothing was imported.");'

@@ -28,6 +28,31 @@ define('ERROR_LAST_UPDATE', 3);
 // fix some warning
 date_default_timezone_set('Europe/Paris'); 
 
+if (!is_dir(DATA_DIR)) {
+    if (!@mkdir(DATA_DIR, 0755)) {
+        echo '
+<script>
+ alert("Error: can not create '.DATA_DIR.' directory, check permissions");
+ document.location=window.location.href;
+</script>';
+        exit();
+    }
+    @chmod(DATA_DIR, 0755);
+    if (!is_file(DATA_DIR.'/.htaccess')) {
+        if (!@file_put_contents(
+                DATA_DIR.'/.htaccess',
+                "Allow from none\nDeny from all\n"
+                )) {
+            echo '
+<script>
+ alert("Can not protect '.DATA_DIR.'");
+ document.location=window.location.href;
+</script>';
+            exit();
+        }
+    }
+}
+
 /* function grabFavicon */
 function grabFavicon($url, $feedHash){
     $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';

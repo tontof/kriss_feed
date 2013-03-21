@@ -194,6 +194,8 @@ class Feed
     public function getFeed($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
+            $this->_data['feeds'][$feedHash]['xmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['xmlUrl']);
+            $this->_data['feeds'][$feedHash]['htmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['htmlUrl']);
             return $this->_data['feeds'][$feedHash];
         }
 
@@ -647,8 +649,6 @@ class Feed
             }
             if (isset($this->_data['items'][$itemHash])) {
                 $item['read'] = $this->_data['items'][$itemHash][1];
-
-                return $item;
             } else if (isset($this->_data['newItems'][$itemHash])) {
                 $item['read'] = $this->_data['newItems'][$itemHash][1];
 
@@ -662,12 +662,17 @@ class Feed
                 } else {
                     $_SESSION['lastNewItemsHash'] = $itemHash;
                 }
-
-                return $item;
             } else {
                 // FIX: data may be corrupted
                 return false;
             }
+            
+            $item['author'] = htmlspecialchars(strip_tags($item['author']));
+            $item['title'] = htmlspecialchars(strip_tags($item['title']));
+            $item['link'] = htmlspecialchars($item['link']);
+            $item['via'] = htmlspecialchars($item['via']);
+            
+            return $item;
         }
 
         return false;
