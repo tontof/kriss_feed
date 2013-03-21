@@ -96,7 +96,7 @@ class Opml
             }
 
             echo '<script>alert("File '
-                . $filename . ' (' . MyTool::humanBytes($filesize)
+                . htmlspecialchars($filename) . ' (' . MyTool::humanBytes($filesize)
                 . ') was successfully processed: ' . $importCount
                 . ' links imported.");document.location=\'?\';</script>';
 
@@ -105,7 +105,7 @@ class Opml
 
             return $kfData;
         } else {
-            echo '<script>alert("File ' . $filename . ' ('
+            echo '<script>alert("File ' . htmlspecialchars($filename) . ' ('
                 . MyTool::humanBytes($filesize) . ') has an unknown'
                 . ' file format. Check encoding, try to remove accents'
                 . ' and try again. Nothing was imported.");'

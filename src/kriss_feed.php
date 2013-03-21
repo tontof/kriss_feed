@@ -11,6 +11,8 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
+define('BAN_FILE', DATA_DIR.'/ipbans.php');
+
 define('FEED_VERSION', 5);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
@@ -25,6 +27,31 @@ define('ERROR_LAST_UPDATE', 3);
 
 // fix some warning
 date_default_timezone_set('Europe/Paris'); 
+
+if (!is_dir(DATA_DIR)) {
+    if (!@mkdir(DATA_DIR, 0755)) {
+        echo '
+<script>
+ alert("Error: can not create '.DATA_DIR.' directory, check permissions");
+ document.location=window.location.href;
+</script>';
+        exit();
+    }
+    @chmod(DATA_DIR, 0755);
+    if (!is_file(DATA_DIR.'/.htaccess')) {
+        if (!@file_put_contents(
+                DATA_DIR.'/.htaccess',
+                "Allow from none\nDeny from all\n"
+                )) {
+            echo '
+<script>
+ alert("Can not protect '.DATA_DIR.'");
+ document.location=window.location.href;
+</script>';
+            exit();
+        }
+    }
+}
 
 /* function grabFavicon */
 function grabFavicon($url, $feedHash){
@@ -65,7 +92,7 @@ function __autoload($className)
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init();
+Session::init(BAN_FILE);
 // XSRF protection with token
 if (!empty($_POST)) {
     if (!Session::isToken($_POST['token'])) {
