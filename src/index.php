@@ -4887,7 +4887,7 @@ class Feed
         case ERROR_LAST_UPDATE:
             return 'Problem with the last update';
             break;
-        case ERROR_UNKNOW:
+        case ERROR_UNKNOWN:
         default:
             return 'unknown error';
             break;
@@ -5020,7 +5020,7 @@ class Feed
                 }
                 $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
             } else {
-                $error = ERROR_UNKNOW;
+                $error = ERROR_UNKNOWN;
             }
         }
 
