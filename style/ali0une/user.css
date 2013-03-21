@@ -1,0 +1,48 @@
+/*
+KriSS Feed black & white theme + OpenSans fonts
+by i M@N a.k.a. @ali0une
+*/
+@font-face{font-family:'OpenSans';src:url('./opensans-bold.eot');src:url('./opensans-bold.eot?#iefix') format('embedded-opentype'),
+url('./opensans-bold.woff') format('woff'),
+url('./opensans-bold.ttf') format('truetype'),
+url('./opensans-bold.svg#open_sansbold') format('svg');font-weight:bold;font-style:normal;}
+@font-face{font-family:'OpenSans';src:url('./opensans-regular.eot');src:url('./opensans-regular.eot?#iefix') format('embedded-opentype'),
+url('./opensans-regular.woff') format('woff'),
+url('./opensans-regular.ttf') format('truetype'),
+url('./opensans-regular.svg#open_sansregular') format('svg');font-weight:normal;font-style:normal;}
+body{margin:0;font-family:"OpenSans", sans-serif;font-size:12px;line-height:20px;color:#333;background-color:#fff}
+a{color:#000;font-weight:bold;text-decoration:none}
+a:hover, a:focus, a:active{color:#777;font-weight:bold;text-decoration:none}
+.dl-horizontal dt{float:left;width:160px;overflow:hidden;clear:left;text-align:left/*right*/;text-overflow:ellipsis;white-space:nowrap}
+.dropdown-menu>li>a:hover,.dropdown-menu>li>a:focus,.dropdown-submenu:hover>a,.dropdown-submenu:focus>a{color:#fff;text-decoration:none;background-color:#0081c2;background-image:-moz-linear-gradient(top,#000,#0077b3);background-image:-webkit-gradient(linear,0 0,0 100%,from(#000),to(#0077b3));background-image:-webkit-linear-gradient(top,#000,#0077b3);background-image:-o-linear-gradient(top,#000,#0077b3);background-image:linear-gradient(to bottom,#000,#0077b3);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0077b3',GradientType=0)}
+.dropdown-menu>.active>a,.dropdown-menu>.active>a:hover,.dropdown-menu>.active>a:focus{color:#fff;text-decoration:none;background-color:#0081c2;background-image:-moz-linear-gradient(top,#000,#0077b3);background-image:-webkit-gradient(linear,0 0,0 100%,from(#000),to(#0077b3));background-image:-webkit-linear-gradient(top,#000,#0077b3);background-image:-o-linear-gradient(top,#000,#0077b3);background-image:linear-gradient(to bottom,#000,#0077b3);background-repeat:repeat-x;outline:0;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0077b3',GradientType=0)}
+.btn-primary{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#006dcc;*background-color:#04c;background-image:-moz-linear-gradient(top,#000,#04c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#000),to(#04c));background-image:-webkit-linear-gradient(top,#000,#04c);background-image:-o-linear-gradient(top,#000,#04c);background-image:linear-gradient(to bottom,#000,#04c);background-repeat:repeat-x;border-color:#04c #04c #002a80;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0044cc',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}
+.btn-info{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#c0c0c0;*background-color:#000000;background-image:-moz-linear-gradient(top,#c0c0c0,#000000);background-image:-webkit-gradient(linear,0 0,0 100%,from(#c0c0c0),to(#000000));background-image:-webkit-linear-gradient(top,#c0c0c0,#000000);background-image:-o-linear-gradient(top,#c0c0c0,#000000);background-image:linear-gradient(to bottom,#c0c0c0,#000000);background-repeat:repeat-x;border-color:#000000 #000000 #1f6377;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de',endColorstr='#ff2f96b4',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}
+.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.btn-info.disabled,.btn-info[disabled]{color:#fff;background-color:#000000;*background-color:#2a85a0}
+.btn-link{color:#000;cursor:pointer;border-color:transparent;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}
+.btn-group.open .btn-info.dropdown-toggle{background-color:#000000}
+.nav-list>.active>a,.nav-list>.active>a:hover,.nav-list>.active>a:focus{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.2);background-color:#000}
+.nav-pills>.active>a,.nav-pills>.active>a:hover,.nav-pills>.active>a:focus{color:#fff;background-color:#000}
+.nav .dropdown-toggle .caret{margin-top:6px;border-top-color:#000;border-bottom-color:#000}
+.progress-info .bar,.progress .bar-info{background-color:#4bb1cf;background-image:-moz-linear-gradient(top,#c0c0c0,#339bb9);background-image:-webkit-gradient(linear,0 0,0 100%,from(#c0c0c0),to(#339bb9));background-image:-webkit-linear-gradient(top,#c0c0c0,#339bb9);background-image:-o-linear-gradient(top,#c0c0c0,#339bb9);background-image:linear-gradient(to bottom,#c0c0c0,#339bb9);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de',endColorstr='#ff339bb9',GradientType=0)}
+.progress-info.progress-striped .bar,.progress-striped .bar-info{background-color:#c0c0c0;background-image:-webkit-gradient(linear,0 100%,100% 0,color-stop(0.25,rgba(255,255,255,0.15)),color-stop(0.25,transparent),color-stop(0.5,transparent),color-stop(0.5,rgba(255,255,255,0.15)),color-stop(0.75,rgba(255,255,255,0.15)),color-stop(0.75,transparent),to(transparent));background-image:-webkit-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-moz-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-o-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent)}
+html, body, .full-height {
+height: auto !important/*100%*/;
+/*overflow: auto;*/
+}
+li.feed {
+border-bottom: 1px dotted #999;
+font-weight: normal;
+}
+li.feed.has-unread {
+font-weight: normal/*bold*/;
+}
+.current {
+border-color: #000 !important;
+}
+.read {
+opacity: 0.8;
+}
+.item-title {
+margin-bottom: 0px/*10px*/;
+}
