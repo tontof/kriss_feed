@@ -1304,7 +1304,7 @@
         toggleCurrentItem();
         break;
         case 85: // 'U'
-        window.location.href = (currentHash==''?'?update':'?update='+currentHash);
+        window.location.href = (currentHash==''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
         break;
         case 86: // 'V'
         if (view == 'list') {
