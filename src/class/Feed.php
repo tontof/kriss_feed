@@ -1209,9 +1209,9 @@ class Feed
             return 'Items may have been missed since last update';
             break;
         case ERROR_LAST_UPDATE:
+        case ERROR_UNKNOWN:
             return 'Problem with the last update';
             break;
-        case ERROR_UNKNOWN:
         default:
             return 'unknown error';
             break;
