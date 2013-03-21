@@ -4569,7 +4569,7 @@ class Feed
                 }
             }
             if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['link']);
+                $hashUrl = MyTool::smallHash($tmpItem['title']);
                 $newItems[$hashUrl] = array();
                 $newItems[$hashUrl]['title'] = $tmpItem['title'];
                 $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
