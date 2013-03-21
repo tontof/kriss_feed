@@ -4796,7 +4796,7 @@ class Feed
             } else {
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
-                if (count($item) == 0) {
+                if (count($items) == 0) {
                     return false;
                 }
                 foreach (array_keys($items) as $itemHash) {
@@ -4927,85 +4927,90 @@ class Feed
             $rssItems = array_slice($rssItems, 0, $this->kfc->maxItems, true);
             $rssItemsHash = array_keys($rssItems);
 
-            // Look for new items
-            foreach ($rssItemsHash as $itemHash) {
-                // itemHash is smallHash of link. To compare to item
-                // hashes into data, we need to concatenate to feedHash.
-                if (!isset($oldItems[$feedHash.$itemHash])) {
-                    if (empty($rssItems[$itemHash]['via'])) {
-                        $rssItems[$itemHash]['via']
-                            = $this->_data['feeds'][$feedHash]['htmlUrl'];
+            if (count($rssItemsHash) !== 0) {
+
+                // Look for new items
+                foreach ($rssItemsHash as $itemHash) {
+                    // itemHash is smallHash of link. To compare to item
+                    // hashes into data, we need to concatenate to feedHash.
+                    if (!isset($oldItems[$feedHash.$itemHash])) {
+                        if (empty($rssItems[$itemHash]['via'])) {
+                            $rssItems[$itemHash]['via']
+                                = $this->_data['feeds'][$feedHash]['htmlUrl'];
+                        }
+                        if (empty($rssItems[$itemHash]['author'])) {
+                            $rssItems[$itemHash]['author']
+                                = $this->_data['feeds'][$feedHash]['title'];
+                        } else {
+                            $rssItems[$itemHash]['author']
+                                = $this->_data['feeds'][$feedHash]['title'] . ' ('
+                                . $rssItems[$itemHash]['author'] . ')';
+                        }
+                        $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
+                        $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
                     }
-                    if (empty($rssItems[$itemHash]['author'])) {
-                        $rssItems[$itemHash]['author']
-                            = $this->_data['feeds'][$feedHash]['title'];
-                    } else {
-                        $rssItems[$itemHash]['author']
-                            = $this->_data['feeds'][$feedHash]['title'] . ' ('
-                            . $rssItems[$itemHash]['author'] . ')';
-                    }
-                    $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
-                    $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
                 }
-            }
-            $newItemsHash = array_keys($newItems);
-            $this->_data['feeds'][$feedHash]['items']
+                $newItemsHash = array_keys($newItems);
+                $this->_data['feeds'][$feedHash]['items']
                     = $newItems+$oldItems;
 
-            // Check if items may have been missed
-            if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
-                $error = ERROR_ITEMS_MISSED;
-            }
-
-            // Remove useless items
-            foreach ($this->getItems($feedHash) as $itemHash => $item) {
-                $itemRssHash = substr($itemHash, 6, 6);
-                // Remove from cache already read items not any more in the feed
-                if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
-                    unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
+                // Check if items may have been missed
+                if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
+                    $error = ERROR_ITEMS_MISSED;
                 }
+
+                // Remove useless items
+                foreach ($this->getItems($feedHash) as $itemHash => $item) {
+                    $itemRssHash = substr($itemHash, 6, 6);
+                    // Remove from cache already read items not any more in the feed
+                    if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
+                        unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
+                    }
                 
-                if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
-                    // Remove items not any more in the cache
-                    unset($this->_data['items'][$itemHash]);
-                    unset($this->_data['newItems'][$itemHash]);
+                    if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
+                        // Remove items not any more in the cache
+                        unset($this->_data['items'][$itemHash]);
+                        unset($this->_data['newItems'][$itemHash]);
+                    }
                 }
-            }
 
-            // Check if quota exceeded
-            $nbAll = count($this->_data['feeds'][$feedHash]['items']);
-            if ($nbAll > $this->kfc->maxItems) {
-                $this->_data['feeds'][$feedHash]['items']
-                    = array_slice(
-                        $this->_data['feeds'][$feedHash]['items'],
-                        0,
-                        $this->kfc->maxItems, true
-                        );
-                $nbAll = $this->kfc->maxItems;
-            }
+                // Check if quota exceeded
+                $nbAll = count($this->_data['feeds'][$feedHash]['items']);
+                if ($nbAll > $this->kfc->maxItems) {
+                    $this->_data['feeds'][$feedHash]['items']
+                        = array_slice(
+                            $this->_data['feeds'][$feedHash]['items'],
+                            0,
+                            $this->kfc->maxItems, true
+                            );
+                    $nbAll = $this->kfc->maxItems;
+                }
 
-            // Update items list and feed information (nbUnread, nbAll)
-            $this->_data['feeds'][$feedHash]['nbAll'] = $nbAll;
-            $nbUnread = 0;
-            foreach ($this->_data['feeds'][$feedHash]['items'] as $itemHash => $item) {
-                if (isset($this->_data['items'][$itemHash])) {
-                    if ($this->_data['items'][$itemHash][1] === 0) {
+                // Update items list and feed information (nbUnread, nbAll)
+                $this->_data['feeds'][$feedHash]['nbAll'] = $nbAll;
+                $nbUnread = 0;
+                foreach ($this->_data['feeds'][$feedHash]['items'] as $itemHash => $item) {
+                    if (isset($this->_data['items'][$itemHash])) {
+                        if ($this->_data['items'][$itemHash][1] === 0) {
+                            $nbUnread++;
+                        }
+                    } else if (isset($this->_data['newItems'][$itemHash])) {
+                        if ($this->_data['newItems'][$itemHash][1] === 0) {
+                            $nbUnread++;
+                        }
+                    } else {
+                        // TODO: Is appended at the end ??
+                        $this->_data['newItems'][$itemHash] = array(
+                            $item['time'],
+                            0                        
+                            );
                         $nbUnread++;
                     }
-                } else if (isset($this->_data['newItems'][$itemHash])) {
-                    if ($this->_data['newItems'][$itemHash][1] === 0) {
-                        $nbUnread++;
-                    }
-                } else {
-                    // TODO: Is appended at the end ??
-                    $this->_data['newItems'][$itemHash] = array(
-                        $item['time'],
-                        0                        
-                    );
-                    $nbUnread++;
                 }
+                $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
+            } else {
+                $error = ERROR_UNKNOW;
             }
-            $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
         }
 
         // update feed information
