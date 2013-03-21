@@ -1031,7 +1031,11 @@ class Feed
                 if (curl_errno($ch))
                     break;
                 $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                if ($code != 301 && $code != 302 && $code!=303)
+                // 301 Moved Permanently
+                // 302 Found
+                // 303 See Other
+                // 307 Temporary Redirect
+                if ($code != 301 && $code != 302 && $code!=303 && $code!=307)
                     break;
                 $header_start = strpos($data, "\r\n")+2;
                 $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
