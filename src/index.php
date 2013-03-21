@@ -2194,6 +2194,7 @@ dl {
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
         <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
+        <div class="clear"></div>
         <div class="item-info-end">
           from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
           <?php echo $item['time']['expanded']; ?>
@@ -3013,6 +3014,7 @@ dl {
       item['title'] +
       '</a>' +
       '</div>' +
+      '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       'from <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
@@ -4448,8 +4450,8 @@ class Feed
                 return false;
             }
             
-            $item['author'] = htmlspecialchars(strip_tags($item['author']));
-            $item['title'] = htmlspecialchars(strip_tags($item['title']));
+            $item['author'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['author']), ENT_QUOTES), ENT_NOQUOTES);
+            $item['title'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['title']), ENT_QUOTES), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             
@@ -4746,7 +4748,11 @@ class Feed
                 if (curl_errno($ch))
                     break;
                 $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                if ($code != 301 && $code != 302 && $code!=303)
+                // 301 Moved Permanently
+                // 302 Found
+                // 303 See Other
+                // 307 Temporary Redirect
+                if ($code != 301 && $code != 302 && $code!=303 && $code!=307)
                     break;
                 $header_start = strpos($data, "\r\n")+2;
                 $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
@@ -4885,9 +4891,9 @@ class Feed
             return 'Items may have been missed since last update';
             break;
         case ERROR_LAST_UPDATE:
+        case ERROR_UNKNOWN:
             return 'Problem with the last update';
             break;
-        case ERROR_UNKNOWN:
         default:
             return 'unknown error';
             break;
