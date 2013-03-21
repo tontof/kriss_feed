@@ -1979,7 +1979,7 @@ dl {
                 <?php if (!empty($referer)) { ?>
                 <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
                 <?php } ?>
-                <a class="btn" href="<?php echo $query."force"; ?>">Force update</a>
+                <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>">Force update</a>
               </div>
             </div>
           </div>
