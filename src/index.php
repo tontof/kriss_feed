@@ -4544,7 +4544,7 @@ class Feed
                         // wrong detection : e.g. media:content for content
                         if ($tag->length != 0) {
                             for ($j = $tag->length; --$j >= 0;) {
-                                $elt = &$tag->item($j);
+                                $elt = $tag->item($j);
                                 if ($tag->item($j)->tagName != $list[$i]) {
                                     $elt->parentNode->removeChild($elt);
                                 }
