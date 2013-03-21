@@ -445,7 +445,11 @@ if (isset($_GET['login'])) {
     if ($type === 'item') {
         MyTool::redirect($query.'current='.$hash);
     } else {
-        MyTool::redirect($query);
+        if ($filter === 'unread' && $read === 1) {
+            MyTool::redirect('?');
+        } else {
+            MyTool::redirect($query);
+        }
     }
 } elseif (isset($_GET['edit']) && Session::isLogged()) {
     // Edit feed, folder, all
