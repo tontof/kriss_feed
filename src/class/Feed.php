@@ -1207,6 +1207,7 @@ class Feed
         case ERROR_LAST_UPDATE:
             return 'Problem with the last update';
             break;
+        case ERROR_UNKNOW:
         default:
             return 'unknown error';
             break;

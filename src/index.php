@@ -24,6 +24,7 @@ define('ERROR_NO_ERROR', 0);
 define('ERROR_NO_XML', 1);
 define('ERROR_ITEMS_MISSED', 2);
 define('ERROR_LAST_UPDATE', 3);
+define('ERROR_UNKNOWN', 4);
 
 // fix some warning
 date_default_timezone_set('Europe/Paris'); 
@@ -4886,6 +4887,7 @@ class Feed
         case ERROR_LAST_UPDATE:
             return 'Problem with the last update';
             break;
+        case ERROR_UNKNOW:
         default:
             return 'unknown error';
             break;
