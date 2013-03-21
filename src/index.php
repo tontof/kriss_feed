@@ -11,6 +11,8 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
+define('BAN_FILE', DATA_DIR.'/ipbans.php');
+
 define('FEED_VERSION', 5);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
@@ -5816,14 +5818,26 @@ class PageBuilder
 
 class Session
 {
+    private static $_instance;
+
     public static $inactivityTimeout = 3600;
 
     public static $disableSessionProtection = false;
 
-    private static $_instance;
+    public static $banFile = 'ipbans.php';
+    public static $banAfter = 4;
+    public static $banDuration = 1800;
 
-    private function __construct()
+    private function __construct($banFile)
     {
+        // Check ban configuration
+        self::$banFile = $banFile;
+
+        if (!is_file(self::$banFile)) {
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
+        }
+        include self::$banFile;
+
         // Force cookie path (but do not change lifetime)
         $cookie=session_get_cookie_params();
         // Default cookie expiration and path.
@@ -5844,11 +5858,55 @@ class Session
         }
     }
 
-    public static function init()
+    public static function init($banFile)
     {
         if (!isset(self::$_instance)) {
-            self::$_instance = new Session();
+            self::$_instance = new Session($banFile);
         }
+    }
+
+    public static function banLoginFailed()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+
+        if (!isset($gb['FAILURES'][$ip])) {
+            $gb['FAILURES'][$ip] = 0;
+        }
+        $gb['FAILURES'][$ip]++;
+        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
+            $gb['BANS'][$ip]= time() + self::$banDuration;
+        }
+
+        $GLOBALS['IPBANS'] = $gb;
+        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+    }
+
+    function banLoginOk()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
+        $GLOBALS['IPBANS'] = $gb;
+        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+    }
+
+    function banCanLogin()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+        if (isset($gb['BANS'][$ip])) {
+            // User is banned. Check if the ban has expired:
+            if ($gb['BANS'][$ip] <= time()) {
+                // Ban expired, user can try to login again.
+                unset($gb['FAILURES'][$ip]);
+                unset($gb['BANS'][$ip]);
+                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+                return true; // Ban has expired, user can login.
+            }
+            return false; // User is banned.
+        }
+        return true; // User is not banned.
     }
 
     private static function _allIPs()
@@ -5867,7 +5925,11 @@ class Session
         $passwordTest,
         $pValues = array())
     {
+        if (!self::banCanLogin()) {
+            die('I said: NO. You are banned for the moment. Go away.');
+        }
         if ($login == $loginTest && $password==$passwordTest) {
+            self::banLoginOk();
             // Generate unique random number to sign forms (HMAC)
             $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
             $_SESSION['ip'] = Session::_allIPs();
@@ -5881,6 +5943,7 @@ class Session
 
             return true;
         }
+        self::banLoginFailed();
         Session::logout();
 
         return false;
@@ -5909,13 +5972,13 @@ class Session
         return true;
     }
 
-    public static function getToken()
+    public static function getToken($salt = '')
     {
         if (!isset($_SESSION['tokens'])) {
             $_SESSION['tokens']=array();
         }
         // We generate a random string and store it on the server side.
-        $rnd = sha1(uniqid('', true).'_'.mt_rand());
+        $rnd = sha1(uniqid('', true).'_'.mt_rand().$salt);
         $_SESSION['tokens'][$rnd]=1;
 
         return $rnd;
@@ -5936,7 +5999,7 @@ class Session
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init();
+Session::init(BAN_FILE);
 // XSRF protection with token
 if (!empty($_POST)) {
     if (!Session::isToken($_POST['token'])) {
