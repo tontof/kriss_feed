@@ -1239,6 +1239,11 @@
         case 32: // 'space'
         toggleCurrentItem();
         break;
+        case 65: // 'A'
+        if (window.confirm('Mark all current as read ?')) {
+          window.location.href = '?read=' + currentHash;
+        }
+        break;
         case 67: // 'C'
         window.location.href = '?config';
         break;
