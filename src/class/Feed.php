@@ -667,8 +667,8 @@ class Feed
                 return false;
             }
             
-            $item['author'] = htmlspecialchars(strip_tags($item['author']));
-            $item['title'] = htmlspecialchars(strip_tags($item['title']));
+            $item['author'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['author']), ENT_QUOTES), ENT_NOQUOTES);
+            $item['title'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['title']), ENT_QUOTES), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             

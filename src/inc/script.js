@@ -728,6 +728,7 @@
       item['title'] +
       '</a>' +
       '</div>' +
+      '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       'from <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
