@@ -156,6 +156,10 @@ h5.folder {
   border-color: red !important;
 }
 
+.current .item-title {
+  font-weight: bold;
+}
+
 dl {
   margin-bottom: 0px !important;
 }
