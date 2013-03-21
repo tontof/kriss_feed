@@ -1977,6 +1977,7 @@ dl {
                 <?php if (!empty($referer)) { ?>
                 <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
                 <?php } ?>
+                <a class="btn" href="<?php echo $query."force"; ?>">Force update</a>
               </div>
             </div>
           </div>
@@ -3572,7 +3573,7 @@ dl {
         toggleCurrentItem();
         break;
         case 85: // 'U'
-        window.location.href = (currentHash==''?'?update':'?update='+currentHash);
+        window.location.href = (currentHash==''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
         break;
         case 86: // 'V'
         if (view == 'list') {
@@ -4569,7 +4570,7 @@ class Feed
                 }
             }
             if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['link']);
+                $hashUrl = MyTool::smallHash($tmpItem['via']);
                 $newItems[$hashUrl] = array();
                 $newItems[$hashUrl]['title'] = $tmpItem['title'];
                 $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
