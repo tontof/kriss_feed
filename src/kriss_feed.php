@@ -11,6 +11,8 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
+define('BAN_FILE', DATA_DIR.'/ipbans.php');
+
 define('FEED_VERSION', 5);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
@@ -65,7 +67,7 @@ function __autoload($className)
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init();
+Session::init(BAN_FILE);
 // XSRF protection with token
 if (!empty($_POST)) {
     if (!Session::isToken($_POST['token'])) {
