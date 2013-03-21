@@ -1605,6 +1605,10 @@ dl {
                 <dt>'s'</dt>
                 <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
               </dl>
+              <dl class="dl-horizontal">
+                <dt>'a'</dt>
+                <dd>Mark 'a'll items, 'a'll items from current feed or 'a'll items from current folder as read</dd>
+              </dl>
               <h3>Menu navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'h'</dt>
@@ -1633,6 +1637,20 @@ dl {
               <dl class="dl-horizontal">
                 <dt>'?' or 'F1'</dt>
                 <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
+              </dl>
+            </div>
+
+            <div id="section">
+              <h2>Check configuration</h2>
+              <dl class="dl-horizontal">
+                <dt>open_ssl</dt>
+                <dd>
+                  <?php if (extension_loaded('openssl')) { ?>
+                  <span class="text-success">You should be able to load https:// rss links.</span>
+                  <?php } else { ?>
+                  <span class="text-error">You may have problems using https:// rss links.</span>
+                  <?php } ?>
+                </dd>
               </dl>
             </div>
           </div>
@@ -2578,7 +2596,7 @@ dl {
     collapseElement(this);
   }
 
-  function initCollapse (list) {
+  function initCollapse(list) {
     var i = 0;
 
     for (i = 0; i < list.length; i += 1) {
@@ -3013,7 +3031,7 @@ dl {
       markAs = 'unread';
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       item['time']['list'] +
       ' <span class="ico">' +
       '<span class="ico-circle"></span>' +
@@ -3035,7 +3053,9 @@ dl {
       '</a> ' +
       '</span>' +
       '<span class="item-description">' +
+      '<a class="item-toggle muted" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
       item['description'] +
+      '</a> ' +
       '</span>' +
       '</dd>' +
       '</dl>';
@@ -3486,6 +3506,11 @@ dl {
       switch(code) {
         case 32: // 'space'
         toggleCurrentItem();
+        break;
+        case 65: // 'A'
+        if (window.confirm('Mark all current as read ?')) {
+          window.location.href = '?read=' + currentHash;
+        }
         break;
         case 67: // 'C'
         window.location.href = '?config';
@@ -4017,7 +4042,7 @@ class Feed
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
             } else {
-                foreach ($feed['foldersHash'] as $folderHash ) {
+                foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
                     if ($folder !== false) {
                         if (!isset($feedsView['folders'][$folderHash]['title'])) {
@@ -4509,8 +4534,13 @@ class Feed
                     } else {
                         $tag = $item->getElementsByTagName($list[$i]);
                         // wrong detection : e.g. media:content for content
-                        if ($tag->length != 0 && $tag->item(0)->tagName != $list[$i]) {
-                            $tag = new DOMNodeList;
+                        if ($tag->length != 0) {
+                            for ($j = $tag->length; --$j >= 0;) {
+                                $elt = &$tag->item($j);
+                                if ($tag->item($j)->tagName != $list[$i]) {
+                                    $elt->parentNode->removeChild($elt);
+                                }
+                            }
                         }
                     }
                     if ($tag->length != 0) {
@@ -4518,8 +4548,18 @@ class Feed
                         // select first item (item(0)), (may not work)
                         // stop to search for another one
                         if ($format == 'link') {
-                            $tmpItem[$format]
-                                = $tag->item(0)->getAttribute('href');
+                            $tmpItem[$format] = '';
+                            for ($j = 0; $j < $tag->length; $j++) {
+                                if ($tag->item($j)->hasAttribute('rel') && $tag->item($j)->getAttribute('rel') == 'alternate') {
+                                    $tmpItem[$format]
+                                        = $tag->item($j)->getAttribute('href');
+                                    $j = $tag->length;
+                                }
+                            }
+                            if ($tmpItem[$format] == '') {
+                                $tmpItem[$format]
+                                    = $tag->item(0)->getAttribute('href');
+                            }
                         }
                         if (empty($tmpItem[$format])) {
                             $tmpItem[$format] = $tag->item(0)->textContent;
@@ -4668,7 +4708,7 @@ class Feed
         return $output;
     }
  
-    function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
+    public function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
         if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
             curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
@@ -4688,7 +4728,7 @@ class Feed
                     break;
                 $header_start = strpos($data, "\r\n")+2;
                 $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
-                if (!preg_match("!\r\n(?:Location|URI): *(.*?) *\r\n!", $headers, $matches))
+                if (!preg_match("!\r\n(?:Location|location|URI): *(.*?) *\r\n!", $headers, $matches))
                     break;
                 curl_setopt($ch, CURLOPT_URL, $matches[1]);
             } while (--$redirects);
@@ -4714,18 +4754,18 @@ class Feed
                 'user_agent' => 'KrISS feed agent '.$this->kfc->version.' by Tontof.net http://github.com/tontof/kriss_feed',
                 )
             );
-        $document = false;
+        $document = new DOMDocument();
 
         if (in_array('curl', get_loaded_extensions())) {
             $output = $this->loadUrl($xmlUrl, $opts);
-            $document = DOMDocument::loadXML($output);
+            $document->loadXML($output);
         } else {
             // try using libxml
             $context = stream_context_create($opts);
             libxml_set_streams_context($context);
 
             // request a file through HTTP
-            $document = DOMDocument::load($xmlUrl);
+            $document->load($xmlUrl);
         }
         // show back warning/error
         restore_error_handler();

@@ -304,7 +304,7 @@
     collapseElement(this);
   }
 
-  function initCollapse (list) {
+  function initCollapse(list) {
     var i = 0;
 
     for (i = 0; i < list.length; i += 1) {
@@ -754,7 +754,7 @@
       markAs = 'unread';
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       item['time']['list'] +
       ' <span class="ico">' +
       '<span class="ico-circle"></span>' +
@@ -776,7 +776,9 @@
       '</a> ' +
       '</span>' +
       '<span class="item-description">' +
+      '<a class="item-toggle muted" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
       item['description'] +
+      '</a> ' +
       '</span>' +
       '</dd>' +
       '</dl>';
@@ -1236,6 +1238,11 @@
       switch(code) {
         case 32: // 'space'
         toggleCurrentItem();
+        break;
+        case 65: // 'A'
+        if (window.confirm('Mark all current as read ?')) {
+          window.location.href = '?read=' + currentHash;
+        }
         break;
         case 67: // 'C'
         window.location.href = '?config';

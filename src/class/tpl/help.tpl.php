@@ -52,6 +52,10 @@
                 <dt>'s'</dt>
                 <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
               </dl>
+              <dl class="dl-horizontal">
+                <dt>'a'</dt>
+                <dd>Mark 'a'll items, 'a'll items from current feed or 'a'll items from current folder as read</dd>
+              </dl>
               <h3>Menu navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'h'</dt>
@@ -80,6 +84,20 @@
               <dl class="dl-horizontal">
                 <dt>'?' or 'F1'</dt>
                 <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
+              </dl>
+            </div>
+
+            <div id="section">
+              <h2>Check configuration</h2>
+              <dl class="dl-horizontal">
+                <dt>open_ssl</dt>
+                <dd>
+                  <?php if (extension_loaded('openssl')) { ?>
+                  <span class="text-success">You should be able to load https:// rss links.</span>
+                  <?php } else { ?>
+                  <span class="text-error">You may have problems using https:// rss links.</span>
+                  <?php } ?>
+                </dd>
               </dl>
             </div>
           </div>
