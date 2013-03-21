@@ -809,7 +809,6 @@ h5.folder {
 
 .current {
   border-color: red !important;
-  font-weight: bold;
 }
 
 dl {
