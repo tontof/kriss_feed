@@ -1464,6 +1464,10 @@ dl {
                 <dd>'M'ark current item as read if unread or unread if read</dd>
               </dl>
               <dl class="dl-horizontal">
+                <dt>'a'</dt>
+                <dd>'M'ark current item as read if and open next item</dd>
+              </dl>
+              <dl class="dl-horizontal">
                 <dt>'n' or right arrow</dt>
                 <dd>Go to 'n'ext item</dd>
               </dl>
@@ -3343,6 +3347,10 @@ dl {
         break;
         case 77: // 'M'
         markAsCurrentItem();
+        break;
+        case 65: // 'A'
+        markAsCurrentItem();
+        openCurrentItem(false);
         break;
         case 39: // right arrow
         case 78: // 'N'
