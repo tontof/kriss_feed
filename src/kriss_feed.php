@@ -602,9 +602,9 @@ $type = $kf->hashType($currentHash);
     // remove sel used with javascript
     $shaarli = str_replace('${sel}', '', $shaarli);
 
-    $url = $item['link'];
-    $via = $item['via'];
-    $title = $item['title'];
+    $url = htmlspecialchars_decode($item['link']);
+    $via = htmlspecialchars_decode($item['via']);
+    $title = htmlspecialchars_decode($item['title']);
 
     if (parse_url($url, PHP_URL_HOST) !== parse_url($via, PHP_URL_HOST)) {
         $via = 'via '.$via;
@@ -612,11 +612,11 @@ $type = $kf->hashType($currentHash);
         $via = '';
     }
 
-    $shaarli = str_replace('${url}', $url, $shaarli);
-    $shaarli = str_replace('${title}', $title, $shaarli);
-    $shaarli = str_replace('${via}', $via, $shaarli);
+    $shaarli = str_replace('${url}', urlencode($url), $shaarli);
+    $shaarli = str_replace('${title}', urlencode($title), $shaarli);
+    $shaarli = str_replace('${via}', urlencode($via), $shaarli);
 
-    MyTool::redirect($shaarli);
+    header('Location: '.$shaarli);
 } else {
     if (Session::isLogged() || $kfc->public) {
         $kf->loadData();

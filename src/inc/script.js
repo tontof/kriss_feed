@@ -317,6 +317,15 @@
   /**
    * Shaarli functions
    */
+  function htmlspecialchars_decode(string) {
+    return string
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&quot;/g, '"')
+           .replace(/&amp;/g, '&')
+           .replace(/&#0*39;/g, "'");
+  }
+
   function shaarliItem(itemHash) {
     var domainUrl, url, domainVia, via, title, sel, element;
 
@@ -342,10 +351,10 @@
 
       window.open(
         shaarli
-        .replace('${url}', encodeURIComponent(url))
-        .replace('${title}', encodeURIComponent(title))
-        .replace('${via}', encodeURIComponent(via))
-        .replace('${sel}', encodeURIComponent(sel)),
+        .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
+        .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
+        .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
+        .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
         '_blank',
         'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
       );

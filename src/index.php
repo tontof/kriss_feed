@@ -2613,6 +2613,15 @@ dl {
     }
   }
 
+  function htmlspecialchars_decode(string) {
+    return string
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&quot;/g, '"')
+           .replace(/&amp;/g, '&')
+           .replace(/&#0*39;/g, "'");
+  }
+
   function shaarliItem(itemHash) {
     var domainUrl, url, domainVia, via, title, sel, element;
 
@@ -2638,10 +2647,10 @@ dl {
 
       window.open(
         shaarli
-        .replace('${url}', encodeURIComponent(url))
-        .replace('${title}', encodeURIComponent(title))
-        .replace('${via}', encodeURIComponent(via))
-        .replace('${sel}', encodeURIComponent(sel)),
+        .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
+        .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
+        .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
+        .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
         '_blank',
         'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
       );
@@ -6532,9 +6541,9 @@ $type = $kf->hashType($currentHash);
     // remove sel used with javascript
     $shaarli = str_replace('${sel}', '', $shaarli);
 
-    $url = $item['link'];
-    $via = $item['via'];
-    $title = $item['title'];
+    $url = htmlspecialchars_decode($item['link']);
+    $via = htmlspecialchars_decode($item['via']);
+    $title = htmlspecialchars_decode($item['title']);
 
     if (parse_url($url, PHP_URL_HOST) !== parse_url($via, PHP_URL_HOST)) {
         $via = 'via '.$via;
@@ -6542,11 +6551,11 @@ $type = $kf->hashType($currentHash);
         $via = '';
     }
 
-    $shaarli = str_replace('${url}', $url, $shaarli);
-    $shaarli = str_replace('${title}', $title, $shaarli);
-    $shaarli = str_replace('${via}', $via, $shaarli);
+    $shaarli = str_replace('${url}', urlencode($url), $shaarli);
+    $shaarli = str_replace('${title}', urlencode($title), $shaarli);
+    $shaarli = str_replace('${via}', urlencode($via), $shaarli);
 
-    MyTool::redirect($shaarli);
+    header('Location: '.$shaarli);
 } else {
     if (Session::isLogged() || $kfc->public) {
         $kf->loadData();
