@@ -1,14 +1,29 @@
 /* Custom P3ter 
  * http://p3ter.fr (CC-BY-V3)
  */
+/*--- GLOBAL ---*/
+.container-fluid {
+	padding: 0;
+}
+
+.ico {
+	vertical-align: middle; 
+}
 
 /*--- SUBSCRIPTIONS LIST ----*/
 #minor-container{
-	padding-right: 20px;
+	padding: 0 20px 0 20px;
 }
 
 ul {
 	list-style-type: none !important;
+}
+
+
+h5 {
+	padding: 2px;
+	background: none repeat scroll 0 0 #EFEFEF;
+	border-radius: 4px 4px 4px 4px;
 }
 
 .feed {
@@ -20,12 +35,37 @@ ul {
 	padding-right: 20px;
 }
 
+ul.inline, ol.inline {
+	text-align: center;
+}
+
+form {
+	margin: 0;
+}
+
 li.item-list {
-	border: none !important;
+    border-top: 1px solid #DDD !important;
+}
+
+li.item-list {
+    border-bottom: none;
 }
 
 .dl-horizontal {
-	background-color: #ECECEC;
+	/*background-color: #ECECEC;*/
+}
+
+.dl-horizontal dt {
+	text-align: left;
+}
+
+.item-title {
+	margin-bottom: 0px;
+}
+
+.item-info-end {
+	float: left;
+	margin-bottom: 20px;
 }
 
 .current {
@@ -34,4 +74,12 @@ li.item-list {
 
 .well {
 	background-color: #FFF;
+	border: 0px;
+	border-radius: 0px;
+	box-shadow: 0 0 0 !important;
+	margin-bottom: 0px;
+}
+
+.item-content {
+	margin-bottom: 20px;
 }
