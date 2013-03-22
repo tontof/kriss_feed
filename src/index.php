@@ -2208,9 +2208,9 @@ dl {
         </a>
       </div>
       <div class="clear"></div>
-      <div class="item-content">
+      <div class="item-content"><article>
         <?php echo $item['content']; ?>
-      </div>
+      </article></div>
       <div class="item-info-end">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
@@ -3029,9 +3029,9 @@ dl {
       '</a>' +
       '</div>' +
       '<div class="clear"></div>' +
-      '<div class="item-content">' +
+      '<div class="item-content"><article>' +
       item['content'] +
-      '</div>' +
+      '</article></div>' +
       '<div class="item-info-end">' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
@@ -3518,10 +3518,12 @@ dl {
   }
 
   function checkKey(e) {
-      var code;
-      if (!e) e = window.event;
-      if (e.keyCode) code = e.keyCode;
-      else if (e.which) code = e.which;
+    var code;
+    if (!e) e = window.event;
+    if (e.keyCode) code = e.keyCode;
+    else if (e.which) code = e.which;
+
+    if (!e.ctrlKey && !e.altKey) {
       switch(code) {
         case 32: // 'space'
         toggleCurrentItem();
@@ -3608,6 +3610,7 @@ dl {
         default:
         break;
       }
+    }
     // e.ctrlKey e.altKey e.shiftKey
   }
 

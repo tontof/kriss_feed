@@ -64,9 +64,9 @@
         </a>
       </div>
       <div class="clear"></div>
-      <div class="item-content">
+      <div class="item-content"><article>
         <?php echo $item['content']; ?>
-      </div>
+      </article></div>
       <div class="item-info-end">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
