@@ -2194,23 +2194,23 @@ dl {
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
         <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
-        <div class="clear"></div>
-        <div class="item-info-end">
-          from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
-          <?php echo $item['time']['expanded']; ?>
-          <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
-            <span class="ico">
-              <span class="ico-feed-dot"></span>
-              <span class="ico-feed-circle-1"></span>
-              <span class="ico-feed-circle-2"></span>
-            </span>
-          </a>
-        </div>
       </div>
       <div class="clear"></div>
-      <div class="item-content">
-        <?php echo $item['content']; ?>
+      <div class="item-info-end">
+        from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
+        <?php echo $item['time']['expanded']; ?>
+        <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
+          <span class="ico">
+            <span class="ico-feed-dot"></span>
+            <span class="ico-feed-circle-1"></span>
+            <span class="ico-feed-circle-2"></span>
+          </span>
+        </a>
       </div>
+      <div class="clear"></div>
+      <div class="item-content"><article>
+        <?php echo $item['content']; ?>
+      </article></div>
       <div class="item-info-end">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
@@ -3029,9 +3029,9 @@ dl {
       '</a>' +
       '</div>' +
       '<div class="clear"></div>' +
-      '<div class="item-content">' +
+      '<div class="item-content"><article>' +
       item['content'] +
-      '</div>' +
+      '</article></div>' +
       '<div class="item-info-end">' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
@@ -3518,10 +3518,12 @@ dl {
   }
 
   function checkKey(e) {
-      var code;
-      if (!e) e = window.event;
-      if (e.keyCode) code = e.keyCode;
-      else if (e.which) code = e.which;
+    var code;
+    if (!e) e = window.event;
+    if (e.keyCode) code = e.keyCode;
+    else if (e.which) code = e.which;
+
+    if (!e.ctrlKey && !e.altKey) {
       switch(code) {
         case 32: // 'space'
         toggleCurrentItem();
@@ -3608,6 +3610,7 @@ dl {
         default:
         break;
       }
+    }
     // e.ctrlKey e.altKey e.shiftKey
   }
 
@@ -4593,7 +4596,7 @@ class Feed
                 }
             }
             if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['via']);
+                $hashUrl = MyTool::smallHash($tmpItem['link']);
                 $newItems[$hashUrl] = array();
                 $newItems[$hashUrl]['title'] = $tmpItem['title'];
                 $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])

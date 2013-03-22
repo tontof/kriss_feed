@@ -1,9 +1,13 @@
-kriss_feed (version 5)
+kriss_feed (version 6)
 ======================
 
 A simple and smart (or stupid) feed reader.
 
 An example is available on [tontof.net](http://tontof.net/feed).
+
+This is an alternative to Google Reader or other RSS feed reader:
+- It does not require SQL or database.
+- It works with PHP 5.2
 
 Installation
 ============
@@ -44,6 +48,10 @@ Features
   * new data structure
   * bootstrap css
   * fully usable without javascript
+
+* version 6
+  * security is increased
+  * more functionnalities (thanks to your feedback)
 
 Licence
 =======
