@@ -13,7 +13,7 @@ define('STYLE_FILE', 'style.css');
 
 define('BAN_FILE', DATA_DIR.'/ipbans.php');
 
-define('FEED_VERSION', 5);
+define('FEED_VERSION', 6);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
