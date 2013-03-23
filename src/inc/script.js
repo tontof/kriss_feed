@@ -333,10 +333,11 @@
     if (element.childNodes.length > 1) {
       title = getTitleItem(itemHash);
       url = getUrlItem(itemHash);
+      via = getViaItem(itemHash);
       if (redirector != 'noreferrer') {
         url = url.replace(redirector,'');
+        via = via.replace(redirector,'');
       }
-      via = getViaItem(itemHash);
       domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       if (domainUrl !== domainVia) {
