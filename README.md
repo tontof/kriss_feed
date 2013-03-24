@@ -5,7 +5,7 @@ A simple and smart (or stupid) feed reader.
 
 An example is available on [tontof.net](http://tontof.net/feed).
 
-This is an alternative to Google Reader or other RSS feed reader:
+This is an alternative to Google Reader or other RSS feed readers:
 - It does not require SQL or database.
 - It works with PHP 5.2
 
