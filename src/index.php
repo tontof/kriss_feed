@@ -808,7 +808,7 @@ h5.folder {
   clear: both;
 }
 
-.current {
+.current, .current-feed, .current-folder {
   border-color: red !important;
 }
 
@@ -1572,74 +1572,74 @@ dl {
               <h3>Items navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'space' or 't'</dt>
-                <dd>When viewing items as list, let you open or close current item ('t'oggle current item)</dd>
+                <dd>When viewing items as list, let you open or close current item (<strong>t</strong>oggle current item)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'m'</dt>
-                <dd>'M'ark current item as read if unread or unread if read</dd>
+                <dd><strong>M</strong>ark current item as read if unread or unread if read</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'n' or right arrow</dt>
-                <dd>Go to 'n'ext item</dd>
+                <dd>Go to <strong>n</strong>ext item</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'p' or left arrow</dt>
-                <dd>Go to 'p'revious item</dd>
+                <dd>Go to <strong>p</strong>revious item</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'shift' + 'n'</dt>
-                <dd>Go to 'n'ext page</dd>
+                <dd>Go to <strong>n</strong>ext page</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'shift' + 'p'</dt>
-                <dd>Go to 'p'revious page</dd>
+                <dd>Go to <strong>p</strong>revious page</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'j'</dt>
-                <dd>Go to 'n'ext item and open it (in list view)</dd>
+                <dd>Go to <strong>n</strong>ext item and open it (in list view)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'k'</dt>
-                <dd>Go to 'p'revious item and open it (in list view)</dd>
+                <dd>Go to <strong>p</strong>revious item and open it (in list view)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'o'</dt>
-                <dd>'O'pen current item in new tab</dd>
+                <dd><strong>O</strong>pen current item in new tab</dd>
                 <dt>'shift' + 'o'</dt>
-                <dd>'O'pen current item in current window</dd>
+                <dd><strong>O</strong>pen current item in current window</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
-                <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
+                <dd><strong>S</strong>hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'a'</dt>
-                <dd>Mark 'a'll items, 'a'll items from current feed or 'a'll items from current folder as read</dd>
+                <dd>Mark <strong>a</strong>ll items, <strong>a</strong>ll items from current feed or <strong>a</strong>ll items from current folder as read</dd>
               </dl>
               <h3>Menu navigation</h3>
               <dl class="dl-horizontal">
                 <dt>'h'</dt>
-                <dd>Go to 'H'ome page</dd>
+                <dd>Go to <strong>H</strong>ome page</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'v'</dt>
-                <dd>Change 'v'iew as list or expanded</dd>
+                <dd>Change <strong>v</strong>iew as list or expanded</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'f'</dt>
-                <dd>Show or hide list of 'f'eeds/'f'olders</dd>
+                <dd>Show or hide list of <strong>f</strong>eeds/<strong>f</strong>olders</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'e'</dt>
-                <dd>'E'dit current selection (all, folder or feed)</dd>
+                <dd><strong>E</strong>dit current selection (all, folder or feed)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'u'</dt>
-                <dd>'U'pdate current selection (all, folder or feed)</dd>
+                <dd><strong>U</strong>pdate current selection (all, folder or feed)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'r'</dt>
-                <dd>'R'eload the page as the 'F5' key in most of browsers</dd>
+                <dd><strong>R</strong>eload the page as the 'F5' key in most of browsers</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'?' or 'F1'</dt>
@@ -2077,7 +2077,7 @@ dl {
         }
         ?>
         
-        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
+        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) echo ' autohide-feed'; ?>">
           <?php if ($addFavicon) { ?>
           <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
           <?php } ?>
@@ -2091,7 +2091,7 @@ dl {
         $isOpen = $folder['isOpen'];
         ?>
         
-        <li id="folder-<?php echo $hashFolder; ?>" class="folder<?php if ($autohide and $folder['nbUnread']== 0) { echo ' autohide-folder';} ?>">
+        <li id="folder-<?php echo $hashFolder; ?>" class="folder<?php if ($currentHash == $feedHash) echo ' current-folder'; ?><?php if ($autohide and $folder['nbUnread']== 0) { echo ' autohide-folder';} ?>">
           <h5>
             <a class="mark-as" href="<?php echo $query.'read='.$hashFolder; ?>"><span class="label"><?php echo $folder['nbUnread']; ?></span></a>
             <a class="folder-toggle" href="<?php echo $query.'toggleFolder='.$hashFolder; ?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $hashFolder; ?>">
@@ -2115,7 +2115,7 @@ dl {
             }
             ?>
 
-            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
+            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
               
               <?php if ($addFavicon) { ?>
               <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>

@@ -152,7 +152,7 @@ h5.folder {
   clear: both;
 }
 
-.current {
+.current, .current-feed, .current-folder {
   border-color: red !important;
 }
 
