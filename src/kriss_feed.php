@@ -99,8 +99,8 @@ if (!empty($_POST)) {
     if (!Session::isToken($_POST['token'])) {
         die('Wrong token.');
     }
+    unset($_SESSION['tokens']);
 }
-unset($_SESSION['tokens']);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
