@@ -691,8 +691,8 @@ class Feed
                 return false;
             }
             
-            $item['author'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['author']), ENT_QUOTES), ENT_NOQUOTES);
-            $item['title'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['title']), ENT_QUOTES), ENT_NOQUOTES);
+            $item['author'] = htmlspecialchars(html_entity_decode(strip_tags($item['author']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
+            $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
