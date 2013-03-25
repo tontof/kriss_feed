@@ -6191,6 +6191,7 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
 
@@ -6352,7 +6353,6 @@ if (isset($_GET['login'])) {
     if (isset($_GET['cron']) || isset($argv) && count($argv) >= 3) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
-        $pb->assign('kf', $kf);
         $pb->assign('feedsHash', $feedsHash);
         $pb->assign('forceUpdate', $forceUpdate);
         $pb->assign('pagetitle', 'Update');
@@ -6783,7 +6783,6 @@ $type = $kf->hashType($currentHash);
         if ($listFeeds == 'show') {
             $pb->assign('feedsView', $kf->getFeedsView());
         }
-        $pb->assign('kf',  $kf);
         $pb->assign('pagetitle', strip_tags($kfc->title));
 
         $pb->renderPage('index');
