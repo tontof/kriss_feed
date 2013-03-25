@@ -101,6 +101,7 @@
              break;
              case 'config':
              ?>
+          <li><a href="?password" class="admin" title="Change your password">Change password</a></li>
           <li><a href="?import" class="admin" title="Import OPML file">Import</a></li>
           <li><a href="?export" class="admin" title="Export OPML file">Export</a></li>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>

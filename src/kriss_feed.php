@@ -176,6 +176,18 @@ if (isset($_GET['login'])) {
     //Logout
     Session::logout();
     MyTool::redirect();
+} elseif (isset($_GET['password']) && Session::isLogged()) {
+    if (isset($_POST['save'])) {
+        if ($kfc->hash === sha1($_POST['oldpassword'].$kfc->login.$kfc->salt)) {
+            $kfc->setHash($_POST['newpassword']);
+            $kfc->write();
+            MyTool::redirect();
+        }
+    } elseif (isset($_POST['cancel'])) {
+        MyTool::redirect();
+    }
+    $pb->assign('pagetitle', 'Change your password');
+    $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
     $kf->loadData();
     $needSave = false;

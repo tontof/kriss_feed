@@ -54,6 +54,18 @@ class FeedPage
     }
 
     /**
+     * changePasswordTpl
+     * 
+     */
+    public static function changePasswordTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/change_password.tpl.php"); ?>
+<?php
+    }
+
+    /**
      * navTpl
      * 
      */
@@ -90,7 +102,7 @@ class FeedPage
     }
 
     /**
-     * configTpl
+     * helpTpl
      * 
      */
     public static function helpTpl()
@@ -102,7 +114,7 @@ class FeedPage
     }
 
     /**
-     * addTpl : Add a new feed
+     * addFeedTpl : Add a new feed
      * 
      */
     public static function addFeedTpl()
