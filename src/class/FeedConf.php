@@ -96,9 +96,9 @@ class FeedConf
     public $addFavicon = false;
 
     /**
-     * Public/private feed reader
+     * Visibility public/protected/private feed reader
      */
-    public $public = false;
+    public $visibility = 'private';
 
     /**
      * Kriss_feed version
@@ -191,7 +191,7 @@ class FeedConf
             }
         }
 
-        if (Session::isLogged()) {
+        if ($this->isLogged()) {
             unset($_SESSION['view']);
             unset($_SESSION['listFeeds']);
             unset($_SESSION['filter']);
@@ -217,12 +217,10 @@ class FeedConf
             $this->order = $order;
             $this->byPage = $byPage;
 
-            if (Session::isLogged()) {
-                $this->write();
-            }
+            $this->write();
         }
 
-        if (!Session::isLogged()) {
+        if (!$this->isLogged()) {
             $_SESSION['view'] = $view;
             $_SESSION['listFeeds'] = $listFeeds;
             $_SESSION['filter'] = $filter;
@@ -458,13 +456,13 @@ class FeedConf
     }
 
     /**
-     * Public setter
+     * Visibility setter
      *
-     * @param string $public New public
+     * @param string $visibility New visibility
      */
-    public function setPublic($public)
+    public function setVisibility($visibility)
     {
-        $this->public = $public;
+        $this->visibility = $visibility;
     }
 
     /**
@@ -749,6 +747,11 @@ class FeedConf
         $this->pagingMarkAs = $pagingMarkAs;
     }
 
+    public function isLogged()
+    {
+        return Session::isLogged() || $this->visibility === 'public';
+    }
+
     /**
      * Write configuration file
      *
@@ -756,28 +759,32 @@ class FeedConf
      */
     public function write()
     {
-        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'public', 'filter', 'view','locale',
-                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                      'pagingMarkAs', 'disableSessionProtection');
-        $out = '<?php';
-        $out .= "\n";
+        if ($this->isLogged()) {
+            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                          'pagingMarkAs', 'disableSessionProtection');
+            $out = '<?php';
+            $out .= "\n";
 
-        foreach ($data as $key) {
-            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-            $out .= '$this->'.$key.' = "'.$value."\";\n";
+            foreach ($data as $key) {
+                $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
+                $out .= '$this->'.$key.' = "'.$value."\";\n";
+            }
+
+            $out .= '?>';
+
+            if (!@file_put_contents($this->_file, $out)) {
+                return false;
+            }
+
+            return true;
         }
 
-        $out .= '?>';
-
-        if (!@file_put_contents($this->_file, $out)) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 }

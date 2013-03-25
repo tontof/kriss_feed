@@ -22,16 +22,29 @@
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Public/private reader</label>
+                    <label class="control-label">Public/protected/private reader</label>
                     <div class="controls">
                       <label for="publicReader">
-                        <input type="radio" id="publicReader" name="public" value="1" <?php echo ($kfcpublic? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="publicReader" name="visibility" value="public" <?php echo ($kfcvisibility==='public'? 'checked="checked"' : ''); ?>/>
                         Public kriss feed
                       </label>
+                       <span class="help-block">
+                         No restriction. Anyone can modify configuration, mark as read items, update feeds...
+                       </span>
+                      <label for="protectedReader">
+                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo (!$kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
+                        Protected kriss feed
+                      </label>
+                      <span class="help-block">
+                        Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...
+                      </span>
                       <label for="privateReader">
-                        <input type="radio" id="privateReader" name="public" value="0" <?php echo (!$kfcpublic? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="privateReader" name="visibility" value="private" <?php echo (!$kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
                         Private kriss feed
                       </label>
+                      <span class="help-block">
+                        Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds...
+                      </span>
                     </div>
                   </div>
 

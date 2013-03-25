@@ -151,7 +151,7 @@ if (isset($_GET['login'])) {
     //Logout
     Session::logout();
     MyTool::redirect();
-} elseif (isset($_GET['password']) && Session::isLogged()) {
+} elseif (isset($_GET['password']) && $kfc->isLogged()) {
     if (isset($_POST['save'])) {
         if ($kfc->hash === sha1($_POST['oldpassword'].$kfc->login.$kfc->salt)) {
             $kfc->setHash($_POST['newpassword']);
@@ -207,7 +207,7 @@ if (isset($_GET['login'])) {
         }
     }
     if (isset($_GET['update'])) {
-        if (Session::isLogged()) {
+        if ($kfc->isLogged()) {
             if (empty($_GET['update'])) {
                 $result['update']['feeds'] = array();
                 $feedsHash = $kf->orderFeedsForUpdate(array_keys($kf->getFeeds()));
@@ -238,7 +238,7 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'Help for KrISS feed');
     $pb->renderPage('help');
 } elseif ((isset($_GET['update'])
-          && (Session::isLogged()
+          && ($kfc->isLogged()
               || (isset($_GET['cron'])
                   && $_GET['cron'] === sha1($kfc->salt.$kfc->hash))))
           || (isset($argv)
@@ -282,7 +282,7 @@ if (isset($_GET['login'])) {
         $pb->assign('pagetitle', 'Update');
         $pb->renderPage('update');
     }
-} elseif (isset($_GET['config']) && Session::isLogged()) {
+} elseif (isset($_GET['config']) && $kfc->isLogged()) {
     // Config
     if (isset($_POST['save'])) {
         if (isset($_POST['disableSessionProtection'])) {
@@ -306,7 +306,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfclocale', htmlspecialchars($kfc->locale));
         $pb->assign('kfcmaxitems', htmlspecialchars($kfc->maxItems));
         $pb->assign('kfcmaxupdate', htmlspecialchars($kfc->maxUpdate));
-        $pb->assign('kfcpublic', (int) $kfc->public);
+        $pb->assign('kfcvisibility', (int) $kfc->visibility);
         $pb->assign('kfccron', sha1($kfc->salt.$kfc->hash));
         $pb->assign('kfcautoreaditem', (int) $kfc->autoreadItem);
         $pb->assign('kfcautoreadpage', (int) $kfc->autoreadPage);
@@ -320,7 +320,7 @@ if (isset($_GET['login'])) {
 
         $pb->renderPage('config');
     }
-} elseif (isset($_GET['import']) && Session::isLogged()) {
+} elseif (isset($_GET['import']) && $kfc->isLogged()) {
     // Import
     if (isset($_POST['import'])) {
         // If file is too big, some form field may be missing.
@@ -351,11 +351,11 @@ if (isset($_GET['login'])) {
         $pb->assign('pagetitle', 'Import');
         $pb->renderPage('import');
     }
-} elseif (isset($_GET['export']) && Session::isLogged()) {
+} elseif (isset($_GET['export']) && $kfc->isLogged()) {
     // Export
     $kf->loadData();
     Opml::exportOpml($kf->getFeeds(), $kf->getFolders());
-} elseif (isset($_GET['add']) && Session::isLogged()) {
+} elseif (isset($_GET['add']) && $kfc->isLogged()) {
     // Add feed
     $kf->loadData();
 
@@ -401,7 +401,7 @@ if (isset($_GET['login'])) {
     $pb->assign('folders', $kf->getFolders());
     
     $pb->renderPage('addFeed');
-} elseif (isset($_GET['toggleFolder']) && Session::isLogged()) {
+} elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
     if (isset($_GET['toggleFolder'])) {
         $kf->toggleFolder($_GET['toggleFolder']);
@@ -410,7 +410,7 @@ if (isset($_GET['login'])) {
     MyTool::redirect();
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))
-          && Session::isLogged()) {
+          && $kfc->isLogged()) {
     // mark all as read : item, feed, folder, all
     $kf->loadData();
 
@@ -439,7 +439,7 @@ if (isset($_GET['login'])) {
             MyTool::redirect($query);
         }
     }
-} elseif (isset($_GET['edit']) && Session::isLogged()) {
+} elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
     $pb->assign('page', 'edit');
@@ -606,7 +606,7 @@ $type = $kf->hashType($currentHash);
 
     header('Location: '.$shaarli);
 } else {
-    if (Session::isLogged() || $kfc->public) {
+    if ($kfc->isLogged() || $kfc->visibility === 'protected') {
         $kf->loadData();
         if ($kf->updateItems()) {
             $kf->writeData();

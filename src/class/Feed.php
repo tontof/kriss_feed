@@ -111,7 +111,7 @@ class Feed
      */
     public function writeData()
     {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
             $write = @file_put_contents(
                 $this->dataFile,
                 PHPPREFIX
@@ -215,7 +215,7 @@ class Feed
         $url = 'http://getfavicon.appspot.com/'.$htmlUrl.'?defaulticon=bluepng';
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
-        if (Session::isLogged()) {
+        if ($this->kfc->isLogged()) {
             return MyTool::grabToLocal($url, $file);
         }
 
@@ -352,7 +352,7 @@ class Feed
      */
     public function writeFeed($feedHash, $feed)
     {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
             if (!is_dir($this->cacheDir)) {
                 if (!@mkdir($this->cacheDir, 0755)) {
                     die("Can not create cache dir: ".$this->cacheDir);
