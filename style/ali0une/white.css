@@ -48,7 +48,7 @@ font-weight: normal;
 li.feed.has-unread {
 font-weight: normal/*bold*/;
 }
-.current {
+.current, .current-feed, .current-folder {
 border-color: #000 !important;
 }
 .read {
