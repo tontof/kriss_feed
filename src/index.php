@@ -54,32 +54,6 @@ if (!is_dir(DATA_DIR)) {
     }
 }
 
-/* function grabFavicon */
-function grabFavicon($url, $feedHash){
-    $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';
-    $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
-
-    if(!file_exists($file) && in_array('curl', get_loaded_extensions()) && Session::isLogged()){
-        $ch = curl_init ($url);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
-        $raw = curl_exec($ch);
-        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
-            $fp = fopen($file, 'x');
-            fwrite($fp, $raw);
-            fclose($fp);
-        }
-        curl_close ($ch);
-    }
-
-    if (file_exists($file)) {
-        return $file;
-    } else {
-        return $url;
-    }
-}
-
 
 class FeedConf
 {
@@ -119,7 +93,7 @@ class FeedConf
 
     public $addFavicon = false;
 
-    public $public = false;
+    public $visibility = 'private';
 
     public $version;
 
@@ -179,7 +153,7 @@ class FeedConf
             }
         }
 
-        if (Session::isLogged()) {
+        if ($this->isLogged()) {
             unset($_SESSION['view']);
             unset($_SESSION['listFeeds']);
             unset($_SESSION['filter']);
@@ -205,12 +179,10 @@ class FeedConf
             $this->order = $order;
             $this->byPage = $byPage;
 
-            if (Session::isLogged()) {
-                $this->write();
-            }
+            $this->write();
         }
 
-        if (!Session::isLogged()) {
+        if (!$this->isLogged()) {
             $_SESSION['view'] = $view;
             $_SESSION['listFeeds'] = $listFeeds;
             $_SESSION['filter'] = $filter;
@@ -392,9 +364,9 @@ class FeedConf
         $this->login = $login;
     }
 
-    public function setPublic($public)
+    public function setVisibility($visibility)
     {
-        $this->public = $public;
+        $this->visibility = $visibility;
     }
 
     public function setHash($pass)
@@ -604,31 +576,40 @@ class FeedConf
         $this->pagingMarkAs = $pagingMarkAs;
     }
 
+    public function isLogged()
+    {
+        return Session::isLogged() || $this->visibility === 'public';
+    }
+
     public function write()
     {
-        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'public', 'filter', 'view','locale',
-                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                      'pagingMarkAs', 'disableSessionProtection');
-        $out = '<?php';
-        $out .= "\n";
+        if ($this->isLogged()) {
+            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                          'pagingMarkAs', 'disableSessionProtection');
+            $out = '<?php';
+            $out .= "\n";
 
-        foreach ($data as $key) {
-            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-            $out .= '$this->'.$key.' = "'.$value."\";\n";
+            foreach ($data as $key) {
+                $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
+                $out .= '$this->'.$key.' = "'.$value."\";\n";
+            }
+
+            $out .= '?>';
+
+            if (!@file_put_contents($this->_file, $out)) {
+                return false;
+            }
+
+            return true;
         }
 
-        $out .= '?>';
-
-        if (!@file_put_contents($this->_file, $out)) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 }
 
@@ -791,6 +772,10 @@ li.folder {
 
 li.item-list {
   border-bottom: 1px dotted #999;
+}
+
+.item-favicon {
+  float: left;
 }
 
 h5.folder {
@@ -1078,6 +1063,58 @@ dl {
 <?php
     }
 
+    public static function changePasswordTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head><?php FeedPage::includesTpl(); ?></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span6 offset3">
+          <div id="config">
+            <?php FeedPage::navTpl(); ?>
+            <div id="section">
+              <form class="form-horizontal" method="post" action="">
+                <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+                <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
+                <fieldset>
+                  <legend>Change your password</legend>
+
+                  <div class="control-group">
+                    <label class="control-label" for="oldpassword">Old password</label>
+                    <div class="controls">
+                      <input type="password" id="oldpassword" name="oldpassword">
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label" for="newpassword">New password</label>
+                    <div class="controls">
+                      <input type="password" id="newpassword" name="newpassword">
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <div class="controls">
+                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
+                      <input class="btn" type="submit" name="save" value="Save new password" />
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<?php
+    }
+
     public static function navTpl()
     {
         extract(FeedPage::$var);
@@ -1175,7 +1212,7 @@ dl {
           <?php break; ?>
           <?php } ?>
           <?php } ?>
-          <?php if (Session::isLogged()) { ?>
+          <?php if ($kf->kfc->isLogged()) { ?>
           <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
           <?php } else { ?>
@@ -1185,6 +1222,7 @@ dl {
              break;
              case 'config':
              ?>
+          <li><a href="?password" class="admin" title="Change your password">Change password</a></li>
           <li><a href="?import" class="admin" title="Import OPML file">Import</a></li>
           <li><a href="?export" class="admin" title="Export OPML file">Export</a></li>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
@@ -1192,7 +1230,7 @@ dl {
              break;
              default:
              ?>
-          <?php if (Session::isLogged()) { ?>
+          <?php if ($kf->kfc->isLogged()) { ?>
           <li><a href="?config" class="admin text-error" title="Configuration">Configuration</a></li>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
           <?php } else { ?>
@@ -1249,16 +1287,29 @@ dl {
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Public/private reader</label>
+                    <label class="control-label">Public/protected/private reader</label>
                     <div class="controls">
                       <label for="publicReader">
-                        <input type="radio" id="publicReader" name="public" value="1" <?php echo ($kfcpublic? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="publicReader" name="visibility" value="public" <?php echo ($kfcvisibility==='public'? 'checked="checked"' : ''); ?>/>
                         Public kriss feed
                       </label>
+                       <span class="help-block">
+                         No restriction. Anyone can modify configuration, mark as read items, update feeds...
+                       </span>
+                      <label for="protectedReader">
+                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo (!$kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
+                        Protected kriss feed
+                      </label>
+                      <span class="help-block">
+                        Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...
+                      </span>
                       <label for="privateReader">
-                        <input type="radio" id="privateReader" name="public" value="0" <?php echo (!$kfcpublic? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="privateReader" name="visibility" value="private" <?php echo (!$kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
                         Private kriss feed
                       </label>
+                      <span class="help-block">
+                        Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds...
+                      </span>
                     </div>
                   </div>
 
@@ -1379,11 +1430,11 @@ dl {
                     <div class="controls">
                       <label for="donotaddfavicon">
                         <input type="radio" id="donotaddfavicon" name="addFavicon" value="0" <?php echo (!$kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
-                        Do not add favicon next to feed on list of feeds
+                        Do not add favicon next to feed on list of feeds/items
                       </label>
                       <label for="addfavicon">
                         <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php echo ($kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
-                        Add favicon next to feed on list of feeds<br><strong>Warning: It depends on http://getfavicon.appspot.com/ <?php if (in_array('curl', get_loaded_extensions())) { echo 'but it will cache favicon on your server'; } ?></strong>
+                        Add favicon next to feed on list of feeds/items<br><strong>Warning: It depends on http://getfavicon.appspot.com/ <?php if (in_array('curl', get_loaded_extensions())) { echo 'but it will cache favicon on your server'; } ?></strong>
                       </label>
                     </div>
                   </div>
@@ -2079,7 +2130,9 @@ dl {
         
         <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) echo ' autohide-feed'; ?>">
           <?php if ($addFavicon) { ?>
-          <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+          <span class="feed-favicon">
+            <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+          </span>
           <?php } ?>
 <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
@@ -2118,7 +2171,9 @@ dl {
             <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
               
               <?php if ($addFavicon) { ?>
-              <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+              <span class="feed-favicon">
+                <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+              </span>
               <?php } ?>
               <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>
@@ -2160,6 +2215,11 @@ dl {
     </a>
     <dl class="dl-horizontal item">
       <dt class="item-feed">
+        <?php if ($addFavicon) { ?>
+        <span class="item-favicon">
+          <img src="<?php echo $item['favicon']; ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+        </span>
+        <?php } ?>
         <span class="item-author">
           <?php echo $item['author']; ?>
         </span>
@@ -2292,7 +2352,7 @@ dl {
     <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>">
+    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>">
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -2345,6 +2405,7 @@ dl {
       currentNbItems = 0, // data-nb-items
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
+      addFavicon = false, // data-add-favicon
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -3061,6 +3122,10 @@ dl {
       '</a>' +
       '<dl class="dl-horizontal item">' +
       '<dt class="item-feed">' +
+      (addFavicon?
+      '<span class="item-favicon">' +
+      '<img src="' + item['favicon'] + '" height="16px" width="16px" title="favicon" alt="favicon"/>' +
+      '</span>':'' ) +
       '<span class="item-author">' +
       item['author'] +
       '</span>' +
@@ -3877,6 +3942,10 @@ dl {
     if (elementIndex.hasAttribute('data-nb-items')) {
       currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
     }
+    if (elementIndex.hasAttribute('data-add-favicon')) {
+      addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
+      addFavicon = (addFavicon === 1)?true:false;
+    }
 
     status = document.getElementById('status').innerHTML;
   }
@@ -4026,7 +4095,7 @@ class Feed
 
     public function writeData()
     {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
             $write = @file_put_contents(
                 $this->dataFile,
                 PHPPREFIX
@@ -4094,6 +4163,19 @@ class Feed
         }
 
         return false;
+    }
+
+    public function getFaviconFeed($feedHash)
+    {
+        $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
+        $url = 'http://getfavicon.appspot.com/'.$htmlUrl.'?defaulticon=bluepng';
+        $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
+
+        if ($this->kfc->isLogged()) {
+            return MyTool::grabToLocal($url, $file);
+        }
+
+        return $url;
     }
 
     public function getFeedHtmlUrl($feedHash)
@@ -4190,7 +4272,7 @@ class Feed
 
     public function writeFeed($feedHash, $feed)
     {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
             if (!is_dir($this->cacheDir)) {
                 if (!@mkdir($this->cacheDir, 0755)) {
                     die("Can not create cache dir: ".$this->cacheDir);
@@ -4458,7 +4540,8 @@ class Feed
             $item['title'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['title']), ENT_QUOTES), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
-            
+            $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+
             return $item;
         }
 
@@ -4885,25 +4968,6 @@ class Feed
         return false;
     }
 
-    public static function getError($error)
-    {
-        switch ($error) {
-        case ERROR_NO_XML:
-            return 'Feed is not in XML format';
-            break;
-        case ERROR_ITEMS_MISSED:
-            return 'Items may have been missed since last update';
-            break;
-        case ERROR_LAST_UPDATE:
-        case ERROR_UNKNOWN:
-            return 'Problem with the last update';
-            break;
-        default:
-            return 'unknown error';
-            break;
-        }
-    }
-
     public function updateChannel($feedHash)
     {
         $error = '';
@@ -4949,7 +5013,6 @@ class Feed
             $rssItemsHash = array_keys($rssItems);
 
             if (count($rssItemsHash) !== 0) {
-
                 // Look for new items
                 foreach ($rssItemsHash as $itemHash) {
                     // itemHash is smallHash of link. To compare to item
@@ -5020,7 +5083,7 @@ class Feed
                             $nbUnread++;
                         }
                     } else {
-                        // TODO: Is appended at the end ??
+                        // TODO: Check if itemHash is appended at the end ??
                         $this->_data['newItems'][$itemHash] = array(
                             $item['time'],
                             0                        
@@ -5256,6 +5319,25 @@ class Feed
     public static function sortByTitle($a, $b) {
         return strnatcasecmp($a['title'], $b['title']);
     }
+
+    public static function getError($error)
+    {
+        switch ($error) {
+        case ERROR_NO_XML:
+            return 'Feed is not in XML format';
+            break;
+        case ERROR_ITEMS_MISSED:
+            return 'Items may have been missed since last update';
+            break;
+        case ERROR_LAST_UPDATE:
+        case ERROR_UNKNOWN:
+            return 'Problem with the last update';
+            break;
+        default:
+            return 'unknown error';
+            break;
+        }
+    }
 }
 
 
@@ -5466,6 +5548,30 @@ class MyTool
         echo json_encode($data);
         exit();
     }
+
+    public static function grabToLocal($url, $file, $force = false)
+    {
+        if(!file_exists($file) || $force){
+            $ch = curl_init ($url);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            $raw = curl_exec($ch);
+            if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
+                $fp = fopen($file, 'x');
+                fwrite($fp, $raw);
+                fclose($fp);
+            }
+            curl_close ($ch);
+        }
+
+        if (file_exists($file)) {
+            return $file;
+        } else {
+            return $url;
+        }
+    }
+
     public static function redirect($rurl = '')
     {
         if ($rurl === '') {
@@ -6052,10 +6158,11 @@ if (!empty($_POST)) {
     unset($_SESSION['tokens']);
 }
 
-$pb = new PageBuilder('FeedPage');
-$kfp = new FeedPage(STYLE_FILE);
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
+
+$pb = new PageBuilder('FeedPage');
+$kfp = new FeedPage(STYLE_FILE);
 
 // List or Expanded ?
 $view = $kfc->view;
@@ -6126,6 +6233,18 @@ if (isset($_GET['login'])) {
     //Logout
     Session::logout();
     MyTool::redirect();
+} elseif (isset($_GET['password']) && $kfc->isLogged()) {
+    if (isset($_POST['save'])) {
+        if ($kfc->hash === sha1($_POST['oldpassword'].$kfc->login.$kfc->salt)) {
+            $kfc->setHash($_POST['newpassword']);
+            $kfc->write();
+            MyTool::redirect();
+        }
+    } elseif (isset($_POST['cancel'])) {
+        MyTool::redirect();
+    }
+    $pb->assign('pagetitle', 'Change your password');
+    $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
     $kf->loadData();
     $needSave = false;
@@ -6170,7 +6289,7 @@ if (isset($_GET['login'])) {
         }
     }
     if (isset($_GET['update'])) {
-        if (Session::isLogged()) {
+        if ($kfc->isLogged()) {
             if (empty($_GET['update'])) {
                 $result['update']['feeds'] = array();
                 $feedsHash = $kf->orderFeedsForUpdate(array_keys($kf->getFeeds()));
@@ -6201,7 +6320,7 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'Help for KrISS feed');
     $pb->renderPage('help');
 } elseif ((isset($_GET['update'])
-          && (Session::isLogged()
+          && ($kfc->isLogged()
               || (isset($_GET['cron'])
                   && $_GET['cron'] === sha1($kfc->salt.$kfc->hash))))
           || (isset($argv)
@@ -6245,7 +6364,7 @@ if (isset($_GET['login'])) {
         $pb->assign('pagetitle', 'Update');
         $pb->renderPage('update');
     }
-} elseif (isset($_GET['config']) && Session::isLogged()) {
+} elseif (isset($_GET['config']) && $kfc->isLogged()) {
     // Config
     if (isset($_POST['save'])) {
         if (isset($_POST['disableSessionProtection'])) {
@@ -6269,7 +6388,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfclocale', htmlspecialchars($kfc->locale));
         $pb->assign('kfcmaxitems', htmlspecialchars($kfc->maxItems));
         $pb->assign('kfcmaxupdate', htmlspecialchars($kfc->maxUpdate));
-        $pb->assign('kfcpublic', (int) $kfc->public);
+        $pb->assign('kfcvisibility', (int) $kfc->visibility);
         $pb->assign('kfccron', sha1($kfc->salt.$kfc->hash));
         $pb->assign('kfcautoreaditem', (int) $kfc->autoreadItem);
         $pb->assign('kfcautoreadpage', (int) $kfc->autoreadPage);
@@ -6283,7 +6402,7 @@ if (isset($_GET['login'])) {
 
         $pb->renderPage('config');
     }
-} elseif (isset($_GET['import']) && Session::isLogged()) {
+} elseif (isset($_GET['import']) && $kfc->isLogged()) {
     // Import
     if (isset($_POST['import'])) {
         // If file is too big, some form field may be missing.
@@ -6314,11 +6433,11 @@ if (isset($_GET['login'])) {
         $pb->assign('pagetitle', 'Import');
         $pb->renderPage('import');
     }
-} elseif (isset($_GET['export']) && Session::isLogged()) {
+} elseif (isset($_GET['export']) && $kfc->isLogged()) {
     // Export
     $kf->loadData();
     Opml::exportOpml($kf->getFeeds(), $kf->getFolders());
-} elseif (isset($_GET['add']) && Session::isLogged()) {
+} elseif (isset($_GET['add']) && $kfc->isLogged()) {
     // Add feed
     $kf->loadData();
 
@@ -6364,7 +6483,7 @@ if (isset($_GET['login'])) {
     $pb->assign('folders', $kf->getFolders());
     
     $pb->renderPage('addFeed');
-} elseif (isset($_GET['toggleFolder']) && Session::isLogged()) {
+} elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
     if (isset($_GET['toggleFolder'])) {
         $kf->toggleFolder($_GET['toggleFolder']);
@@ -6373,7 +6492,7 @@ if (isset($_GET['login'])) {
     MyTool::redirect();
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))
-          && Session::isLogged()) {
+          && $kfc->isLogged()) {
     // mark all as read : item, feed, folder, all
     $kf->loadData();
 
@@ -6402,7 +6521,7 @@ if (isset($_GET['login'])) {
             MyTool::redirect($query);
         }
     }
-} elseif (isset($_GET['edit']) && Session::isLogged()) {
+} elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
     $pb->assign('page', 'edit');
@@ -6569,7 +6688,7 @@ $type = $kf->hashType($currentHash);
 
     header('Location: '.$shaarli);
 } else {
-    if (Session::isLogged() || $kfc->public) {
+    if ($kfc->isLogged() || $kfc->visibility === 'protected') {
         $kf->loadData();
         if ($kf->updateItems()) {
             $kf->writeData();
