@@ -16,9 +16,11 @@
     </a>
     <dl class="dl-horizontal item">
       <dt class="item-feed">
+        <?php if ($addFavicon) { ?>
         <span class="item-favicon">
           <img src="<?php echo $item['favicon']; ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
         </span>
+        <?php } ?>
         <span class="item-author">
           <?php echo $item['author']; ?>
         </span>

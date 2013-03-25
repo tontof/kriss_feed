@@ -15,6 +15,7 @@
       currentNbItems = 0, // data-nb-items
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
+      addFavicon = false, // data-add-favicon
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -775,9 +776,10 @@
       '</a>' +
       '<dl class="dl-horizontal item">' +
       '<dt class="item-feed">' +
+      (addFavicon?
       '<span class="item-favicon">' +
       '<img src="' + item['favicon'] + '" height="16px" width="16px" title="favicon" alt="favicon"/>' +
-      '</span>' +
+      '</span>':'' ) +
       '<span class="item-author">' +
       item['author'] +
       '</span>' +
@@ -1605,6 +1607,10 @@
     }
     if (elementIndex.hasAttribute('data-nb-items')) {
       currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
+    }
+    if (elementIndex.hasAttribute('data-add-favicon')) {
+      addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
+      addFavicon = (addFavicon === 1)?true:false;
     }
 
     status = document.getElementById('status').innerHTML;
