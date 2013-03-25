@@ -216,7 +216,7 @@ class Feed
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
         if ($this->kfc->isLogged()) {
-            return MyTool::grabToLocal($url, $file);
+            MyTool::grabToLocal($url, $file);
         }
 
         if (file_exists($file)) {
