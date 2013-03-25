@@ -32,14 +32,14 @@
                          No restriction. Anyone can modify configuration, mark as read items, update feeds...
                        </span>
                       <label for="protectedReader">
-                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo (!$kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo ($kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
                         Protected kriss feed
                       </label>
                       <span class="help-block">
                         Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...
                       </span>
                       <label for="privateReader">
-                        <input type="radio" id="privateReader" name="visibility" value="private" <?php echo (!$kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="privateReader" name="visibility" value="private" <?php echo ($kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
                         Private kriss feed
                       </label>
                       <span class="help-block">

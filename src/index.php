@@ -238,9 +238,7 @@ class FeedConf
             }
         }
 
-        if (!$this->write()) {
-            die("Can't write to ".CONFIG_FILE);
-        }
+        $this->write();
     }
 
     public function getView()
@@ -583,33 +581,27 @@ class FeedConf
 
     public function write()
     {
-        if ($this->isLogged()) {
-            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
-                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                          'pagingMarkAs', 'disableSessionProtection');
-            $out = '<?php';
-            $out .= "\n";
+        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                      'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                      'pagingMarkAs', 'disableSessionProtection');
+        $out = '<?php';
+        $out .= "\n";
 
-            foreach ($data as $key) {
-                $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-                $out .= '$this->'.$key.' = "'.$value."\";\n";
-            }
-
-            $out .= '?>';
-
-            if (!@file_put_contents($this->_file, $out)) {
-                return false;
-            }
-
-            return true;
+        foreach ($data as $key) {
+            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
+            $out .= '$this->'.$key.' = "'.$value."\";\n";
         }
 
-        return false;
+        $out .= '?>';
+
+        if (!@file_put_contents($this->_file, $out)) {
+            die("Can't write to ".CONFIG_FILE);
+        }
     }
 }
 
@@ -1214,6 +1206,8 @@ dl {
           <?php } ?>
           <?php if ($kf->kfc->isLogged()) { ?>
           <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
+          <?php } ?>
+          <?php if (Session::isLogged()) { ?>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
           <?php } else { ?>
           <li><a href="?login">Login</a></li>
@@ -1231,7 +1225,9 @@ dl {
              default:
              ?>
           <?php if ($kf->kfc->isLogged()) { ?>
-          <li><a href="?config" class="admin text-error" title="Configuration">Configuration</a></li>
+          <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
+          <?php } ?>
+          <?php if (Session::isLogged()) { ?>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
           <?php } else { ?>
           <li><a href="?login">Login</a></li>
@@ -1297,14 +1293,14 @@ dl {
                          No restriction. Anyone can modify configuration, mark as read items, update feeds...
                        </span>
                       <label for="protectedReader">
-                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo (!$kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo ($kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
                         Protected kriss feed
                       </label>
                       <span class="help-block">
                         Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...
                       </span>
                       <label for="privateReader">
-                        <input type="radio" id="privateReader" name="visibility" value="private" <?php echo (!$kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
+                        <input type="radio" id="privateReader" name="visibility" value="private" <?php echo ($kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
                         Private kriss feed
                       </label>
                       <span class="help-block">
@@ -6386,7 +6382,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfclocale', htmlspecialchars($kfc->locale));
         $pb->assign('kfcmaxitems', htmlspecialchars($kfc->maxItems));
         $pb->assign('kfcmaxupdate', htmlspecialchars($kfc->maxUpdate));
-        $pb->assign('kfcvisibility', $kfc->visibility);
+        $pb->assign('kfcvisibility', htmlspecialchars($kfc->visibility));
         $pb->assign('kfccron', sha1($kfc->salt.$kfc->hash));
         $pb->assign('kfcautoreaditem', (int) $kfc->autoreadItem);
         $pb->assign('kfcautoreadpage', (int) $kfc->autoreadPage);

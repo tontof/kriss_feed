@@ -93,6 +93,8 @@
           <?php } ?>
           <?php if ($kf->kfc->isLogged()) { ?>
           <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
+          <?php } ?>
+          <?php if (Session::isLogged()) { ?>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
           <?php } else { ?>
           <li><a href="?login">Login</a></li>
@@ -110,7 +112,9 @@
              default:
              ?>
           <?php if ($kf->kfc->isLogged()) { ?>
-          <li><a href="?config" class="admin text-error" title="Configuration">Configuration</a></li>
+          <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
+          <?php } ?>
+          <?php if (Session::isLogged()) { ?>
           <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
           <?php } else { ?>
           <li><a href="?login">Login</a></li>

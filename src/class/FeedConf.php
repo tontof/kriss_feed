@@ -284,9 +284,7 @@ class FeedConf
             }
         }
 
-        if (!$this->write()) {
-            die("Can't write to ".CONFIG_FILE);
-        }
+        $this->write();
     }
 
     /**
@@ -759,32 +757,26 @@ class FeedConf
      */
     public function write()
     {
-        if ($this->isLogged()) {
-            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
-                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                          'pagingMarkAs', 'disableSessionProtection');
-            $out = '<?php';
-            $out .= "\n";
+        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                      'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                      'pagingMarkAs', 'disableSessionProtection');
+        $out = '<?php';
+        $out .= "\n";
 
-            foreach ($data as $key) {
-                $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-                $out .= '$this->'.$key.' = "'.$value."\";\n";
-            }
-
-            $out .= '?>';
-
-            if (!@file_put_contents($this->_file, $out)) {
-                return false;
-            }
-
-            return true;
+        foreach ($data as $key) {
+            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
+            $out .= '$this->'.$key.' = "'.$value."\";\n";
         }
 
-        return false;
+        $out .= '?>';
+
+        if (!@file_put_contents($this->_file, $out)) {
+            die("Can't write to ".CONFIG_FILE);
+        }
     }
 }
