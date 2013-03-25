@@ -4175,7 +4175,11 @@ class Feed
             return MyTool::grabToLocal($url, $file);
         }
 
-        return $url;
+        if (file_exists($file)) {
+            return $file;
+        } else {
+            return $url;
+        }
     }
 
     public function getFeedHtmlUrl($feedHash)
@@ -5551,7 +5555,7 @@ class MyTool
 
     public static function grabToLocal($url, $file, $force = false)
     {
-        if(!file_exists($file) || $force){
+        if (!file_exists($file) || $force){
             $ch = curl_init ($url);
             curl_setopt($ch, CURLOPT_HEADER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -5563,12 +5567,6 @@ class MyTool
                 fclose($fp);
             }
             curl_close ($ch);
-        }
-
-        if (file_exists($file)) {
-            return $file;
-        } else {
-            return $url;
         }
     }
 

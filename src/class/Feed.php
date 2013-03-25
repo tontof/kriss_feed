@@ -219,7 +219,11 @@ class Feed
             return MyTool::grabToLocal($url, $file);
         }
 
-        return $url;
+        if (file_exists($file)) {
+            return $file;
+        } else {
+            return $url;
+        }
     }
 
     /**
