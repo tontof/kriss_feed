@@ -290,6 +290,11 @@ class MyTool
         return $t;
     }
 
+    /**
+     * Render json from data
+     *
+     * @param mixed $data data to convert into json
+     */
     public static function renderJson($data)
     {
         header('Cache-Control: no-cache, must-revalidate');
@@ -299,6 +304,40 @@ class MyTool
         echo json_encode($data);
         exit();
     }
+
+    /**
+     * Grab to local a page/an image and save it into file and return a link
+     * to local if success or original link if it fails
+     *
+     * @param string $url to be downloaded
+     * @param string $file to be saved
+     * @param bool   $force to force update
+     *
+     * @return string corresponding to $file if success otherwise $url 
+     */
+    public static function grabToLocal($url, $file, $force = false)
+    {
+        if(!file_exists($file) || $force){
+            $ch = curl_init ($url);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            $raw = curl_exec($ch);
+            if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
+                $fp = fopen($file, 'x');
+                fwrite($fp, $raw);
+                fclose($fp);
+            }
+            curl_close ($ch);
+        }
+
+        if (file_exists($file)) {
+            return $file;
+        } else {
+            return $url;
+        }
+    }
+
     /**
      * Redirect depending on returnurl form or REFERER
      *

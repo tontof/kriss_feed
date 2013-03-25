@@ -19,7 +19,7 @@
         
         <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) echo ' autohide-feed'; ?>">
           <?php if ($addFavicon) { ?>
-          <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+          <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
           <?php } ?>
 <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
           
@@ -58,7 +58,7 @@
             <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
               
               <?php if ($addFavicon) { ?>
-              <img src="<?php echo grabFavicon($feed['htmlUrl'], $feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+              <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
               <?php } ?>
               <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
             </li>

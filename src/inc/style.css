@@ -137,6 +137,10 @@ li.item-list {
   border-bottom: 1px dotted #999;
 }
 
+.item-favicon {
+  float: left;
+}
+
 h5.folder {
   background-color: #ddd;
   border-radius: 4px;

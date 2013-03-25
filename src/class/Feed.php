@@ -203,6 +203,26 @@ class Feed
     }
 
     /**
+     * Return a link to favicon
+     *
+     * @param string $feedHash Hash corresponding to a feed
+     *
+     * @return string that corresponds to favicon of feed
+     */
+    public function getFaviconFeed($feedHash)
+    {
+        $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
+        $url = 'http://getfavicon.appspot.com/'.$htmlUrl.'?defaulticon=bluepng';
+        $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
+
+        if (Session::isLogged()) {
+            return MyTool::grabToLocal($url, $file);
+        }
+
+        return $url;
+    }
+
+    /**
      * Return html url of the feed
      *
      * @param string $feedHash Hash corresponding to a feed
@@ -671,7 +691,8 @@ class Feed
             $item['title'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['title']), ENT_QUOTES), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
-            
+            $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+
             return $item;
         }
 
@@ -1193,32 +1214,6 @@ class Feed
     }
 
     /**
-     * Get human readable error
-     *
-     * @param integer $error Number of error occured during a feed update
-     *
-     * @return string String of the corresponding error
-     */
-    public static function getError($error)
-    {
-        switch ($error) {
-        case ERROR_NO_XML:
-            return 'Feed is not in XML format';
-            break;
-        case ERROR_ITEMS_MISSED:
-            return 'Items may have been missed since last update';
-            break;
-        case ERROR_LAST_UPDATE:
-        case ERROR_UNKNOWN:
-            return 'Problem with the last update';
-            break;
-        default:
-            return 'unknown error';
-            break;
-        }
-    }
-
-    /**
      * Update channel and return feed information error, lastUpdate
      * and newItems
      *
@@ -1271,7 +1266,6 @@ class Feed
             $rssItemsHash = array_keys($rssItems);
 
             if (count($rssItemsHash) !== 0) {
-
                 // Look for new items
                 foreach ($rssItemsHash as $itemHash) {
                     // itemHash is smallHash of link. To compare to item
@@ -1342,7 +1336,7 @@ class Feed
                             $nbUnread++;
                         }
                     } else {
-                        // TODO: Is appended at the end ??
+                        // TODO: Check if itemHash is appended at the end ??
                         $this->_data['newItems'][$itemHash] = array(
                             $item['time'],
                             0                        
@@ -1635,6 +1629,32 @@ class Feed
      */
     public static function sortByTitle($a, $b) {
         return strnatcasecmp($a['title'], $b['title']);
+    }
+
+    /**
+     * Get human readable error
+     *
+     * @param integer $error Number of error occured during a feed update
+     *
+     * @return string String of the corresponding error
+     */
+    public static function getError($error)
+    {
+        switch ($error) {
+        case ERROR_NO_XML:
+            return 'Feed is not in XML format';
+            break;
+        case ERROR_ITEMS_MISSED:
+            return 'Items may have been missed since last update';
+            break;
+        case ERROR_LAST_UPDATE:
+        case ERROR_UNKNOWN:
+            return 'Problem with the last update';
+            break;
+        default:
+            return 'unknown error';
+            break;
+        }
     }
 }
 

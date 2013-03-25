@@ -54,32 +54,6 @@ if (!is_dir(DATA_DIR)) {
     }
 }
 
-/* function grabFavicon */
-function grabFavicon($url, $feedHash){
-    $url = 'http://getfavicon.appspot.com/'.$url.'?defaulticon=bluepng';
-    $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
-
-    if(!file_exists($file) && in_array('curl', get_loaded_extensions()) && Session::isLogged()){
-        $ch = curl_init ($url);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
-        $raw = curl_exec($ch);
-        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
-            $fp = fopen($file, 'x');
-            fwrite($fp, $raw);
-            fclose($fp);
-        }
-        curl_close ($ch);
-    }
-
-    if (file_exists($file)) {
-        return $file;
-    } else {
-        return $url;
-    }
-}
-
 /**
  * autoload class
  *
@@ -102,10 +76,11 @@ if (!empty($_POST)) {
     unset($_SESSION['tokens']);
 }
 
-$pb = new PageBuilder('FeedPage');
-$kfp = new FeedPage(STYLE_FILE);
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
+
+$pb = new PageBuilder('FeedPage');
+$kfp = new FeedPage(STYLE_FILE);
 
 // List or Expanded ?
 $view = $kfc->view;
