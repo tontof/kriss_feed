@@ -22,7 +22,9 @@
         </span>
         <?php } ?>
         <span class="item-author">
-          <?php echo $item['author']; ?>
+          <a class="item-feed" href="<?php echo '?currentHash='.substr($itemHash, 0, 6); ?>">
+            <?php echo $item['author']; ?>
+          </a>
         </span>
       </dt>
       <dd class="item-info">

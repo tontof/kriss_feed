@@ -781,7 +781,9 @@
       '<img src="' + item['favicon'] + '" height="16px" width="16px" title="favicon" alt="favicon"/>' +
       '</span>':'' ) +
       '<span class="item-author">' +
+      '<a class="item-feed" href="?currentHash=' + item['itemHash'].substring(0, 6) + '">' +
       item['author'] +
+      '</a>' +
       '</span>' +
       '</dt>' +
       '<dd class="item-info">' +

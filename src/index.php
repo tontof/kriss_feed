@@ -2217,7 +2217,9 @@ dl {
         </span>
         <?php } ?>
         <span class="item-author">
-          <?php echo $item['author']; ?>
+          <a class="item-feed" href="<?php echo '?currentHash='.substr($itemHash, 0, 6); ?>">
+            <?php echo $item['author']; ?>
+          </a>
         </span>
       </dt>
       <dd class="item-info">
@@ -3123,7 +3125,9 @@ dl {
       '<img src="' + item['favicon'] + '" height="16px" width="16px" title="favicon" alt="favicon"/>' +
       '</span>':'' ) +
       '<span class="item-author">' +
+      '<a class="item-feed" href="?currentHash=' + item['itemHash'].substring(0, 6) + '">' +
       item['author'] +
+      '</a>' +
       '</span>' +
       '</dt>' +
       '<dd class="item-info">' +
