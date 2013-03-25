@@ -6386,7 +6386,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfclocale', htmlspecialchars($kfc->locale));
         $pb->assign('kfcmaxitems', htmlspecialchars($kfc->maxItems));
         $pb->assign('kfcmaxupdate', htmlspecialchars($kfc->maxUpdate));
-        $pb->assign('kfcvisibility', (int) $kfc->visibility);
+        $pb->assign('kfcvisibility', $kfc->visibility);
         $pb->assign('kfccron', sha1($kfc->salt.$kfc->hash));
         $pb->assign('kfcautoreaditem', (int) $kfc->autoreadItem);
         $pb->assign('kfcautoreadpage', (int) $kfc->autoreadPage);
