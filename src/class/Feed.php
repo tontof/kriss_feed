@@ -1275,7 +1275,7 @@ class Feed
             }
             if (!empty($oldItems)) {
                 $lastTime = current($oldItems);
-                $lastTime = $oldItems['time'];
+                $lastTime = $lastTime['time'];
             }
             $newLastTime = $lastTime;
 
