@@ -5017,6 +5017,15 @@ class Feed
 
             $this->loadFeed($feedHash);
             $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            $lastTime = 0;
+            if (isset($this->_data['feeds'][$feedHash]['lastTime'])) {
+                $lastTime = $this->_data['feeds'][$feedHash]['lastTime'];
+            }
+            if (!empty($oldItems)) {
+                $lastTime = current($oldItems);
+                $lastTime = $oldItems['time'];
+            }
+            $newLastTime = $lastTime;
 
             $rssItems = $this->getItemsFromXml($xml);
             $rssItems = array_slice($rssItems, 0, $this->kfc->maxItems, true);
@@ -5041,7 +5050,13 @@ class Feed
                                 . $rssItems[$itemHash]['author'] . ')';
                         }
                         $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
-                        $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
+
+                        if ($rssItems[$itemHash]['time'] > $lastTime) {
+                            if ($rssItems[$itemHash]['time'] > $newLastTime) {
+                                $newLastTime = $rssItems[$itemHash]['time'];
+                            }
+                            $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
+                        }
                     }
                 }
                 $newItemsHash = array_keys($newItems);
@@ -5117,6 +5132,11 @@ class Feed
             unset($this->_data['feeds'][$feedHash]['items']);
             $this->writeData();
         } else {
+            if (empty($this->_data['feeds'][$feedHash]['items'])) {
+                $this->_data['feeds'][$feedHash]['lastTime'] = $newLastTime;
+            } else {
+                unset($this->_data['feeds'][$feedHash]['lastTime']);
+            }
             $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
             unset($this->_data['feeds'][$feedHash]['items']);
             $this->_data['needSort'] = true;
@@ -5482,7 +5502,7 @@ class MyTool
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
-        $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
+        $scriptname = str_replace('/index.php', '/', $_SERVER["SCRIPT_NAME"]);
 
         if (!isset($_SERVER["SERVER_NAME"])) {
             return $scriptname;
@@ -5581,7 +5601,7 @@ class MyTool
         if ($rurl === '') {
             // if (!empty($_SERVER['HTTP_REFERER']) && strcmp(parse_url($_SERVER['HTTP_REFERER'],PHP_URL_HOST),$_SERVER['SERVER_NAME'])==0)
             $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
-            if (!empty($_POST)) {
+            if (isset($_POST['returnurl'])) {
                 $rurl = $_POST['returnurl'];
             }
         }
@@ -5593,7 +5613,7 @@ class MyTool
 
         if (substr($rurl, 0, 1) !== '?') {
             $ref = MyTool::getUrl();
-            if (substr($rurl, 0, strlen($ref)) != $ref) {
+            if (substr($rurl, 0, strlen($ref)) !== $ref) {
                 $rurl = $ref;
             }
         }

@@ -1269,6 +1269,15 @@ class Feed
 
             $this->loadFeed($feedHash);
             $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            $lastTime = 0;
+            if (isset($this->_data['feeds'][$feedHash]['lastTime'])) {
+                $lastTime = $this->_data['feeds'][$feedHash]['lastTime'];
+            }
+            if (!empty($oldItems)) {
+                $lastTime = current($oldItems);
+                $lastTime = $oldItems['time'];
+            }
+            $newLastTime = $lastTime;
 
             $rssItems = $this->getItemsFromXml($xml);
             $rssItems = array_slice($rssItems, 0, $this->kfc->maxItems, true);
@@ -1293,7 +1302,13 @@ class Feed
                                 . $rssItems[$itemHash]['author'] . ')';
                         }
                         $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
-                        $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
+
+                        if ($rssItems[$itemHash]['time'] > $lastTime) {
+                            if ($rssItems[$itemHash]['time'] > $newLastTime) {
+                                $newLastTime = $rssItems[$itemHash]['time'];
+                            }
+                            $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
+                        }
                     }
                 }
                 $newItemsHash = array_keys($newItems);
@@ -1369,6 +1384,11 @@ class Feed
             unset($this->_data['feeds'][$feedHash]['items']);
             $this->writeData();
         } else {
+            if (empty($this->_data['feeds'][$feedHash]['items'])) {
+                $this->_data['feeds'][$feedHash]['lastTime'] = $newLastTime;
+            } else {
+                unset($this->_data['feeds'][$feedHash]['lastTime']);
+            }
             $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
             unset($this->_data['feeds'][$feedHash]['items']);
             $this->_data['needSort'] = true;

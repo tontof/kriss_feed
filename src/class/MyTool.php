@@ -183,7 +183,7 @@ class MyTool
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
-        $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
+        $scriptname = str_replace('/index.php', '/', $_SERVER["SCRIPT_NAME"]);
 
         if (!isset($_SERVER["SERVER_NAME"])) {
             return $scriptname;
@@ -340,7 +340,7 @@ class MyTool
         if ($rurl === '') {
             // if (!empty($_SERVER['HTTP_REFERER']) && strcmp(parse_url($_SERVER['HTTP_REFERER'],PHP_URL_HOST),$_SERVER['SERVER_NAME'])==0)
             $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
-            if (!empty($_POST)) {
+            if (isset($_POST['returnurl'])) {
                 $rurl = $_POST['returnurl'];
             }
         }
@@ -352,7 +352,7 @@ class MyTool
 
         if (substr($rurl, 0, 1) !== '?') {
             $ref = MyTool::getUrl();
-            if (substr($rurl, 0, strlen($ref)) != $ref) {
+            if (substr($rurl, 0, strlen($ref)) !== $ref) {
                 $rurl = $ref;
             }
         }
