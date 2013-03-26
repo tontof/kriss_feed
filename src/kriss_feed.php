@@ -606,7 +606,7 @@ $type = $kf->hashType($currentHash);
 
     header('Location: '.$shaarli);
 } else {
-    if ($kfc->isLogged() || $kfc->visibility === 'protected') {
+    if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
         if ($kf->updateItems()) {
             $kf->writeData();
