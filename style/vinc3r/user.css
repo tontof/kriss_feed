@@ -1,0 +1,44 @@
+body{background-color: #595959; /* gris */}
+#menu a{
+	margin: 0;
+	padding: 0 5px;
+	font-size: 1em;
+	text-shadow:none;
+}
+#menu a:hover{
+	background-color: #ff6c00; /* orange */
+	color: #fff;
+}
+.navbar .brand{padding: 1% 3%;}
+.ico-circle, .label, #paging-up a, #paging-down a{
+	background-color: #507cb7; /* bleu */
+	color: #fff;
+}
+.ico-circle:hover, .label:hover, .btn-info:hover{background-color: #5c9c3f !important; /* vert */}
+.ico-circle, .label, .navbar-inner, .well, #paging-up a, #paging-down a{border-radius: 0;}
+body, #minor-container{border-right: 1px solid #ff6c00; /* orange */}
+#minor-container{
+	background-color: #373737; /* gris fonce */
+	padding:0 0.5%;
+}
+#minor-container li a{color: #fff;}
+#minor-container li a:hover{
+	color: #507cb7; /* bleu */
+	text-decoration: none;
+}
+.container-fluid {
+    padding-right: 1%;
+    padding-left: 0;
+}
+#list-items{background-color: #fff;}
+.current{border-color: #5c9c3f !important; /* vert */}
+.btn-info{background-image: none;}
+.btn{box-shadow: none;}
+.btn:hover, .btn:focus{transition:0;}
+li.feed{border-color: #595959; /* gris */}
+h5{border-top: 1px solid #ff6c00; /* orange */}
+#status{
+	color: #eee;
+	font-size: 0.8em;
+}
+ul.nav{border-top: 1px solid #595959;}
