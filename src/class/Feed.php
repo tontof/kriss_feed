@@ -1380,17 +1380,17 @@ class Feed
             $this->_data['feeds'][$feedHash]['error'] = $error;
         }
 
+        if (empty($this->_data['feeds'][$feedHash]['items'])) {
+            $this->_data['feeds'][$feedHash]['lastTime'] = $newLastTime;
+        } else {
+            unset($this->_data['feeds'][$feedHash]['lastTime']);
+        }
+        $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
+        unset($this->_data['feeds'][$feedHash]['items']);
+
         if (empty($newItems)) {
-            unset($this->_data['feeds'][$feedHash]['items']);
             $this->writeData();
         } else {
-            if (empty($this->_data['feeds'][$feedHash]['items'])) {
-                $this->_data['feeds'][$feedHash]['lastTime'] = $newLastTime;
-            } else {
-                unset($this->_data['feeds'][$feedHash]['lastTime']);
-            }
-            $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
-            unset($this->_data['feeds'][$feedHash]['items']);
             $this->_data['needSort'] = true;
 
             if (isset($_SESSION['lastNewItemsHash'])) {
