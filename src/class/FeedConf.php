@@ -239,22 +239,13 @@ class FeedConf
             $this->setLogin($_POST['setlogin']);
             $this->setHash($_POST['setpassword']);
 
-            if ($this->write()) {
-                echo '
+            $this->write();
+            echo '
 <script>
  alert("Your simple and smart (or stupid) feed reader is now configured.");
  document.location="'.MyTool::getUrl().'?import'.'";
 </script>';
-                    exit();
-            } else {
-                echo '
-<script>
- alert("Error: can not write config and data files.");
- document.location=window.location.href;
-</script>';
-                    exit();
-            }
-            Session::logout();
+            exit();
         } else {
             FeedPage::init(
                 array(
