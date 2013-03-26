@@ -50,7 +50,7 @@
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
-                <dd><strong>S</strong>hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
+                <dd><strong>S</strong>hare current item (go in <a href="?config" title="configuration">configuration</a> to set up your link)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'a'</dt>
