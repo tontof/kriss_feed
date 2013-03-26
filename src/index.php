@@ -4315,6 +4315,11 @@ class Feed
                 $newFeedsHash[] = $feedHash;
             }
         }
+
+        if ($this->kfc->order !== 'newerFirst') {
+            $newFeedsHash = array_reverse($newFeedsHash);
+        }
+
         foreach($feedsHash as $feedHash) {
             if (!in_array($feedHash, $newFeedsHash)) {
                 $newFeedsHash[] = $feedHash;
