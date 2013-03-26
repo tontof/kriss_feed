@@ -5281,7 +5281,7 @@ class Feed
                 if ($read == 1) {
                     $this->_data['feeds'][$feedHash]['nbUnread'] = 0;
                 } else {
-                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds']['nbAll'];
+                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds'][$feedHash]['nbAll'];
                 }
             }
         }
