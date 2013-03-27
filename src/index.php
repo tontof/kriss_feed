@@ -586,8 +586,7 @@ class FeedConf
         $out .= "\n";
 
         foreach ($data as $key) {
-            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-            $out .= '$this->'.$key.' = "'.$value."\";\n";
+            $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
         }
 
         $out .= '?>';
