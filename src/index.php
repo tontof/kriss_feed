@@ -179,7 +179,9 @@ class FeedConf
             $this->order = $order;
             $this->byPage = $byPage;
 
-            $this->write();
+            if ($this->isLogged()) {
+                $this->write();
+            }
         }
 
         if (!$this->isLogged()) {
@@ -591,7 +593,7 @@ class FeedConf
         $out .= '?>';
 
         if (!@file_put_contents($this->_file, $out)) {
-            die("Can't write to ".CONFIG_FILE);
+            die("Can't write to ".CONFIG_FILE." check permissions");
         }
     }
 }
@@ -1648,7 +1650,7 @@ dl {
               </dl>
               <dl class="dl-horizontal">
                 <dt>'s'</dt>
-                <dd><strong>S</strong>hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
+                <dd><strong>S</strong>hare current item (go in <a href="?config" title="configuration">configuration</a> to set up your link)</dd>
               </dl>
               <dl class="dl-horizontal">
                 <dt>'a'</dt>
@@ -3616,7 +3618,12 @@ dl {
         toggleCurrentItem();
         break;
         case 77: // 'M'
-        markAsCurrentItem();
+        if (e.shiftKey) {
+          markAsCurrentItem();
+          toggleCurrentItem();
+        } else {
+          markAsCurrentItem();
+        }
         break;
         case 39: // right arrow
         case 78: // 'N'

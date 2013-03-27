@@ -217,7 +217,9 @@ class FeedConf
             $this->order = $order;
             $this->byPage = $byPage;
 
-            $this->write();
+            if ($this->isLogged()) {
+                $this->write();
+            }
         }
 
         if (!$this->isLogged()) {
@@ -767,7 +769,7 @@ class FeedConf
         $out .= '?>';
 
         if (!@file_put_contents($this->_file, $out)) {
-            die("Can't write to ".CONFIG_FILE);
+            die("Can't write to ".CONFIG_FILE." check permissions");
         }
     }
 }
