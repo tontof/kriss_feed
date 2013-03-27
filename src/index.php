@@ -1618,6 +1618,10 @@ dl {
                 <dd><strong>M</strong>ark current item as read if unread or unread if read</dd>
               </dl>
               <dl class="dl-horizontal">
+                <dt>'shift' + 'm'</dt>
+                <dd><strong>M</strong>ark current item as read if unread or unread if read and open current (useful in list view and unread filter)</dd>
+              </dl>
+              <dl class="dl-horizontal">
                 <dt>'n' or right arrow</dt>
                 <dd>Go to <strong>n</strong>ext item</dd>
               </dl>
