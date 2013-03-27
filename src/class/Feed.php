@@ -943,7 +943,8 @@ class Feed
             'via'        => array('guid', 'id'),
             'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
             'time'        => array('pubDate', 'updated', 'lastBuildDate',
-                                   'published', 'dc:date', 'date'),
+                                   'published', 'dc:date', 'date', 'created',
+                                   'modified'),
             'title'       => array('title'));
 
         if ($feed->item(0)) {
