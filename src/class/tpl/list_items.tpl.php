@@ -8,10 +8,10 @@
     <?php if ($view==='list') { ?>
     <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
       <?php echo $item['time']['list']; ?>
-      <span class="ico">
-        <span class="ico-circle"></span>
-        <span class="ico-line-h"></span>
-        <span class="ico-line-v<?php echo ((!isset($_GET['open']) or $currentItemHash != $itemHash)?' item-toggle-close':' item-toggle-open'); ?>"></span>
+      <span class="ico ico-toggle-item">
+        <span class="ico-b-disc"></span>
+        <span class="ico-w-line-h"></span>
+        <span class="ico-w-line-v<?php echo ((!isset($_GET['open']) or $currentItemHash != $itemHash)?' item-toggle-close':' item-toggle-open'); ?>"></span>
       </span>
     </a>
     <dl class="dl-horizontal item">

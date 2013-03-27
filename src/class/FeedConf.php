@@ -217,9 +217,7 @@ class FeedConf
             $this->order = $order;
             $this->byPage = $byPage;
 
-            if ($this->isLogged()) {
-                $this->write();
-            }
+            $this->write();
         }
 
         if (!$this->isLogged()) {
@@ -750,25 +748,27 @@ class FeedConf
      */
     public function write()
     {
-        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'visibility', 'filter', 'view','locale',
-                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                      'pagingMarkAs', 'disableSessionProtection');
-        $out = '<?php';
-        $out .= "\n";
+        if ($this->isLogged() || !is_file($this->_file)) {
+            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                          'pagingMarkAs', 'disableSessionProtection');
+            $out = '<?php';
+            $out .= "\n";
 
-        foreach ($data as $key) {
-            $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
-        }
+            foreach ($data as $key) {
+                $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
+            }
 
-        $out .= '?>';
+            $out .= '?>';
 
-        if (!@file_put_contents($this->_file, $out)) {
-            die("Can't write to ".CONFIG_FILE." check permissions");
+            if (!@file_put_contents($this->_file, $out)) {
+                die("Can't write to ".CONFIG_FILE." check permissions");
+            }
         }
     }
 }

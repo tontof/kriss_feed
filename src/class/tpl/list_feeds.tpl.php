@@ -38,9 +38,9 @@
             <a class="mark-as" href="<?php echo $query.'read='.$hashFolder; ?>"><span class="label"><?php echo $folder['nbUnread']; ?></span></a>
             <a class="folder-toggle" href="<?php echo $query.'toggleFolder='.$hashFolder; ?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $hashFolder; ?>">
               <span class="ico">
-                <span class="ico-circle"></span>
-                <span class="ico-line-h"></span>
-                <span class="ico-line-v<?php echo ($isOpen?' folder-toggle-open':' folder-toggle-close'); ?>"></span>
+                <span class="ico-b-disc"></span>
+                <span class="ico-w-line-h"></span>
+                <span class="ico-w-line-v<?php echo ($isOpen?' folder-toggle-open':' folder-toggle-close'); ?>"></span>
               </span>
             </a>
             <a href="<?php echo '?currentHash='.$hashFolder; ?>"><?php echo htmlspecialchars($folder['title']); ?></a>

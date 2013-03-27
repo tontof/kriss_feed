@@ -12,6 +12,9 @@ define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
 define('BAN_FILE', DATA_DIR.'/ipbans.php');
+define('UPDATECHECK_FILE', DATA_DIR.'/lastupdatecheck.txt');
+// Updates check frequency. 86400 seconds = 24 hours
+define('UPDATECHECK_INTERVAL', 86400);
 
 define('FEED_VERSION', 6);
 
