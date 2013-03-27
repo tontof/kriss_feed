@@ -4819,7 +4819,7 @@ class Feed
             curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
             curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
         }
-        curl_setopt($ch, CURLOPT_ENCODING, true);
+        curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
         curl_setopt($ch, CURLOPT_URL, $url);
