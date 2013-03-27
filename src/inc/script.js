@@ -1290,7 +1290,12 @@
         toggleCurrentItem();
         break;
         case 77: // 'M'
-        markAsCurrentItem();
+        if (e.shiftKey) {
+          markAsCurrentItem();
+          toggleCurrentItem();
+        } else {
+          markAsCurrentItem();
+        }
         break;
         case 39: // right arrow
         case 78: // 'N'
