@@ -1,5 +1,5 @@
 /* Custom P3ter 
- * Version 1.2
+ * Version 1.2.1
  * http://p3ter.fr (CC-BY-V3)
  */
 
@@ -9,14 +9,17 @@
 }
 
 .ico {
-	vertical-align: middle;
+	margin-left: 8px;
+  margin-right: 0px;
+	margin-top: 2px;
 }
-.ico-circle {
+
+.ico-b-disc {
 	background-color: #444;
 	border-radius: 0px !important;
 }
 
-.ico-circle:hover {
+.ico-b-disc:hover {
 	background-color: #AAA;
 }
 
@@ -68,6 +71,10 @@ h5 {
 	border: 1px solid #444;
 }
 
+h5 a {
+	margin-left: 2px;
+}
+
 .feed {
 	border: none !important;
 }
@@ -104,6 +111,10 @@ li.item-list {
 .item-info-end {
 	float: left;
 	margin-bottom: 20px;
+}
+
+.item-info-end .ico {
+	margin-left: 0px;
 }
 
 .current {
