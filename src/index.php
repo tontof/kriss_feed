@@ -6211,7 +6211,7 @@ class MyTool
 
     public static function grabToLocal($url, $file, $force = false)
     {
-        if (!file_exists($file) || $force){
+        if ((!file_exists($file) || $force) && in_array('curl', get_loaded_extensions())){
             $ch = curl_init ($url);
             curl_setopt($ch, CURLOPT_HEADER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
