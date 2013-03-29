@@ -4027,7 +4027,7 @@ dl {
   }
 
   function updateNewItems(result) {
-    var i = 0, list, currentMin;
+    var i = 0, list, currentMin, folder, feed, unreadLabelItems, nbItems;
     setStatus('');
     if (result !== false) {
       if (result['feeds']) {
@@ -4038,9 +4038,23 @@ dl {
           listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
         }
       }
-      if (result['newItems']) {
-        currentNbItems += result['newItems'].length;
-        setNbUnread(currentUnread + result['newItems'].length);
+      if (result.newItems && result.newItems.length > 0) {
+        nbItems = result.newItems.length;
+        currentNbItems += nbItems;
+        setNbUnread(currentUnread + nbItems);
+        addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), nbItems);
+        unreadLabelItems = getUnreadLabelItems(result.newItems[0].substr(0,6));
+        for (i = 0; i < unreadLabelItems.length; i += 1) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          folder = getLiParentByClassName(feed, 'folder');
+          addClass(feed, 'has-unread');
+          if (autohide) {
+            removeClass(feed, 'autohide-feed');
+            removeClass(folder, 'autohide-folder');
+          }
+          addToUnreadLabel(getUnreadLabel(feed), nbItems);
+          addToUnreadLabel(getUnreadLabel(folder), nbItems);
+        }
       }
       updateTimeout();
     }
@@ -4707,7 +4721,8 @@ dl {
   window.checkKey = checkKey;
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
-})();    </script>
+})();
+    </script>
     <?php } ?>
   </body>
 </html>
