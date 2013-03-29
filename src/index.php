@@ -3358,10 +3358,23 @@ dl {
   }
 
   function getFolder(element) {
-    var folder = null
+    var folder = null;
 
     while (folder === null && element !== null) {
       if (element.tagName === 'LI' && element.id.indexOf('folder-') === 0) {
+        folder = element;
+      }
+      element = element.parentNode;
+    }
+
+    return folder;
+  }
+
+  function getLiParentByClassName(element, classname) {
+    var folder = null;
+
+    while (folder === null && element !== null) {
+      if (element.tagName === 'LI' && hasClass(element, classname)) {
         folder = element;
       }
       element = element.parentNode;
@@ -3462,12 +3475,59 @@ dl {
     }
   }
 
+  function getUnreadLabelItems(itemHash) {
+    var i, listLinks, regex = new RegExp('read=' + itemHash.substr(0,6)), items = [];
+    listLinks = getListLinkFolders();
+    for (i = 0; i < listLinks.length; i += 1) {
+      if (regex.test(listLinks[i].href)) {
+        items.push(listLinks[i].children[0]);
+      }
+    }
+    return items;
+  }
+
+  function addToUnreadLabel(unreadLabelItem, value) {
+      var unreadLabel = -1;
+      if (unreadLabelItem !== null) {
+        unreadLabel = parseInt(unreadLabelItem.innerHTML, 10) + value;
+        unreadLabelItem.innerHTML = unreadLabel;
+      }
+      return unreadLabel;
+  }
+
+  function getUnreadLabel(folder) {
+    var element = null;
+    if (folder !== null) {
+      element = folder.getElementsByClassName('label')[0];
+    }
+    return element;
+  }
+
   function markAsItem(itemHash) {
-    var item, url, client, indexItem;
+    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder;
 
     item = getItem(itemHash);
 
     if (item !== null) {
+      unreadLabelItems = getUnreadLabelItems(itemHash);
+
+      for (i = 0; i < unreadLabelItems.length; i += 1) {
+        nb = addToUnreadLabel(unreadLabelItems[i], -1);
+        if (nb === 0) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          removeClass(feed, 'has-unread');
+          if (autohide) {
+            addClass(feed, 'autohide-feed');
+          }
+        }
+        folder = getLiParentByClassName(unreadLabelItems[i], 'folder');
+        nb = addToUnreadLabel(getUnreadLabel(folder), -1);
+        if (nb === 0 && autohide) {
+          addClass(folder, 'autohide-folder');
+        }
+      }
+      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), -1);
+
       if (hasClass(item, 'read')) {
         url = '?unread=' + itemHash;
         removeClass(item, 'read');
@@ -3967,7 +4027,7 @@ dl {
   }
 
   function updateNewItems(result) {
-    var i = 0, list, currentMin;
+    var i = 0, list, currentMin, folder, feed, unreadLabelItems, nbItems;
     setStatus('');
     if (result !== false) {
       if (result['feeds']) {
@@ -3978,9 +4038,23 @@ dl {
           listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
         }
       }
-      if (result['newItems']) {
-        currentNbItems += result['newItems'].length;
-        setNbUnread(currentUnread + result['newItems'].length);
+      if (result.newItems && result.newItems.length > 0) {
+        nbItems = result.newItems.length;
+        currentNbItems += nbItems;
+        setNbUnread(currentUnread + nbItems);
+        addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), nbItems);
+        unreadLabelItems = getUnreadLabelItems(result.newItems[0].substr(0,6));
+        for (i = 0; i < unreadLabelItems.length; i += 1) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          folder = getLiParentByClassName(feed, 'folder');
+          addClass(feed, 'has-unread');
+          if (autohide) {
+            removeClass(feed, 'autohide-feed');
+            removeClass(folder, 'autohide-folder');
+          }
+          addToUnreadLabel(getUnreadLabel(feed), nbItems);
+          addToUnreadLabel(getUnreadLabel(folder), nbItems);
+        }
       }
       updateTimeout();
     }
@@ -4515,7 +4589,6 @@ dl {
 
     currentUnread = nb;
     element.innerHTML = currentUnread;
-
     document.title = title + ' (' + currentUnread + ')';
   }
 
@@ -4648,7 +4721,8 @@ dl {
   window.checkKey = checkKey;
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
-})();    </script>
+})();
+    </script>
     <?php } ?>
   </body>
 </html>
