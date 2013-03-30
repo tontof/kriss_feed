@@ -5418,16 +5418,20 @@ dl {
   }
 
   function getLiParentByClassName(element, classname) {
-    var folder = null;
+    var li = null;
 
-    while (folder === null && element !== null) {
+    while (li === null && element !== null) {
       if (element.tagName === 'LI' && hasClass(element, classname)) {
-        folder = element;
+        li = element;
       }
       element = element.parentNode;
     }
 
-    return folder;
+    if (classname === 'folder' && li.id === 'all-subscriptions') {
+      li = null;
+    }
+
+    return li;
   }
 
   function getFolderHash(element) {
@@ -7838,18 +7842,12 @@ class Feed
                     $error = ERROR_ITEMS_MISSED;
                 }
 
-                // Remove useless items
-                foreach ($this->getItems($feedHash) as $itemHash => $item) {
+                // Remove from cache already read items not any more in the feed
+                $listOfOldItems = $this->getItems($feedHash);
+                foreach ($listOfOldItems as $itemHash => $item) {
                     $itemRssHash = substr($itemHash, 6, 6);
-                    // Remove from cache already read items not any more in the feed
                     if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
                         unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
-                    }
-                
-                    if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
-                        // Remove items not any more in the cache
-                        unset($this->_data['items'][$itemHash]);
-                        unset($this->_data['newItems'][$itemHash]);
                     }
                 }
 
@@ -7863,6 +7861,15 @@ class Feed
                             $this->kfc->maxItems, true
                             );
                     $nbAll = $this->kfc->maxItems;
+                }
+
+                // Remove items not any more in the cache
+                foreach (array_keys($listOfOldItems) as $itemHash) {
+                    if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
+                        // Remove items not any more in the cache
+                        unset($this->_data['items'][$itemHash]);
+                        unset($this->_data['newItems'][$itemHash]);
+                    }
                 }
 
                 // Update items list and feed information (nbUnread, nbAll)

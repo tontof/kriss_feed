@@ -406,16 +406,20 @@
   }
 
   function getLiParentByClassName(element, classname) {
-    var folder = null;
+    var li = null;
 
-    while (folder === null && element !== null) {
+    while (li === null && element !== null) {
       if (element.tagName === 'LI' && hasClass(element, classname)) {
-        folder = element;
+        li = element;
       }
       element = element.parentNode;
     }
 
-    return folder;
+    if (classname === 'folder' && li.id === 'all-subscriptions') {
+      li = null;
+    }
+
+    return li;
   }
 
   function getFolderHash(element) {
