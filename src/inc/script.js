@@ -33,6 +33,12 @@
       return this.replace(/^\s+|\s+$/g,'');
     };
   }
+  /**
+   * http://javascript.info/tutorial/bubbling-and-capturing
+   */
+  function stopBubbling(event) {
+    event.stopPropagation ? event.stopPropagation() : (event.cancelBubble=true);
+  }
 
   /**
    * JSON Object
@@ -301,7 +307,10 @@
     }
   }
 
-  function collapseClick() {
+  function collapseClick(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     collapseElement(this);
   }
 
@@ -371,7 +380,10 @@
     shaarliItem(currentItemHash);
   }
 
-  function shaarliClickItem() {
+  function shaarliClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     shaarliItem(getItemHash(this));
 
     return false;
@@ -433,7 +445,10 @@
     }
   }
 
-  function toggleClickFolder() {
+  function toggleClickFolder(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     toggleFolder(getFolderHash(this));
 
     return false;
@@ -534,7 +549,10 @@
     markAsItem(currentItemHash);
   }
 
-  function markAsClickItem() {
+  function markAsClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     markAsItem(getItemHash(this));
 
     return false;
@@ -621,7 +639,10 @@
     collapseElement(document.getElementById('item-toggle-' + currentItemHash));
   }
 
-  function toggleClickItem() {
+  function toggleClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     toggleItem(getItemHash(this));
 
     return false;
@@ -768,12 +789,12 @@
     }
 
     li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
-      item['time']['list'] +
-      ' <span class="ico">' +
-      '<span class="ico-circle"></span>' +
-      '<span class="ico-line-h"></span>' +
-      '<span class="ico-line-v item-toggle-close"></span>' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '<span class="ico-w-line-v item-toggle-close"></span>' +
       '</span>' +
+      item['time']['list'] +
       '</a>' +
       '<dl class="dl-horizontal item">' +
       '<dt class="item-feed">' +
@@ -1037,13 +1058,19 @@
     }
   }
 
-  function previousClickPage() {
+  function previousClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     previousPage();
 
     return false;
   }
 
-  function nextClickPage() {
+  function nextClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     nextPage();
 
     return false;
@@ -1072,13 +1099,19 @@
     removeChildren(getListItems());
   }
 
-  function previousClickItem() {
+  function previousClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     previousItem();
 
     return false;
   }
 
-  function nextClickItem() {
+  function nextClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     nextItem();
 
     return false;
@@ -1692,4 +1725,5 @@
   window.checkKey = checkKey;
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
+  window.toggle = toggleCurrentItem;
 })();
