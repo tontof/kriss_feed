@@ -1,5 +1,5 @@
 /* Custom P3ter 
- * Version 1.3
+ * Version 1.3.1
  * 
  * Development Version of KrISS Feed is needed
  * https://github.com/tontof/kriss_feed/blob/master/src/index.php
@@ -36,9 +36,7 @@
 }
 
 ul.inline > li, ol.inline > li {
-	padding-left: 0;
-	padding-right: 10px;
-	margin-bottom: 16px;
+	padding: 0 10px 7px 0;
 }
 
 .btn-group > .btn:first-child,
@@ -66,8 +64,8 @@ ul.inline > li, ol.inline > li {
 }
 
 /*--- SUBSCRIPTIONS LIST ----*/
-#minor-container{
-	padding: 0 20px 0 20px;
+#list-feeds {
+	padding: 0 20px;
 }
 
 ul {
