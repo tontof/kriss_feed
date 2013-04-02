@@ -670,9 +670,13 @@ class Feed
             $time = $item['time'];
             if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
                 // Today
-                $item['time'] = array('list' => utf8_encode(strftime('%R %p', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
             } else {
-                $item['time'] = array('list' => utf8_encode(strftime('%b %e, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));                
+                if (strftime('%Y', $time) == strftime('%Y', time())) {
+                    $item['time'] = array('list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                } else {
+                    $item['time'] = array('list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                }
             }
             if (isset($this->_data['items'][$itemHash])) {
                 $item['read'] = $this->_data['items'][$itemHash][1];
