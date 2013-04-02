@@ -47,6 +47,7 @@
     </dl>
     <?php } ?>
 
+    <div class="clear"></div>
     <div id="item-div-<?php echo $itemHash; ?>" class="item collapse<?php echo (($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open'])))?' in well':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
@@ -71,9 +72,12 @@
         </a>
       </div>
       <div class="clear"></div>
-      <div class="item-content"><article>
-        <?php echo $item['content']; ?>
-      </article></div>
+      <div class="item-content">
+        <article>
+          <?php echo $item['content']; ?>
+        </article>
+      </div>
+      <div class="clear"></div>
       <div class="item-info-end">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
@@ -88,3 +92,4 @@
   </li>
   <?php } ?>
 </ul>
+<div class="clear"></div>
