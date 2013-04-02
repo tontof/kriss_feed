@@ -5558,15 +5558,17 @@ dl {
   }
 
   function markAsItem(itemHash) {
-    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder;
+    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder, addRead = 1;
 
     item = getItem(itemHash);
 
     if (item !== null) {
       unreadLabelItems = getUnreadLabelItems(itemHash);
-
+      if (!hasClass(item, 'read')) {
+        addRead = -1;
+      }
       for (i = 0; i < unreadLabelItems.length; i += 1) {
-        nb = addToUnreadLabel(unreadLabelItems[i], -1);
+        nb = addToUnreadLabel(unreadLabelItems[i], addRead);
         if (nb === 0) {
           feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
           removeClass(feed, 'has-unread');
@@ -5575,12 +5577,12 @@ dl {
           }
         }
         folder = getLiParentByClassName(unreadLabelItems[i], 'folder');
-        nb = addToUnreadLabel(getUnreadLabel(folder), -1);
+        nb = addToUnreadLabel(getUnreadLabel(folder), addRead);
         if (nb === 0 && autohide) {
           addClass(folder, 'autohide-folder');
         }
       }
-      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), -1);
+      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), addRead);
 
       if (hasClass(item, 'read')) {
         url = '?unread=' + itemHash;
@@ -5633,12 +5635,10 @@ dl {
 
   function markAsRead(itemHash) {
     setNbUnread(currentUnread - 1);
-
   }
 
   function markAsUnread(itemHash) {
     setNbUnread(currentUnread + 1);
-
   }
 
   function loadDivItem(itemHash) {
@@ -9061,13 +9061,13 @@ if (isset($_GET['login'])) {
     }
     if (isset($_GET['read'])) {
         $needSave = $kf->mark($_GET['read'], 1);
-        if ($needSave) {
+        if ($needSave && $kfc->isLogged()) {
             $result['read'] = $_GET['read'];
         }
     }
     if (isset($_GET['unread'])) {
         $needSave = $kf->mark($_GET['unread'], 0);
-        if ($needSave) {
+        if ($needSave && $kfc->isLogged()) {
             $result['unread'] = $_GET['unread'];
         }
     }

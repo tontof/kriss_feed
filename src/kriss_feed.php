@@ -177,13 +177,13 @@ if (isset($_GET['login'])) {
     }
     if (isset($_GET['read'])) {
         $needSave = $kf->mark($_GET['read'], 1);
-        if ($needSave) {
+        if ($needSave && $kfc->isLogged()) {
             $result['read'] = $_GET['read'];
         }
     }
     if (isset($_GET['unread'])) {
         $needSave = $kf->mark($_GET['unread'], 0);
-        if ($needSave) {
+        if ($needSave && $kfc->isLogged()) {
             $result['unread'] = $_GET['unread'];
         }
     }
