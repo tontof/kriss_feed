@@ -502,8 +502,8 @@ dd {
     clear: both;
   }
 
-  li.feed, li.folder {
-    margin: 15px 0;
+  li.feed, li.folder > h4,  li.folder > h5{
+    padding: 10px 0;
   }
   .row-fluid .span12,
   .row-fluid .span9,
