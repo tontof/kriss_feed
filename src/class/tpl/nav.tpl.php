@@ -6,6 +6,7 @@
       <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse">
         menu
       </a>
+
       <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
         <span class="ico-navbar">
           <span class="ico">
@@ -21,6 +22,7 @@
         <?php echo $currentHashView ?>
       </span>
       <?php } ?>
+
       <div id="menu-collapse" class="nav-collapse collapse">
         <ul class="nav">
           <?php
@@ -352,7 +354,9 @@
              }
              ?>
         </ul>
+        <div class="clear"></div>
       </div>
+      <div class="clear"></div>
     </div>
   </div>
 </div>
