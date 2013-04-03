@@ -818,11 +818,13 @@
       '</div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
+      item['time']['expanded'] +
+      '</div>' +
+      '<div class="item-info-end">' +
       'from <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
       '</a> ' +
-      item['time']['expanded'] +
-      ' <a class="item-xml" href="' + item['xmlUrl'] + '">' +
+      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
       '<span class="ico">' +
       '<span class="ico-feed-dot"></span>' +
       '<span class="ico-feed-circle-1"></span>' +
@@ -834,6 +836,7 @@
       '<div class="item-content"><article>' +
       item['content'] +
       '</article></div>' +
+      '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
@@ -864,7 +867,7 @@
       '<dt class="item-feed">' +
       (addFavicon?
       '<span class="item-favicon">' +
-      '<img src="' + item['favicon'] + '" height="16px" width="16px" title="favicon" alt="favicon"/>' +
+      '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
       '</span>':'' ) +
       '<span class="item-author">' +
       '<a class="item-feed" href="?currentHash=' + item['itemHash'].substring(0, 6) + '">' +
@@ -885,7 +888,8 @@
       '</a> ' +
       '</span>' +
       '</dd>' +
-      '</dl>';
+      '</dl>' +
+      '<div class="clear"></div>';
 
     initCollapse(li.getElementsByTagName('a'));
     initLinkItems(li.getElementsByTagName('a'));

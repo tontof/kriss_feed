@@ -18,7 +18,7 @@
       <dt class="item-feed">
         <?php if ($addFavicon) { ?>
         <span class="item-favicon">
-          <img src="<?php echo $item['favicon']; ?>" height="16px" width="16px" title="favicon" alt="favicon"/>
+          <img src="<?php echo $item['favicon']; ?>" height="16" width="16" title="favicon" alt="favicon"/>
         </span>
         <?php } ?>
         <span class="item-author">
@@ -45,9 +45,9 @@
         </span>
       </dd>
     </dl>
+    <div class="clear"></div>
     <?php } ?>
 
-    <div class="clear"></div>
     <div id="item-div-<?php echo $itemHash; ?>" class="item collapse<?php echo (($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open'])))?' in well':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
@@ -61,8 +61,10 @@
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
-        from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
         <?php echo $item['time']['expanded']; ?>
+      </div>
+      <div class="item-info-end">
+        from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
         <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
           <span class="ico">
             <span class="ico-feed-dot"></span>
