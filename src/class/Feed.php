@@ -702,6 +702,12 @@ class Feed
             $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
+            
+            if (isset($this->_data['items'][$itemHash]['starred'])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
 
             return $item;
@@ -1536,6 +1542,31 @@ class Feed
     }
 
     /**
+     * Mark an item as $starred
+     *
+     * @param string  $itemHash
+     * @param integer $starred
+     *
+     * @return boolean true if modified false otherwise
+     */
+    public function markItemAsStarred($itemHash, $starred) {
+        $save = false;
+        if (isset($this->_data['items'][$itemHash])) {
+            if (!isset($this->_data['items'][$itemHash]['starred']) && $starred == 1){
+                $save = true;
+                $this->_data['items'][$itemHash]['starred'] = $starred;
+            }elseif($this->_data['items'][$itemHash]['starred'] != $starred) {
+                $save = true;
+                $this->_data['items'][$itemHash]['starred'] = $starred;
+            }
+            if ($this->_data['items'][$itemHash]['starred'] == 0){
+                unset($this->_data['items'][$itemHash]['starred']);
+            }
+        }
+        return $save;
+    }
+
+    /**
      * Mark list of feeds as $read
      *
      * @param string  $feedsHash
@@ -1617,6 +1648,9 @@ class Feed
 
         return false;
     }
+
+        
+    
 
     /**
      * Get type of a hash : item, feed, folder or ''

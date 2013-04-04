@@ -114,6 +114,18 @@ class FeedPage
     }
 
     /**
+     * starsTpl
+     * 
+     */
+    public static function starsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/stars.tpl.php"); ?>
+<?php
+    }
+
+    /**
      * addFeedTpl : Add a new feed
      * 
      */
@@ -198,7 +210,19 @@ class FeedPage
     }
 
     /**
-     * listFeedsTpl : list feeds ul
+     * listStarredFeedsTpl : list starred feeds ul
+     * 
+     */
+    public static function listStarredFeedsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/list_starred_feeds.tpl.php"); ?>
+<?php
+    }
+
+    /**
+     * listItemsTpl : list items
      * 
      */
     public static function listItemsTpl()
@@ -206,6 +230,18 @@ class FeedPage
         extract(FeedPage::$var);
 ?>
 <?php include("tpl/list_items.tpl.php"); ?>
+<?php
+    }
+
+    /**
+     * listStarredItemsTpl : list starred items
+     * 
+     */
+    public static function listStarredItemsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/list_starred_items.tpl.php"); ?>
 <?php
     }
 
