@@ -194,6 +194,9 @@ class Feed
     public function getFeed($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
+            // Fix problem of version 6 &amp;amp;
+            $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
+            $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
             return $this->_data['feeds'][$feedHash];
         }
 
