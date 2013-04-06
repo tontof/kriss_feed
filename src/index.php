@@ -7241,7 +7241,7 @@ class Session
         file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
     }
 
-    function banLoginOk()
+    public static function banLoginOk()
     {
         $ip = $_SERVER["REMOTE_ADDR"];
         $gb = $GLOBALS['IPBANS'];
@@ -7250,7 +7250,7 @@ class Session
         file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
     }
 
-    function banCanLogin()
+    public static function banCanLogin()
     {
         $ip = $_SERVER["REMOTE_ADDR"];
         $gb = $GLOBALS['IPBANS'];

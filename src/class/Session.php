@@ -123,7 +123,7 @@ class Session
     /**
      * Signals a successful login. Resets failed login counter.
      */
-    function banLoginOk()
+    public static function banLoginOk()
     {
         $ip = $_SERVER["REMOTE_ADDR"];
         $gb = $GLOBALS['IPBANS'];
@@ -135,7 +135,7 @@ class Session
     /**
      * Checks if the user CAN login. If 'true', the user can try to login.
      */
-    function banCanLogin()
+    public static function banCanLogin()
     {
         $ip = $_SERVER["REMOTE_ADDR"];
         $gb = $GLOBALS['IPBANS'];
