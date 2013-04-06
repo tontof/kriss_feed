@@ -213,7 +213,7 @@ class Feed
         $url = 'http://getfavicon.appspot.com/'.$htmlUrl.'?defaulticon=bluepng';
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
-        if ($this->kfc->isLogged()) {
+        if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
             MyTool::grabToLocal($url, $file);
         }
 
