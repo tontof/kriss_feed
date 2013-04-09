@@ -706,6 +706,9 @@ class Feed
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+            // Fix problem of version 6 &amp;amp;
+            $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
+
 
             return $item;
         }

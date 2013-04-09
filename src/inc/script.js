@@ -838,6 +838,7 @@
       '</article></div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
       (view=='list'?

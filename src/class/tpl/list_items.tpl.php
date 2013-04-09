@@ -81,6 +81,7 @@
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
+        <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
         <a class="item-mark-as" class="link-mark" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>

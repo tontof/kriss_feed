@@ -496,7 +496,9 @@ dd {
     border-radius: 10px !important;
   }
 
-  .item-shaarli > .label, .item-mark-as > .label {
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-mark-as > .label {
     display: block;
     float: left;
     margin: 5px;
