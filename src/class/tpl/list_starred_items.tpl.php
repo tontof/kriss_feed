@@ -1,9 +1,9 @@
 <ul id="list-items" class="unstyled">
   <?php
      foreach (array_keys($items) as $itemHash){
-     $item = $kf->getItem($itemHash);
+     $item = $ks->getItem($itemHash);
   ?>
-  <li id="item-<?php echo $itemHash; ?>" class="<?php echo ($view==='expanded'?'item-expanded':'item-list'); ?><?php echo ($item['read']==1?' read':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
+  <li id="item-<?php echo $itemHash; ?>" class="<?php echo ($view==='expanded'?'item-expanded':'item-list'); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
 
     <?php if ($view==='list') { ?>
     <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
@@ -29,10 +29,11 @@
       </dt>
       <dd class="item-info">
         <span class="item-title">
-          <?php if ($item['read'] == 1) { ?>
-          <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label">unread</span></a>
+     <?php 
+     if (isset($item['starred'])) { ?>
+          <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
           <?php } else { ?>
-          <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
+          <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
           <?php } ?>
           <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
             <?php echo $item['title']; ?>
@@ -52,12 +53,8 @@
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label">share</span></a>
-        <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
-        <?php } else { ?>
-        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
-        <?php }
-     if (isset($item['starred']) && $item['starred']===1) { ?>
+        <?php
+        if ($item['starred'] == 1) { ?>
         <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
         <?php } else { ?>
         <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
@@ -87,13 +84,9 @@
       <div class="clear"></div>
       <div class="item-info-end">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
-        <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" class="link-mark" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
-        <?php } else { ?>
-        <a class="item-mark-as" class="link-mark" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
-        <?php }
-     if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
+        <?php
+        if ($item['starred'] == 1) { ?>
+        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
         <?php } else { ?>
         <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
         <?php }?>

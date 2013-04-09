@@ -27,6 +27,7 @@
         <ul class="nav">
           <?php
              switch($template) {
+             case 'stars':
              case 'index':
              ?>
           <?php foreach(array_keys($menu) as $menuOpt) { ?>
@@ -278,6 +279,14 @@
             </a>
           </li>
           <?php break; ?>
+          <?php case 'menuStars': 
+             if($template === 'index'){
+             ?>
+          <li>
+            <a href="<?php echo $query.'stars'; ?>" title="Show starred items">Starred Items</a>
+          </li>
+          <?php }
+             break; ?>
           <?php default: ?>
           <?php break; ?>
           <?php } ?>
