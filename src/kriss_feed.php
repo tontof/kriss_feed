@@ -8,6 +8,7 @@ define('CACHE_DIR', DATA_DIR.'/cache');
 define('FAVICON_DIR', INC_DIR.'/favicon');
 
 define('DATA_FILE', DATA_DIR.'/data.php');
+define('STAR_FILE', DATA_DIR.'/star.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
@@ -81,6 +82,7 @@ if (!empty($_POST)) {
 
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
+$ks = new Star(STAR_FILE, $kfc);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
@@ -169,10 +171,16 @@ if (isset($_GET['login'])) {
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
     $kf->loadData();
+    $ks->loadStars();
     $needSave = false;
+    $needStarSave = false;
     $result = array();
     if (isset($_GET['current'])) {
-        $result['item'] = $kf->getItem($_GET['current'], false);
+        if (isset($_GET['stars'])) {
+            $result['item'] = $ks->getItem($_GET['current'], false);
+        }else{
+            $result['item'] = $kf->getItem($_GET['current'], false);
+        }
         $result['item']['itemHash'] = $_GET['current'];
     }
     if (isset($_GET['read'])) {
@@ -187,11 +195,34 @@ if (isset($_GET['login'])) {
             $result['unread'] = $_GET['unread'];
         }
     }
+    if (isset($_GET['starred'])) {
+        $needSave = $kf->markItemAsStarred($_GET['starred'], 1);
+        if ($needSave) {
+            $result['starred'] = $_GET['starred'];
+        }
+        $needStarSave = $ks->markItem($_GET['starred'], 1);
+    }
+    if (isset($_GET['unstarred'])) {
+        $hash = $_GET['unstarred'];
+        $item = $kf->getItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+        $folders = $kf->getFolders();
+
+        $needSave = $kf->markItemAsStarred($_GET['unstarred'], 0);
+        if ($needSave) {
+            $result['unstarred'] = $_GET['unstarred'];
+        }
+        $needStarSave = $ks->markItem($hash, $item, $feed, $folders, 0);
+    }
     if (isset($_GET['toggleFolder'])) {
         $needSave = $kf->toggleFolder($_GET['toggleFolder']);
     }
     if (isset($_GET['page'])) {
-        $listItems = $kf->getItems($currentHash, $filter);
+        if (isset($_GET['stars'])) {
+            $listItems = $ks->getItems($currentHash, $filter);
+        }else{
+            $listItems = $kf->getItems($currentHash, $filter);
+        }
         $currentPage = $_GET['page'];
         $index = ($currentPage - 1) * $byPage;
         $results = array_slice($listItems, $index, $byPage + 1, true);
@@ -205,7 +236,11 @@ if (isset($_GET['login'])) {
         }
         $i = 0;
         foreach(array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
-            $result['page'][$i] = $kf->getItem($itemHash, false);
+            if (isset($_GET['stars'])) {
+                $result['page'][$i] = $ks->getItem($itemHash, false);
+            }else{
+                $result['page'][$i] = $kf->getItem($itemHash, false);
+            }
             $result['page'][$i]['read'] = $item[1];
             $i++;
         }
@@ -236,6 +271,9 @@ if (isset($_GET['login'])) {
     }
     if ($needSave) {
         $kf->writeData();
+    }
+    if ($needStarSave) {
+        $ks->writeStars();
     }
     MyTool::renderJson($result);
 } elseif (isset($_GET['help']) && ($kfc->isLogged() || $kfc->visibility === 'protected')) {
@@ -406,11 +444,17 @@ if (isset($_GET['login'])) {
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
-    if (isset($_GET['toggleFolder'])) {
+    $ks->loadStars();
+    if (isset($_GET['stars'])) {
+        $ks->toggleFolder($_GET['toggleFolder']);
+        $ks->writeStars();
+        $query = '?stars';
+    }else{
         $kf->toggleFolder($_GET['toggleFolder']);
+        $kf->writeData();
+        $query = '';
     }
-    $kf->writeData();
-    MyTool::redirect();
+    MyTool::redirect($query);
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))
           && $kfc->isLogged()) {
@@ -430,18 +474,146 @@ if (isset($_GET['login'])) {
     if ($needSave) {
         $kf->writeData();
     }
+    if (isset($_GET['stars'])) {
+        $queryStar = 'stars&';
+    }
 
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     if ($type === 'item') {
-        MyTool::redirect($query.'current='.$hash);
+        $query = $query.$queryStar.'current='.$hash;
     } else {
         if ($filter === 'unread' && $read === 1) {
-            MyTool::redirect('?');
+            $query = '?'.$queryStar;
         } else {
-            MyTool::redirect($query);
+            $query = $query.$queryStar;
         }
     }
+    MyTool::redirect($query);
+    
+} elseif ((isset($_GET['starred'])
+           || isset($_GET['unstarred']))
+          && $kfc->isLogged()) {
+    // mark all as starred : item, feed, folder, all
+    $kf->loadData();
+    $ks->loadStars();
+    $starred = 1;
+    if (isset($_GET['starred'])) {
+        $hash = $_GET['starred'];
+        $starred = 1;
+    } else {
+        $hash = $_GET['unstarred'];
+        $starred = 0;
+    }
+    $needSave = $kf->markItemAsStarred($hash, $starred);
+    if ($needSave) {
+        $kf->writeData();
+    }
+    $item = $kf->getItem($hash, false);
+    $feed = $kf->getFeed(substr($hash, 0, 6));
+    $folders = $kf->getFolders();
+    $needStarSave = $ks->markItem($hash, $item, $feed, $folders, $starred);
+    if ($needStarSave) {
+        $ks->writeStars();
+    }
+
+    // type : 'feed', 'folder', 'all', 'item'
+    $type = $kf->hashType($hash);
+    if (isset($_GET['stars'])) {
+        $query = $query."stars&";
+    }
+    if ($type === 'item') {
+        MyTool::redirect($query.'current='.$hash);
+    }
+} elseif (isset($_GET['stars'])&&(($kfc->isLogged() || $kfc->public))) {
+    $ks->loadStars();
+    $listItems = $ks->getItems($currentHash, $filter);
+    $listHash = array_keys($listItems);
+    $currentItemHash = '';
+    if (isset($_GET['current']) && !empty($_GET['current'])) {
+        $currentItemHash = $_GET['current'];
+    }
+    if (isset($_GET['next']) && !empty($_GET['next'])) {
+        $currentItemHash = $_GET['next'];
+    }
+    if (isset($_GET['previous']) && !empty($_GET['previous'])) {
+        $currentItemHash = $_GET['previous'];
+    }
+    if (empty($currentItemHash)) {
+        $currentPage = $kfc->getCurrentPage();
+        $index = ($currentPage - 1) * $byPage;
+    } else {
+        $index = array_search($currentItemHash, $listHash);
+        if (isset($_GET['next'])) {
+            if ($index < count($listHash)-1) {
+                $index++;
+            } 
+        }
+        
+        if (isset($_GET['previous'])) {
+            if ($index > 0) {
+                $index--;
+            }
+        }
+    }
+
+    if ($index < count($listHash)) {
+        $currentItemHash = $listHash[$index];
+    } else {
+        $index = count($listHash) - 1;
+    }
+    
+    // pagination
+    $currentPage = (int) ($index/$byPage)+1;
+    if ($currentPage <= 0) {
+        $currentPage = 1;
+    }
+    $begin = ($currentPage - 1) * $byPage;
+    $maxPage = (count($listItems) <= $byPage) ? '1' : ceil(count($listItems) / $byPage);
+    $nbItems = count($listItems);
+    
+    // list items
+    $listItems = array_slice($listItems, $begin, $byPage, true);
+    
+    // type : 'feed', 'folder', 'all', 'item'
+    $currentHashType = $kf->hashType($currentHash);
+    $hashView = '';
+    switch($currentHashType){
+    case 'all':
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    case 'feed':
+        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    case 'folder':
+        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    default:
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    }
+    
+    $menu = $kfc->getMenu();
+    $paging = $kfc->getPaging();
+    $query = $query . "stars&amp;";
+    $pb->assign('query', $query);
+    $pb->assign('menu',  $menu);
+    $pb->assign('paging',  $paging);
+    $pb->assign('currentHashType', $currentHashType);
+    $pb->assign('currentHashView', $hashView);
+    $pb->assign('currentPage',  (int) $currentPage);
+    $pb->assign('maxPage', (int) $maxPage);
+    $pb->assign('currentItemHash', $currentItemHash);
+    $pb->assign('nbItems', $nbItems);
+    $pb->assign('items', $listItems);
+    if ($listFeeds == 'show') {
+        $pb->assign('feedsView', $ks->getFeedsView());
+    }
+
+    $pb->assign('items', $listItems);
+    $pb->assign('ks', $ks);
+    $pb->assign('pagetitle', 'Starred items');
+    $pb->renderPage('stars');
 } elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
@@ -449,8 +621,8 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'edit');
     
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
-// type : 'feed', 'folder', 'all', 'item'
-$type = $kf->hashType($currentHash);
+    // type : 'feed', 'folder', 'all', 'item'
+    $type = $kf->hashType($currentHash);
     $type = $kf->hashType($hash);
     switch($type) {
     case 'feed':
@@ -611,6 +783,7 @@ $type = $kf->hashType($currentHash);
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
+        $ks->loadStars();
         if ($kf->updateItems()) {
             $kf->writeData();
         }

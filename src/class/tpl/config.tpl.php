@@ -269,6 +269,13 @@
                     </div>
                   </div>
                   <div class="control-group">
+                    <label class="control-label" for="menuStarred">Starred</label>
+                    <div class="controls">
+                      <input type="text" id="menuStarred" name="menuStarred" value="<?php echo empty($kfcmenu['menuStarred'])?'0':$kfcmenu['menuStarred']; ?>">
+                      <span class="help-block">If you want to add a link to the starred items</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
                       <input class="btn" type="submit" name="save" value="Save" />

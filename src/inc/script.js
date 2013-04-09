@@ -16,6 +16,7 @@
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      stars = false, // data-stars
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -637,7 +638,6 @@
    */
   function loadDivItem(itemHash) {
     var element, url, client, cacheItem;
-
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
@@ -1734,6 +1734,10 @@
       addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
       addFavicon = (addFavicon === 1)?true:false;
     }
+    if (elementIndex.hasAttribute('data-stars')) {
+      stars = true;
+    }
+
 
     status = document.getElementById('status').innerHTML;
   }
