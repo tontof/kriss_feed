@@ -840,11 +840,18 @@
       '<div class="item-info-end">' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
+      (view=='list'?
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '</span>' +
+      '</a>':'') +
       '</div>' +
       '<div class="clear"></div>';
 
     initLinkItems(div.getElementsByTagName('a'));
-
+    initCollapse(div.getElementsByTagName('a'));
     anonymize(div);
   }
 
