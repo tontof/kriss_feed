@@ -908,6 +908,10 @@ ol.inline > li {
   padding-left: 5px;
 }
 
+li.feed {
+  margin-left: 4px;
+}
+
 li.feed:hover {
   background-color: #eee;
 }

@@ -296,6 +296,10 @@ ol.inline > li {
 /**
  * List of feeds
  */
+li.feed {
+  margin-left: 4px;
+}
+
 li.feed:hover {
   background-color: #eee;
 }
