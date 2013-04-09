@@ -1105,7 +1105,9 @@ dd {
     border-radius: 10px !important;
   }
 
-  .item-shaarli > .label, .item-mark-as > .label {
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-mark-as > .label {
     display: block;
     float: left;
     margin: 5px;
@@ -3329,6 +3331,7 @@ dd {
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
+        <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
         <a class="item-mark-as" class="link-mark" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
@@ -4250,6 +4253,7 @@ dd {
       '</article></div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
       (view=='list'?
@@ -5751,6 +5755,9 @@ class Feed
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+            // Fix problem of version 6 &amp;amp;
+            $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
+
 
             return $item;
         }
