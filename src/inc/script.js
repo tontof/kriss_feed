@@ -1735,7 +1735,8 @@
       addFavicon = (addFavicon === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-stars')) {
-      stars = true;
+      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
+      stars = (stars === 1)?true:false;
     }
 
 
@@ -1760,7 +1761,9 @@
     initLinkItems(listLinkItems);
 
     initListItemsHash();
-    initListItems();
+    if (!stars) {
+      initListItems();
+    }
     initUnread();
 
     initItemButton();
@@ -1771,7 +1774,7 @@
     addEvent(window, 'keydown', checkKey);
     addEvent(window, 'touchstart', checkMove);
 
-    if (autoupdate) {
+    if (autoupdate && !stars) {
       initUpdate();
     }
 
