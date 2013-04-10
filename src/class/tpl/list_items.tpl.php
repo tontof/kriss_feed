@@ -56,8 +56,8 @@
         <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
-        <?php }
-     if (isset($item['starred']) && $item['starred']===1) { ?>
+        <?php } ?>
+        <?php if (isset($item['starred']) && $item['starred']===1) { ?>
         <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
         <?php } else { ?>
         <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
