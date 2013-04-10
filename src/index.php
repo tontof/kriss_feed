@@ -3306,14 +3306,19 @@ dd {
         <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
-        <?php } ?>
+        <?php }
+     if (isset($item['starred']) && $item['starred']===1) { ?>
+        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
+        <?php } else { ?>
+        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
+        <?php }?>
         <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
       <div class="clear"></div>
-      <div class="item-info-end">
+      <div class="item-info-end item-info-time">
         <?php echo $item['time']['expanded']; ?>
       </div>
-      <div class="item-info-end">
+      <div class="item-info-end item-info-author">
         from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
         <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
           <span class="ico">
@@ -3338,6 +3343,11 @@ dd {
         <?php } else { ?>
         <a class="item-mark-as" class="link-mark" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
         <?php } ?>
+        <?php if (isset($item['starred']) && $item['starred']===1) { ?>
+        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
+        <?php } else { ?>
+        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
+        <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
           <span class="ico ico-toggle-item">
@@ -3478,6 +3488,7 @@ dd {
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      stars = false, // data-stars
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -4055,7 +4066,6 @@ dd {
 
   function loadDivItem(itemHash) {
     var element, url, client, cacheItem;
-
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
@@ -4232,10 +4242,10 @@ dd {
       '</a>' +
       '</div>' +
       '<div class="clear"></div>' +
-      '<div class="item-info-end">' +
+      '<div class="item-info-end item-info-time">' +
       item['time']['expanded'] +
       '</div>' +
-      '<div class="item-info-end">' +
+      '<div class="item-info-end item-info-authors">' +
       'from <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
       '</a> ' +
@@ -5145,6 +5155,11 @@ dd {
       addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
       addFavicon = (addFavicon === 1)?true:false;
     }
+    if (elementIndex.hasAttribute('data-stars')) {
+      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
+      stars = (stars === 1)?true:false;
+    }
+
 
     status = document.getElementById('status').innerHTML;
   }
@@ -5167,7 +5182,9 @@ dd {
     initLinkItems(listLinkItems);
 
     initListItemsHash();
-    initListItems();
+    if (!stars) {
+      initListItems();
+    }
     initUnread();
 
     initItemButton();
@@ -5178,7 +5195,7 @@ dd {
     addEvent(window, 'keydown', checkKey);
     addEvent(window, 'touchstart', checkMove);
 
-    if (autoupdate) {
+    if (autoupdate && !stars) {
       initUpdate();
     }
 

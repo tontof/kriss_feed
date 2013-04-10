@@ -16,6 +16,7 @@
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      stars = false, // data-stars
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -637,7 +638,6 @@
    */
   function loadDivItem(itemHash) {
     var element, url, client, cacheItem;
-
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
@@ -817,10 +817,10 @@
       '</a>' +
       '</div>' +
       '<div class="clear"></div>' +
-      '<div class="item-info-end">' +
+      '<div class="item-info-end item-info-time">' +
       item['time']['expanded'] +
       '</div>' +
-      '<div class="item-info-end">' +
+      '<div class="item-info-end item-info-authors">' +
       'from <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
       '</a> ' +
@@ -1742,6 +1742,11 @@
       addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
       addFavicon = (addFavicon === 1)?true:false;
     }
+    if (elementIndex.hasAttribute('data-stars')) {
+      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
+      stars = (stars === 1)?true:false;
+    }
+
 
     status = document.getElementById('status').innerHTML;
   }
@@ -1764,7 +1769,9 @@
     initLinkItems(listLinkItems);
 
     initListItemsHash();
-    initListItems();
+    if (!stars) {
+      initListItems();
+    }
     initUnread();
 
     initItemButton();
@@ -1775,7 +1782,7 @@
     addEvent(window, 'keydown', checkKey);
     addEvent(window, 'touchstart', checkMove);
 
-    if (autoupdate) {
+    if (autoupdate && !stars) {
       initUpdate();
     }
 
