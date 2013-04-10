@@ -1,0 +1,200 @@
+a:hover {
+  text-decoration: none;
+}
+
+.collapse {
+  #display: none;
+  height: 0;
+}
+
+.collapse.in {
+  height: inherit;
+}
+
+.row-fluid .span9 {
+  width: 80%;
+}
+
+.row-fluid .span3 {
+  width: 20%;
+}
+
+.well {
+  display: block;
+  border: 1px solid #DDD;
+  box-shadow: 0 0 4px #E3E5EB;
+  margin: 5px 10px 15px 0;
+  background-color: #FFF;
+  z-index: 1000;
+  position: relative;
+  border-radius: 0;
+  padding: 0;
+}
+
+.navbar {
+  margin: 5px 10px 15px 0;
+  border: 1px solid #DDD;
+  box-shadow: 0 0 4px #E3E5EB;
+  background-color: #FFF;
+  border-radius: 0px;
+}
+
+.btn, button {
+  border: 1px solid #DCDCDC;
+  background-color: #F5F5F5;
+  border-radius: 2px 2px 2px 2px;
+  margin: 0 5px;
+  color: #999999;
+  background-image: -moz-linear-gradient(center top , #F5F5F5, #F1F1F1);
+}
+
+.btn:hover {
+  border: 1px solid #444444;
+  color: #444444;
+  background-image: -moz-linear-gradient(center top , #F8F8F8, #F1F1F1);
+
+}
+
+li.feed {
+  padding: 5px 5px 0px 30px;
+  font-size: 80%;
+  margin: 0;
+}
+
+li.feed.has-unread  a{
+  color: #000;
+}
+
+li.feed.has-unread  a:hover{
+  color: #000;
+}
+
+.item-favicon {
+  display: inline-block;
+}
+
+.item-author {
+  display: block;
+  padding-left: 20px;
+  text-align: left;
+}
+
+li.folder > h4 {
+  border: none;
+  border-radius: 0px;
+  padding: 2px;
+  margin: 5px 5px 0px 5px;
+}
+
+li.folder > h5 {
+  border: none;
+  border-radius: 0px;
+  padding: 2px;
+  margin: 5px 5px 0px 5px;
+}
+
+li.item-list {
+  vertical-align: bottom;
+  line-height: 26px;
+  padding: 5px 0;
+}
+
+.current {
+  border-left-color: #4D90F0;
+}
+
+.current, .current-feed, .current-folder > h5, .current-folder > h4 {
+  background-color: #FFF;
+}
+
+.current .item-title {
+  font-weight: bold;
+}
+
+.item-title {
+  font-weight: bold;
+  padding: 20px 20px 10px 20px;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.item-title a {
+  margin: 0;
+  display: inline-block;
+}
+
+dl {
+  height: 26px;
+  line-height: 26px;
+}
+
+.dl-horizontal dt {
+  width: 15%;
+  line-height: 26px;
+}
+
+.dl-horizontal dd {
+  padding: 0;
+  line-height: 26px;
+  margin-left: inherit;
+}
+
+.dl-horizontal .item-title {
+  padding: 0 5px;
+}
+
+.item-link {
+  padding: 0 10px;
+}
+
+.dl-horizontal .item-link {
+  padding: 0px;
+}
+
+.item-toggle-plus {
+  line-height: 26px;
+  height: 26px;
+  padding: 0;
+  margin: 0;
+}
+
+.item-content {
+  padding: 0 20px;
+  text-align: justify;
+}
+
+.item-info-end {
+  float: none;
+  background-color: #FAFAFA;
+  border-top: 1px solid #EBEBEB;
+  padding: 15px 20px;
+  text-align: right;
+}
+
+.item-info-time, .item-info-author, .item-info-authors {
+  float: left;
+  padding: 0 20px;
+  background: none;
+  border: none;
+  font-size: 80%;
+  height: 26px;
+  line-height: 26px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.item-info-author, .item-info-authors {
+  padding: 0px;
+}
+
+.label,
+.badge {
+  margin: 0px;
+}
+
+@media (min-width: 768px) {
+  .nav-collapse.collapse {
+    display: block;
+  }
+}
+
