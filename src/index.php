@@ -1105,7 +1105,9 @@ dd {
     border-radius: 10px !important;
   }
 
-  .item-shaarli > .label, .item-mark-as > .label {
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-mark-as > .label {
     display: block;
     float: left;
     margin: 5px;
@@ -3329,11 +3331,20 @@ dd {
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
+        <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php if ($item['read'] == 1) { ?>
         <a class="item-mark-as" class="link-mark" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
         <?php } else { ?>
         <a class="item-mark-as" class="link-mark" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
+        <?php } ?>
+        <?php if ($view==='list') { ?>
+        <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
+          <span class="ico ico-toggle-item">
+            <span class="ico-b-disc"></span>
+            <span class="ico-w-line-h"></span>
+          </span>
+        </a>
         <?php } ?>
       </div>
       <div class="clear"></div>
@@ -4242,13 +4253,21 @@ dd {
       '</article></div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
+      (view=='list'?
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '</span>' +
+      '</a>':'') +
       '</div>' +
       '<div class="clear"></div>';
 
     initLinkItems(div.getElementsByTagName('a'));
-
+    initCollapse(div.getElementsByTagName('a'));
     anonymize(div);
   }
 
@@ -5736,6 +5755,9 @@ class Feed
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+            // Fix problem of version 6 &amp;amp;
+            $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
+
 
             return $item;
         }
