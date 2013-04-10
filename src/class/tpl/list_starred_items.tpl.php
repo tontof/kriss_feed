@@ -86,9 +86,9 @@
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
         <?php
         if ($item['starred'] == 1) { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
+        <a class="item-mark-as-star" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
         <?php } else { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
+        <a class="item-mark-as-star" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
         <?php }?>
       </div>
       <div class="clear"></div>

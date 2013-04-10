@@ -96,13 +96,16 @@ $filter =  $kfc->filter;
 // newerFirst or olderFirst
 $order =  $kfc->order;
 // number of item by page
-$byPage = $kfc->getByPage();
+$byPage = $kfc->byPage;
 // Hash : 'all', feed hash or folder hash
 $currentHash = $kfc->getCurrentHash();
 // Query
 $query = '?';
+if (isset($_GET['stars'])) {
+    $query .= 'stars&';
+}
 if (!empty($currentHash) and $currentHash !== 'all') {
-    $query = '?currentHash='.$currentHash.'&amp;';
+    $query .= 'currentHash='.$currentHash.'&';
 }
 
 $pb->assign('view', $view);
@@ -111,7 +114,7 @@ $pb->assign('filter', $filter);
 $pb->assign('order', $order);
 $pb->assign('byPage', $byPage);
 $pb->assign('currentHash', $currentHash);
-$pb->assign('query', $query);
+$pb->assign('query', htmlspecialchars($query));
 $pb->assign('redirector', $kfc->redirector);
 $pb->assign('shaarli', htmlspecialchars($kfc->shaarli));
 $pb->assign('autoreadItem', $kfc->autoreadItem);
@@ -443,16 +446,14 @@ if (isset($_GET['login'])) {
     
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
-    $kf->loadData();
-    $ks->loadStars();
     if (isset($_GET['stars'])) {
+        $ks->loadStars();
         $ks->toggleFolder($_GET['toggleFolder']);
         $ks->writeStars();
-        $query = '?stars';
-    }else{
+    } else {
+        $kf->loadData();
         $kf->toggleFolder($_GET['toggleFolder']);
         $kf->writeData();
-        $query = '';
     }
     MyTool::redirect($query);
 } elseif ((isset($_GET['read'])
@@ -474,23 +475,17 @@ if (isset($_GET['login'])) {
     if ($needSave) {
         $kf->writeData();
     }
-    if (isset($_GET['stars'])) {
-        $queryStar = 'stars&';
-    }
 
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     if ($type === 'item') {
-        $query = $query.$queryStar.'current='.$hash;
+        $query .= 'current='.$hash;
     } else {
         if ($filter === 'unread' && $read === 1) {
-            $query = '?'.$queryStar;
-        } else {
-            $query = $query.$queryStar;
+            $query = '?';
         }
     }
     MyTool::redirect($query);
-    
 } elseif ((isset($_GET['starred'])
            || isset($_GET['unstarred']))
           && $kfc->isLogged()) {
@@ -596,7 +591,7 @@ if (isset($_GET['login'])) {
     $menu = $kfc->getMenu();
     $paging = $kfc->getPaging();
     $query = $query . "stars&amp;";
-    $pb->assign('query', $query);
+    $pb->assign('query', htmlspecialchars($query));
     $pb->assign('menu',  $menu);
     $pb->assign('paging',  $paging);
     $pb->assign('currentHashType', $currentHashType);
