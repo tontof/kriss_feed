@@ -96,11 +96,29 @@ li.folder > h5 {
 li.item-list {
   vertical-align: bottom;
   line-height: 26px;
-  padding: 5px 0;
 }
 
 .current {
   border-left-color: #4D90F0;
+}
+
+.current dl{
+  border-left: 1px solid #4D90F0;
+  background-color: #FAFAFA;
+  box-shadow: 0 -2px 2px #E3E5EB;
+}
+
+.item-list .well {
+  border-top: none;
+  border-right: none;
+  box-shadow: 0 2px 2px #E3E5EB;
+  margin-top: 0;
+  margin-right: 0;
+  padding-top: 0;
+}
+
+.item-list  a.item-toggle {
+  padding: 5px;
 }
 
 .current, .current-feed, .current-folder > h5, .current-folder > h4 {
@@ -126,6 +144,7 @@ li.item-list {
 dl {
   height: 26px;
   line-height: 26px;
+  padding: 5px;
 }
 
 .dl-horizontal dt {
