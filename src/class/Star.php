@@ -53,14 +53,16 @@ class Star
                             )
                         )
                     );
+
                 return true;
             } else {
                 $this->_stars['feeds'] = array();
-                $this->_stars['folders'] = array();
                 $this->_stars['items'] = array();
+
                 return false;
             }
         }
+
         // stars already loaded
         return true;
     }
@@ -93,26 +95,13 @@ class Star
      */
     public function getFeedsView()
     {
-        $feedsView = array('all' => array('title' => 'All feeds', 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
+        $feedsView = array('all' => array('title' => 'All feeds', 'nbAll' => 0, 'feeds' => array()));
+
         foreach ($this->_stars['feeds'] as $feedHash => $feed) {
             $feedsView['all']['nbAll'] += $feed['nbAll'];
-            if (empty($feed['foldersHash'])) {
-                $feedsView['all']['feeds'][$feedHash] = $feed;
-            } else {
-                foreach ($feed['foldersHash'] as $folderHash) {
-                    $folder = $this->getFolder($folderHash);
-                    if ($folder !== false) {
-                        if (!isset($feedsView['folders'][$folderHash]['title'])) {
-                            $feedsView['folders'][$folderHash]['title'] = $folder['title'];
-                            $feedsView['folders'][$folderHash]['isOpen'] = $folder['isOpen'];
-                            $feedsView['folders'][$folderHash]['nbAll'] = 0;
-                        }
-                        $feedsView['folders'][$folderHash]['feeds'][$feedHash] = $feed;
-                        $feedsView['folders'][$folderHash]['nbAll'] += $feed['nbAll'];
-                    }
-                }
-            }
+            $feedsView['all']['feeds'][$feedHash] = $feed;
         }
+
         return $feedsView;
     }
 
@@ -137,40 +126,6 @@ class Star
         } else {
             return $url;
         }
-    }
-
-    /**
-     * Return folder from a given folder hash
-     *
-     * @param string $hash Hash corresponding to a folder
-     *
-     * @return array|false array of folder if exists, false otherwise
-     */
-    public function getFolder($folderHash)
-    {
-        if (isset($this->_stars['folders'][$folderHash])) {
-            return $this->_stars['folders'][$folderHash];
-        }
-        
-        return false;
-    }
-
-    /**
-     * Toggle isOpen folder to open or close a folder
-     *
-     * @param string $hash Hash corresponding to a folder
-     */
-    public function toggleFolder($hash)
-    {
-        if ($this->_stars['folders'][$hash]) {
-            $isOpen = $this->_stars['folders'][$hash]['isOpen'];
-            if ($isOpen) {
-                $this->_stars['folders'][$hash]['isOpen'] = 0;
-            } else {
-                $this->_stars['folders'][$hash]['isOpen'] = 1;
-            }
-        }
-        return true;
     }
 
     /**
@@ -205,26 +160,10 @@ class Star
                     $list[$hash] = $this->_stars['items'][$hash];
                 }
             } else {
-                $feedsHash = array();
-                if (isset($this->_stars['feeds'][$hash])) {
-                    // a feed
-                    $feedsHash[] = $hash;
-                } else if (isset($this->_stars['folders'][$hash])) {
-                    // a folder
-                    foreach ($this->_stars['feeds'] as $feedHash => $feed) {
-                        if (in_array($hash, $feed['foldersHash'])) {
-                            $feedsHash[] = $feedHash;
-                        }
-                    }
-                }
-
-                // get items from a list of feeds
-                if (!empty($feedsHash)) {
-                    $flipFeedsHash = array_flip($feedsHash);
-                    foreach ($this->_stars['items'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            $list[$itemHash] = $item;
-                        }
+                // a feed
+                foreach ($this->_stars['items'] as $itemHash => $item) {
+                    if (substr($itemHash, 0, 6) === $hash) {
+                        $list[$itemHash] = $item;
                     }
                 }
             }
@@ -237,25 +176,23 @@ class Star
      * Load a specific item from feeds, load feed is necessary
      *
      * @param string $itemHash Hash corresponding to an item
-     * TODO:modifier?
+     * 
      * @return array
      */
     public function loadItem($itemHash)
     {
-        $feedHash = substr($itemHash, 0, 6);
-        $item = array();
         if (isset($this->_stars['items'][$itemHash])) {
-            $item = $this->_stars['items'][$itemHash];
+            return $this->_stars['items'][$itemHash];
         }
 
-        return $item;
+        return array();
     }
 
     /**
      * Load a specific item from feeds, load feed is necessary
      *
      * @param string $itemHash Hash corresponding to an item
-     * TODO:modifier?
+     * 
      * @return false|array corresponding to itemHash, false otherwise
      */
     public function getItem($itemHash, $keep = true)
@@ -264,13 +201,26 @@ class Star
 
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
+
             $time = $item['time'];
-            
-            $item['author'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['author']), ENT_QUOTES), ENT_NOQUOTES);
-            $item['title'] = htmlspecialchars(htmlspecialchars_decode(strip_tags($item['title']), ENT_QUOTES), ENT_NOQUOTES);
+            if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
+                // Today
+                $item['time'] = array('list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+            } else {
+                if (strftime('%Y', $time) == strftime('%Y', time())) {
+                    $item['time'] = array('list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                } else {
+                    $item['time'] = array('list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                }
+            }
+
+            $item['author'] = htmlspecialchars(html_entity_decode(strip_tags($item['author']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
+            $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
-            
+            $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+            $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
+
             return $item;
         }
 
@@ -281,39 +231,39 @@ class Star
      * Mark an item as $read
      *
      * @param string  $itemHash
-     * @param integer $read
      *
      * @return boolean true if modified false otherwise
      */
-    public function markItem($itemHash, $item, $feed, $folders, $starred) {
+    public function markItem($itemHash, $starred, $item = false, $feed = false) {
         $save = false;
         $feedHash = substr($itemHash, 0, 6);
-        if (isset($this->_stars['items'][$itemHash]) && $starred == 0) {
+        if (isset($this->_stars['items'][$itemHash]) && $starred === 0) {
             $save = true;
             unset($this->_stars['items'][$itemHash]);
             if (isset($this->_stars['feeds'][$feedHash])){
-                $this->_stars['feeds'][$feedHash]['nbAll'] = $this->_stars['feeds'][$feedHash]['nbAll'] - 1;
-            }
-        }elseif (($starred == 1) && $item && $feed){
-            //didn't exists, want to star it
-            $save = true;
-            $this->_stars['items'][$itemHash] = $item;     
-            if (!isset($this->_stars['feeds'][$feedHash])){
-                foreach ($feed['foldersHash'] as $folderHash) {
-                    if(isset($folders[$folderHash]) && !$this->getFolder($folderHash)){
-                        $folder = $folders[$folderHash];
-                        $this->_stars['folders'][$folderHash] = $folder;
-                    }
+                $this->_stars['feeds'][$feedHash]['nbAll']--;
+                if ($this->_stars['feeds'][$feedHash]['nbAll'] <= 0) {
+                    unset($this->_stars['feeds'][$feedHash]);
                 }
+            }
+        } else if ($starred === 1 && $item && $feed) {
+            // didn't exists, want to star it
+            $save = true;
+            $this->_stars['items'][$itemHash] = $item;
+            // remove useless item information
+            $this->_stars['items'][$itemHash]['time'] = $item['time']['time'];
+            unset($this->_stars['items'][$itemHash]['favicon']);
+            if (!isset($this->_stars['feeds'][$feedHash])){
                 $this->_stars['feeds'][$feedHash] = $feed;
                 $this->_stars['feeds'][$feedHash]['nbAll'] = 0;
+                // remove useless feed information
                 unset($this->_stars['feeds'][$feedHash]['timeUpdate']);
                 unset($this->_stars['feeds'][$feedHash]['nbUnread']);
                 unset($this->_stars['feeds'][$feedHash]['lastUpdate']);
             }
-            $this->_stars['feeds'][$feedHash]['nbAll'] = $this->_stars['feeds'][$feedHash]['nbAll'] + 1;
+            $this->_stars['feeds'][$feedHash]['nbAll']++;
         }
-        return $save;
 
+        return $save;
     }
 }

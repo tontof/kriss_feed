@@ -197,7 +197,11 @@ class Feed
             // FIX: problem of version 6 &amp;amp;
             $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
             $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
-            return $this->_data['feeds'][$feedHash];
+            $feed = $this->_data['feeds'][$feedHash];
+            $feed['xmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['xmlUrl']);
+            $feed['htmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['htmlUrl']);
+
+            return $feed;
         }
 
         return false;
@@ -673,12 +677,12 @@ class Feed
             $time = $item['time'];
             if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
                 // Today
-                $item['time'] = array('list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
             } else {
                 if (strftime('%Y', $time) == strftime('%Y', time())) {
-                    $item['time'] = array('list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
                 } else {
-                    $item['time'] = array('list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
@@ -706,7 +710,7 @@ class Feed
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             
-            if (isset($this->_data['items'][$itemHash]['starred'])) {
+            if (isset($this->_data['items'][$itemHash][2])) {
                 $item['starred'] = 1 ;
             } else {
                 $item['starred'] = 0 ;
@@ -715,6 +719,7 @@ class Feed
 
             // FIX: problem of version 6 &amp;amp;
             $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
+            $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
 
             return $item;
         }
@@ -1558,15 +1563,15 @@ class Feed
     public function markItemAsStarred($itemHash, $starred) {
         $save = false;
         if (isset($this->_data['items'][$itemHash])) {
-            if (!isset($this->_data['items'][$itemHash]['starred']) && $starred == 1){
+            if (!isset($this->_data['items'][$itemHash][2]) && $starred == 1){
                 $save = true;
-                $this->_data['items'][$itemHash]['starred'] = $starred;
-            }elseif($this->_data['items'][$itemHash]['starred'] != $starred) {
+                $this->_data['items'][$itemHash][2] = $starred;
+            }elseif($this->_data['items'][$itemHash][2] != $starred) {
                 $save = true;
-                $this->_data['items'][$itemHash]['starred'] = $starred;
+                $this->_data['items'][$itemHash][2] = $starred;
             }
-            if ($this->_data['items'][$itemHash]['starred'] == 0){
-                unset($this->_data['items'][$itemHash]['starred']);
+            if ($this->_data['items'][$itemHash][2] == 0){
+                unset($this->_data['items'][$itemHash][2]);
             }
         }
         return $save;

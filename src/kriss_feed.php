@@ -199,23 +199,26 @@ if (isset($_GET['login'])) {
         }
     }
     if (isset($_GET['starred'])) {
+        $hash = $_GET['starred'];
+        $item = $kf->getItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+
         $needSave = $kf->markItemAsStarred($_GET['starred'], 1);
         if ($needSave) {
-            $result['starred'] = $_GET['starred'];
+            $result['starred'] = $hash;
         }
-        $needStarSave = $ks->markItem($_GET['starred'], 1);
+        $needStarSave = $ks->markItem($_GET['starred'], 1, $item, $feed);
     }
     if (isset($_GET['unstarred'])) {
         $hash = $_GET['unstarred'];
         $item = $kf->getItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
-        $folders = $kf->getFolders();
 
         $needSave = $kf->markItemAsStarred($_GET['unstarred'], 0);
         if ($needSave) {
-            $result['unstarred'] = $_GET['unstarred'];
+            $result['unstarred'] = $hash;
         }
-        $needStarSave = $ks->markItem($hash, $item, $feed, $folders, 0);
+        $needStarSave = $ks->markItem($hash, 0);
     }
     if (isset($_GET['toggleFolder'])) {
         $needSave = $kf->toggleFolder($_GET['toggleFolder']);
@@ -492,35 +495,38 @@ if (isset($_GET['login'])) {
     // mark all as starred : item, feed, folder, all
     $kf->loadData();
     $ks->loadStars();
+
     $starred = 1;
     if (isset($_GET['starred'])) {
         $hash = $_GET['starred'];
         $starred = 1;
+
+        $item = $kf->getItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+        
+        $needStarSave = $ks->markItem($hash, $starred, $item, $feed);
     } else {
         $hash = $_GET['unstarred'];
         $starred = 0;
+
+        $needStarSave = $ks->markItem($hash, $starred);
     }
     $needSave = $kf->markItemAsStarred($hash, $starred);
     if ($needSave) {
         $kf->writeData();
     }
-    $item = $kf->getItem($hash, false);
-    $feed = $kf->getFeed(substr($hash, 0, 6));
-    $folders = $kf->getFolders();
-    $needStarSave = $ks->markItem($hash, $item, $feed, $folders, $starred);
     if ($needStarSave) {
         $ks->writeStars();
     }
 
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
-    if (isset($_GET['stars'])) {
-        $query = $query."stars&";
-    }
+
     if ($type === 'item') {
-        MyTool::redirect($query.'current='.$hash);
+        $query .= 'current='.$hashs;
     }
-} elseif (isset($_GET['stars'])&&(($kfc->isLogged() || $kfc->public))) {
+    MyTool::redirect($query);
+} elseif (isset($_GET['stars']) && $kfc->isLogged()) {
     $ks->loadStars();
     $listItems = $ks->getItems($currentHash, $filter);
     $listHash = array_keys($listItems);
@@ -590,7 +596,7 @@ if (isset($_GET['login'])) {
     
     $menu = $kfc->getMenu();
     $paging = $kfc->getPaging();
-    $query = $query . "stars&amp;";
+
     $pb->assign('query', htmlspecialchars($query));
     $pb->assign('menu',  $menu);
     $pb->assign('paging',  $paging);
