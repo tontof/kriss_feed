@@ -9,6 +9,7 @@ define('FAVICON_DIR', INC_DIR.'/favicon');
 
 define('DATA_FILE', DATA_DIR.'/data.php');
 define('STAR_FILE', DATA_DIR.'/star.php');
+define('ITEM_FILE', DATA_DIR.'/item.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
@@ -82,7 +83,7 @@ if (!empty($_POST)) {
 
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
-$ks = new Star(STAR_FILE, $kfc);
+$ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
@@ -174,7 +175,6 @@ if (isset($_GET['login'])) {
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
     $kf->loadData();
-    $ks->loadStars();
     $needSave = false;
     $needStarSave = false;
     $result = array();
@@ -279,7 +279,7 @@ if (isset($_GET['login'])) {
         $kf->writeData();
     }
     if ($needStarSave) {
-        $ks->writeStars();
+        $ks->writeData();
     }
     MyTool::renderJson($result);
 } elseif (isset($_GET['help']) && ($kfc->isLogged() || $kfc->visibility === 'protected')) {
@@ -450,9 +450,8 @@ if (isset($_GET['login'])) {
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     if (isset($_GET['stars'])) {
-        $ks->loadStars();
         $ks->toggleFolder($_GET['toggleFolder']);
-        $ks->writeStars();
+        $ks->writeData();
     } else {
         $kf->loadData();
         $kf->toggleFolder($_GET['toggleFolder']);
@@ -494,7 +493,7 @@ if (isset($_GET['login'])) {
           && $kfc->isLogged()) {
     // mark all as starred : item, feed, folder, all
     $kf->loadData();
-    $ks->loadStars();
+    $ks->loadData();
 
     $starred = 1;
     if (isset($_GET['starred'])) {
@@ -504,19 +503,15 @@ if (isset($_GET['login'])) {
         $item = $kf->getItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
         
-        $needStarSave = $ks->markItem($hash, $starred, $item, $feed);
+        $needSave = $ks->markItem($hash, $starred, $item, $feed);
     } else {
         $hash = $_GET['unstarred'];
         $starred = 0;
 
-        $needStarSave = $ks->markItem($hash, $starred);
+        $needSave = $ks->markItem($hash, $starred);
     }
-    $needSave = $kf->markItemAsStarred($hash, $starred);
     if ($needSave) {
-        $kf->writeData();
-    }
-    if ($needStarSave) {
-        $ks->writeStars();
+        $ks->writeData();
     }
 
     // type : 'feed', 'folder', 'all', 'item'
@@ -527,7 +522,7 @@ if (isset($_GET['login'])) {
     }
     MyTool::redirect($query);
 } elseif (isset($_GET['stars']) && $kfc->isLogged()) {
-    $ks->loadStars();
+    $ks->loadData();
     $listItems = $ks->getItems($currentHash, $filter);
     $listHash = array_keys($listItems);
     $currentItemHash = '';
@@ -784,7 +779,6 @@ if (isset($_GET['login'])) {
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
-        $ks->loadStars();
         if ($kf->updateItems()) {
             $kf->writeData();
         }

@@ -59,6 +59,24 @@ class Feed
         $this->_data = $data;
     }
 
+    public function initData()
+    {
+        $this->_data['feeds'] = array(
+            MyTool::smallHash('http://tontof.net/?rss') => array(
+                'title' => 'Tontof',
+                'foldersHash' => array(),
+                'timeUpdate' => 'auto',
+                'lastUpdate' => 0,
+                'nbUnread' => 0,
+                'nbAll' => 0,
+                'htmlUrl' => 'http://tontof.net',
+                'xmlUrl' => 'http://tontof.net/?rss',
+                'description' => 'A simple and smart (or stupid) blog'));
+        $this->_data['folders'] = array();
+        $this->_data['items'] = array();
+        $this->_data['newItems'] = array();
+    }
+
     /**
      * Load data file or create one if not exists
      *
@@ -81,20 +99,7 @@ class Feed
                     );
                 return true;
             } else {
-                $this->_data['feeds'] = array(
-                    MyTool::smallHash('http://tontof.net/?rss') => array(
-                        'title' => 'Tontof',
-                        'foldersHash' => array(),
-                        'timeUpdate' => 'auto',
-                        'lastUpdate' => 0,
-                        'nbUnread' => 0,
-                        'nbAll' => 0,
-                        'htmlUrl' => 'http://tontof.net',
-                        'xmlUrl' => 'http://tontof.net/?rss',
-                        'description' => 'A simple and smart (or stupid) blog'));
-                $this->_data['folders'] = array();
-                $this->_data['items'] = array();
-                $this->_data['newItems'] = array();
+                $this->initData();
 
                 return false;
             }
@@ -710,7 +715,8 @@ class Feed
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             
-            if (isset($this->_data['items'][$itemHash][2])) {
+            
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
                 $item['starred'] = 1 ;
             } else {
                 $item['starred'] = 0 ;
@@ -1549,31 +1555,6 @@ class Feed
             }
         }
 
-        return $save;
-    }
-
-    /**
-     * Mark an item as $starred
-     *
-     * @param string  $itemHash
-     * @param integer $starred
-     *
-     * @return boolean true if modified false otherwise
-     */
-    public function markItemAsStarred($itemHash, $starred) {
-        $save = false;
-        if (isset($this->_data['items'][$itemHash])) {
-            if (!isset($this->_data['items'][$itemHash][2]) && $starred == 1){
-                $save = true;
-                $this->_data['items'][$itemHash][2] = $starred;
-            }elseif($this->_data['items'][$itemHash][2] != $starred) {
-                $save = true;
-                $this->_data['items'][$itemHash][2] = $starred;
-            }
-            if ($this->_data['items'][$itemHash][2] == 0){
-                unset($this->_data['items'][$itemHash][2]);
-            }
-        }
         return $save;
     }
 
