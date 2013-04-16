@@ -121,6 +121,7 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('isLogged', $kfc->isLogged());
 
 if (isset($_GET['login'])) {
     // Login
@@ -171,6 +172,9 @@ if (isset($_GET['login'])) {
     $kf->loadData();
     $needSave = false;
     $result = array();
+    if (!$kfc->isLogged()) {
+        $result['logout'] = true;
+    }
     if (isset($_GET['current'])) {
         $result['item'] = $kf->getItem($_GET['current'], false);
         $result['item']['itemHash'] = $_GET['current'];

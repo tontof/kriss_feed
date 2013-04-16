@@ -17,6 +17,7 @@
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
       stars = false, // data-stars
+      isLogged = false, // data-is-logged
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -182,6 +183,9 @@
     onSuccess: function(responseText) {
       var result = JSON.parse(responseText);
 
+      if (result['logout'] && isLogged) {
+        alert('You have been disconnected');
+      }
       if (result['item']) {
         cache['item-' + result['item']['itemHash']] = result['item'];
         loadDivItem(result['item']['itemHash']);
@@ -1746,7 +1750,10 @@
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
       stars = (stars === 1)?true:false;
     }
-
+    if (elementIndex.hasAttribute('data-is-logged')) {
+      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
+      isLogged = (isLogged === 1)?true:false;
+    }
 
     status = document.getElementById('status').innerHTML;
   }

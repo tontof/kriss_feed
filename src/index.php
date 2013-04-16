@@ -3424,7 +3424,7 @@ dd {
     <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>">
+    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-is-logged="<?php echo $isLogged; ?>">
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -3479,6 +3479,7 @@ dd {
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
       stars = false, // data-stars
+      isLogged = false, // data-is-logged
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -3624,6 +3625,9 @@ dd {
     onSuccess: function(responseText) {
       var result = JSON.parse(responseText);
 
+      if (result['logout'] && isLogged) {
+        alert('You have been disconnected');
+      }
       if (result['item']) {
         cache['item-' + result['item']['itemHash']] = result['item'];
         loadDivItem(result['item']['itemHash']);
@@ -5149,7 +5153,10 @@ dd {
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
       stars = (stars === 1)?true:false;
     }
-
+    if (elementIndex.hasAttribute('data-is-logged')) {
+      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
+      isLogged = (isLogged === 1)?true:false;
+    }
 
     status = document.getElementById('status').innerHTML;
   }
@@ -7442,6 +7449,7 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('isLogged', $kfc->isLogged());
 
 if (isset($_GET['login'])) {
     // Login
@@ -7492,6 +7500,9 @@ if (isset($_GET['login'])) {
     $kf->loadData();
     $needSave = false;
     $result = array();
+    if (!$kfc->isLogged()) {
+        $result['logout'] = true;
+    }
     if (isset($_GET['current'])) {
         $result['item'] = $kf->getItem($_GET['current'], false);
         $result['item']['itemHash'] = $_GET['current'];
@@ -7598,6 +7609,8 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
+
+    $pb->assign('currentHash', $hash);
     if (isset($_GET['cron']) || isset($argv) && count($argv) >= 3) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
