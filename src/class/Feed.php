@@ -97,9 +97,11 @@ class Feed
                             )
                         )
                     );
+
                 return true;
             } else {
                 $this->initData();
+                $this->writeData();
 
                 return false;
             }
@@ -127,6 +129,10 @@ class Feed
                 die("Can't write to " . $this->dataFile);
             }
         }
+    }
+
+    public function updateFeed($feedHash, $feed) {
+        $this->_data['feeds'][$feedHash] = $feed;
     }
 
     /**
@@ -563,7 +569,11 @@ class Feed
     public function getItems($hash = 'all', $filter = 'all')
     {
         if (empty($hash) or $hash == 'all' and $filter == 'all') {
-            return $this->_data['items']+$this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['items']+$this->_data['newItems'];
+            } else {
+                return $this->_data['items'];
+            }
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'old') {
@@ -571,7 +581,11 @@ class Feed
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'new') {
-            return $this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['newItems'];
+            } else {
+                return array();
+            }
         }
         
         $list = array();
@@ -587,9 +601,11 @@ class Feed
                     $list[$itemHash] = $item;
                 }
             }
-            foreach ($this->_data['newItems'] as $itemHash => $item) {
-                if ($item[1] === $isRead) {
-                    $list[$itemHash] = $item;
+            if (isset($this->_data['newItems'])) {
+                foreach ($this->_data['newItems'] as $itemHash => $item) {
+                    if ($item[1] === $isRead) {
+                        $list[$itemHash] = $item;
+                    }
                 }
             }
         } else {
@@ -597,7 +613,7 @@ class Feed
                 // an item
                 if (isset($this->_data['items'][$hash])) {
                     $list[$hash] = $this->_data['items'][$hash];
-                } else if (isset($this->_data['newItems'][$hash])) {
+                } else if (isset($this->_data['newItems']) && isset($this->_data['newItems'][$hash])) {
                     $list[$hash] = $this->_data['newItems'][$hash];
                 }
             } else {
@@ -624,10 +640,12 @@ class Feed
                             }
                         }
                     }
-                    foreach ($this->_data['newItems'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            if ($filter === 'all' or $item[1] === $isRead) {
-                                $list[$itemHash] = $item;
+                    if (isset($this->_data['newItems'])) {
+                        foreach ($this->_data['newItems'] as $itemHash => $item) {
+                            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                                if ($filter === 'all' or $item[1] === $isRead) {
+                                    $list[$itemHash] = $item;
+                                }
                             }
                         }
                     }
@@ -1196,7 +1214,7 @@ class Feed
                 $channel['timeUpdate'] = 'auto';
                 $channel['lastUpdate'] = time();
 
-                $this->_data['feeds'][$feedHash] = $channel;
+                $this->updateFeed($feedHash, $channel);
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);

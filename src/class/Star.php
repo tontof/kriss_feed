@@ -65,14 +65,15 @@ class Star extends Feed
             $this->_data['items'][$itemHash]['time'] = $item['time']['time'];
             unset($this->_data['items'][$itemHash]['favicon']);
             if (!isset($this->_data['feeds'][$feedHash])){
-                $this->_data['feeds'][$feedHash] = $feed;
-                $this->_data['feeds'][$feedHash]['nbAll'] = 0;
+                $feed['nbAll'] = 0;
                 // remove useless feed information
-                unset($this->_data['feeds'][$feedHash]['timeUpdate']);
-                unset($this->_data['feeds'][$feedHash]['nbUnread']);
-                unset($this->_data['feeds'][$feedHash]['lastUpdate']);
+                unset($feed['timeUpdate']);
+                unset($feed['nbUnread']);
+                unset($feed['lastUpdate']);
+            } else {
+                $feedthis->_data['feeds'][$feedHash]['nbAll']++;
             }
-            $this->_data['feeds'][$feedHash]['nbAll']++;
+            $this->updateFeed($feedHash, $feed);
         }
 
         return $save;

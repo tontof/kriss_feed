@@ -511,6 +511,7 @@ if (isset($_GET['login'])) {
         $needSave = $ks->markItem($hash, $starred);
     }
     if ($needSave) {
+        print_r($ks->getData());exit();
         $ks->writeData();
     }
 
