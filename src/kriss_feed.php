@@ -127,6 +127,7 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('isLogged', $kfc->isLogged());
 
 if (isset($_GET['login'])) {
     // Login
@@ -178,6 +179,9 @@ if (isset($_GET['login'])) {
     $needSave = false;
     $needStarSave = false;
     $result = array();
+    if (!$kfc->isLogged()) {
+        $result['logout'] = true;
+    }
     if (isset($_GET['current'])) {
         if (isset($_GET['stars'])) {
             $result['item'] = $ks->getItem($_GET['current'], false);
@@ -321,6 +325,8 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
+
+    $pb->assign('currentHash', $hash);
     if (isset($_GET['cron']) || isset($argv) && count($argv) >= 3) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
