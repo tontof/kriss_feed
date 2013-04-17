@@ -1,9 +1,27 @@
+* {
+  line-height: 142%;
+}
+
+html, body  {
+  font-size: 100%;
+}
+
+body {
+  font-family: "Segoe UI","Segoe UI Web Regular","Segoe UI Symbol","Helvetica Neue","BBAlpha Sans","S60 Sans",Arial,"sans-serif";
+  font-size: 88%;
+  direction: ltr;
+  color: #000;
+}
+
+ol, ul {
+  cursor: pointer;
+}
+
 a:hover {
   text-decoration: none;
 }
 
 .collapse {
-  #display: none;
   height: 0;
 }
 
@@ -17,18 +35,6 @@ a:hover {
 
 .row-fluid .span3 {
   width: 20%;
-}
-
-.well {
-  display: block;
-  border: 1px solid #DDD;
-  box-shadow: 0 0 4px #E3E5EB;
-  margin: 5px 10px 15px 0;
-  background-color: #FFF;
-  z-index: 1000;
-  position: relative;
-  border-radius: 0;
-  padding: 0;
 }
 
 .navbar {
@@ -69,16 +75,6 @@ li.feed.has-unread  a:hover{
   color: #000;
 }
 
-.item-favicon {
-  display: inline-block;
-}
-
-.item-author {
-  display: block;
-  padding-left: 20px;
-  text-align: left;
-}
-
 li.folder > h4 {
   border: none;
   border-radius: 0px;
@@ -93,19 +89,20 @@ li.folder > h5 {
   margin: 5px 5px 0px 5px;
 }
 
+ul#list-items {
+  border-top: 1px solid #DDDDDD;
+}
+
 li.item-list {
-  vertical-align: bottom;
-  line-height: 26px;
-}
-
-.current {
-  border-left-color: #4D90F0;
-}
-
-.current dl{
-  border-left: 1px solid #4D90F0;
-  background-color: #FAFAFA;
-  box-shadow: 0 -2px 2px #E3E5EB;
+  line-height: 142%;
+  min-height: 27px;
+  cursor: pointer;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  width: auto;
+  border-left: 1px none #FFF;
 }
 
 .item-list .well {
@@ -117,64 +114,102 @@ li.item-list {
   padding-top: 0;
 }
 
-.item-list  a.item-toggle {
-  padding: 5px;
+.item-favicon {
+  display: inline-block;
 }
 
 .current, .current-feed, .current-folder > h5, .current-folder > h4 {
   background-color: #FFF;
 }
 
-.current .item-title {
-  font-weight: bold;
+dl, dt, dd {
+  line-height: 142%;
+  white-space: normal;
 }
 
-.item-title {
-  font-weight: bold;
-  padding: 20px 20px 10px 20px;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.item-title a {
-  margin: 0;
-  display: inline-block;
-}
-
-dl {
+dl.dl-horizontal {
+  float: none;
+  margin: 0 0 0 0 !important;
+  padding: 5px 0 0 5px;
+  overflow: hidden;
   height: 26px;
-  line-height: 26px;
-  padding: 5px;
 }
 
-.dl-horizontal dt {
-  width: 15%;
-  line-height: 26px;
+dt.item-feed {
+  margin: 0 0 0 0;
+  padding-top: 0;
+  width: auto;
+  white-space: normal;
+  float: left;
+  clear: none;
+  display: inline;
+  max-width: 12em;
+  text-align: left;
 }
 
-.dl-horizontal dd {
+dd.item-info {
+  left: 0;
+  margin: 0 5em 0 13em;
   padding: 0;
-  line-height: 26px;
-  margin-left: inherit;
-}
-
-.dl-horizontal .item-title {
-  padding: 0 5px;
-}
-
-.item-link {
-  padding: 0 10px;
-}
-
-.dl-horizontal .item-link {
-  padding: 0px;
+  overflow: hidden;
+  position: absolute;
+  white-space: normal;
+  width: auto;
+  float: left;
+  clear: none;
 }
 
 .item-toggle-plus {
-  line-height: 26px;
-  height: 26px;
+
+}
+
+span.item-title {
+  display: inline;
+  white-space: normal;
+  position: static;
+  width: auto;
   padding: 0;
   margin: 0;
+}
+
+div.item-title {
+  padding: 20px 20px 0 20px;
+  font-size: 100%;
+}
+
+span.item-description {
+  white-space: normal;
+  float: none;
+  position: static;
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.item-title a {
+  font-family: "Segoe UI Web Semibold","Segoe UI Web Regular","Segoe UI","Segoe UI Symbol","Helvetica Neue",Arial;
+  font-weight: bold;
+}
+
+.well {
+  display: block;
+  border: 1px solid #DDD;
+  box-shadow: 0 0 4px #E3E5EB;
+  margin: 10px 10px 15px 0;
+  background-color: #FFF;
+  z-index: 1000;
+  position: relative;
+  border-radius: 0;
+  padding: 0;
+}
+
+div .well.current {
+  border-left: 1px solid #4D90F0;
+}
+
+.current .dl-horizontal {
+  border-left: 1px solid #4D90F0;
+  background: #EEE;
 }
 
 .item-content {
@@ -473,7 +508,19 @@ input[type=checkbox]:focus {
 }
 
 @media screen and (max-width: 768px) {
-  #paging-up, #paging-down {
+  html, body  {
+    height: 100%;
+  } 
+  
+  .full-height  {
+
+  }
+  
+  #index, .row-fluid {
+
+  }
+  
+  #paging-up .inline, #paging-down .inline{
     display: none;
   }
   
@@ -488,10 +535,61 @@ input[type=checkbox]:focus {
   .row-fluid .span3 {
     width: 100%;
   }
+
+  #main-container {
+    margin: 0;
+    width: 100%;
+  }
   
   #minor-container {
     margin: 10px 0 0 0;
+    width: 100%;
   }
+  
+    dl {
+      height: inherit;
+      line-height: 26px;
+      padding: 5px;
+      position: relative;
+    }
+
+    .dl-horizontal dt {
+      line-height: 26px;
+      width: 20%;
+      display: block;
+      float: left;
+      margin: 0;
+      padding: 0;
+      z-index: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dl-horizontal dd {
+      margin: 0;
+      margin-left: 20%;
+      line-height: 26px;
+      display: block;
+      height: 26px;
+      float: left;
+      width: auto;
+      padding: 0;
+      z-index: 2;
+      overflow: hidden;
+      position: absolute;
+    }
+    
+    .item-toggle-plus {
+      line-height: 26px;
+      display: block;
+      float: right;
+      margin: 0;
+      padding: 0 0 0 2px;
+      z-index: 10;
+      position: absolute;
+      overflow: hidden;
+      right: 0;
+    }
   
   .well {
     margin: 0px;
@@ -534,5 +632,17 @@ input[type=checkbox]:focus {
   
   .item-info-end {
     padding: 0 2px;
+  }
+
+  dd.item-info {
+    margin: 0 5em 0 2em;
+  }
+  
+  .item-author {
+    display: none;
+  }
+
+  div.item-title {
+    padding: 20px 0 0 0;
   }
 }
