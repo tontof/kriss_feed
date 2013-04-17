@@ -18,6 +18,7 @@
       addFavicon = false, // data-add-favicon
       stars = false, // data-stars
       isLogged = false, // data-is-logged
+      blank = false, // data-blank
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -807,7 +808,7 @@
   }
 
   function setDivItem(div, item) {
-    var markAs = 'read', starred = 'starred';
+    var markAs = 'read', starred = 'starred', target = ' target="_blank"';
 
     if (item['read'] == 1) {
       markAs = 'unread';
@@ -817,11 +818,15 @@
       starred = 'unstarred';
     }
 
+    if (!blank) {
+      target = '';
+    }
+
     div.innerHTML = '<div class="item-title">' +
       '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ' +
       '<a class="item-starred" href="' + '?currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
-      '<a target="_blank" class="item-link" href="' + item['link'] + '">' +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a>' +
       '</div>' +
@@ -867,10 +872,14 @@
   }
 
   function setLiItem(li, item) {
-    var markAs = 'read';
+    var markAs = 'read', target = ' target="_blank"';
 
     if (item['read'] == 1) {
       markAs = 'unread';
+    }
+
+    if (!blank) {
+      target = '';
     }
 
     li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
@@ -896,7 +905,7 @@
       '<dd class="item-info">' +
       '<span class="item-title">' +
       '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ' +
-      '<a target="_blank" class="item-link" href="' + item['link'] + '">' +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a> ' +
       '</span>' +
@@ -1677,7 +1686,11 @@
   function initUnread() {
     var element = document.getElementById('nb-unread');
 
-    currentUnread = parseInt(element.innerHTML, 10);
+    if (element) {
+      currentUnread = parseInt(element.innerHTML, 10);
+    } else {
+      currentUnread = 0;
+    }
 
     title = document.title;
     setNbUnread(currentUnread);
@@ -1691,8 +1704,10 @@
     }
 
     currentUnread = nb;
-    element.innerHTML = currentUnread;
-    document.title = title + ' (' + currentUnread + ')';
+    if (element) {
+      element.innerHTML = currentUnread;
+      document.title = title + ' (' + currentUnread + ')';
+    }
   }
 
   function initOptions() {
@@ -1755,6 +1770,10 @@
     if (elementIndex.hasAttribute('data-stars')) {
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
       stars = (stars === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-blank')) {
+      blank = parseInt(elementIndex.getAttribute('data-blank'), 10);
+      blank = (blank === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-is-logged')) {
       isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);

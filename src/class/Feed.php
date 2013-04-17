@@ -131,8 +131,8 @@ class Feed
         }
     }
 
-    public function updateFeed($feedHash, $feed) {
-        $this->_data['feeds'][$feedHash] = $feed;
+    public function setFeeds($feeds) {
+        $this->_data['feeds'] = $feeds;
     }
 
     /**
@@ -170,10 +170,17 @@ class Feed
             if (isset($feed['error'])) {
                 $feed['error'] = $this->getError($feed['error']);
             }
-            $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            if (isset($feed['nbUnread'])) {
+                $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            } else {
+                $feedsView['all']['nbUnread'] += $feed['nbAll'];
+            }
             $feedsView['all']['nbAll'] += $feed['nbAll'];
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
+                if (!isset($feed['nbUnread'])) {
+                    $feedsView['all']['feeds'][$feedHash]['nbUnread'] = $feed['nbAll'];
+                }
             } else {
                 foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
@@ -208,11 +215,8 @@ class Feed
             // FIX: problem of version 6 &amp;amp;
             $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
             $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
-            $feed = $this->_data['feeds'][$feedHash];
-            $feed['xmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['xmlUrl']);
-            $feed['htmlUrl'] = htmlspecialchars($this->_data['feeds'][$feedHash]['htmlUrl']);
 
-            return $feed;
+            return $this->_data['feeds'][$feedHash];
         }
 
         return false;
@@ -656,6 +660,11 @@ class Feed
         return $list;
     }
 
+    public function setItems($items)
+    {
+        $this->_data['items'] = $items;
+    }
+
     /**
      * Load a specific item from feeds, load feed is necessary
      *
@@ -694,6 +703,12 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
+            
+        if (isset($GLOBALS['starredItems'][$itemHash])) {
+            $item['starred'] = 1 ;
+        } else {
+            $item['starred'] = 0 ;
+        }
 
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
@@ -733,22 +748,13 @@ class Feed
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
             
-            
-            if (isset($GLOBALS['starredItems'][$itemHash])) {
-                $item['starred'] = 1 ;
-            } else {
-                $item['starred'] = 0 ;
-            }
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
-
-            // FIX: problem of version 6 &amp;amp;
-            $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
             $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
 
             return $item;
         }
 
-        return false;
+        return $item;
     }
 
     /**

@@ -124,6 +124,7 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
@@ -204,25 +205,21 @@ if (isset($_GET['login'])) {
     }
     if (isset($_GET['starred'])) {
         $hash = $_GET['starred'];
-        $item = $kf->getItem($hash, false);
+        $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
 
-        $needSave = $kf->markItemAsStarred($_GET['starred'], 1);
-        if ($needSave) {
+        $needStarSave = $ks->markItem($_GET['starred'], 1, $feed, $item);
+        if ($needStarSave) {
             $result['starred'] = $hash;
         }
-        $needStarSave = $ks->markItem($_GET['starred'], 1, $item, $feed);
     }
     if (isset($_GET['unstarred'])) {
         $hash = $_GET['unstarred'];
-        $item = $kf->getItem($hash, false);
-        $feed = $kf->getFeed(substr($hash, 0, 6));
 
-        $needSave = $kf->markItemAsStarred($_GET['unstarred'], 0);
-        if ($needSave) {
+        $needStarSave = $ks->markItem($hash, 0);
+        if ($needStarSave) {
             $result['unstarred'] = $hash;
         }
-        $needStarSave = $ks->markItem($hash, 0);
     }
     if (isset($_GET['toggleFolder'])) {
         $needSave = $kf->toggleFolder($_GET['toggleFolder']);
@@ -367,6 +364,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcblank', (int) $kfc->blank);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
@@ -506,10 +504,10 @@ if (isset($_GET['login'])) {
         $hash = $_GET['starred'];
         $starred = 1;
 
-        $item = $kf->getItem($hash, false);
+        $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
         
-        $needSave = $ks->markItem($hash, $starred, $item, $feed);
+        $needSave = $ks->markItem($hash, $starred, $feed, $item);
     } else {
         $hash = $_GET['unstarred'];
         $starred = 0;
@@ -517,7 +515,6 @@ if (isset($_GET['login'])) {
         $needSave = $ks->markItem($hash, $starred);
     }
     if ($needSave) {
-        print_r($ks->getData());exit();
         $ks->writeData();
     }
 
@@ -525,12 +522,12 @@ if (isset($_GET['login'])) {
     $type = $kf->hashType($hash);
 
     if ($type === 'item') {
-        $query .= 'current='.$hashs;
+        $query .= 'current='.$hash;
     }
     MyTool::redirect($query);
 } elseif (isset($_GET['stars']) && $kfc->isLogged()) {
     $ks->loadData();
-    $listItems = $ks->getItems($currentHash, $filter);
+    $listItems = $ks->getItems($currentHash, 'all');
     $listHash = array_keys($listItems);
     $currentItemHash = '';
     if (isset($_GET['current']) && !empty($_GET['current'])) {
@@ -599,7 +596,6 @@ if (isset($_GET['login'])) {
     $menu = $kfc->getMenu();
     $paging = $kfc->getPaging();
 
-    $pb->assign('query', htmlspecialchars($query));
     $pb->assign('menu',  $menu);
     $pb->assign('paging',  $paging);
     $pb->assign('currentHashType', $currentHashType);
@@ -612,11 +608,9 @@ if (isset($_GET['login'])) {
     if ($listFeeds == 'show') {
         $pb->assign('feedsView', $ks->getFeedsView());
     }
-
-    $pb->assign('items', $listItems);
-    $pb->assign('ks', $ks);
+    $pb->assign('kf', $ks);
     $pb->assign('pagetitle', 'Starred items');
-    $pb->renderPage('stars');
+    $pb->renderPage('index');
 } elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();

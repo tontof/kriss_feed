@@ -175,6 +175,20 @@
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Auto target="_blank"</label>
+                    <div class="controls">
+                      <label for="donotblank">
+                        <input type="radio" id="donotblank" name="blank" value="0" <?php echo (!$kfcblank ? 'checked="checked"' : ''); ?>/>
+                        Do not open link in new tab
+                      </label>
+                      <label for="doblank">
+                        <input type="radio" id="doblank" name="blank" value="1" <?php echo ($kfcblank ? 'checked="checked"' : ''); ?>/>
+                        Automatically open link in new tab
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">

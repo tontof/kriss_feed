@@ -96,6 +96,11 @@ class FeedConf
     public $addFavicon = false;
 
     /**
+     * Target _blank
+     */
+    public $blank = false;
+
+    /**
      * Visibility public/protected/private feed reader
      */
     public $visibility = 'private';
@@ -605,6 +610,16 @@ class FeedConf
         $this->order = $order;
     }
 
+    /**
+     * Blank setter
+     *
+     * @param string $blank New blank
+     */
+    public function setBlank($blank)
+    {
+        $this->blank = $blank;
+    }
+
     public function getMenu()
     {
         $menu = array();
@@ -766,7 +781,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                          'pagingMarkAs', 'disableSessionProtection');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank');
             $out = '<?php';
             $out .= "\n";
 
