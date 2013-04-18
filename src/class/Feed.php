@@ -703,13 +703,7 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-            
-        if (isset($GLOBALS['starredItems'][$itemHash])) {
-            $item['starred'] = 1 ;
-        } else {
-            $item['starred'] = 0 ;
-        }
-
+         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
@@ -751,10 +745,16 @@ class Feed
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
             $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
 
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
+
             return $item;
         }
 
-        return $item;
+        return false;
     }
 
     /**

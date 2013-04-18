@@ -88,6 +88,7 @@ class Star extends Feed
         }
 
         if ($save) {
+            arsort($items);
             $this->setItems($items);
             $this->setFeeds($feeds);
         }

@@ -176,6 +176,10 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'Change your password');
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
+    if (isset($_GET['stars'])) {
+        $filter = 'all';
+        $kf = $ks;
+    }
     $kf->loadData();
     $needSave = false;
     $needStarSave = false;
@@ -184,11 +188,7 @@ if (isset($_GET['login'])) {
         $result['logout'] = true;
     }
     if (isset($_GET['current'])) {
-        if (isset($_GET['stars'])) {
-            $result['item'] = $ks->getItem($_GET['current'], false);
-        }else{
-            $result['item'] = $kf->getItem($_GET['current'], false);
-        }
+        $result['item'] = $kf->getItem($_GET['current'], false);
         $result['item']['itemHash'] = $_GET['current'];
     }
     if (isset($_GET['read'])) {
@@ -203,11 +203,12 @@ if (isset($_GET['login'])) {
             $result['unread'] = $_GET['unread'];
         }
     }
-    if (isset($_GET['starred'])) {
+    if (isset($_GET['starred']) && !isset($_GET['stars'])) {
         $hash = $_GET['starred'];
         $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
 
+        $ks->loadData();
         $needStarSave = $ks->markItem($_GET['starred'], 1, $feed, $item);
         if ($needStarSave) {
             $result['starred'] = $hash;
@@ -216,6 +217,7 @@ if (isset($_GET['login'])) {
     if (isset($_GET['unstarred'])) {
         $hash = $_GET['unstarred'];
 
+        $ks->loadData();
         $needStarSave = $ks->markItem($hash, 0);
         if ($needStarSave) {
             $result['unstarred'] = $hash;
@@ -225,11 +227,7 @@ if (isset($_GET['login'])) {
         $needSave = $kf->toggleFolder($_GET['toggleFolder']);
     }
     if (isset($_GET['page'])) {
-        if (isset($_GET['stars'])) {
-            $listItems = $ks->getItems($currentHash, $filter);
-        }else{
-            $listItems = $kf->getItems($currentHash, $filter);
-        }
+        $listItems = $kf->getItems($currentHash, $filter);
         $currentPage = $_GET['page'];
         $index = ($currentPage - 1) * $byPage;
         $results = array_slice($listItems, $index, $byPage + 1, true);
@@ -244,11 +242,11 @@ if (isset($_GET['login'])) {
         $i = 0;
         foreach(array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
             if (isset($_GET['stars'])) {
-                $result['page'][$i] = $ks->getItem($itemHash, false);
-            }else{
+                $result['page'][$i] = $kf->getItem($itemHash);
+            } else {
                 $result['page'][$i] = $kf->getItem($itemHash, false);
+                $result['page'][$i]['read'] = $item[1];
             }
-            $result['page'][$i]['read'] = $item[1];
             $i++;
         }
     }
@@ -453,14 +451,10 @@ if (isset($_GET['login'])) {
     
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
-    if (isset($_GET['stars'])) {
-        $ks->toggleFolder($_GET['toggleFolder']);
-        $ks->writeData();
-    } else {
-        $kf->loadData();
-        $kf->toggleFolder($_GET['toggleFolder']);
-        $kf->writeData();
-    }
+    $kf->loadData();
+    $kf->toggleFolder($_GET['toggleFolder']);
+    $kf->writeData();
+
     MyTool::redirect($query);
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))

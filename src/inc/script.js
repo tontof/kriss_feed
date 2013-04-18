@@ -630,6 +630,65 @@
     return false;
   }
 
+  function toggleMarkAsStarredLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks, url = '';
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-starred')) {
+          url = listLinks[i].href;
+          if (listLinks[i].href.indexOf('unstarred=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstarred=','starred=');
+            listLinks[i].firstChild.innerHTML = 'starred';
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('starred=','unstarred=');
+            listLinks[i].firstChild.innerHTML = 'unstarred';
+          }
+        }
+      }
+    }
+
+    return url;
+  }
+
+
+  function markAsStarredItem(itemHash) {
+    var url, client, indexItem;
+
+    url = toggleMarkAsStarredLinkItem(itemHash);
+    if (url.indexOf('unstarred=') > -1 && stars) {
+      removeElement(getItem(itemHash));
+      indexItem = listItemsHash.indexOf(itemHash);
+      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+      if (listItemsHash.length <= byPage) {
+        appendItem(listItemsHash[listItemsHash.length - 1]);
+      }
+      setCurrentItem(listItemsHash[indexItem]);
+      
+      url += '&page=' + currentPage;
+    }
+    if (url !== '') {
+      client = new HTTPClient();
+      client.init(url + '&ajax');
+      try {
+        client.asyncGET(ajaxHandler);
+      } catch (e) {
+        alert(e);
+      }
+    }
+  }
+
+  function markAsStarredClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsStarredItem(getItemHash(this));
+
+    return false;
+  }
+
   function markAsRead(itemHash) {
     setNbUnread(currentUnread - 1);
   }
@@ -650,7 +709,7 @@
         setDivItem(element, cacheItem);
         removeCacheItem(itemHash);
       } else {
-        url = '?currentHash=' + currentHash
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash
             + '&current=' + itemHash
             + '&ajax';
         client = new HTTPClient();
@@ -823,9 +882,10 @@
     }
 
     div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ' +
-      '<a class="item-starred" href="' + '?currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
       '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a>' +
@@ -853,11 +913,12 @@
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ' +
-      '<a class="item-starred" href="' + '?currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
       (view=='list'?
-      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       '<span class="ico ico-toggle-item">' +
       '<span class="ico-b-disc"></span>' +
       '<span class="ico-w-line-h"></span>' +
@@ -882,7 +943,7 @@
       target = '';
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       '<span class="ico ico-toggle-item">' +
       '<span class="ico-b-disc"></span>' +
       '<span class="ico-w-line-h"></span>' +
@@ -897,20 +958,20 @@
       '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
       '</span>':'' ) +
       '<span class="item-author">' +
-      '<a class="item-feed" href="?currentHash=' + item['itemHash'].substring(0, 6) + '">' +
+      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
       item['author'] +
       '</a>' +
       '</span>' +
       '</dt>' +
       '<dd class="item-info">' +
       '<span class="item-title">' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ' +
+      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
       '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a> ' +
       '</span>' +
       '<span class="item-description">' +
-      '<a class="item-toggle muted" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
+      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
       item['description'] +
       '</a> ' +
       '</span>' +
@@ -1017,6 +1078,9 @@
       if (hasClass(listItems[i], 'item-mark-as')) {
         listItems[i].onclick = markAsClickItem;
       }
+      if (hasClass(listItems[i], 'item-starred')) {
+        listItems[i].onclick = markAsStarredClickItem;
+      }
       if (hasClass(listItems[i], 'item-shaarli')) {
         listItems[i].onclick = shaarliClickItem;
       }
@@ -1029,7 +1093,8 @@
     url = '?currentHash=' + currentHash
         + '&page=' + currentPage
         + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax';
+        + '&ajax'
+        + (stars?'&stars':'');
 
     client = new HTTPClient();
     client.init(url);
@@ -1684,30 +1749,24 @@
    * init KrISS feed javascript
    */
   function initUnread() {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
-    if (element) {
-      currentUnread = parseInt(element.innerHTML, 10);
-    } else {
-      currentUnread = 0;
-    }
+    currentUnread = parseInt(element.innerHTML, 10);
 
     title = document.title;
     setNbUnread(currentUnread);
   }
 
   function setNbUnread(nb) {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
     if (nb < 0) {
       nb = 0;
     }
 
     currentUnread = nb;
-    if (element) {
-      element.innerHTML = currentUnread;
-      document.title = title + ' (' + currentUnread + ')';
-    }
+    element.innerHTML = currentUnread;
+    document.title = title + ' (' + currentUnread + ')';
   }
 
   function initOptions() {
@@ -1801,9 +1860,8 @@
     initLinkItems(listLinkItems);
 
     initListItemsHash();
-    if (!stars) {
-      initListItems();
-    }
+    initListItems();
+
     initUnread();
 
     initItemButton();
