@@ -74,7 +74,7 @@
       </div>
       <div class="item-info-end item-info-author">
         from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
-        <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').htmlspecialchars($item['xmlUrl']); ?>">
+        <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
           <span class="ico">
             <span class="ico-feed-dot"></span>
             <span class="ico-feed-circle-1"></span>
