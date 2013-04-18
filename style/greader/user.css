@@ -29,6 +29,10 @@ a:hover {
   height: inherit;
 }
 
+.row-fluid .span12 {
+  width: 100%;
+}
+
 .row-fluid .span9 {
   width: 80%;
 }
@@ -38,7 +42,7 @@ a:hover {
 }
 
 .navbar {
-  margin: 5px 10px 15px 0;
+  margin: 5px 10px 15px 10px;
   border: 1px solid #DDD;
   box-shadow: 0 0 4px #E3E5EB;
   background-color: #FFF;
@@ -102,16 +106,12 @@ li.item-list {
   padding: 0;
   position: relative;
   width: auto;
-  border-left: 1px none #FFF;
+  border-left: 1px solid #FFF;
 }
 
-.item-list .well {
-  border-top: none;
-  border-right: none;
-  box-shadow: 0 2px 2px #E3E5EB;
-  margin-top: 0;
-  margin-right: 0;
-  padding-top: 0;
+li.item-list.current {
+  border-left: 1px solid #4D90F0;
+  background: #EEE;
 }
 
 .item-favicon {
@@ -123,7 +123,7 @@ li.item-list {
 }
 
 dl, dt, dd {
-  line-height: 142%;
+  line-height: 152%;
   white-space: normal;
 }
 
@@ -159,10 +159,6 @@ dd.item-info {
   clear: none;
 }
 
-.item-toggle-plus {
-
-}
-
 span.item-title {
   display: inline;
   white-space: normal;
@@ -188,14 +184,14 @@ span.item-description {
 
 .item-title a {
   font-family: "Segoe UI Web Semibold","Segoe UI Web Regular","Segoe UI","Segoe UI Symbol","Helvetica Neue",Arial;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .well {
   display: block;
   border: 1px solid #DDD;
   box-shadow: 0 0 4px #E3E5EB;
-  margin: 10px 10px 15px 0;
+  margin: 10px 10px 40px 10px;
   background-color: #FFF;
   z-index: 1000;
   position: relative;
@@ -203,13 +199,19 @@ span.item-description {
   padding: 0;
 }
 
-div .well.current {
+.well.current {
   border-left: 1px solid #4D90F0;
 }
 
-.current .dl-horizontal {
-  border-left: 1px solid #4D90F0;
-  background: #EEE;
+.item-list .well, .item-list .well.current {
+  box-shadow: 0 0 4px #E3E5EB;
+  border: 1px solid #DDD;
+  margin: 0 10px 10px 10px;
+}
+
+.item-toggle {
+  height: 26px;
+  padding: 5px 0 0 0;
 }
 
 .item-content {
@@ -546,64 +548,6 @@ input[type=checkbox]:focus {
     width: 100%;
   }
   
-    dl {
-      height: inherit;
-      line-height: 26px;
-      padding: 5px;
-      position: relative;
-    }
-
-    .dl-horizontal dt {
-      line-height: 26px;
-      width: 20%;
-      display: block;
-      float: left;
-      margin: 0;
-      padding: 0;
-      z-index: 1;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .dl-horizontal dd {
-      margin: 0;
-      margin-left: 20%;
-      line-height: 26px;
-      display: block;
-      height: 26px;
-      float: left;
-      width: auto;
-      padding: 0;
-      z-index: 2;
-      overflow: hidden;
-      position: absolute;
-    }
-    
-    .item-toggle-plus {
-      line-height: 26px;
-      display: block;
-      float: right;
-      margin: 0;
-      padding: 0 0 0 2px;
-      z-index: 10;
-      position: absolute;
-      overflow: hidden;
-      right: 0;
-    }
-  
-  .well {
-    margin: 0px;
-    box-shadow: none;
-    border-left: none;
-    border-right: none;
-    padding: 0;
-  }
-  
-  .item-content {
-    margin: 0px;
-    padding: 0 2px;
-  }
-  
   .item-top > .label, .item-shaarli > .label, .item-mark-as > .label, .item-markStar-as > .label {
     margin: 0px 2px;
     display: inline-block;
@@ -617,32 +561,47 @@ input[type=checkbox]:focus {
     background: none !important;
   }
   
-  .item-title {
-    padding: 0 2px;
-  }
-  
-  .item-title a {
-    padding: 0 2px;
-    display: block;
-  }
-  
-  .item-title .item-shaarli, .item-title .item-mark-as, .item-title .item-markStar-as {
-    display: none;
-  }
-  
-  .item-info-end {
-    padding: 0 2px;
+  li.item-list {
+    border-left: 1px none #FFF;
+    padding-bottom: 0;
   }
 
-  dd.item-info {
-    margin: 0 5em 0 2em;
+  li.item-list.current {
+    border-left: 1px none #FFF;
   }
   
-  .item-author {
-    display: none;
+  dd.item-info {
+    margin: 0 5em 0 3em;
+  }
+  
+  .item-list .well, .well, .well.current, .item-list .well.current {
+    margin: 0px;
+    box-shadow: none;
+    border-left: none;
+    border-right: none;
+    padding: 0;
   }
 
   div.item-title {
-    padding: 20px 0 0 0;
+    padding: 20px 5px 0 5px;
   }
+  
+  span.item-title a.item-mark-as {
+    display: none;
+  }
+  
+  div.item-info-end {
+    padding: 15px;
+    margin: 0;
+    line-height: 10px;
+  }
+
+  div.item-content {
+    padding: 0 5px 5px 5px;
+  }
+  
+  span.item-author {
+    display: none;
+  }
+  
 }
