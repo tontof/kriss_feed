@@ -3327,14 +3327,6 @@ dd {
   <li id="item-<?php echo $itemHash; ?>" class="<?php echo ($view==='expanded'?'item-expanded':'item-list'); ?><?php echo ($item['read']==1?' read':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
 
     <?php if ($view==='list') { ?>
-    <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
-      <span class="ico ico-toggle-item">
-        <span class="ico-b-disc"></span>
-        <span class="ico-w-line-h"></span>
-        <span class="ico-w-line-v<?php echo ((!isset($_GET['open']) or $currentItemHash != $itemHash)?' item-toggle-close':' item-toggle-open'); ?>"></span>
-      </span>
-      <?php echo $item['time']['list']; ?>
-    </a>
     <dl class="dl-horizontal item">
       <dt class="item-feed">
         <?php if ($addFavicon) { ?>
@@ -3348,6 +3340,14 @@ dd {
           </a>
         </span>
       </dt>
+      <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
+        <span class="ico ico-toggle-item">
+          <span class="ico-b-disc"></span>
+          <span class="ico-w-line-h"></span>
+          <span class="ico-w-line-v<?php echo ((!isset($_GET['open']) or $currentItemHash != $itemHash)?' item-toggle-close':' item-toggle-open'); ?>"></span>
+        </span>
+        <?php echo $item['time']['list']; ?>
+      </a>
       <dd class="item-info">
         <span class="item-title">
           <?php if (!isset($_GET['stars'])) { ?>
