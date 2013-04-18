@@ -18,7 +18,7 @@ define('UPDATECHECK_FILE', DATA_DIR.'/lastupdatecheck.txt');
 // Updates check frequency. 86400 seconds = 24 hours
 define('UPDATECHECK_INTERVAL', 86400);
 
-define('FEED_VERSION', 6);
+define('FEED_VERSION', 7);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.

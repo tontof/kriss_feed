@@ -1,4 +1,4 @@
-kriss_feed (version 6)
+kriss_feed (version 7)
 ======================
 
 A simple and smart (or stupid) feed reader.
@@ -52,6 +52,11 @@ Features
 * version 6
   * security is increased
   * more functionnalities (thanks to your feedback)
+
+* version 7
+  * starred items
+  * order list of feeds
+  * list of feeds are updated with javascript
 
 Licence
 =======
