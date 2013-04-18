@@ -763,7 +763,19 @@ class FeedConf
 
     public function isLogged()
     {
-        return Session::isLogged() || $this->visibility === 'public';
+        if (Session::isLogged()
+            || $this->visibility === 'public'
+            || (isset($_GET['cron'])
+                && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))
+            || (isset($argv)
+                && count($argv) >= 3
+                && $argv[1] == 'update'
+                && $argv[2] == sha1($kfc->salt.$kfc->hash))) {
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

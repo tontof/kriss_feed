@@ -118,7 +118,7 @@ class Feed
      */
     public function writeData()
     {
-        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged()) {
             $write = @file_put_contents(
                 $this->dataFile,
                 PHPPREFIX
