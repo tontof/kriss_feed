@@ -1220,7 +1220,7 @@ class Feed
                 $channel['timeUpdate'] = 'auto';
                 $channel['lastUpdate'] = time();
 
-                $this->updateFeed($feedHash, $channel);
+                $this->_data['feeds'][$feedHash] = $channel;
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
