@@ -2637,9 +2637,9 @@ dd {
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuStarred">Starred</label>
+                    <label class="control-label" for="menuStars">Starred</label>
                     <div class="controls">
-                      <input type="text" id="menuStarred" name="menuStarred" value="<?php echo empty($kfcmenu['menuStarred'])?'0':$kfcmenu['menuStarred']; ?>">
+                      <input type="text" id="menuStars" name="menuStars" value="<?php echo empty($kfcmenu['menuStars'])?'0':$kfcmenu['menuStars']; ?>">
                       <span class="help-block">If you want to add a link to the starred items</span>
                     </div>
                   </div>
