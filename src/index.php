@@ -2943,8 +2943,7 @@ dd {
             </fieldset>
 
             <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
-            <input class="btn" type="submit" name="save" value="Save selected" />
+            <input class="btn" type="submit" name="save" value="Save modifications" />
 
             <fieldset>
               <legend>Add selected folders to selected feeds</legend>
@@ -2976,8 +2975,7 @@ dd {
             </fieldset>
 
             <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
-            <input class="btn" type="submit" name="save" value="Save selected" />
+            <input class="btn" type="submit" name="save" value="Save modifications" />
 
             <fieldset>
               <legend>List of feeds</legend>
@@ -3001,7 +2999,7 @@ dd {
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
             <input class="btn" type="submit" name="cancel" value="Cancel"/>
             <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
-            <input class="btn" type="submit" name="save" value="Save selected" />
+            <input class="btn" type="submit" name="save" value="Save modifications" />
           </form>
         </div>
       </div>
