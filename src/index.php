@@ -3338,10 +3338,12 @@ dd {
       </dt>
       <dd class="item-info">
         <span class="item-title">
+          <?php if (!isset($_GET['stars'])) { ?>
           <?php if ($item['read'] == 1) { ?>
           <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label">unread</span></a>
           <?php } else { ?>
           <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
+          <?php } ?>
           <?php } ?>
           <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
             <?php echo $item['title']; ?>
@@ -3361,15 +3363,17 @@ dd {
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label">share</span></a>
+        <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
         <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
         <?php } ?>
+        <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
         <?php } else { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
         <?php }?>
         <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
@@ -3397,15 +3401,17 @@ dd {
       <div class="item-info-end">
         <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
+        <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
         <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
         <?php } ?>
+        <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
         <?php } else { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
         <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
@@ -4120,6 +4126,65 @@ dd {
     return false;
   }
 
+  function toggleMarkAsStarredLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks, url = '';
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-starred')) {
+          url = listLinks[i].href;
+          if (listLinks[i].href.indexOf('unstarred=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstarred=','starred=');
+            listLinks[i].firstChild.innerHTML = 'starred';
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('starred=','unstarred=');
+            listLinks[i].firstChild.innerHTML = 'unstarred';
+          }
+        }
+      }
+    }
+
+    return url;
+  }
+
+
+  function markAsStarredItem(itemHash) {
+    var url, client, indexItem;
+
+    url = toggleMarkAsStarredLinkItem(itemHash);
+    if (url.indexOf('unstarred=') > -1 && stars) {
+      removeElement(getItem(itemHash));
+      indexItem = listItemsHash.indexOf(itemHash);
+      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+      if (listItemsHash.length <= byPage) {
+        appendItem(listItemsHash[listItemsHash.length - 1]);
+      }
+      setCurrentItem(listItemsHash[indexItem]);
+      
+      url += '&page=' + currentPage;
+    }
+    if (url !== '') {
+      client = new HTTPClient();
+      client.init(url + '&ajax');
+      try {
+        client.asyncGET(ajaxHandler);
+      } catch (e) {
+        alert(e);
+      }
+    }
+  }
+
+  function markAsStarredClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsStarredItem(getItemHash(this));
+
+    return false;
+  }
+
   function markAsRead(itemHash) {
     setNbUnread(currentUnread - 1);
   }
@@ -4137,7 +4202,7 @@ dd {
         setDivItem(element, cacheItem);
         removeCacheItem(itemHash);
       } else {
-        url = '?currentHash=' + currentHash
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash
             + '&current=' + itemHash
             + '&ajax';
         client = new HTTPClient();
@@ -4307,9 +4372,10 @@ dd {
     }
 
     div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ' +
-      '<a class="item-starred" href="' + '?currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
       '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a>' +
@@ -4337,11 +4403,12 @@ dd {
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ' +
-      '<a class="item-starred" href="' + '?currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
       (view=='list'?
-      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       '<span class="ico ico-toggle-item">' +
       '<span class="ico-b-disc"></span>' +
       '<span class="ico-w-line-h"></span>' +
@@ -4366,7 +4433,7 @@ dd {
       target = '';
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       '<span class="ico ico-toggle-item">' +
       '<span class="ico-b-disc"></span>' +
       '<span class="ico-w-line-h"></span>' +
@@ -4381,20 +4448,20 @@ dd {
       '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
       '</span>':'' ) +
       '<span class="item-author">' +
-      '<a class="item-feed" href="?currentHash=' + item['itemHash'].substring(0, 6) + '">' +
+      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
       item['author'] +
       '</a>' +
       '</span>' +
       '</dt>' +
       '<dd class="item-info">' +
       '<span class="item-title">' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ' +
+      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
       '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a> ' +
       '</span>' +
       '<span class="item-description">' +
-      '<a class="item-toggle muted" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
+      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
       item['description'] +
       '</a> ' +
       '</span>' +
@@ -4498,6 +4565,9 @@ dd {
       if (hasClass(listItems[i], 'item-mark-as')) {
         listItems[i].onclick = markAsClickItem;
       }
+      if (hasClass(listItems[i], 'item-starred')) {
+        listItems[i].onclick = markAsStarredClickItem;
+      }
       if (hasClass(listItems[i], 'item-shaarli')) {
         listItems[i].onclick = shaarliClickItem;
       }
@@ -4510,7 +4580,8 @@ dd {
     url = '?currentHash=' + currentHash
         + '&page=' + currentPage
         + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax';
+        + '&ajax'
+        + (stars?'&stars':'');
 
     client = new HTTPClient();
     client.init(url);
@@ -5156,30 +5227,24 @@ dd {
   }
 
   function initUnread() {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
-    if (element) {
-      currentUnread = parseInt(element.innerHTML, 10);
-    } else {
-      currentUnread = 0;
-    }
+    currentUnread = parseInt(element.innerHTML, 10);
 
     title = document.title;
     setNbUnread(currentUnread);
   }
 
   function setNbUnread(nb) {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
     if (nb < 0) {
       nb = 0;
     }
 
     currentUnread = nb;
-    if (element) {
-      element.innerHTML = currentUnread;
-      document.title = title + ' (' + currentUnread + ')';
-    }
+    element.innerHTML = currentUnread;
+    document.title = title + ' (' + currentUnread + ')';
   }
 
   function initOptions() {
@@ -5273,9 +5338,8 @@ dd {
     initLinkItems(listLinkItems);
 
     initListItemsHash();
-    if (!stars) {
-      initListItems();
-    }
+    initListItems();
+
     initUnread();
 
     initItemButton();
@@ -5860,13 +5924,7 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-            
-        if (isset($GLOBALS['starredItems'][$itemHash])) {
-            $item['starred'] = 1 ;
-        } else {
-            $item['starred'] = 0 ;
-        }
-
+         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
@@ -5908,10 +5966,16 @@ class Feed
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
             $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
 
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
+
             return $item;
         }
 
-        return $item;
+        return false;
     }
 
     public function updateItems()
@@ -7601,6 +7665,7 @@ class Star extends Feed
         }
 
         if ($save) {
+            arsort($items);
             $this->setItems($items);
             $this->setFeeds($feeds);
         }
@@ -7739,6 +7804,10 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'Change your password');
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
+    if (isset($_GET['stars'])) {
+        $filter = 'all';
+        $kf = $ks;
+    }
     $kf->loadData();
     $needSave = false;
     $needStarSave = false;
@@ -7747,11 +7816,7 @@ if (isset($_GET['login'])) {
         $result['logout'] = true;
     }
     if (isset($_GET['current'])) {
-        if (isset($_GET['stars'])) {
-            $result['item'] = $ks->getItem($_GET['current'], false);
-        }else{
-            $result['item'] = $kf->getItem($_GET['current'], false);
-        }
+        $result['item'] = $kf->getItem($_GET['current'], false);
         $result['item']['itemHash'] = $_GET['current'];
     }
     if (isset($_GET['read'])) {
@@ -7766,11 +7831,12 @@ if (isset($_GET['login'])) {
             $result['unread'] = $_GET['unread'];
         }
     }
-    if (isset($_GET['starred'])) {
+    if (isset($_GET['starred']) && !isset($_GET['stars'])) {
         $hash = $_GET['starred'];
         $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
 
+        $ks->loadData();
         $needStarSave = $ks->markItem($_GET['starred'], 1, $feed, $item);
         if ($needStarSave) {
             $result['starred'] = $hash;
@@ -7779,6 +7845,7 @@ if (isset($_GET['login'])) {
     if (isset($_GET['unstarred'])) {
         $hash = $_GET['unstarred'];
 
+        $ks->loadData();
         $needStarSave = $ks->markItem($hash, 0);
         if ($needStarSave) {
             $result['unstarred'] = $hash;
@@ -7788,11 +7855,7 @@ if (isset($_GET['login'])) {
         $needSave = $kf->toggleFolder($_GET['toggleFolder']);
     }
     if (isset($_GET['page'])) {
-        if (isset($_GET['stars'])) {
-            $listItems = $ks->getItems($currentHash, $filter);
-        }else{
-            $listItems = $kf->getItems($currentHash, $filter);
-        }
+        $listItems = $kf->getItems($currentHash, $filter);
         $currentPage = $_GET['page'];
         $index = ($currentPage - 1) * $byPage;
         $results = array_slice($listItems, $index, $byPage + 1, true);
@@ -7807,11 +7870,11 @@ if (isset($_GET['login'])) {
         $i = 0;
         foreach(array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
             if (isset($_GET['stars'])) {
-                $result['page'][$i] = $ks->getItem($itemHash, false);
-            }else{
+                $result['page'][$i] = $kf->getItem($itemHash);
+            } else {
                 $result['page'][$i] = $kf->getItem($itemHash, false);
+                $result['page'][$i]['read'] = $item[1];
             }
-            $result['page'][$i]['read'] = $item[1];
             $i++;
         }
     }
@@ -8016,14 +8079,10 @@ if (isset($_GET['login'])) {
     
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
-    if (isset($_GET['stars'])) {
-        $ks->toggleFolder($_GET['toggleFolder']);
-        $ks->writeData();
-    } else {
-        $kf->loadData();
-        $kf->toggleFolder($_GET['toggleFolder']);
-        $kf->writeData();
-    }
+    $kf->loadData();
+    $kf->toggleFolder($_GET['toggleFolder']);
+    $kf->writeData();
+
     MyTool::redirect($query);
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))
