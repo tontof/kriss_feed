@@ -4174,7 +4174,7 @@ dd {
         appendItem(listItemsHash[listItemsHash.length - 1]);
       }
       setCurrentItem(listItemsHash[indexItem]);
-      
+
       url += '&page=' + currentPage;
     }
     if (url !== '') {
@@ -4921,11 +4921,11 @@ dd {
                    coords: [ touch.pageX, touch.pageY ] };
 
           // prevent scrolling
-          if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
+          /* if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
                                         >  scrollSupressionThreshold
              ) {
             e.preventDefault();
-          }
+          } */
         }
       }
 

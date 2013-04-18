@@ -1426,13 +1426,6 @@
           var touch = e.targetTouches[0];
           stop = { time: ( new Date() ).getTime(),
                    coords: [ touch.pageX, touch.pageY ] };
-
-          // prevent scrolling
-          if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-                                        >  scrollSupressionThreshold
-             ) {
-            e.preventDefault();
-          }
         }
       }
 
