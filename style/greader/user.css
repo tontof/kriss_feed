@@ -548,7 +548,7 @@ input[type=checkbox]:focus {
     width: 100%;
   }
   
-  .item-top > .label, .item-shaarli > .label, .item-mark-as > .label, .item-markStar-as > .label {
+  .item-top > .label, .item-shaarli > .label, .item-mark-as > .label, .item-starred > .label {
     margin: 0px 2px;
     display: inline-block;
     float: none;
