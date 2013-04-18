@@ -688,9 +688,18 @@ if (isset($_GET['login'])) {
     case 'all':
         if (isset($_POST['save'])) {
 
+            foreach (array_keys($_POST) as $key) {
+                if (strpos($key, 'order-folder-') !== false) {
+                    $folderHash = str_replace('order-folder-', '', $key);
+                    $kf->orderFolder($folderHash, (int) $_POST[$key]);
+                }
+            }
+
             $feedsHash = array();
-            foreach ($_POST['feeds'] as $feedHash) {
-                $feedsHash[] = $feedHash;
+            if (isset($_POST['feeds'])) {
+                foreach ($_POST['feeds'] as $feedHash) {
+                    $feedsHash[] = $feedHash;
+                }
             }
 
             foreach ($feedsHash as $feedHash) {
@@ -724,6 +733,7 @@ if (isset($_GET['login'])) {
                     ''
                 );
             }
+            $kf->sortFolders();
             $kf->writeData();
 
             MyTool::redirect();

@@ -11,6 +11,24 @@
           <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
+              <legend>Reorder folders</legend>
+              <div class="control-group">
+                <div class="controls">
+                  <?php $i=0; foreach ($folders as $hash => $folder) { ?>
+                  <label for="order-folder-<?php echo $hash; ?>">
+                    <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>) <br>
+                    <input type="text" id="order-folder-<?php echo $hash; ?>" name="order-folder-<?php echo $hash; ?>" value="<?php echo $i; $i++; ?>">
+                  </label>
+                  <?php } ?>
+                </div>
+              </div>
+            </fieldset>
+
+            <input class="btn" type="submit" name="cancel" value="Cancel"/>
+            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
+            <input class="btn" type="submit" name="save" value="Save selected" />
+
+            <fieldset>
               <legend>Add selected folders to selected feeds</legend>
               <div class="control-group">
                 <div class="controls">

@@ -2929,6 +2929,24 @@ dd {
           <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
+              <legend>Reorder folders</legend>
+              <div class="control-group">
+                <div class="controls">
+                  <?php $i=0; foreach ($folders as $hash => $folder) { ?>
+                  <label for="order-folder-<?php echo $hash; ?>">
+                    <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>) <br>
+                    <input type="text" id="order-folder-<?php echo $hash; ?>" name="order-folder-<?php echo $hash; ?>" value="<?php echo $i; $i++; ?>">
+                  </label>
+                  <?php } ?>
+                </div>
+              </div>
+            </fieldset>
+
+            <input class="btn" type="submit" name="cancel" value="Cancel"/>
+            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
+            <input class="btn" type="submit" name="save" value="Save selected" />
+
+            <fieldset>
               <legend>Add selected folders to selected feeds</legend>
               <div class="control-group">
                 <div class="controls">
@@ -5523,6 +5541,14 @@ class Feed
             );
     }
 
+    public function sortFolders()
+    {
+        uasort(
+            $this->_data['folders'],
+            'Feed::sortByOrder'
+            );
+    }
+
     public function getFeedsView()
     {
         $feedsView = array('all' => array('title' => 'All feeds', 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
@@ -5551,6 +5577,11 @@ class Feed
                             $feedsView['folders'][$folderHash]['isOpen'] = $folder['isOpen'];
                             $feedsView['folders'][$folderHash]['nbUnread'] = 0;
                             $feedsView['folders'][$folderHash]['nbAll'] = 0;
+                            if (isset($folder['order'])) {
+                                $feedsView['folders'][$folderHash]['order'] = $folder['order'];
+                            } else {
+                                $feedsView['folders'][$folderHash]['order'] = 0;
+                            }
                         }
                         $feedsView['folders'][$folderHash]['feeds'][$feedHash] = $feed;
                         $feedsView['folders'][$folderHash]['nbUnread'] += $feed['nbUnread'];
@@ -5559,6 +5590,8 @@ class Feed
                 }
             }
         }
+
+        uasort($feedsView['folders'], 'Feed::sortByOrder');
 
         return $feedsView;
     }
@@ -5798,6 +5831,15 @@ class Feed
                     $this->_data['feeds'][$feedHash]['foldersHash'][] = $newFolderHash;
                 }
             }
+        }
+    }
+
+    public function orderFolder(
+        $folderHash,
+        $order)
+    {
+        if (isset($this->_data['folders'][$folderHash])) {
+            $this->_data['folders'][$folderHash]['order'] = $order;
         }
     }
 
@@ -6790,6 +6832,10 @@ class Feed
         }
 
         return $type;
+    }
+
+    public static function sortByOrder($a, $b) {
+        return strnatcasecmp($a['order'], $b['order']);
     }
 
     public static function sortByTitle($a, $b) {
@@ -8335,9 +8381,18 @@ if (isset($_GET['login'])) {
     case 'all':
         if (isset($_POST['save'])) {
 
+            foreach (array_keys($_POST) as $key) {
+                if (strpos($key, 'order-folder-') !== false) {
+                    $folderHash = str_replace('order-folder-', '', $key);
+                    $kf->orderFolder($folderHash, (int) $_POST[$key]);
+                }
+            }
+
             $feedsHash = array();
-            foreach ($_POST['feeds'] as $feedHash) {
-                $feedsHash[] = $feedHash;
+            if (isset($_POST['feeds'])) {
+                foreach ($_POST['feeds'] as $feedHash) {
+                    $feedsHash[] = $feedHash;
+                }
             }
 
             foreach ($feedsHash as $feedHash) {
@@ -8371,6 +8426,7 @@ if (isset($_GET['login'])) {
                     ''
                 );
             }
+            $kf->sortFolders();
             $kf->writeData();
 
             MyTool::redirect();

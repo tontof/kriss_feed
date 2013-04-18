@@ -157,6 +157,17 @@ class Feed
     }
 
     /**
+     * Sort by order  list of folder
+     */
+    public function sortFolders()
+    {
+        uasort(
+            $this->_data['folders'],
+            'Feed::sortByOrder'
+            );
+    }
+
+    /**
      * Return feeds with folders and read/unread information
      * array('title', 'feeds', 'nbUnread', 'nbAll', 'folders')
      *
@@ -190,6 +201,11 @@ class Feed
                             $feedsView['folders'][$folderHash]['isOpen'] = $folder['isOpen'];
                             $feedsView['folders'][$folderHash]['nbUnread'] = 0;
                             $feedsView['folders'][$folderHash]['nbAll'] = 0;
+                            if (isset($folder['order'])) {
+                                $feedsView['folders'][$folderHash]['order'] = $folder['order'];
+                            } else {
+                                $feedsView['folders'][$folderHash]['order'] = 0;
+                            }
                         }
                         $feedsView['folders'][$folderHash]['feeds'][$feedHash] = $feed;
                         $feedsView['folders'][$folderHash]['nbUnread'] += $feed['nbUnread'];
@@ -198,6 +214,8 @@ class Feed
                 }
             }
         }
+
+        uasort($feedsView['folders'], 'Feed::sortByOrder');
 
         return $feedsView;
     }
@@ -520,6 +538,15 @@ class Feed
                     $this->_data['feeds'][$feedHash]['foldersHash'][] = $newFolderHash;
                 }
             }
+        }
+    }
+
+    public function orderFolder(
+        $folderHash,
+        $order)
+    {
+        if (isset($this->_data['folders'][$folderHash])) {
+            $this->_data['folders'][$folderHash]['order'] = $order;
         }
     }
 
@@ -1703,6 +1730,17 @@ class Feed
         }
 
         return $type;
+    }
+
+    /** 
+     * Sort function by order (feed, folder)
+     * Used with uasort
+     *
+     * @param mixed $a a feed or a folder
+     * @param mixed $b a feed or a folder
+     */
+    public static function sortByOrder($a, $b) {
+        return strnatcasecmp($a['order'], $b['order']);
     }
 
     /** 
