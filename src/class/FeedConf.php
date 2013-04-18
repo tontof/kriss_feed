@@ -96,6 +96,11 @@ class FeedConf
     public $addFavicon = false;
 
     /**
+     * Target _blank
+     */
+    public $blank = false;
+
+    /**
      * Visibility public/protected/private feed reader
      */
     public $visibility = 'private';
@@ -148,6 +153,7 @@ class FeedConf
     public $menuEdit = 8;
     public $menuAdd = 9;
     public $menuHelp = 10;
+    public $menuStars = 11;
 
     /**
      * paging personnalization
@@ -604,6 +610,16 @@ class FeedConf
         $this->order = $order;
     }
 
+    /**
+     * Blank setter
+     *
+     * @param string $blank New blank
+     */
+    public function setBlank($blank)
+    {
+        $this->blank = $blank;
+    }
+
     public function getMenu()
     {
         $menu = array();
@@ -637,6 +653,10 @@ class FeedConf
         }
         if ($this->menuHelp != 0) {
             $menu['menuHelp'] = $this->menuHelp;
+        }
+
+        if ($this->menuStars != 0) {
+            $menu['menuStars'] = $this->menuStars;
         }
 
         asort($menu);
@@ -716,6 +736,11 @@ class FeedConf
         $this->menuHelp = $menuHelp;
     }
 
+    public function setMenuStars($menuStars)
+    {
+        $this->menuStars = $menuStars;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -738,7 +763,19 @@ class FeedConf
 
     public function isLogged()
     {
-        return Session::isLogged() || $this->visibility === 'public';
+        if (Session::isLogged()
+            || $this->visibility === 'public'
+            || (isset($_GET['cron'])
+                && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))
+            || (isset($argv)
+                && count($argv) >= 3
+                && $argv[1] == 'update'
+                && $argv[2] == sha1($kfc->salt.$kfc->hash))) {
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -754,9 +791,9 @@ class FeedConf
                           'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
                           'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                          'pagingMarkAs', 'disableSessionProtection');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank');
             $out = '<?php';
             $out .= "\n";
 

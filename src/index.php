@@ -8,6 +8,8 @@ define('CACHE_DIR', DATA_DIR.'/cache');
 define('FAVICON_DIR', INC_DIR.'/favicon');
 
 define('DATA_FILE', DATA_DIR.'/data.php');
+define('STAR_FILE', DATA_DIR.'/star.php');
+define('ITEM_FILE', DATA_DIR.'/item.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('STYLE_FILE', 'style.css');
 
@@ -96,6 +98,8 @@ class FeedConf
 
     public $addFavicon = false;
 
+    public $blank = false;
+
     public $visibility = 'private';
 
     public $version;
@@ -122,6 +126,7 @@ class FeedConf
     public $menuEdit = 8;
     public $menuAdd = 9;
     public $menuHelp = 10;
+    public $menuStars = 11;
 
     public $pagingItem = 1;
     public $pagingPage = 2;
@@ -436,6 +441,11 @@ class FeedConf
         $this->order = $order;
     }
 
+    public function setBlank($blank)
+    {
+        $this->blank = $blank;
+    }
+
     public function getMenu()
     {
         $menu = array();
@@ -469,6 +479,10 @@ class FeedConf
         }
         if ($this->menuHelp != 0) {
             $menu['menuHelp'] = $this->menuHelp;
+        }
+
+        if ($this->menuStars != 0) {
+            $menu['menuStars'] = $this->menuStars;
         }
 
         asort($menu);
@@ -548,6 +562,11 @@ class FeedConf
         $this->menuHelp = $menuHelp;
     }
 
+    public function setMenuStars($menuStars)
+    {
+        $this->menuStars = $menuStars;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -570,7 +589,19 @@ class FeedConf
 
     public function isLogged()
     {
-        return Session::isLogged() || $this->visibility === 'public';
+        if (Session::isLogged()
+            || $this->visibility === 'public'
+            || (isset($_GET['cron'])
+                && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))
+            || (isset($argv)
+                && count($argv) >= 3
+                && $argv[1] == 'update'
+                && $argv[2] == sha1($kfc->salt.$kfc->hash))) {
+
+            return true;
+        }
+
+        return false;
     }
 
     public function write()
@@ -581,9 +612,9 @@ class FeedConf
                           'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
                           'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                          'pagingMarkAs', 'disableSessionProtection');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank');
             $out = '<?php';
             $out .= "\n";
 
@@ -1107,6 +1138,7 @@ dd {
 
   .item-top > .label,
   .item-shaarli > .label,
+  .item-starred > .label,
   .item-mark-as > .label {
     display: block;
     float: left;
@@ -1958,6 +1990,7 @@ dd {
         <ul class="nav">
           <?php
              switch($template) {
+             case 'stars':
              case 'index':
              ?>
           <?php foreach(array_keys($menu) as $menuOpt) { ?>
@@ -2209,6 +2242,14 @@ dd {
             </a>
           </li>
           <?php break; ?>
+          <?php case 'menuStars': 
+             if($template === 'index'){
+             ?>
+          <li>
+            <a href="<?php echo $query.'stars'; ?>" title="Show starred items">Starred Items</a>
+          </li>
+          <?php }
+             break; ?>
           <?php default: ?>
           <?php break; ?>
           <?php } ?>
@@ -2486,6 +2527,20 @@ dd {
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Auto target="_blank"</label>
+                    <div class="controls">
+                      <label for="donotblank">
+                        <input type="radio" id="donotblank" name="blank" value="0" <?php echo (!$kfcblank ? 'checked="checked"' : ''); ?>/>
+                        Do not open link in new tab
+                      </label>
+                      <label for="doblank">
+                        <input type="radio" id="doblank" name="blank" value="1" <?php echo ($kfcblank ? 'checked="checked"' : ''); ?>/>
+                        Automatically open link in new tab
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">
@@ -2577,6 +2632,13 @@ dd {
                     <div class="controls">
                       <input type="text" id="menuHelp" name="menuHelp" value="<?php echo empty($kfcmenu['menuHelp'])?'0':$kfcmenu['menuHelp']; ?>">
                       <span class="help-block">If you want to add a link to the help</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuStarred">Starred</label>
+                    <div class="controls">
+                      <input type="text" id="menuStarred" name="menuStarred" value="<?php echo empty($kfcmenu['menuStarred'])?'0':$kfcmenu['menuStarred']; ?>">
+                      <span class="help-block">If you want to add a link to the starred items</span>
                     </div>
                   </div>
                   <div class="control-group">
@@ -3166,7 +3228,12 @@ dd {
      ?>
   <ul class="unstyled">
     <li id="all-subscriptions" class="folder<?php if ($currentHash == 'all') echo ' current-folder'; ?>">
+      <?php if (isset($_GET['stars'])) { ?>
+      <h4><a class="mark-as" href="?stars&currentHash=all"><span class="label"><?php echo $feedsView['all']['nbAll']; ?></span></a><a href="<?php echo '?stars&currentHash=all'; ?>"><?php echo $feedsView['all']['title']; ?></a></h4>
+      <?php } else { ?>
       <h4><a class="mark-as" href="<?php echo ($feedsView['all']['nbUnread']==0?'?currentHash=all&unread':$query.'read').'=all'; ?>" title="Mark all as <?php echo ($feedsView['all']['nbUnread']==0?'unread':'read');?>"><span class="label"><?php echo $feedsView['all']['nbUnread']; ?></span></a><a href="<?php echo '?currentHash=all'; ?>"><?php echo $feedsView['all']['title']; ?></a></h4>
+      <?php } ?>
+
       <ul class="unstyled">
         <?php
            foreach ($feedsView['all']['feeds'] as $feedHash => $feed) {
@@ -3185,7 +3252,11 @@ dd {
             <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16" width="16" title="favicon" alt="favicon"/>
           </span>
           <?php } ?>
-<a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash.'#feed-'.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+          <?php if (isset($_GET['stars'])) { ?>
+          <a class="mark-as" href="<?php echo $query.'currentHash='.$feedHash; ?>"><span class="label"><?php echo $feed['nbAll']; ?></span></a><a class="feed" href="<?php echo '?stars&currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+          <?php } else { ?>
+          <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash.'#feed-'.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+          <?php } ?>
           
         </li>
 
@@ -3279,12 +3350,14 @@ dd {
       </a>
       <dd class="item-info">
         <span class="item-title">
+          <?php if (!isset($_GET['stars'])) { ?>
           <?php if ($item['read'] == 1) { ?>
           <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label">unread</span></a>
           <?php } else { ?>
           <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
           <?php } ?>
-          <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
+          <?php } ?>
+          <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
             <?php echo $item['title']; ?>
           </a>
         </span>
@@ -3302,17 +3375,19 @@ dd {
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label">share</span></a>
+        <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
         <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
         <?php } else { ?>
         <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
-        <?php }
-     if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
+        <?php } ?>
+        <?php } ?>
+        <?php if (isset($item['starred']) && $item['starred']===1) { ?>
+        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
         <?php } else { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
         <?php }?>
-        <a target="_blank"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
+        <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
       <div class="clear"></div>
       <div class="item-info-end item-info-time">
@@ -3320,7 +3395,7 @@ dd {
       </div>
       <div class="item-info-end item-info-author">
         from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
-        <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
+        <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').htmlspecialchars($item['xmlUrl']); ?>">
           <span class="ico">
             <span class="ico-feed-dot"></span>
             <span class="ico-feed-circle-1"></span>
@@ -3338,15 +3413,17 @@ dd {
       <div class="item-info-end">
         <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
         <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
+        <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" class="link-mark" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
         <?php } else { ?>
-        <a class="item-mark-as" class="link-mark" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
+        <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
         <?php } else { ?>
-        <a class="item-markStar-as" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
         <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
@@ -3434,7 +3511,7 @@ dd {
     <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>">
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -3489,6 +3566,8 @@ dd {
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
       stars = false, // data-stars
+      isLogged = false, // data-is-logged
+      blank = false, // data-blank
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -3634,6 +3713,9 @@ dd {
     onSuccess: function(responseText) {
       var result = JSON.parse(responseText);
 
+      if (result['logout'] && isLogged) {
+        alert('You have been disconnected');
+      }
       if (result['item']) {
         cache['item-' + result['item']['itemHash']] = result['item'];
         loadDivItem(result['item']['itemHash']);
@@ -4056,6 +4138,65 @@ dd {
     return false;
   }
 
+  function toggleMarkAsStarredLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks, url = '';
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-starred')) {
+          url = listLinks[i].href;
+          if (listLinks[i].href.indexOf('unstarred=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstarred=','starred=');
+            listLinks[i].firstChild.innerHTML = 'starred';
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('starred=','unstarred=');
+            listLinks[i].firstChild.innerHTML = 'unstarred';
+          }
+        }
+      }
+    }
+
+    return url;
+  }
+
+
+  function markAsStarredItem(itemHash) {
+    var url, client, indexItem;
+
+    url = toggleMarkAsStarredLinkItem(itemHash);
+    if (url.indexOf('unstarred=') > -1 && stars) {
+      removeElement(getItem(itemHash));
+      indexItem = listItemsHash.indexOf(itemHash);
+      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+      if (listItemsHash.length <= byPage) {
+        appendItem(listItemsHash[listItemsHash.length - 1]);
+      }
+      setCurrentItem(listItemsHash[indexItem]);
+      
+      url += '&page=' + currentPage;
+    }
+    if (url !== '') {
+      client = new HTTPClient();
+      client.init(url + '&ajax');
+      try {
+        client.asyncGET(ajaxHandler);
+      } catch (e) {
+        alert(e);
+      }
+    }
+  }
+
+  function markAsStarredClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsStarredItem(getItemHash(this));
+
+    return false;
+  }
+
   function markAsRead(itemHash) {
     setNbUnread(currentUnread - 1);
   }
@@ -4073,7 +4214,7 @@ dd {
         setDivItem(element, cacheItem);
         removeCacheItem(itemHash);
       } else {
-        url = '?currentHash=' + currentHash
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash
             + '&current=' + itemHash
             + '&ajax';
         client = new HTTPClient();
@@ -4228,16 +4369,26 @@ dd {
   }
 
   function setDivItem(div, item) {
-    var markAs = 'read';
+    var markAs = 'read', starred = 'starred', target = ' target="_blank"';
 
-      if (item['read'] == 1) {
-        markAs = 'unread';
-      }
+    if (item['read'] == 1) {
+      markAs = 'unread';
+    }
+
+    if (item['starred'] == 1) {
+      starred = 'unstarred';
+    }
+
+    if (!blank) {
+      target = '';
+    }
 
     div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ' +
-      '<a target="_blank" class="item-link" href="' + item['link'] + '">' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a>' +
       '</div>' +
@@ -4264,10 +4415,12 @@ dd {
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
       (view=='list'?
-      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       '<span class="ico ico-toggle-item">' +
       '<span class="ico-b-disc"></span>' +
       '<span class="ico-w-line-h"></span>' +
@@ -4282,13 +4435,17 @@ dd {
   }
 
   function setLiItem(li, item) {
-    var markAs = 'read';
+    var markAs = 'read', target = ' target="_blank"';
 
     if (item['read'] == 1) {
       markAs = 'unread';
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+    if (!blank) {
+      target = '';
+    }
+
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
       '<span class="ico ico-toggle-item">' +
       '<span class="ico-b-disc"></span>' +
       '<span class="ico-w-line-h"></span>' +
@@ -4303,20 +4460,20 @@ dd {
       '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
       '</span>':'' ) +
       '<span class="item-author">' +
-      '<a class="item-feed" href="?currentHash=' + item['itemHash'].substring(0, 6) + '">' +
+      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
       item['author'] +
       '</a>' +
       '</span>' +
       '</dt>' +
       '<dd class="item-info">' +
       '<span class="item-title">' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ' +
-      '<a target="_blank" class="item-link" href="' + item['link'] + '">' +
+      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a> ' +
       '</span>' +
       '<span class="item-description">' +
-      '<a class="item-toggle muted" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
+      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
       item['description'] +
       '</a> ' +
       '</span>' +
@@ -4420,6 +4577,9 @@ dd {
       if (hasClass(listItems[i], 'item-mark-as')) {
         listItems[i].onclick = markAsClickItem;
       }
+      if (hasClass(listItems[i], 'item-starred')) {
+        listItems[i].onclick = markAsStarredClickItem;
+      }
       if (hasClass(listItems[i], 'item-shaarli')) {
         listItems[i].onclick = shaarliClickItem;
       }
@@ -4432,7 +4592,8 @@ dd {
     url = '?currentHash=' + currentHash
         + '&page=' + currentPage
         + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax';
+        + '&ajax'
+        + (stars?'&stars':'');
 
     client = new HTTPClient();
     client.init(url);
@@ -4758,13 +4919,6 @@ dd {
           var touch = e.targetTouches[0];
           stop = { time: ( new Date() ).getTime(),
                    coords: [ touch.pageX, touch.pageY ] };
-
-          // prevent scrolling
-          if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-                                        >  scrollSupressionThreshold
-             ) {
-            e.preventDefault();
-          }
         }
       }
 
@@ -5078,7 +5232,7 @@ dd {
   }
 
   function initUnread() {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
     currentUnread = parseInt(element.innerHTML, 10);
 
@@ -5087,7 +5241,7 @@ dd {
   }
 
   function setNbUnread(nb) {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
     if (nb < 0) {
       nb = 0;
@@ -5159,7 +5313,14 @@ dd {
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
       stars = (stars === 1)?true:false;
     }
-
+    if (elementIndex.hasAttribute('data-blank')) {
+      blank = parseInt(elementIndex.getAttribute('data-blank'), 10);
+      blank = (blank === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-is-logged')) {
+      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
+      isLogged = (isLogged === 1)?true:false;
+    }
 
     status = document.getElementById('status').innerHTML;
   }
@@ -5182,9 +5343,8 @@ dd {
     initLinkItems(listLinkItems);
 
     initListItemsHash();
-    if (!stars) {
-      initListItems();
-    }
+    initListItems();
+
     initUnread();
 
     initItemButton();
@@ -5270,6 +5430,24 @@ class Feed
         $this->_data = $data;
     }
 
+    public function initData()
+    {
+        $this->_data['feeds'] = array(
+            MyTool::smallHash('http://tontof.net/?rss') => array(
+                'title' => 'Tontof',
+                'foldersHash' => array(),
+                'timeUpdate' => 'auto',
+                'lastUpdate' => 0,
+                'nbUnread' => 0,
+                'nbAll' => 0,
+                'htmlUrl' => 'http://tontof.net',
+                'xmlUrl' => 'http://tontof.net/?rss',
+                'description' => 'A simple and smart (or stupid) blog'));
+        $this->_data['folders'] = array();
+        $this->_data['items'] = array();
+        $this->_data['newItems'] = array();
+    }
+
     public function loadData()
     {
         if (empty($this->_data)) {
@@ -5285,22 +5463,11 @@ class Feed
                             )
                         )
                     );
+
                 return true;
             } else {
-                $this->_data['feeds'] = array(
-                    MyTool::smallHash('http://tontof.net/?rss') => array(
-                        'title' => 'Tontof',
-                        'foldersHash' => array(),
-                        'timeUpdate' => 'auto',
-                        'lastUpdate' => 0,
-                        'nbUnread' => 0,
-                        'nbAll' => 0,
-                        'htmlUrl' => 'http://tontof.net',
-                        'xmlUrl' => 'http://tontof.net/?rss',
-                        'description' => 'A simple and smart (or stupid) blog'));
-                $this->_data['folders'] = array();
-                $this->_data['items'] = array();
-                $this->_data['newItems'] = array();
+                $this->initData();
+                $this->writeData();
 
                 return false;
             }
@@ -5312,7 +5479,7 @@ class Feed
 
     public function writeData()
     {
-        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged()) {
             $write = @file_put_contents(
                 $this->dataFile,
                 PHPPREFIX
@@ -5323,6 +5490,10 @@ class Feed
                 die("Can't write to " . $this->dataFile);
             }
         }
+    }
+
+    public function setFeeds($feeds) {
+        $this->_data['feeds'] = $feeds;
     }
 
     public function getFeeds()
@@ -5346,10 +5517,17 @@ class Feed
             if (isset($feed['error'])) {
                 $feed['error'] = $this->getError($feed['error']);
             }
-            $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            if (isset($feed['nbUnread'])) {
+                $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            } else {
+                $feedsView['all']['nbUnread'] += $feed['nbAll'];
+            }
             $feedsView['all']['nbAll'] += $feed['nbAll'];
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
+                if (!isset($feed['nbUnread'])) {
+                    $feedsView['all']['feeds'][$feedHash]['nbUnread'] = $feed['nbAll'];
+                }
             } else {
                 foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
@@ -5374,9 +5552,10 @@ class Feed
     public function getFeed($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
-            // Fix problem of version 6 &amp;amp;
+            // FIX: problem of version 6 &amp;amp;
             $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
             $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
+
             return $this->_data['feeds'][$feedHash];
         }
 
@@ -5634,7 +5813,11 @@ class Feed
     public function getItems($hash = 'all', $filter = 'all')
     {
         if (empty($hash) or $hash == 'all' and $filter == 'all') {
-            return $this->_data['items']+$this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['items']+$this->_data['newItems'];
+            } else {
+                return $this->_data['items'];
+            }
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'old') {
@@ -5642,7 +5825,11 @@ class Feed
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'new') {
-            return $this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['newItems'];
+            } else {
+                return array();
+            }
         }
         
         $list = array();
@@ -5658,9 +5845,11 @@ class Feed
                     $list[$itemHash] = $item;
                 }
             }
-            foreach ($this->_data['newItems'] as $itemHash => $item) {
-                if ($item[1] === $isRead) {
-                    $list[$itemHash] = $item;
+            if (isset($this->_data['newItems'])) {
+                foreach ($this->_data['newItems'] as $itemHash => $item) {
+                    if ($item[1] === $isRead) {
+                        $list[$itemHash] = $item;
+                    }
                 }
             }
         } else {
@@ -5668,7 +5857,7 @@ class Feed
                 // an item
                 if (isset($this->_data['items'][$hash])) {
                     $list[$hash] = $this->_data['items'][$hash];
-                } else if (isset($this->_data['newItems'][$hash])) {
+                } else if (isset($this->_data['newItems']) && isset($this->_data['newItems'][$hash])) {
                     $list[$hash] = $this->_data['newItems'][$hash];
                 }
             } else {
@@ -5695,10 +5884,12 @@ class Feed
                             }
                         }
                     }
-                    foreach ($this->_data['newItems'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            if ($filter === 'all' or $item[1] === $isRead) {
-                                $list[$itemHash] = $item;
+                    if (isset($this->_data['newItems'])) {
+                        foreach ($this->_data['newItems'] as $itemHash => $item) {
+                            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                                if ($filter === 'all' or $item[1] === $isRead) {
+                                    $list[$itemHash] = $item;
+                                }
                             }
                         }
                     }
@@ -5707,6 +5898,11 @@ class Feed
         }
 
         return $list;
+    }
+
+    public function setItems($items)
+    {
+        $this->_data['items'] = $items;
     }
 
     public function loadItem($itemHash, $keep)
@@ -5733,18 +5929,18 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-
+         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
             if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
                 // Today
-                $item['time'] = array('list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
             } else {
                 if (strftime('%Y', $time) == strftime('%Y', time())) {
-                    $item['time'] = array('list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
                 } else {
-                    $item['time'] = array('list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
@@ -5771,10 +5967,15 @@ class Feed
             $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
+            
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
-            // Fix problem of version 6 &amp;amp;
-            $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
+            $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
 
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
 
             return $item;
         }
@@ -6165,7 +6366,7 @@ class Feed
                 $channel['timeUpdate'] = 'auto';
                 $channel['lastUpdate'] = time();
 
-                $this->_data['feeds'][$feedHash] = $channel;
+                $this->updateFeed($feedHash, $channel);
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
@@ -6546,6 +6747,9 @@ class Feed
 
         return false;
     }
+
+        
+    
 
     public function hashType($hash)
     {
@@ -7398,6 +7602,106 @@ class Session
     }
 }//end class
 
+class Star extends Feed
+{
+    public $starItemFile;
+
+    public function __construct($starFile, $starItemFile, $kfc)
+    {
+        parent::__construct($starFile, '', $kfc);
+
+        $this->starItemFile = $starItemFile;
+        if (is_file($this->starItemFile)) {
+            include_once $this->starItemFile;
+        }
+    }
+
+
+    public function initData()
+    {
+        $data = array();
+        
+        $data['feeds'] = array();
+        $data['items'] = array();
+        $GLOBALS['starredItems'] = array();
+
+        $this->setData($data);
+    }
+
+    public function markItem($itemHash, $starred, $feed = false, $item = false) {
+        $save = false;
+        $feeds = $this->getFeeds();
+        $feedHash = substr($itemHash, 0, 6);
+        $items = $this->getItems();
+
+        if (isset($items[$itemHash]) && $starred === 0) {
+            $save = true;
+            unset($items[$itemHash]);
+            unset($GLOBALS['starredItems'][$itemHash]);
+            if (isset($feeds[$feedHash])){
+                unset($feeds[$feedHash]['items'][$itemHash]);
+                $feeds[$feedHash]['nbAll']--;
+                if ($feeds[$feedHash]['nbAll'] <= 0) {
+                    unset($feeds[$feedHash]);
+                }
+            }
+        } else if (!isset($items[$itemHash]) && $starred === 1) {
+            // didn't exists, want to star it
+            $save = true;
+
+            $items[$itemHash] = time();
+
+            if (!isset($feeds[$feedHash])){
+                $feed['nbAll'] = 0;
+                $feed['items'] = array();
+                // remove useless feed information
+                unset($feed['timeUpdate']);
+                unset($feed['nbUnread']);
+                unset($feed['lastUpdate']);
+                unset($feed['foldersHash']);
+                unset($feed['error']);
+                $feeds[$feedHash] = $feed;
+            }
+            
+            $feeds[$feedHash]['items'][$itemHash] = $item;
+            $feeds[$feedHash]['nbAll']++;
+
+            $GLOBALS['starredItems'][$itemHash] = 1;
+        }
+
+        if ($save) {
+            arsort($items);
+            $this->setItems($items);
+            $this->setFeeds($feeds);
+        }
+
+        return $save;
+    }
+    
+    public function writeStarredItems()
+    {
+        if ($this->kfc->isLogged()) {
+            $data = array('starredItems');
+
+            $out = '<?php '."\n";
+            foreach ($data as $key) {
+                $out .= '$GLOBALS[\''.$key.'\'] = '.var_export($GLOBALS[$key],true).';'."\n";
+            }
+            
+            
+            if (!@file_put_contents($this->starItemFile, $out)) {
+                die("Can't write to ".$this->starItemFile." check permissions");
+            }
+        }
+    }
+
+    public function writeData()
+    {
+        parent::writeData();
+        $this->writeStarredItems();
+    }
+}
+
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
@@ -7412,6 +7716,7 @@ if (!empty($_POST)) {
 
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
+$ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
@@ -7425,13 +7730,16 @@ $filter =  $kfc->filter;
 // newerFirst or olderFirst
 $order =  $kfc->order;
 // number of item by page
-$byPage = $kfc->getByPage();
+$byPage = $kfc->byPage;
 // Hash : 'all', feed hash or folder hash
 $currentHash = $kfc->getCurrentHash();
 // Query
 $query = '?';
+if (isset($_GET['stars'])) {
+    $query .= 'stars&';
+}
 if (!empty($currentHash) and $currentHash !== 'all') {
-    $query = '?currentHash='.$currentHash.'&amp;';
+    $query .= 'currentHash='.$currentHash.'&';
 }
 
 $pb->assign('view', $view);
@@ -7440,7 +7748,7 @@ $pb->assign('filter', $filter);
 $pb->assign('order', $order);
 $pb->assign('byPage', $byPage);
 $pb->assign('currentHash', $currentHash);
-$pb->assign('query', $query);
+$pb->assign('query', htmlspecialchars($query));
 $pb->assign('redirector', $kfc->redirector);
 $pb->assign('shaarli', htmlspecialchars($kfc->shaarli));
 $pb->assign('autoreadItem', $kfc->autoreadItem);
@@ -7449,9 +7757,11 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('isLogged', $kfc->isLogged());
 
 if (isset($_GET['login'])) {
     // Login
@@ -7499,9 +7809,17 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'Change your password');
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
+    if (isset($_GET['stars'])) {
+        $filter = 'all';
+        $kf = $ks;
+    }
     $kf->loadData();
     $needSave = false;
+    $needStarSave = false;
     $result = array();
+    if (!$kfc->isLogged()) {
+        $result['logout'] = true;
+    }
     if (isset($_GET['current'])) {
         $result['item'] = $kf->getItem($_GET['current'], false);
         $result['item']['itemHash'] = $_GET['current'];
@@ -7516,6 +7834,26 @@ if (isset($_GET['login'])) {
         $needSave = $kf->mark($_GET['unread'], 0);
         if ($needSave && $kfc->isLogged()) {
             $result['unread'] = $_GET['unread'];
+        }
+    }
+    if (isset($_GET['starred']) && !isset($_GET['stars'])) {
+        $hash = $_GET['starred'];
+        $item = $kf->loadItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+
+        $ks->loadData();
+        $needStarSave = $ks->markItem($_GET['starred'], 1, $feed, $item);
+        if ($needStarSave) {
+            $result['starred'] = $hash;
+        }
+    }
+    if (isset($_GET['unstarred'])) {
+        $hash = $_GET['unstarred'];
+
+        $ks->loadData();
+        $needStarSave = $ks->markItem($hash, 0);
+        if ($needStarSave) {
+            $result['unstarred'] = $hash;
         }
     }
     if (isset($_GET['toggleFolder'])) {
@@ -7536,8 +7874,12 @@ if (isset($_GET['login'])) {
         }
         $i = 0;
         foreach(array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
-            $result['page'][$i] = $kf->getItem($itemHash, false);
-            $result['page'][$i]['read'] = $item[1];
+            if (isset($_GET['stars'])) {
+                $result['page'][$i] = $kf->getItem($itemHash);
+            } else {
+                $result['page'][$i] = $kf->getItem($itemHash, false);
+                $result['page'][$i]['read'] = $item[1];
+            }
             $i++;
         }
     }
@@ -7567,6 +7909,9 @@ if (isset($_GET['login'])) {
     }
     if ($needSave) {
         $kf->writeData();
+    }
+    if ($needStarSave) {
+        $ks->writeData();
     }
     MyTool::renderJson($result);
 } elseif (isset($_GET['help']) && ($kfc->isLogged() || $kfc->visibility === 'protected')) {
@@ -7608,6 +7953,8 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
+
+    $pb->assign('currentHash', $hash);
     if (isset($_GET['cron']) || isset($argv) && count($argv) >= 3) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
@@ -7648,6 +7995,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcblank', (int) $kfc->blank);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
@@ -7737,11 +8085,10 @@ if (isset($_GET['login'])) {
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
-    if (isset($_GET['toggleFolder'])) {
-        $kf->toggleFolder($_GET['toggleFolder']);
-    }
+    $kf->toggleFolder($_GET['toggleFolder']);
     $kf->writeData();
-    MyTool::redirect();
+
+    MyTool::redirect($query);
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))
           && $kfc->isLogged()) {
@@ -7765,14 +8112,132 @@ if (isset($_GET['login'])) {
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     if ($type === 'item') {
-        MyTool::redirect($query.'current='.$hash);
+        $query .= 'current='.$hash;
     } else {
         if ($filter === 'unread' && $read === 1) {
-            MyTool::redirect('?');
-        } else {
-            MyTool::redirect($query);
+            $query = '?';
         }
     }
+    MyTool::redirect($query);
+} elseif ((isset($_GET['starred'])
+           || isset($_GET['unstarred']))
+          && $kfc->isLogged()) {
+    // mark all as starred : item, feed, folder, all
+    $kf->loadData();
+    $ks->loadData();
+
+    $starred = 1;
+    if (isset($_GET['starred'])) {
+        $hash = $_GET['starred'];
+        $starred = 1;
+
+        $item = $kf->loadItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+        
+        $needSave = $ks->markItem($hash, $starred, $feed, $item);
+    } else {
+        $hash = $_GET['unstarred'];
+        $starred = 0;
+
+        $needSave = $ks->markItem($hash, $starred);
+    }
+    if ($needSave) {
+        $ks->writeData();
+    }
+
+    // type : 'feed', 'folder', 'all', 'item'
+    $type = $kf->hashType($hash);
+
+    if ($type === 'item') {
+        $query .= 'current='.$hash;
+    }
+    MyTool::redirect($query);
+} elseif (isset($_GET['stars']) && $kfc->isLogged()) {
+    $ks->loadData();
+    $listItems = $ks->getItems($currentHash, 'all');
+    $listHash = array_keys($listItems);
+    $currentItemHash = '';
+    if (isset($_GET['current']) && !empty($_GET['current'])) {
+        $currentItemHash = $_GET['current'];
+    }
+    if (isset($_GET['next']) && !empty($_GET['next'])) {
+        $currentItemHash = $_GET['next'];
+    }
+    if (isset($_GET['previous']) && !empty($_GET['previous'])) {
+        $currentItemHash = $_GET['previous'];
+    }
+    if (empty($currentItemHash)) {
+        $currentPage = $kfc->getCurrentPage();
+        $index = ($currentPage - 1) * $byPage;
+    } else {
+        $index = array_search($currentItemHash, $listHash);
+        if (isset($_GET['next'])) {
+            if ($index < count($listHash)-1) {
+                $index++;
+            } 
+        }
+        
+        if (isset($_GET['previous'])) {
+            if ($index > 0) {
+                $index--;
+            }
+        }
+    }
+
+    if ($index < count($listHash)) {
+        $currentItemHash = $listHash[$index];
+    } else {
+        $index = count($listHash) - 1;
+    }
+    
+    // pagination
+    $currentPage = (int) ($index/$byPage)+1;
+    if ($currentPage <= 0) {
+        $currentPage = 1;
+    }
+    $begin = ($currentPage - 1) * $byPage;
+    $maxPage = (count($listItems) <= $byPage) ? '1' : ceil(count($listItems) / $byPage);
+    $nbItems = count($listItems);
+    
+    // list items
+    $listItems = array_slice($listItems, $begin, $byPage, true);
+    
+    // type : 'feed', 'folder', 'all', 'item'
+    $currentHashType = $kf->hashType($currentHash);
+    $hashView = '';
+    switch($currentHashType){
+    case 'all':
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    case 'feed':
+        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    case 'folder':
+        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    default:
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        break;
+    }
+    
+    $menu = $kfc->getMenu();
+    $paging = $kfc->getPaging();
+
+    $pb->assign('menu',  $menu);
+    $pb->assign('paging',  $paging);
+    $pb->assign('currentHashType', $currentHashType);
+    $pb->assign('currentHashView', $hashView);
+    $pb->assign('currentPage',  (int) $currentPage);
+    $pb->assign('maxPage', (int) $maxPage);
+    $pb->assign('currentItemHash', $currentItemHash);
+    $pb->assign('nbItems', $nbItems);
+    $pb->assign('items', $listItems);
+    if ($listFeeds == 'show') {
+        $pb->assign('feedsView', $ks->getFeedsView());
+    }
+    $pb->assign('kf', $ks);
+    $pb->assign('pagetitle', 'Starred items');
+    $pb->renderPage('index');
 } elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
@@ -7780,8 +8245,8 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', 'edit');
     
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
-// type : 'feed', 'folder', 'all', 'item'
-$type = $kf->hashType($currentHash);
+    // type : 'feed', 'folder', 'all', 'item'
+    $type = $kf->hashType($currentHash);
     $type = $kf->hashType($hash);
     switch($type) {
     case 'feed':

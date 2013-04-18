@@ -59,6 +59,24 @@ class Feed
         $this->_data = $data;
     }
 
+    public function initData()
+    {
+        $this->_data['feeds'] = array(
+            MyTool::smallHash('http://tontof.net/?rss') => array(
+                'title' => 'Tontof',
+                'foldersHash' => array(),
+                'timeUpdate' => 'auto',
+                'lastUpdate' => 0,
+                'nbUnread' => 0,
+                'nbAll' => 0,
+                'htmlUrl' => 'http://tontof.net',
+                'xmlUrl' => 'http://tontof.net/?rss',
+                'description' => 'A simple and smart (or stupid) blog'));
+        $this->_data['folders'] = array();
+        $this->_data['items'] = array();
+        $this->_data['newItems'] = array();
+    }
+
     /**
      * Load data file or create one if not exists
      *
@@ -79,22 +97,11 @@ class Feed
                             )
                         )
                     );
+
                 return true;
             } else {
-                $this->_data['feeds'] = array(
-                    MyTool::smallHash('http://tontof.net/?rss') => array(
-                        'title' => 'Tontof',
-                        'foldersHash' => array(),
-                        'timeUpdate' => 'auto',
-                        'lastUpdate' => 0,
-                        'nbUnread' => 0,
-                        'nbAll' => 0,
-                        'htmlUrl' => 'http://tontof.net',
-                        'xmlUrl' => 'http://tontof.net/?rss',
-                        'description' => 'A simple and smart (or stupid) blog'));
-                $this->_data['folders'] = array();
-                $this->_data['items'] = array();
-                $this->_data['newItems'] = array();
+                $this->initData();
+                $this->writeData();
 
                 return false;
             }
@@ -111,7 +118,7 @@ class Feed
      */
     public function writeData()
     {
-        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged()) {
             $write = @file_put_contents(
                 $this->dataFile,
                 PHPPREFIX
@@ -122,6 +129,10 @@ class Feed
                 die("Can't write to " . $this->dataFile);
             }
         }
+    }
+
+    public function setFeeds($feeds) {
+        $this->_data['feeds'] = $feeds;
     }
 
     /**
@@ -159,10 +170,17 @@ class Feed
             if (isset($feed['error'])) {
                 $feed['error'] = $this->getError($feed['error']);
             }
-            $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            if (isset($feed['nbUnread'])) {
+                $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            } else {
+                $feedsView['all']['nbUnread'] += $feed['nbAll'];
+            }
             $feedsView['all']['nbAll'] += $feed['nbAll'];
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
+                if (!isset($feed['nbUnread'])) {
+                    $feedsView['all']['feeds'][$feedHash]['nbUnread'] = $feed['nbAll'];
+                }
             } else {
                 foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
@@ -194,9 +212,10 @@ class Feed
     public function getFeed($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
-            // Fix problem of version 6 &amp;amp;
+            // FIX: problem of version 6 &amp;amp;
             $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
             $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
+
             return $this->_data['feeds'][$feedHash];
         }
 
@@ -554,7 +573,11 @@ class Feed
     public function getItems($hash = 'all', $filter = 'all')
     {
         if (empty($hash) or $hash == 'all' and $filter == 'all') {
-            return $this->_data['items']+$this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['items']+$this->_data['newItems'];
+            } else {
+                return $this->_data['items'];
+            }
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'old') {
@@ -562,7 +585,11 @@ class Feed
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'new') {
-            return $this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['newItems'];
+            } else {
+                return array();
+            }
         }
         
         $list = array();
@@ -578,9 +605,11 @@ class Feed
                     $list[$itemHash] = $item;
                 }
             }
-            foreach ($this->_data['newItems'] as $itemHash => $item) {
-                if ($item[1] === $isRead) {
-                    $list[$itemHash] = $item;
+            if (isset($this->_data['newItems'])) {
+                foreach ($this->_data['newItems'] as $itemHash => $item) {
+                    if ($item[1] === $isRead) {
+                        $list[$itemHash] = $item;
+                    }
                 }
             }
         } else {
@@ -588,7 +617,7 @@ class Feed
                 // an item
                 if (isset($this->_data['items'][$hash])) {
                     $list[$hash] = $this->_data['items'][$hash];
-                } else if (isset($this->_data['newItems'][$hash])) {
+                } else if (isset($this->_data['newItems']) && isset($this->_data['newItems'][$hash])) {
                     $list[$hash] = $this->_data['newItems'][$hash];
                 }
             } else {
@@ -615,10 +644,12 @@ class Feed
                             }
                         }
                     }
-                    foreach ($this->_data['newItems'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            if ($filter === 'all' or $item[1] === $isRead) {
-                                $list[$itemHash] = $item;
+                    if (isset($this->_data['newItems'])) {
+                        foreach ($this->_data['newItems'] as $itemHash => $item) {
+                            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                                if ($filter === 'all' or $item[1] === $isRead) {
+                                    $list[$itemHash] = $item;
+                                }
                             }
                         }
                     }
@@ -627,6 +658,11 @@ class Feed
         }
 
         return $list;
+    }
+
+    public function setItems($items)
+    {
+        $this->_data['items'] = $items;
     }
 
     /**
@@ -667,18 +703,18 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-
+         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
             if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
                 // Today
-                $item['time'] = array('list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
             } else {
                 if (strftime('%Y', $time) == strftime('%Y', time())) {
-                    $item['time'] = array('list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
                 } else {
-                    $item['time'] = array('list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
@@ -705,10 +741,15 @@ class Feed
             $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
             $item['link'] = htmlspecialchars($item['link']);
             $item['via'] = htmlspecialchars($item['via']);
+            
             $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
-            // Fix problem of version 6 &amp;amp;
-            $item['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $item['xmlUrl']);
+            $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
 
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
 
             return $item;
         }
@@ -1179,7 +1220,7 @@ class Feed
                 $channel['timeUpdate'] = 'auto';
                 $channel['lastUpdate'] = time();
 
-                $this->_data['feeds'][$feedHash] = $channel;
+                $this->updateFeed($feedHash, $channel);
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
@@ -1623,6 +1664,9 @@ class Feed
 
         return false;
     }
+
+        
+    
 
     /**
      * Get type of a hash : item, feed, folder or ''

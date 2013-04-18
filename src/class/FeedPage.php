@@ -198,7 +198,7 @@ class FeedPage
     }
 
     /**
-     * listFeedsTpl : list feeds ul
+     * listItemsTpl : list items
      * 
      */
     public static function listItemsTpl()

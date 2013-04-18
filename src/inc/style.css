@@ -498,6 +498,7 @@ dd {
 
   .item-top > .label,
   .item-shaarli > .label,
+  .item-starred > .label,
   .item-mark-as > .label {
     display: block;
     float: left;

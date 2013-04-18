@@ -175,6 +175,20 @@
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Auto target="_blank"</label>
+                    <div class="controls">
+                      <label for="donotblank">
+                        <input type="radio" id="donotblank" name="blank" value="0" <?php echo (!$kfcblank ? 'checked="checked"' : ''); ?>/>
+                        Do not open link in new tab
+                      </label>
+                      <label for="doblank">
+                        <input type="radio" id="doblank" name="blank" value="1" <?php echo ($kfcblank ? 'checked="checked"' : ''); ?>/>
+                        Automatically open link in new tab
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto update with javascript</label>
                     <div class="controls">
                       <label for="donotautoupdate">
@@ -266,6 +280,13 @@
                     <div class="controls">
                       <input type="text" id="menuHelp" name="menuHelp" value="<?php echo empty($kfcmenu['menuHelp'])?'0':$kfcmenu['menuHelp']; ?>">
                       <span class="help-block">If you want to add a link to the help</span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuStarred">Starred</label>
+                    <div class="controls">
+                      <input type="text" id="menuStarred" name="menuStarred" value="<?php echo empty($kfcmenu['menuStarred'])?'0':$kfcmenu['menuStarred']; ?>">
+                      <span class="help-block">If you want to add a link to the starred items</span>
                     </div>
                   </div>
                   <div class="control-group">
