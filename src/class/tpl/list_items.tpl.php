@@ -62,9 +62,9 @@
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label">unstar</span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label">star</span></a>
         <?php }?>
         <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
@@ -100,9 +100,9 @@
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label label-expanded">unstar</span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label label-expanded">star</span></a>
         <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">

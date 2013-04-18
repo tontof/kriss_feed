@@ -639,12 +639,12 @@
       for (i = 0; i < listLinks.length; i += 1) {
         if (hasClass(listLinks[i], 'item-starred')) {
           url = listLinks[i].href;
-          if (listLinks[i].href.indexOf('unstarred=') > -1) {
-            listLinks[i].href = listLinks[i].href.replace('unstarred=','starred=');
-            listLinks[i].firstChild.innerHTML = 'starred';
+          if (listLinks[i].href.indexOf('unstar=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
+            listLinks[i].firstChild.innerHTML = 'star';
           } else {
-            listLinks[i].href = listLinks[i].href.replace('starred=','unstarred=');
-            listLinks[i].firstChild.innerHTML = 'unstarred';
+            listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
+            listLinks[i].firstChild.innerHTML = 'unstar';
           }
         }
       }
@@ -658,7 +658,7 @@
     var url, client, indexItem;
 
     url = toggleMarkAsStarredLinkItem(itemHash);
-    if (url.indexOf('unstarred=') > -1 && stars) {
+    if (url.indexOf('unstar=') > -1 && stars) {
       removeElement(getItem(itemHash));
       indexItem = listItemsHash.indexOf(itemHash);
       listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
@@ -666,7 +666,7 @@
         appendItem(listItemsHash[listItemsHash.length - 1]);
       }
       setCurrentItem(listItemsHash[indexItem]);
-      
+
       url += '&page=' + currentPage;
     }
     if (url !== '') {
@@ -867,14 +867,14 @@
   }
 
   function setDivItem(div, item) {
-    var markAs = 'read', starred = 'starred', target = ' target="_blank"';
+    var markAs = 'read', starred = 'star', target = ' target="_blank"';
 
     if (item['read'] == 1) {
       markAs = 'unread';
     }
 
     if (item['starred'] == 1) {
-      starred = 'unstarred';
+      starred = 'unstar';
     }
 
     if (!blank) {

@@ -203,24 +203,24 @@ if (isset($_GET['login'])) {
             $result['unread'] = $_GET['unread'];
         }
     }
-    if (isset($_GET['starred']) && !isset($_GET['stars'])) {
-        $hash = $_GET['starred'];
+    if (isset($_GET['star']) && !isset($_GET['stars'])) {
+        $hash = $_GET['star'];
         $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
 
         $ks->loadData();
-        $needStarSave = $ks->markItem($_GET['starred'], 1, $feed, $item);
+        $needStarSave = $ks->markItem($_GET['star'], 1, $feed, $item);
         if ($needStarSave) {
-            $result['starred'] = $hash;
+            $result['star'] = $hash;
         }
     }
-    if (isset($_GET['unstarred'])) {
-        $hash = $_GET['unstarred'];
+    if (isset($_GET['unstar'])) {
+        $hash = $_GET['unstar'];
 
         $ks->loadData();
         $needStarSave = $ks->markItem($hash, 0);
         if ($needStarSave) {
-            $result['unstarred'] = $hash;
+            $result['unstar'] = $hash;
         }
     }
     if (isset($_GET['toggleFolder'])) {
@@ -486,16 +486,16 @@ if (isset($_GET['login'])) {
         }
     }
     MyTool::redirect($query);
-} elseif ((isset($_GET['starred'])
-           || isset($_GET['unstarred']))
+} elseif ((isset($_GET['star'])
+           || isset($_GET['unstar']))
           && $kfc->isLogged()) {
     // mark all as starred : item, feed, folder, all
     $kf->loadData();
     $ks->loadData();
 
     $starred = 1;
-    if (isset($_GET['starred'])) {
-        $hash = $_GET['starred'];
+    if (isset($_GET['star'])) {
+        $hash = $_GET['star'];
         $starred = 1;
 
         $item = $kf->loadItem($hash, false);
@@ -503,7 +503,7 @@ if (isset($_GET['login'])) {
         
         $needSave = $ks->markItem($hash, $starred, $feed, $item);
     } else {
-        $hash = $_GET['unstarred'];
+        $hash = $_GET['unstar'];
         $starred = 0;
 
         $needSave = $ks->markItem($hash, $starred);

@@ -3415,9 +3415,9 @@ dd {
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label">unstar</span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label">star</span></a>
         <?php }?>
         <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
@@ -3453,9 +3453,9 @@ dd {
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstarred='.$itemHash; ?>"><span class="label label-expanded">unstarred</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label label-expanded">unstar</span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'starred='.$itemHash; ?>"><span class="label label-expanded">starred</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label label-expanded">star</span></a>
         <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
@@ -4179,12 +4179,12 @@ dd {
       for (i = 0; i < listLinks.length; i += 1) {
         if (hasClass(listLinks[i], 'item-starred')) {
           url = listLinks[i].href;
-          if (listLinks[i].href.indexOf('unstarred=') > -1) {
-            listLinks[i].href = listLinks[i].href.replace('unstarred=','starred=');
-            listLinks[i].firstChild.innerHTML = 'starred';
+          if (listLinks[i].href.indexOf('unstar=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
+            listLinks[i].firstChild.innerHTML = 'star';
           } else {
-            listLinks[i].href = listLinks[i].href.replace('starred=','unstarred=');
-            listLinks[i].firstChild.innerHTML = 'unstarred';
+            listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
+            listLinks[i].firstChild.innerHTML = 'unstar';
           }
         }
       }
@@ -4198,7 +4198,7 @@ dd {
     var url, client, indexItem;
 
     url = toggleMarkAsStarredLinkItem(itemHash);
-    if (url.indexOf('unstarred=') > -1 && stars) {
+    if (url.indexOf('unstar=') > -1 && stars) {
       removeElement(getItem(itemHash));
       indexItem = listItemsHash.indexOf(itemHash);
       listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
@@ -4206,7 +4206,7 @@ dd {
         appendItem(listItemsHash[listItemsHash.length - 1]);
       }
       setCurrentItem(listItemsHash[indexItem]);
-      
+
       url += '&page=' + currentPage;
     }
     if (url !== '') {
@@ -4401,14 +4401,14 @@ dd {
   }
 
   function setDivItem(div, item) {
-    var markAs = 'read', starred = 'starred', target = ' target="_blank"';
+    var markAs = 'read', starred = 'star', target = ' target="_blank"';
 
     if (item['read'] == 1) {
       markAs = 'unread';
     }
 
     if (item['starred'] == 1) {
-      starred = 'unstarred';
+      starred = 'unstar';
     }
 
     if (!blank) {
@@ -7896,24 +7896,24 @@ if (isset($_GET['login'])) {
             $result['unread'] = $_GET['unread'];
         }
     }
-    if (isset($_GET['starred']) && !isset($_GET['stars'])) {
-        $hash = $_GET['starred'];
+    if (isset($_GET['star']) && !isset($_GET['stars'])) {
+        $hash = $_GET['star'];
         $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
 
         $ks->loadData();
-        $needStarSave = $ks->markItem($_GET['starred'], 1, $feed, $item);
+        $needStarSave = $ks->markItem($_GET['star'], 1, $feed, $item);
         if ($needStarSave) {
-            $result['starred'] = $hash;
+            $result['star'] = $hash;
         }
     }
-    if (isset($_GET['unstarred'])) {
-        $hash = $_GET['unstarred'];
+    if (isset($_GET['unstar'])) {
+        $hash = $_GET['unstar'];
 
         $ks->loadData();
         $needStarSave = $ks->markItem($hash, 0);
         if ($needStarSave) {
-            $result['unstarred'] = $hash;
+            $result['unstar'] = $hash;
         }
     }
     if (isset($_GET['toggleFolder'])) {
@@ -8179,16 +8179,16 @@ if (isset($_GET['login'])) {
         }
     }
     MyTool::redirect($query);
-} elseif ((isset($_GET['starred'])
-           || isset($_GET['unstarred']))
+} elseif ((isset($_GET['star'])
+           || isset($_GET['unstar']))
           && $kfc->isLogged()) {
     // mark all as starred : item, feed, folder, all
     $kf->loadData();
     $ks->loadData();
 
     $starred = 1;
-    if (isset($_GET['starred'])) {
-        $hash = $_GET['starred'];
+    if (isset($_GET['star'])) {
+        $hash = $_GET['star'];
         $starred = 1;
 
         $item = $kf->loadItem($hash, false);
@@ -8196,7 +8196,7 @@ if (isset($_GET['login'])) {
         
         $needSave = $ks->markItem($hash, $starred, $feed, $item);
     } else {
-        $hash = $_GET['unstarred'];
+        $hash = $_GET['unstar'];
         $starred = 0;
 
         $needSave = $ks->markItem($hash, $starred);
