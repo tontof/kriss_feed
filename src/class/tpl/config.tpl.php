@@ -337,12 +337,24 @@
                   <legend>Cron configuration</legend>
                   <code><?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?></code>
                   You can use <code>&force</code> to force update.<br>
-                  To update every 15 minutes
+                  To update every 15 minutes:<br>
                   <code>*/15 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code><br>
-                  To update every hour
+                  To update every hour:<br>
                   <code>0 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code><br>
-                  If you can not use wget, you may try php command line :
-                  <code>0 * * * * php -f <?php echo $_SERVER["SCRIPT_FILENAME"].' update '.$kfccron; ?> > /tmp/kf.cron</code>
+                  If you can not use wget, you may try php command line:<br>
+                  <code>0 * * * * php -f <?php echo $_SERVER["SCRIPT_FILENAME"].' update '.$kfccron; ?> > /tmp/kf.cron</code><br>
+                  If previous solutions do not work, try to create an update.php file into data directory containing:<br>
+                  <code>
+                  &lt;?php<br>
+                  $url = "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>";<br>
+                  $options = array('http'=>array('method'=>'GET'));<br>
+                  $context = stream_context_create($options);<br>
+                  $data=file_get_contents($url,false,$context);<br>
+                  print($data);
+                  </code><br>
+                  Then set up your cron with:<br>
+                  <code>0 * * * * php -f <?php echo dirname($_SERVER["SCRIPT_FILENAME"]).'/data/update.php'; ?> > /tmp/kf.cron</code><br>
+                  Don't forget to check right permissions !<br>
                   <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="Cancel"/>
