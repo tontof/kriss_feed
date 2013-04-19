@@ -62,6 +62,14 @@ opacity: 0.8;
 .item-title {
 margin-bottom: 0px/*10px*/;
 }
+.item-link {
+color: #FFFFFF;
+}
 legend, .help-block, .help-inline {
 color:#c0c0c0;
+}
+.current, .current-feed, .current-folder > h5, .current-folder > h4, li.folder > h4:hover,
+li.folder > h5:hover, li.feed:hover {
+color:#fff;
+background-color: #000;
 }
