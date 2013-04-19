@@ -50,6 +50,8 @@
                 <dl class="dl-horizontal">
                   <dt>'o'</dt>
                   <dd><strong>O</strong>pen current item in new tab</dd>
+                </dl>
+                <dl class="dl-horizontal">
                   <dt>'shift' + 'o'</dt>
                   <dd><strong>O</strong>pen current item in current window</dd>
                 </dl>
