@@ -6336,9 +6336,9 @@ class Feed
 		/* Bypass SSL verification */
 		if ($this->kfc->bypassHttpsVerif){
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); 
 		}
 		
+        curl_setopt($ch, CURLOPT_CAINFO, 'D:\MyApps2\EasyPHP\App\EasyPHP\php\cacert.pem');
         curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
