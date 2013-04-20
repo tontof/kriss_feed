@@ -99,6 +99,8 @@ class FeedConf
     public $addFavicon = false;
 
     public $blank = false;
+	
+	public $bypassHttpsVerif = false;
 
     public $visibility = 'private';
 
@@ -420,7 +422,12 @@ class FeedConf
     {
         $this->addFavicon = $addFavicon;
     }
-
+	
+	public function setBypassHttpsVerif($bypassHttpsVerif)
+    {
+        $this->bypassHttpsVerif = $bypassHttpsVerif;
+    }
+	
     public function setShaarli($url)
     {
         $this->shaarli = $url;
@@ -616,7 +623,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank','bypassHttpsVerif');
             $out = '<?php';
             $out .= "\n";
 
@@ -2555,6 +2562,32 @@ dd {
                       </label>
                     </div>
                   </div>
+				  
+				  
+				  <div class="control-group">
+				  
+
+                    <label class="control-label">
+					<div>
+						 <?php if (extension_loaded('openssl')) { ?>
+                  <span class="text-success">You should be able to load https:// rss links.</span>
+                  <?php } else { ?>
+                  <span class="text-error">You may have problems using https:// rss links. But you can try to <strong> bypass SSL verification for Https links</strong></span>
+                  <?php } ?>
+				  </div>
+					</label>
+                    <div class="controls">
+					
+                      <label for="donotbypasshttpsverif">
+                        <input type="radio" id="donotbypasshttpsverif" name="bypassHttpsVerif" value="0" <?php echo (!$kfcbypassHttpsVerif ? 'checked="checked"' : ''); ?>/>
+                        Do not bypass SSL verification
+                      </label>
+                      <label for="bypasshttpsverif">
+                        <input type="radio" id="bypasshttpsverif" name="bypassHttpsVerif" value="1" <?php echo ($kfcbypassHttpsVerif ? 'checked="checked"' : ''); ?>/>
+                        Bypass SSL verification
+                      </label>
+                    </div>
+                  </div>
 
                   <div class="control-group">
                     <div class="controls">
@@ -3597,6 +3630,7 @@ dd {
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      bypassHttpsVerif = false, // data-bypass-Https-Verif
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
@@ -6299,6 +6333,12 @@ class Feed
             curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
             curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
         }
+		/* Bypass SSL verification */
+		if ($this->kfc->bypassHttpsVerif){
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		}
+		
+        curl_setopt($ch, CURLOPT_CAINFO, 'D:\MyApps2\EasyPHP\App\EasyPHP\php\cacert.pem');
         curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
@@ -7818,6 +7858,7 @@ $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('blank', $kfc->blank);
+$pb->assign('bypassHttpsVerif', $kfc->bypassHttpsVerif);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
@@ -8056,6 +8097,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
         $pb->assign('kfcblank', (int) $kfc->blank);
+        $pb->assign('kfcbypassHttpsVerif', (int) $kfc->bypassHttpsVerif);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
