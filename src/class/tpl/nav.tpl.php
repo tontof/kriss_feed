@@ -177,7 +177,7 @@
           <?php break; ?>
           <?php case 'menuUpdate': ?>
           <li>
-            <a href="<?php echo $query.'update='.$currentHash; ?>" class="admin" title="Update <?php echo $currentHashType; ?> manually">
+            <a href="<?php echo $query.'update='.$currentHash; ?>" title="Update <?php echo $currentHashType; ?> manually">
               <span class="menu-ico ico-update">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -193,7 +193,7 @@
           <?php break; ?>
           <?php case 'menuRead': ?>
           <li>
-            <a href="<?php echo $query.'read='.$currentHash; ?>" class="admin" title="Mark <?php echo $currentHashType; ?> as read">
+            <a href="<?php echo $query.'read='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as read">
               <span class="menu-ico ico-mark-as-read">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -211,7 +211,7 @@
           <?php break; ?>
           <?php case 'menuUnread': ?>
           <li>
-            <a href="<?php echo $query.'unread='.$currentHash; ?>" class="admin" title="Mark <?php echo $currentHashType; ?> as unread">
+            <a href="<?php echo $query.'unread='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as unread">
               <span class="menu-ico ico-mark-as-unread">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -228,7 +228,7 @@
           <?php break; ?>
           <?php case 'menuEdit': ?>
           <li>
-            <a href="<?php echo $query.'edit='.$currentHash; ?>" class="admin" title="Edit <?php echo $currentHashType; ?>">
+            <a href="<?php echo $query.'edit='.$currentHash; ?>" title="Edit <?php echo $currentHashType; ?>">
               <span class="menu-ico ico-edit">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -247,7 +247,7 @@
           <?php break; ?>
           <?php case 'menuAdd': ?>
           <li>
-            <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">
+            <a href="<?php echo $query.'add'; ?>" title="Add a new feed">
               <span class="menu-ico ico-add-feed">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -293,7 +293,7 @@
           <?php } ?>
           <?php if ($kf->kfc->isLogged()) { ?>
           <li>
-            <a href="?config" class="admin" title="Configuration">
+            <a href="?config" title="Configuration">
               <span class="menu-ico ico-config">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -310,7 +310,7 @@
           <?php } ?>
           <?php if (Session::isLogged()) { ?>
           <li>
-            <a href="?logout" class="admin" title="Logout">
+            <a href="?logout" title="Logout">
               <span class="menu-ico ico-logout">
                 <span class="ico">
                   <span class="ico-b-disc"></span>
@@ -342,19 +342,19 @@
              break;
              case 'config':
              ?>
-          <li><a href="?password" class="admin" title="Change your password">Change password</a></li>
-          <li><a href="?import" class="admin" title="Import OPML file">Import</a></li>
-          <li><a href="?export" class="admin" title="Export OPML file">Export</a></li>
-          <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
+          <li><a href="?password" title="Change your password">Change password</a></li>
+          <li><a href="?import" title="Import OPML file">Import</a></li>
+          <li><a href="?export" title="Export OPML file">Export</a></li>
+          <li><a href="?logout" title="Logout">Logout</a></li>
           <?php
              break;
              default:
              ?>
           <?php if ($kf->kfc->isLogged()) { ?>
-          <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
+          <li><a href="?config" title="Configuration">Configuration</a></li>
           <?php } ?>
           <?php if (Session::isLogged()) { ?>
-          <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
+          <li><a href="?logout" title="Logout">Logout</a></li>
           <?php } else { ?>
           <li><a href="?login">Login</a></li>
           <?php } ?>
