@@ -1467,7 +1467,7 @@
         case 65: // 'A'
 		if (filter == 'unread') {
 			while(listItemsHash.indexOf(currentItemHash) != -1) {
-				window.open(getUrlItem(currentItemHash),'_newtab');
+				window.open(getUrlItem(currentItemHash),'_blank');
 				markAsCurrentItem();
 			}
         } else if (filter == 'all') {
