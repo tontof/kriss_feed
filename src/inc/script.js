@@ -1460,10 +1460,18 @@
         case 32: // 'space'
         toggleCurrentItem();
         break;
-        case 65: // 'A'
+  /*      case 65: // 'A'
         if (window.confirm('Mark all current as read ?')) {
           window.location.href = '?read=' + currentHash;
-        }
+        }*/
+        case 65: // 'A'
+		while(listItemsHash.indexOf(currentItemHash) != -1) {
+			//only apply to unread elements
+			//if(currentItemHash. listItemsHash.indexOf(currentItemHash) + 1)){
+			window.open(getUrlItem(currentItemHash),'_newtab');
+			markAsCurrentItem();
+		//	}
+		}
         break;
         case 67: // 'C'
         window.location.href = '?config';
