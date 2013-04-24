@@ -1465,13 +1465,16 @@
           window.location.href = '?read=' + currentHash;
         }*/
         case 65: // 'A'
-		while(listItemsHash.indexOf(currentItemHash) != -1) {
-			//only apply to unread elements
-			//if(currentItemHash. listItemsHash.indexOf(currentItemHash) + 1)){
-			window.open(getUrlItem(currentItemHash),'_newtab');
-			markAsCurrentItem();
-		//	}
-		}
+		//alert (view);
+		if (view == 'list') {
+			while(listItemsHash.indexOf(currentItemHash) != -1) {
+				window.open(getUrlItem(currentItemHash),'_newtab');
+				markAsCurrentItem();
+			}
+        } //else {
+			
+		//}
+		
         break;
         case 67: // 'C'
         window.location.href = '?config';
