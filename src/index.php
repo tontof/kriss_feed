@@ -680,6 +680,7 @@ html, body, .full-height {
 
 img {
   max-width: 100%;
+  height: 100%;
   vertical-align: middle;
   border: 0;
 }
