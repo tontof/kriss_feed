@@ -6401,9 +6401,7 @@ class Feed
             } else {
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
-                if (count($items) == 0) {
-                    return false;
-                }
+
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
                         $items[$itemHash]['via'] = $channel['htmlUrl'];
