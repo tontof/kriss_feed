@@ -187,6 +187,9 @@ class Opml
                 $feeds[$hashUrl]['htmlUrl']
             );
             $outline->appendChild($outlineHtmlUrl);
+            $outlineType = $opmlData->createAttribute('type');
+            $outlineType->value = 'rss';
+            $outline->appendChild($outlineType);
             $body->appendChild($outline);
         }
 
@@ -226,6 +229,9 @@ class Opml
                 $outlineHtmlUrl->value
                     = htmlspecialchars($feeds[$hashUrl]['htmlUrl']);
                 $outlineKF->appendChild($outlineHtmlUrl);
+                $outlineType = $opmlData->createAttribute('type');
+                $outlineType->value = 'rss';
+                $outlineKF->appendChild($outlineType);
                 $outline->appendChild($outlineKF);
             }
             $body->appendChild($outline);
