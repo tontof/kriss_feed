@@ -336,7 +336,8 @@ class Feed
         $title,
         $description,
         $foldersHash,
-        $timeUpdate)
+        $timeUpdate,
+        $htmlUrl)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
             if (!empty($title)) {
@@ -344,6 +345,9 @@ class Feed
             }
             if (!empty($description)) {
                 $this->_data['feeds'][$feedHash]['description'] = $description;
+            }
+            if (!empty($htmlUrl)) {
+                $this->_data['feeds'][$feedHash]['htmlUrl'] = $htmlUrl;
             }
             
             $this->_data['feeds'][$feedHash]['foldersHash'] = $foldersHash;

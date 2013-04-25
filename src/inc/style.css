@@ -181,6 +181,11 @@ input[type="password"] {
   border-radius: 0;
 }
 
+input[readonly="readonly"]{
+  opacity: 0.4;
+}
+
+
 .input-mini {
   width: 24px !important;
 }

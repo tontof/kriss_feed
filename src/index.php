@@ -835,6 +835,11 @@ input[type="password"] {
   border-radius: 0;
 }
 
+input[readonly="readonly"]{
+  opacity: 0.4;
+}
+
+
 .input-mini {
   width: 24px !important;
 }
@@ -3087,7 +3092,7 @@ dd {
               <div class="control-group">
                 <label class="control-label">Feed main url</label>
                 <div class="controls">
-                  <input type="text" readonly="readonly" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
+                  <input type="text" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
                 </div>
               </div>
               <div class="control-group">
@@ -3131,7 +3136,7 @@ dd {
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Last update (<em>read only</em>)</label>
+                <label class="control-label">Last update</label>
                 <div class="controls">
                   <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate; ?>">
                 </div>
@@ -5673,7 +5678,8 @@ class Feed
         $title,
         $description,
         $foldersHash,
-        $timeUpdate)
+        $timeUpdate,
+        $htmlUrl)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
             if (!empty($title)) {
@@ -5681,6 +5687,9 @@ class Feed
             }
             if (!empty($description)) {
                 $this->_data['feeds'][$feedHash]['description'] = $description;
+            }
+            if (!empty($htmlUrl)) {
+                $this->_data['feeds'][$feedHash]['htmlUrl'] = $htmlUrl;
             }
             
             $this->_data['feeds'][$feedHash]['foldersHash'] = $foldersHash;
@@ -8123,7 +8132,7 @@ if (isset($_GET['login'])) {
                 $folders[] = $newFolderHash;
             }
             $hash = MyTool::smallHash($_POST['newfeed']);
-            $kf->editFeed($hash, '', '', $folders, '');
+            $kf->editFeed($hash, '', '', $folders, '', '');
             $kf->sortFeeds();
             $kf->writeData();
             MyTool::redirect('?currentHash='.$hash);
@@ -8320,6 +8329,7 @@ if (isset($_GET['login'])) {
         if (isset($_POST['save'])) {
             $title = $_POST['title'];
             $description = $_POST['description'];
+            $htmlUrl = $_POST['htmlUrl'];
             $folders = array();
             if (!empty($_POST['folders'])) {
                 foreach ($_POST['folders'] as $hashFolder) {
@@ -8333,7 +8343,7 @@ if (isset($_GET['login'])) {
             }
             $timeUpdate = $_POST['timeUpdate'];
 
-            $kf->editFeed($hash, $title, $description, $folders, $timeUpdate);
+            $kf->editFeed($hash, $title, $description, $folders, $timeUpdate, $htmlUrl);
             $kf->writeData();
 
             MyTool::redirect();
@@ -8425,13 +8435,7 @@ if (isset($_GET['login'])) {
                 }
                 $addFoldersHash = array_diff($addFoldersHash, $removeFoldersHash);
 
-                $kf->editFeed(
-                    $feedHash,
-                    '',
-                    '',
-                    $addFoldersHash,
-                    ''
-                );
+                $kf->editFeed($feedHash, '', '', $addFoldersHash, '', '');
             }
             $kf->sortFolders();
             $kf->writeData();

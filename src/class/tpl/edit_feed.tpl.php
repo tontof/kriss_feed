@@ -27,7 +27,7 @@
               <div class="control-group">
                 <label class="control-label">Feed main url</label>
                 <div class="controls">
-                  <input type="text" readonly="readonly" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
+                  <input type="text" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
                 </div>
               </div>
               <div class="control-group">
@@ -71,7 +71,7 @@
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Last update (<em>read only</em>)</label>
+                <label class="control-label">Last update</label>
                 <div class="controls">
                   <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate; ?>">
                 </div>
