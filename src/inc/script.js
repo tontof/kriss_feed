@@ -1934,15 +1934,11 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 	function setOriginalFavicon(val) { GM_setValue('originalFavicon', val) };
 }
 
-(function GReaderFaviconAlerts() {
+(function FaviconAlerts() {
 	var self = this;
 	
 	this.construct = function() {
 		this.head = document.getElementsByTagName('head')[0];
-		/*this.icons = {
-			current: 'favicon.ico',
-			original: 'favicon.png'
-		};*/
 		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0],],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1],]}};
 		
 		this.timer = setInterval(this.poll, 500);
@@ -2100,7 +2096,7 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 		document.body.removeChild(shim);
 	}
 	
-	this.toString = function() { return '[object GReaderFaviconAlerts]'; }
+	this.toString = function() { return '[object FaviconAlerts]'; }
 	
 	return this.construct();
 }());
