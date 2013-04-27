@@ -1464,22 +1464,7 @@
         if (window.confirm('Mark all current as read ?')) {
           window.location.href = '?read=' + currentHash;
         }
-        case 84: // 't'
-		if (filter == 'unread') {
-			while(listItemsHash.indexOf(currentItemHash) != -1) {
-				window.open(getUrlItem(currentItemHash),'_blank');
-				markAsCurrentItem();
-			}
-        } else if (filter == 'all') {
-			for (var i=0;i<listItemsHash.length;i++){
-				if (!hasClass(getItem(listItemsHash[i]), 'read')){
-					window.open(getUrlItem(currentItemHash),'_blank');
-					markAsCurrentItem();
-				}
-				nextItem();
-			}
-		}
-        break;
+		break;
         case 67: // 'C'
         window.location.href = '?config';
         break;
@@ -1553,6 +1538,22 @@
         } else {
           window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
         }
+        break;
+        case 90: // 'z'
+		if (filter == 'unread') {
+			while(listItemsHash.indexOf(currentItemHash) != -1) {
+				window.open(getUrlItem(currentItemHash),'_blank');
+				markAsCurrentItem();
+			}
+        } else if (filter == 'all') {
+			for (var i=0;i<listItemsHash.length;i++){
+				if (!hasClass(getItem(listItemsHash[i]), 'read')){
+					window.open(getUrlItem(currentItemHash),'_blank');
+					markAsCurrentItem();
+				}
+				nextItem();
+			}
+		}
         break;
         case 112: // 'F1'
         case 188: // '?'
