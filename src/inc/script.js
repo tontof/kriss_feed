@@ -1460,11 +1460,11 @@
         case 32: // 'space'
         toggleCurrentItem();
         break;
-  /*      case 65: // 'A'
+        case 65: // 'A'
         if (window.confirm('Mark all current as read ?')) {
           window.location.href = '?read=' + currentHash;
-        }*/
-        case 65: // 'A'
+        }
+        case 84: // 't'
 		if (filter == 'unread') {
 			while(listItemsHash.indexOf(currentItemHash) != -1) {
 				window.open(getUrlItem(currentItemHash),'_blank');
@@ -1921,6 +1921,7 @@
   window.addEvent = addEvent;
 })();
 
+// unread count for favicon part
 if(typeof GM_getValue == 'undefined') {
 	function GM_getValue(name, fallback) {
 		return fallback;
@@ -2036,12 +2037,12 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 				ctx.drawImage(img, 0, 0);
 				callback(self.unreadCanvas);
 			}, true);
-			/*
-			if(GM_getValue('originalFavicon', false)) {
-				img.src = self.icons.original;
-			} else {
-				img.src = self.icons.current;
-			}*/
+			
+		//	if(GM_getValue('originalFavicon', false)) {
+		//		img.src = self.icons.original;
+		//	} else {
+		//		img.src = self.icons.current;
+		//	}
 			img.src = 'favicon.ico';
 		} else {
 			callback(self.unreadCanvas);
@@ -2100,4 +2101,3 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 	
 	return this.construct();
 }());
-
