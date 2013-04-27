@@ -1148,10 +1148,13 @@ class Feed
                 // 307 Temporary Redirect
                 if ($code != 301 && $code != 302 && $code!=303 && $code!=307)
                     break;
-                $header_start = strpos($data, "\r\n")+2;
-                $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
-                if (!preg_match("!\r\n(?:Location|location|URI): *(.*?) *\r\n!", $headers, $matches))
-                    break;
+
+                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE); 
+                $header = substr($data, 0, $header_size); 
+                if (!preg_match('/^(?:Location|URI): ([^\r\n]*)[\r\n]*$/im', $header, $matches)) { 
+                    break; 
+                } 
+
                 curl_setopt($ch, CURLOPT_URL, $matches[1]);
             } while (--$redirects);
             if (!$redirects)
