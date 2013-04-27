@@ -7,7 +7,7 @@
         menu
       </a>
 
-      <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
+      <a id="nav-home" class="brand icon icon-rate" href="<?php echo MyTool::getUrl(); ?>" title="Home">
         <span class="ico-navbar">
           <span class="ico">
             <span class="ico-home-square"></span>

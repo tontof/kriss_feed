@@ -663,6 +663,25 @@ dd {
 
 /* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
 /* https://github.com/lucianmarin/peculiar */
+.menu-ico {
+  display: inline-block;
+}
+
+.icon {
+  display: inline-block;
+  text-decoration: none !important;
+}
+
+.icon:before {
+  content: "";
+  display: inline-block;
+  speak: none;
+}
+
+.icon-rate:before {
+  content: "\2605";
+}
+
 .ico {
   position: relative;
   width: 16px;
