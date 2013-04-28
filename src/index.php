@@ -6657,7 +6657,6 @@ class Feed
                 }
                 $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
             } else {
-                // no new element, and no etag/last-modified saying to re-use cache data
                 $error = ERROR_UNKNOWN;
             }
         }
