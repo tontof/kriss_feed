@@ -1,0 +1,326 @@
+/* Simple
+ * 
+ * 
+ * Pierre Tandille
+ * http://lecollecteur.fr
+ */
+
+/*--- GLOBAL ---*/
+body{
+margin: 0;
+font-family: georgia;
+font-size: 18px;
+line-height: 29px;
+color: #000;
+background-color: #F8F8F8;
+}
+
+a{
+color:blue;
+}
+
+a:hover{
+color:blue;
+}
+
+.row-fluid .span3 {
+	width: 22%;
+}
+
+.container-fluid {
+	padding: 0;
+}
+
+.menu-ico {
+  display: inline-block;
+}
+
+.menu-text {
+  display: none;
+}
+
+.ico {
+	margin-left: 8px;
+  margin-right: 0px;
+	vertical-align: top;
+	background: black;
+}
+
+.ico-b-disc {
+	background: none;
+	border-radius: 0px !important;
+}
+
+.ico:hover {
+	background-color: blue;
+}
+#nav-home .ico, .item-xml .ico {
+	background: none;
+}
+
+#paging-up, #paging-down {
+	margin-left: 1px;
+}
+nav
+ul.inline > li, ol.inline > li {
+	padding: 0 10px 7px 0;
+}
+
+.btn-group > .btn:first-child,
+.btn .btn-info .previous-item,
+.btn .btn-info .next-item,
+.btn-group > .btn:last-child, .btn-group > .dropdown-toggle,
+.btn-group > .btn, .btn-group > .dropdown-menu, .btn-group > .popover,
+input-append .add-on, .input-append .btn, .input-append .btn-group,
+input-prepend.input-append .add-on:first-child, .input-prepend.input-append .btn:first-child,
+input-prepend.input-append .add-on:last-child, .input-prepend.input-append .btn:last-child,
+input[type="text"], input[type="password"] {
+	text-align: center;
+	text-shadow: none;
+	background-image: none;
+	padding: 0px 4px;
+	font-size: 12px;
+	font-weight: bold;
+	line-height: 17px;
+	text-shadow: none;
+	white-space: nowrap;
+	vertical-align: baseline;
+	background: none;
+	color: #000;
+	border: 3px solid;
+	border-radius:0;
+	margin-right:5px;
+}
+
+input[type="text"], input[type="password"] {
+	background-color: #fff;
+}
+
+
+/*--- SUBSCRIPTIONS LIST ----*/
+#list-feeds {
+	padding: 20px 20px 0 20px;
+}
+
+ul {
+	list-style-type: none !important;
+}
+
+
+h5 {
+	padding: 2px;
+	background: none repeat scroll 0 0 #EFEFEF;
+	border-radius: 4px 4px 4px 4px;
+	margin-left: -10px;
+	border: 1px solid #444;
+}
+
+h5 a {
+	margin-left: 2px;
+}
+
+
+/*---- SUBSCRIPTIONS CONTENT ---*/
+#main-container {
+	padding-right: 20px;
+}
+
+form {
+	margin: 0;
+}
+
+li.item-list {
+    border-top: 1px solid #DDD !important;
+}
+
+li.item-list {
+    border-bottom: none;
+}
+
+.dl-horizontal {
+	/*background-color: #ECECEC;*/
+}
+
+.dl-horizontal dt {
+	text-align: left;
+}
+
+.item-title {
+	margin-bottom: 0px;
+}
+
+.item-info-end {
+	float: left;
+	width: 100%;
+}
+
+.item-info-end .ico {
+	margin-left: 0px;
+}
+
+.current {
+	border: none !important;
+}
+
+
+
+.well {
+	background: none;
+	border: 0px;
+	border-radius: 0px;
+	box-shadow: 0 0 0 !important;
+	margin-bottom: 0px;
+	padding:0;
+}
+
+.navbar, .navbar .brand {
+color: #000;
+text-shadow: none;
+font-size: 12px;
+font-family: arial;
+}
+
+.item-content  span{
+margin:10px;
+}
+
+.item-title {
+font-size: 24px;
+}
+.item-info-end {
+font-size: 11px;
+}
+.item-content {
+margin: 10px 0;
+}
+.item-list, .item-expanded{
+	border-bottom: 6px solid #000 !important;
+	margin: 40px 0 50px 0;
+	padding-bottom:10px;
+	background: none;
+}
+li.item-list {
+border-top: 0 !important;
+}
+.label{
+padding: 0px 4px;
+font-size: 12px;
+font-weight: bold;
+line-height: 17px;
+text-shadow: none;
+white-space: nowrap;
+vertical-align: baseline;
+background: none;
+color: #000;
+border: 3px solid;
+border-radius:0;
+
+}
+.item-info-end a:hover, .btn-group a:hover {
+	text-decoration:none !important;
+}
+
+.item-title .label{
+	display:none;
+}
+
+
+.btn{
+padding: 0px 4px;
+font-size: 12px;
+font-weight: bold;
+line-height: 17px;
+text-shadow: none;
+white-space: nowrap;
+vertical-align: baseline;
+background: none;
+color: #000;
+border: 3px solid;
+border-radius:0;
+font-family: arial;
+}
+
+
+.mark-as .label{
+border:0;
+display:inline-block;
+}
+
+a{
+color: #1E36E8;
+}
+
+.navbar-inner{
+background:none;
+border:0;
+border-radius:0;
+box-shadow:none;
+padding:0;
+}
+
+.navbar{
+background:none;
+border:0;
+border-radius:0;
+}
+
+.nav{
+font-size:11px;
+color:#000;
+clear: both;
+}
+
+#nav-home{
+	padding: 12px 20px 0 0;
+}
+.read{
+opacity:1;
+}
+
+#status {
+font-size: 10px;
+position: absolute;
+bottom: 5px;
+line-height: 20px;
+right: 40px;
+background: #F8F8F8;
+padding: 0 10px;
+z-index: 100;
+}
+#status::after {
+  content: " - design Pierre Tandille";
+}
+
+#list-items{
+margin: 15px 0;
+width: 700px;
+}
+
+#minor-container a {
+color: #000 !important;
+text-decoration:none;
+}
+#minor-container {
+margin-left: 0;
+font-family: arial;
+font-size: 12px;
+line-height: 24px;
+}
+#minor-container a.feed {
+	margin: auto 10px;
+}
+
+
+.container {
+	padding: 20px 0 0 0;
+}
+.current-feed, .current-folder > h5, .current-folder > h4 {
+background: none;
+border-bottom: 3px solid black;
+}
+
+li.folder > h4 {
+border: none;
+border-radius: 0;
+margin: 0;
+}
