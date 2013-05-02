@@ -6434,7 +6434,7 @@ class Feed
     {
         $feedHash = MyTool::smallHash($xmlUrl);
         if (!isset($this->_data['feeds'][$feedHash])) {
-            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['last-modified']);
+            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified']);
 
             if (!$xml) {
                 return false;
@@ -6522,7 +6522,7 @@ class Feed
 
         unset($this->_data['feeds'][$feedHash]['error']);
         $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
-        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['last-modified']);
+        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified']);
 
         if (!$xml) {
             if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
