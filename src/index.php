@@ -6329,6 +6329,7 @@ class Feed
             curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
             curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
+
             $data = curl_exec($ch);
         } else {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
@@ -6380,7 +6381,7 @@ class Feed
         return strlen($str);
     }
 
-    public function loadXml($xmlUrl, &$cachedata)
+    public function loadXml($xmlUrl, &$etag, &$lastModified)
     {
         // reinitialize cache headers
         $this->_headers = array();
@@ -6398,17 +6399,12 @@ class Feed
             );
 
         // http headers
-        if (isset($cachedata)) {
-            if (empty($opts['http']['headers'])) {
-                $opts['http']['headers'] = array();
-            }
-
-            if (!empty($cachedata['last-modified'])) {
-                $opts['http']['headers'][] = 'If-Modified-Since: ' . $cachedata['last-modified'];
-            }
-            if (!empty($cachedata['etag'])) {
-                $opts['http']['headers'][] = 'If-None-Match: ' . $cachedata['etag'];
-            }
+        $opts['http']['headers'] = array();
+        if (!empty($lastModified)) {
+            $opts['http']['headers'][] = 'If-Modified-Since: ' . $lastModified;
+        }
+        if (!empty($etag)) {
+            $opts['http']['headers'][] = 'If-None-Match: ' . $etag;
         }
 
         $document = new DOMDocument();
@@ -6416,11 +6412,10 @@ class Feed
         if (in_array('curl', get_loaded_extensions())) {
             $output = $this->loadUrl($xmlUrl, $opts);
             if ($output['isnew']) {
-                $cachedata['xml'] = $output['data'];
-                $cachedata['etag'] = $output['etag'];
-                $cachedata['last-modified'] = $output['last-modified'];
+                $etag = $output['etag'];
+                $lastModified = $output['last-modified'];
             }
-            $document->loadXml($cachedata['xml']);
+            $document->loadXML($output['data']);
         } else {
             // try using libxml
             $context = stream_context_create($opts);
@@ -6439,7 +6434,7 @@ class Feed
     {
         $feedHash = MyTool::smallHash($xmlUrl);
         if (!isset($this->_data['feeds'][$feedHash])) {
-            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['cachedata']);
+            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['last-modified']);
 
             if (!$xml) {
                 return false;
@@ -6527,7 +6522,7 @@ class Feed
 
         unset($this->_data['feeds'][$feedHash]['error']);
         $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
-        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['cachedata']);
+        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['last-modified']);
 
         if (!$xml) {
             if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
