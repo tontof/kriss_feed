@@ -47,7 +47,7 @@
                 </span>
               </span>
               <span class="menu-text menu-list">
-                View as list
+                <?php echo _("View as list"); ?>
               </span>
             </a>
           </li>

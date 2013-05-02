@@ -59,6 +59,14 @@ if (!is_dir(DATA_DIR)) {
     }
 }
 
+function _($s) {
+    if ($s == "View as list") {
+        return "Youpi";
+    }
+
+    return $s;
+}
+
 /**
  * autoload class
  *
