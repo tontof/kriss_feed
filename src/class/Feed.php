@@ -1137,6 +1137,7 @@ class Feed
             curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
             curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
+
             $data = curl_exec($ch);
         } else {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
@@ -1231,11 +1232,10 @@ class Feed
         if (in_array('curl', get_loaded_extensions())) {
             $output = $this->loadUrl($xmlUrl, $opts);
             if ($output['isnew']) {
-                $cachedata['xml'] = $output['data'];
                 $cachedata['etag'] = $output['etag'];
                 $cachedata['last-modified'] = $output['last-modified'];
             }
-            $document->loadXml($cachedata['xml']);
+            $document->loadXml($output['data']);
         } else {
             // try using libxml
             $context = stream_context_create($opts);
