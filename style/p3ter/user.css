@@ -1,8 +1,8 @@
 /* Custom P3ter 
- * Version 2
+ * Version 2.1
  * 
- * Development Version of KrISS Feed is needed
- * https://github.com/tontof/kriss_feed/blob/master/src/index.php
+ * KrISS Feed 7 is needed
+ * https://github.com/tontof/kriss_feed/blob/master/index.php
  * 
  * http://p3ter.fr (CC-BY-V3)
  */
@@ -77,7 +77,7 @@ input[type="text"], input[type="password"] {
 
 /*--- SUBSCRIPTIONS LIST ----*/
 #list-feeds {
-	padding: 20px 20px 0 20px;
+	padding: 20px;
 }
 
 ul {
