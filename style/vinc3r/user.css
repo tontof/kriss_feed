@@ -1,11 +1,16 @@
 body{background-color: #595959; /* gris */}
+.form-horizontal{color:#fff;}
+#status a{
+	color: #fff;
+	
+	}
 #menu a{
 	margin: 0;
 	padding: 0 5px;
 	font-size: 1em;
 	text-shadow:none;
 }
-#menu a:hover{
+#menu a:hover, li.folder > h5:hover, li.folder > h4:hover, #minor-container li a:hover, li.feed:hover{
 	background-color: #ff6c00; /* orange */
 	color: #fff;
 }
@@ -20,25 +25,47 @@ body, #minor-container{border-right: 1px solid #ff6c00; /* orange */}
 #minor-container{
 	background-color: #373737; /* gris fonce */
 	padding:0 0.5%;
+	width: 23%;
 }
-#minor-container li a{color: #fff;}
-#minor-container li a:hover{
-	color: #507cb7; /* bleu */
-	text-decoration: none;
-}
+#minor-container li a{color: #777;}
+#minor-container li a:hover{text-decoration: none;}
+.container{border:1px #ff6c00 solid;}
 .container-fluid {
     padding-right: 1%;
     padding-left: 0;
 }
 #list-items{background-color: #fff;}
-.current{border-color: #5c9c3f !important; /* vert */}
+#minor-container li.feed.has-unread a{color:#fff;font-weight: normal;}
 .btn-info{background-image: none;}
 .btn{box-shadow: none;}
 .btn:hover, .btn:focus{transition:0;}
-li.feed{border-color: #595959; /* gris */}
-h5{border-top: 1px solid #ff6c00; /* orange */}
+li.folder > h5, li.folder > h4{
+	border:0;
+	border-top: 1px solid #ff6c00; /* orange */
+	border-radius:0;
+	background: none;
+	}
+li.folder > h4{border-top: 2px solid #ff6c00; /* orange */}
+#minor-container h5 a{color: #fff;}
+a.feed.text-error {color: #cc2200 !important; /* rouge */}
 #status{
 	color: #eee;
 	font-size: 0.8em;
 }
-ul.nav{border-top: 1px solid #595959;}
+ul.nav{border-top: 1px solid #595959; /* gris */}
+.ico-b-disc{border-radius: 0;}
+.item-list{background-color:#fff;}
+.current{
+	background-color: #ff6c00;
+	padding: 0;
+	color: #fff;
+	}
+	.current a{color: #fff;}
+.well{
+	background-color: #fff;
+	margin:0;
+	border:2px solid #ff6c00;
+	color: #000;
+	}
+	.well a{color: #000;}
+.item-title{border-bottom: 1px solid #ff6c00;}
