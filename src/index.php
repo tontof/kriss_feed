@@ -650,7 +650,11 @@ class FeedPage
 <title><?php echo $pagetitle;?></title>
 <meta charset="utf-8">
 
-<!-- <link href="images/favicon.ico" rel="shortcut icon" type="image/x-icon"> -->
+<?php if (is_file('inc/favicon.ico')) { ?>
+<link href="inc/favicon.ico" rel="icon" type="image/x-icon">
+<?php } else { ?>
+<link href="?file=favicon" rel="icon" type="image/x-icon">
+<?php } ?>
 <?php if (is_file('inc/style.css')) { ?>
 <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
 <?php } else { ?>
@@ -943,6 +947,7 @@ ol.inline > li {
 
 li.feed {
   margin-left: 4px;
+  width:2000%;
 }
 
 li.feed:hover {
@@ -3259,7 +3264,6 @@ dd {
      if ($listFeeds == 'show') {
      ?>
 	 <input type="text" id="Nbunread" style="display:none;" value='<?php echo $feedsView['all']['nbUnread']; ?>'>
-	 <?php echo '<script src="inc/favicon.js" type="text/javascript" charset="utf-8"></script>'; ?>
   <ul class="unstyled">
     <li id="all-subscriptions" class="folder<?php if ($currentHash == 'all') echo ' current-folder'; ?>">
       <?php if (isset($_GET['stars'])) { ?>
@@ -4991,7 +4995,7 @@ dd {
         if (window.confirm('Mark all current as read ?')) {
           window.location.href = '?read=' + currentHash;
         }
-        break;
+		break;
         case 67: // 'C'
         window.location.href = '?config';
         break;
@@ -5065,6 +5069,22 @@ dd {
         } else {
           window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
         }
+        break;
+        case 90: // 'z'
+		if (filter == 'unread') {
+			while(listItemsHash.indexOf(currentItemHash) != -1) {
+				window.open(getUrlItem(currentItemHash),'_blank');
+				markAsCurrentItem();
+			}
+        } else if (filter == 'all') {
+			for (var i=0;i<listItemsHash.length;i++){
+				if (!hasClass(getItem(listItemsHash[i]), 'read')){
+					window.open(getUrlItem(currentItemHash),'_blank');
+					markAsCurrentItem();
+				}
+				nextItem();
+			}
+		}
         break;
         case 112: // 'F1'
         case 188: // '?'
@@ -5429,6 +5449,198 @@ dd {
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
 })();
+
+// unread count for favicon part
+if(typeof GM_getValue == 'undefined') {
+	function GM_getValue(name, fallback) {
+		return fallback;
+	}
+}
+
+// Register GM Commands and Methods
+if(typeof GM_registerMenuCommand !== 'undefined') {
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false) } );
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true) } );
+	function setOriginalFavicon(val) { GM_setValue('originalFavicon', val) };
+}
+
+(function FaviconAlerts() {
+	var self = this;
+
+	this.construct = function() {
+		this.head = document.getElementsByTagName('head')[0];
+		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0],],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1],]}};
+
+		this.timer = setInterval(this.poll, 500);
+		this.poll();
+
+		return true;
+	}
+
+	this.drawUnreadCount = function(unread, callback) {
+		if(!self.textedCanvas) {
+			self.textedCanvas = [];
+		}
+
+		if(!self.textedCanvas[unread]) {
+			self.getUnreadCanvas(function(iconCanvas) {
+				var textedCanvas = document.createElement('canvas');
+				textedCanvas.height = textedCanvas.width = iconCanvas.width;
+				var ctx = textedCanvas.getContext('2d');
+				ctx.drawImage(iconCanvas, 0, 0);
+
+				ctx.fillStyle = '#b7bfc9';
+				ctx.strokeStyle = '#7792ba';
+				ctx.strokeWidth = 1;
+
+				var count = unread.length;
+
+				if(count > 4) {
+					unread = '1k+';
+					count = unread.length;
+				}
+
+				var bgHeight = self.pixelMaps.numbers[0].length;
+				var bgWidth = 0;
+				var padding = count < 4 ? 1 : 0;
+				var topMargin = 0;
+
+				for(var index = 0; index < count; index++) {
+					bgWidth += self.pixelMaps.numbers[unread[index]][0].length;
+					if(index < count-1) {
+						bgWidth += padding;
+					}
+				}
+				bgWidth = bgWidth > textedCanvas.width-4 ? textedCanvas.width-4 : bgWidth;
+
+				ctx.fillRect(textedCanvas.width-bgWidth-4,topMargin,bgWidth+4,bgHeight+4);
+
+				var digit;
+				var digitsWidth = bgWidth;
+				for(var index = 0; index < count; index++) {
+					digit = unread[index];
+
+					if (self.pixelMaps.numbers[digit]) {
+						var map = self.pixelMaps.numbers[digit];
+						var height = map.length;
+						var width = map[0].length;
+
+						ctx.fillStyle = '#2c3323';
+
+						for (var y = 0; y < height; y++) {
+							for (var x = 0; x < width; x++) {
+								if(map[y][x]) {
+									ctx.fillRect(14- digitsWidth + x, y+topMargin+2, 1, 1);
+								}
+							}
+						}
+
+						digitsWidth -= width + padding;
+					}
+				}
+
+				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+.5,bgWidth+3,bgHeight+3);
+
+				self.textedCanvas[unread] = textedCanvas;
+
+				callback(self.textedCanvas[unread]);
+			});
+		}
+
+		callback(self.textedCanvas[unread]);
+	}
+	this.getIcon = function(callback) {
+		self.getUnreadCanvas(function(canvas) {
+			callback(canvas.toDataURL('image/png'));
+		});
+	}
+        this.getIconSrc = function() {
+          var links = document.getElementsByTagName('link');
+          for (var i = 0; i < links.length; i++) {
+            if (links[i].rel === 'icon') {
+              return links[i].href;
+            }
+          }
+
+          return false;
+        }
+	this.getUnreadCanvas = function(callback) {
+		if(!self.unreadCanvas) {
+			self.unreadCanvas = document.createElement('canvas');
+			self.unreadCanvas.height = self.unreadCanvas.width = 16;
+
+			var ctx = self.unreadCanvas.getContext('2d');
+			var img = new Image();
+
+			img.addEventListener('load', function() {
+				ctx.drawImage(img, 0, 0);
+				callback(self.unreadCanvas);
+			}, true);
+
+		//	if(GM_getValue('originalFavicon', false)) {
+		//		img.src = self.icons.original;
+		//	} else {
+		//		img.src = self.icons.current;
+		//	}
+		// img.src = 'inc/favicon.ico';
+                  img.src = self.getIconSrc();
+		} else {
+			callback(self.unreadCanvas);
+		}
+	}
+	this.getUnreadCount = function() {
+		matches = self.getSearchText().match(/\((.*)\)/);
+		return matches ? matches[1] : false;
+	}
+	this.getUnreadCountIcon = function(callback) {
+		var unread = self.getUnreadCount();
+		self.drawUnreadCount(unread, function(icon) {
+			callback(icon.toDataURL('image/png'));
+		});
+	}
+	this.getSearchText = function() {
+		var Nbunread = 'Kriss feed (' + document.getElementById('Nbunread').value + ')' ;
+		return Nbunread;
+	}
+	this.poll = function() {
+		if(self.getUnreadCount()!=0) {
+			self.getUnreadCountIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		} else {
+			self.getIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		}
+	}
+
+	this.setIcon = function(icon) {
+		var links = self.head.getElementsByTagName('link');
+		for (var i = 0; i < links.length; i++)
+			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
+			   links[i].href != icon)
+				self.head.removeChild(links[i]);
+			else if(links[i].href == icon)
+				return;
+
+		var newIcon = document.createElement('link');
+		newIcon.type = 'image/png';
+		newIcon.rel = 'shortcut icon';
+		newIcon.href = icon;
+		self.head.appendChild(newIcon);
+
+		// Chrome hack for updating the favicon
+		var shim = document.createElement('iframe');
+		shim.width = shim.height = 0;
+		document.body.appendChild(shim);
+		shim.src = 'icon';
+		document.body.removeChild(shim);
+	}
+
+	this.toString = function() { return '[object FaviconAlerts]'; }
+
+	return this.construct();
+}());
     </script>
     <?php } ?>
   </body>
@@ -8476,6 +8688,35 @@ if (isset($_GET['login'])) {
     $shaarli = str_replace('${via}', urlencode($via), $shaarli);
 
     header('Location: '.$shaarli);
+} elseif (isset($_GET['file'])) {
+    if ($_GET['file'] == 'favicon') {
+        $favicon = '
+AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAA
+AAAAAAD2+f3/ocLv/0yS6f83hen/NYLn/zR/5v8zfOX/M3rj/zJ44v8ydeH/MXPg/zFx3/8ycd//
+SYTi/6HB7//2+f3/ocLv/0SW8f84l/f/NY/0/zKI8P8ygu3/MXzq/y925/8rb+T/Kmrh/ytn3/8p
+Yd3/Jl3b/yhe2/88d+H/ocDv/02U6v85mvn/OZz6/1qp+P9trvb/P4/x/zGB7f8+hOv/caHu/2ua
+7P80cOL/Tn/k/3OY6P9YgeL/K2Db/0mE4v84iuv/N5j4/1eq+v/g7/7//P3//5vH+f8xh/D/ZqLy
+//j6/v/d6Pv/P3zm/5y68f//////r8Py/ytg2/8ycd//N4nr/zWV9/9lr/n/9Pn///////+22Pz/
+NY/0/5XC+P//////w9j4/zh86P+50Pb//////5q27/8pYd3/MXLf/zaH6v82k/X/Ppn3/43E+/+v
+1/z/XK36/1Sm+P/f7f3//////4i29P9Giez/4ez8//7+//90nev/KWXf/zFz4P82hun/NpDz/zWS
+9f8ylPb/NZf4/1eq+v/I4/7//////9Tn/P9Fk/H/hLT0//7////j7Pz/SIPn/ytr4v8ydeH/NYTo
+/zSL8f9Dl/T/cLP4/53M+//i8P7//////+fz/v9psPn/Tp31/9vq/P//////osP1/y925/8uceT/
+Mnji/zWC5/8xhu//bav0//j7/////////f7//9Po/f9os/r/RqL6/7vb/P//////4O39/1KV7/8v
+eun/MHfn/zN64/80gOb/MILt/2Sj8v/V5/z/vtv7/4W9+f9Gnvf/Uab5/7zd/f/+////9Pn//3y2
+9/8yiPD/MoLt/zF86v80fOX/NH7l/zJ/6/83he3/QI7w/z2Q8f9OnfT/i8H5/97u/v//////8/n/
+/43G/P85mPf/NpD0/zSJ8P8zg+3/NH/m/zN85P8veun/UpPu/6fK9//D3Pr/5/H9//3+////////
+3+7+/3u7+v86nPn/OJv5/ziX9/82kPT/NYnw/zWC5/80e+P/LHTm/2ug7v/7/P////////v9///g
+7f3/oMr5/1Ki9v81lfb/OJj4/zmb+f85nPn/OJf3/zeQ9P83hun/Sonl/y1y5P9SjOr/pcX1/5S8
+9P9wqPL/SZTw/zSL8f8zjvP/NpP1/zeW9v84mfj/OZv5/zmc+v84l/f/TJLp/6DA7/8+geb/LnTl
+/y525v8ueej/L37r/zGD7f80iO//NYzx/zaQ8/83lPX/OJf3/zmZ+P85mvn/RJbx/6DB7//2+f3/
+oMHv/0qJ5f80e+P/NHzk/zR+5f81gOb/NYLn/zaE6P82hun/N4jq/zeJ6/84i+v/TZTq/6DB7//2
++f3/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAA==
+';
+        header('Content-Type: image/vnd.microsoft.icon');
+        echo base64_decode($favicon);
+        exit();
+    }
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();

@@ -781,6 +781,15 @@ if (isset($_GET['login'])) {
     $shaarli = str_replace('${via}', urlencode($via), $shaarli);
 
     header('Location: '.$shaarli);
+} elseif (isset($_GET['file'])) {
+    if ($_GET['file'] == 'favicon') {
+        $favicon = '
+<?php include("inc/favicon.ico"); ?>
+';
+        header('Content-Type: image/vnd.microsoft.icon');
+        echo base64_decode($favicon);
+        exit();
+    }
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
