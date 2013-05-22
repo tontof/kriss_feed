@@ -9,6 +9,16 @@ function removeComments {
 delim1="<\?php include\(\""
 delim2="\"); \?>"
 
+function catFile {
+  fileOutput=$(file $1)
+  if [[ "$fileOutput" == *text* ]]
+  then
+    cat $1
+  else
+    base64 $1
+  fi
+}
+
 # Thanks Fred 
 function includeFile {
   while IFS='' read -r line
@@ -17,11 +27,12 @@ function includeFile {
     then
         fic1=${line##*${delim1}}
         fic2=${fic1%${delim2}*}
+
         if [ -f $fic2 ]
         then
-          cat $fic2
+          catFile $fic2
         else
-          cat class/$fic2
+          catFile class/$fic2
         fi
     else
         printf "%s\n" "$line"
@@ -38,4 +49,4 @@ do
  cat $i | includeFile | includeFile
 done | sed -e 's:del><?php::g' | removeComments
 
-tail -n $(( ${nt} - $((${n} + 3)) )) ${file} | removeComments
+tail -n $(( ${nt} - $((${n} + 3)) )) ${file} | removeComments | includeFile

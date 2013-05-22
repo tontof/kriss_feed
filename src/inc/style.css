@@ -304,6 +304,7 @@ ol.inline > li {
  */
 li.feed {
   margin-left: 4px;
+  width:2000%;
 }
 
 li.feed:hover {

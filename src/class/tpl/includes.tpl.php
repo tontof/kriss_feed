@@ -1,7 +1,11 @@
 <title><?php echo $pagetitle;?></title>
 <meta charset="utf-8">
 
-<!-- <link href="images/favicon.ico" rel="shortcut icon" type="image/x-icon"> -->
+<?php if (is_file('inc/favicon.ico')) { ?>
+<link href="inc/favicon.ico" rel="icon" type="image/x-icon">
+<?php } else { ?>
+<link href="?file=favicon" rel="icon" type="image/x-icon">
+<?php } ?>
 <?php if (is_file('inc/style.css')) { ?>
 <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
 <?php } else { ?>

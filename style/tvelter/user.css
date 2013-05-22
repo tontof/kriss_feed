@@ -1,0 +1,108 @@
+/* Custom tvelter */
+html, body, .full-height {
+  font-size: 12pt;
+  font-family:"Ubuntu";
+}
+
+input, button, select, textarea {
+  font-size: 10pt;
+  font-family:"Ubuntu";
+}
+
+.navbar .nav > li > a {
+  border-left: 1px solid #404e63;
+  padding: 3px;
+  font-size: 9pt;
+}
+
+html, body {
+  background-color: #222a36;
+}
+
+.current, .current-feed, .current-folder > h5, .current-folder > h4,li.feed:hover,li.folder > h5:hover,li.folder > h4:hover, .all-subscriptions {
+  background-color: rgb(183, 191, 201);
+  border-color: rgb(183, 191, 201) !important;
+}
+
+a.item-link {
+  font-weight: bold;
+  color : #7792ba;
+}
+
+.navbar-inner {
+  background-color: rgb(183, 191, 201);
+}
+
+.btn {
+  font-size : 9pt;
+  border-radius: 5px 5px 5px 5px;
+  line-height: 12px;
+}
+
+input.btn2 {
+  height: 12px;background-color: rgb(221, 221, 221);
+}
+
+span.brand,.item-info-end {
+  display:none !important;
+}
+
+#nav-home, .container {
+  padding: 0px;
+}
+
+#paging-up, #paging-down {
+  margin : 0px;
+  display: table;
+  margin: 0 auto;
+}
+
+li.folder > h5 {
+    border: 1px solid rgb(238, 238, 238);
+    border-radius: 4px 4px 4px 4px;
+    padding: 0px;
+    margin: 0px 0px;
+}
+.icon{background-color:#222a36;}
+
+.ico-b-disc,.ico-home-square,.ico-home-line {
+    background-color: #7792ba;
+}
+
+.ico-home-triangle {
+  border-color: transparent transparent #7792ba;
+}
+
+.ico-w-line-h,.ico-w-line-v {
+    background-color: #222a36;
+}
+
+der: 7px solid #222a36;
+border-left-color: transparent;
+border-top-color: transparent;
+border-right-color: #222a36;
+#status {
+  display : none;
+}
+
+.dl-horizontal dt {
+    text-align: left;
+    width: 10%;
+}
+
+.dl-horizontal dd {
+    margin-left: 10%;
+}
+
+.item-content {
+    margin: 0px 0px;
+}
+
+.item-list {
+    border-radius: 5px 5px 5px 5px;
+}
+ 
+.well {
+    padding: 0px;
+    margin-bottom: 0px;
+}
