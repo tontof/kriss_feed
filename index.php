@@ -2783,6 +2783,8 @@ dd {
                 <dl class="dl-horizontal">
                   <dt>'o'</dt>
                   <dd><strong>O</strong>pen current item in new tab</dd>
+                </dl>
+                <dl class="dl-horizontal">
                   <dt>'shift' + 'o'</dt>
                   <dd><strong>O</strong>pen current item in current window</dd>
                 </dl>
@@ -3256,6 +3258,8 @@ dd {
   <?php
      if ($listFeeds == 'show') {
      ?>
+	 <input type="text" id="Nbunread" style="display:none;" value='<?php echo $feedsView['all']['nbUnread']; ?>'>
+	 <?php echo '<script src="inc/favicon.js" type="text/javascript" charset="utf-8"></script>'; ?>
   <ul class="unstyled">
     <li id="all-subscriptions" class="folder<?php if ($currentHash == 'all') echo ' current-folder'; ?>">
       <?php if (isset($_GET['stars'])) { ?>
