@@ -9,6 +9,8 @@ This is an alternative to Google Reader or other RSS feed readers:
 - It does not require SQL or database.
 - It works with PHP 5.2
 
+More information here: [KrISS feed](http://tontof.net/kriss/feed).
+
 Installation
 ============
 * If you just want to use kriss feed, download [index.php](https://raw.github.com/tontof/kriss_feed/master/index.php) file and upload it
@@ -17,6 +19,8 @@ on your server. Enjoy !
 * If you want to look at the source, look at the src directory.
 To generate index.php file, just run the command :
 bash generateIndex > index.php
+
+More information here: [KrISS feed](http://tontof.net/kriss/feed).
 
 Features
 ========
@@ -61,6 +65,8 @@ Features
 Licence
 =======
 kriss_feed simple and smart (or stupid) feed reader
+
 Copyleft (ɔ) 2012 Tontof - http://tontof.net
+
 use KrISS feed at your own risk
 
