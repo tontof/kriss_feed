@@ -2065,7 +2065,9 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 	this.getUnreadCountIcon = function(callback) {
 		var unread = self.getUnreadCount();
     self.drawUnreadCount(unread, function(icon) {
-      callback(icon.toDataURL('image/png'));
+      if(icon) {
+        callback(icon.toDataURL('image/png'));
+      }
     });
 	};
 	this.getSearchText = function() {
