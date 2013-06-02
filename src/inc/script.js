@@ -2069,11 +2069,11 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
     });
 	};
 	this.getSearchText = function() {
-		var Nbunread = 'Kriss feed (' + document.getElementById('Nbunread').value + ')' ;
+		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
 		return Nbunread;
 	};
 	this.poll = function() {
-		if(self.getUnreadCount() !== 0) {
+		if(self.getUnreadCount() != "0") {
 			self.getUnreadCountIcon(function(icon) {
 				self.setIcon(icon);
 			});
