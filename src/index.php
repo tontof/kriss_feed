@@ -98,6 +98,8 @@ class FeedConf
 
     public $addFavicon = false;
 
+    public $preload = false;
+
     public $blank = false;
 
     public $visibility = 'private';
@@ -421,6 +423,11 @@ class FeedConf
         $this->addFavicon = $addFavicon;
     }
 
+    public function setPreload($preload)
+    {
+        $this->preload = $preload;
+    }
+
     public function setShaarli($url)
     {
         $this->shaarli = $url;
@@ -615,7 +622,7 @@ class FeedConf
                           'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
-                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
                           'pagingMarkAs', 'disableSessionProtection', 'blank');
             $out = '<?php';
             $out .= "\n";
@@ -2540,6 +2547,20 @@ dd {
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Preload option</label>
+                    <div class="controls">
+                      <label for="donotpreload">
+                        <input type="radio" id="donotpreload" name="preload" value="0" <?php echo (!$kfcpreload ? 'checked="checked"' : ''); ?>/>
+                        Do not preload items.
+                      </label>
+                      <label for="preload">
+                        <input type="radio" id="preload" name="preload" value="1" <?php echo ($kfcpreload ? 'checked="checked"' : ''); ?>/>
+                        Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you don't read all the page items.
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto target="_blank"</label>
                     <div class="controls">
                       <label for="donotblank">
@@ -3555,7 +3576,7 @@ dd {
     <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -3591,6 +3612,8 @@ dd {
     <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
     <?php } else { ?>
     <script type="text/javascript">
+/*jshint sub:true, evil:true */
+
 (function () {
 
   var view = '', // data-view
@@ -3609,6 +3632,7 @@ dd {
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      preload = false, // data-preload
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
@@ -3626,7 +3650,12 @@ dd {
     };
   }
   function stopBubbling(event) {
-    event.stopPropagation ? event.stopPropagation() : (event.cancelBubble=true);
+    if(event.stopPropagation) {
+      event.stopPropagation();
+    }
+    else {
+      event.cancelBubble = true;
+    }
   }
 
   if (!window.JSON) {
@@ -3661,7 +3690,7 @@ dd {
         try {
           httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
         }
-        catch (e) {}
+        catch (e2) {}
       }
     }
 
@@ -3669,7 +3698,7 @@ dd {
   }
 
   // Constructor for generic HTTP client
-  function HTTPClient() {};
+  function HTTPClient() {}
   HTTPClient.prototype = {
     url: null,
     xhr: null,
@@ -3683,7 +3712,7 @@ dd {
       // Prevent multiple calls
       if (this.callinprogress) {
         throw "Call in progress";
-      };
+      }
       this.callinprogress = true;
       this.userhandler = handler;
       // Open an async request - third argument makes it async
@@ -3692,7 +3721,7 @@ dd {
       // Assign a closure to the onreadystatechange callback
       this.xhr.onreadystatechange = function() {
         self.stateChangeCallback(self);
-      }
+      };
       this.xhr.send(null);
     },
     stateChangeCallback: function(client) {
@@ -3748,7 +3777,7 @@ dd {
         break;
       }
     }
-  }
+  };
 
   var ajaxHandler = {
     onInit: function() {},
@@ -3767,6 +3796,9 @@ dd {
       if (result['page']) {
         updateListItems(result['page']);
         setCurrentItem();
+        if (preload) {
+          preloadItems();
+        }
       }
       if (result['read']) {
         markAsRead(result['read']);
@@ -3921,7 +3953,7 @@ dd {
         via = '';
       }
       sel = getSelectionHtml();
-      if (sel != '') {
+      if (sel !== '') {
         sel = '«' + sel + '»';
       }
 
@@ -4142,9 +4174,9 @@ dd {
         addClass(item, 'read');
         toggleMarkAsLinkItem(itemHash);
         if (filter === 'unread') {
-          url += '&currentHash=' + currentHash
-               + '&page=' + currentPage
-               + '&last=' + listItemsHash[listItemsHash.length - 1];
+          url += '&currentHash=' + currentHash +
+            '&page=' + currentPage +
+            '&last=' + listItemsHash[listItemsHash.length - 1];
 
           removeElement(item);
           indexItem = listItemsHash.indexOf(itemHash);
@@ -4156,8 +4188,8 @@ dd {
         }
       }
     } else {
-      url = '?currentHash=' + currentHash
-          + '&page=' + currentPage;
+      url = '?currentHash=' + currentHash +
+        '&page=' + currentPage;
     }
 
     client = new HTTPClient();
@@ -4254,13 +4286,13 @@ dd {
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
-      if (cacheItem != null) {
+      if (cacheItem !== null) {
         setDivItem(element, cacheItem);
         removeCacheItem(itemHash);
       } else {
-        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash
-            + '&current=' + itemHash
-            + '&ajax';
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
+          '&current=' + itemHash +
+          '&ajax';
         client = new HTTPClient();
         client.init(url, element);
         try {
@@ -4366,7 +4398,7 @@ dd {
   }
 
   function getLiItem(element) {
-    var item = null
+    var item = null;
 
     while (item === null && element !== null) {
       if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
@@ -4633,11 +4665,11 @@ dd {
   function initListItems() {
     var url, client;
 
-    url = '?currentHash=' + currentHash
-        + '&page=' + currentPage
-        + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax'
-        + (stars?'&stars':'');
+    url = '?currentHash=' + currentHash +
+      '&page=' + currentPage +
+      '&last=' + listItemsHash[listItemsHash.length -1] +
+      '&ajax' +
+      (stars?'&stars':'');
 
     client = new HTTPClient();
     client.init(url);
@@ -4645,6 +4677,15 @@ dd {
       client.asyncGET(ajaxHandler);
     } catch (e) {
       alert(e);
+    }
+  }
+
+  function preloadItems()
+  {
+    // Pre-fetch items from top to bottom
+    for(var i = 0, len = listItemsHash.length; i < len; ++i)
+    {
+      loadDivItem(listItemsHash[i]);
     }
   }
 
@@ -4764,7 +4805,7 @@ dd {
   }
 
   function setWindowLocation() {
-    if (currentItemHash != '' && autofocus) {
+    if (currentItemHash !== '' && autofocus) {
       window.location = '#item-' + currentItemHash;
     }
   }
@@ -4792,7 +4833,7 @@ dd {
     if (currentPage > Math.ceil(currentNbItems / byPage)) {
       currentPage = Math.ceil(currentNbItems / byPage);
     }
-    if (listItemsHash.length == 0) {
+    if (listItemsHash.length === 0) {
       currentPage = 1;
     }
     listItemsHash = [];
@@ -4953,7 +4994,7 @@ dd {
       start = { time: ( new Date() ).getTime(),
                 coords: [ touch.pageX, touch.pageY ] },
       stop;
-      function moveHandler( e ) {
+      var moveHandler = function ( e ) {
 
         if ( !start ) {
           return;
@@ -4964,21 +5005,22 @@ dd {
           stop = { time: ( new Date() ).getTime(),
                    coords: [ touch.pageX, touch.pageY ] };
         }
-      }
+      };
 
       addEvent(window, 'touchmove', moveHandler);
       addEvent(window, 'touchend', function (e) {
         removeEvent(window, 'touchmove', moveHandler);
         if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold
-            && Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-             > horizontalDistanceThreshold
-            && Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] )
-             < verticalDistanceThreshold
+          if ( stop.time - start.time < durationThreshold &&
+            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
              ) {
-            start.coords[0] > stop.coords[ 0 ]
-                ? nextItem()
-                : previousItem() ;
+            if ( start.coords[0] > stop.coords[ 0 ] ) {
+              nextItem();
+            }
+            else {
+              previousItem();
+            }
           }
           start = stop = undefined;
         }
@@ -5006,13 +5048,13 @@ dd {
         window.location.href = '?config';
         break;
         case 69: // 'E'
-        window.location.href = (currentHash==''?'?edit':'?edit='+currentHash);
+        window.location.href = (currentHash===''?'?edit':'?edit='+currentHash);
         break;
         case 70: // 'F'
         if (listFeeds =='show') {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
         } else {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
         }
         break;
         case 72: // 'H'
@@ -5067,13 +5109,13 @@ dd {
         toggleCurrentItem();
         break;
         case 85: // 'U'
-        window.location.href = (currentHash==''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
+        window.location.href = (currentHash===''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
         break;
         case 86: // 'V'
         if (view == 'list') {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
         } else {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=list';
         }
         break;
         case 90: // 'z'
@@ -5152,8 +5194,7 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
           if (currentPage === 1) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5165,8 +5206,7 @@ dd {
           }
         }
         if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
           if (currentPage === maxPage) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5190,8 +5230,7 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
           if (currentPage === 1) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5203,8 +5242,7 @@ dd {
           }
         }
         if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
           if (currentPage === maxPage) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5263,12 +5301,10 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
         }
         if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
 
         }
       }
@@ -5279,13 +5315,10 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
         }
         if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
-
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
         }
       }
     }
@@ -5368,6 +5401,10 @@ dd {
     if (elementIndex.hasAttribute('data-add-favicon')) {
       addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
       addFavicon = (addFavicon === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-preload')) {
+      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
+      preload = (preload === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-stars')) {
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
@@ -5458,16 +5495,16 @@ dd {
 
 // unread count for favicon part
 if(typeof GM_getValue == 'undefined') {
-	function GM_getValue(name, fallback) {
+	GM_getValue = function(name, fallback) {
 		return fallback;
-	}
+	};
 }
 
 // Register GM Commands and Methods
 if(typeof GM_registerMenuCommand !== 'undefined') {
-	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false) } );
-	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true) } );
-	function setOriginalFavicon(val) { GM_setValue('originalFavicon', val) };
+  var setOriginalFavicon = function(val) { GM_setValue('originalFavicon', val); };
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false); } );
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true); } );
 }
 
 (function FaviconAlerts() {
@@ -5475,13 +5512,13 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 
 	this.construct = function() {
 		this.head = document.getElementsByTagName('head')[0];
-		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0],],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1],]}};
+		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1]]}};
 
 		this.timer = setInterval(this.poll, 500);
 		this.poll();
 
 		return true;
-	}
+	};
 
 	this.drawUnreadCount = function(unread, callback) {
 		if(!self.textedCanvas) {
@@ -5523,7 +5560,7 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 
 				var digit;
 				var digitsWidth = bgWidth;
-				for(var index = 0; index < count; index++) {
+				for(index = 0; index < count; index++) {
 					digit = unread[index];
 
 					if (self.pixelMaps.numbers[digit]) {
@@ -5545,31 +5582,29 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 					}
 				}
 
-				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+.5,bgWidth+3,bgHeight+3);
+				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+0.5,bgWidth+3,bgHeight+3);
 
 				self.textedCanvas[unread] = textedCanvas;
 
 				callback(self.textedCanvas[unread]);
 			});
+      callback(self.textedCanvas[unread]);
 		}
-
-		callback(self.textedCanvas[unread]);
-	}
+	};
 	this.getIcon = function(callback) {
 		self.getUnreadCanvas(function(canvas) {
 			callback(canvas.toDataURL('image/png'));
 		});
-	}
-        this.getIconSrc = function() {
-          var links = document.getElementsByTagName('link');
-          for (var i = 0; i < links.length; i++) {
-            if (links[i].rel === 'icon') {
-              return links[i].href;
-            }
-          }
-
-          return false;
-        }
+	};
+  this.getIconSrc = function() {
+    var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].rel === 'icon') {
+        return links[i].href;
+      }
+    }
+    return false;
+  };
 	this.getUnreadCanvas = function(callback) {
 		if(!self.unreadCanvas) {
 			self.unreadCanvas = document.createElement('canvas');
@@ -5593,23 +5628,25 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 		} else {
 			callback(self.unreadCanvas);
 		}
-	}
+	};
 	this.getUnreadCount = function() {
 		matches = self.getSearchText().match(/\((.*)\)/);
 		return matches ? matches[1] : false;
-	}
+	};
 	this.getUnreadCountIcon = function(callback) {
 		var unread = self.getUnreadCount();
-		self.drawUnreadCount(unread, function(icon) {
-			callback(icon.toDataURL('image/png'));
-		});
-	}
+    self.drawUnreadCount(unread, function(icon) {
+      if(icon) {
+        callback(icon.toDataURL('image/png'));
+      }
+    });
+	};
 	this.getSearchText = function() {
-		var Nbunread = 'Kriss feed (' + document.getElementById('Nbunread').value + ')' ;
+		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
 		return Nbunread;
-	}
+	};
 	this.poll = function() {
-		if(self.getUnreadCount()!=0) {
+		if(self.getUnreadCount() != "0") {
 			self.getUnreadCountIcon(function(icon) {
 				self.setIcon(icon);
 			});
@@ -5618,13 +5655,13 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 				self.setIcon(icon);
 			});
 		}
-	}
+	};
 
 	this.setIcon = function(icon) {
 		var links = self.head.getElementsByTagName('link');
 		for (var i = 0; i < links.length; i++)
 			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
-			   links[i].href != icon)
+        links[i].href != icon)
 				self.head.removeChild(links[i]);
 			else if(links[i].href == icon)
 				return;
@@ -5641,9 +5678,9 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 		document.body.appendChild(shim);
 		shim.src = 'icon';
 		document.body.removeChild(shim);
-	}
+	};
 
-	this.toString = function() { return '[object FaviconAlerts]'; }
+	this.toString = function() { return '[object FaviconAlerts]'; };
 
 	return this.construct();
 }());
@@ -8114,6 +8151,7 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
@@ -8352,6 +8390,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);

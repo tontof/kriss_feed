@@ -124,6 +124,7 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
@@ -362,6 +363,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);

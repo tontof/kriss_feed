@@ -18,6 +18,7 @@
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      preload = false, // data-preload
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
@@ -201,7 +202,9 @@
       if (result['page']) {
         updateListItems(result['page']);
         setCurrentItem();
-        //preLoadItems();
+        if (preload) {
+          preloadItems();
+        }
       }
       if (result['read']) {
         markAsRead(result['read']);
@@ -1113,6 +1116,15 @@
     }
   }
 
+  function preloadItems()
+  {
+    // Pre-fetch items from top to bottom
+    for(var i = 0, len = listItemsHash.length; i < len; ++i)
+    {
+      loadDivItem(listItemsHash[i]);
+    }
+  }
+
   /**
    * Update
    */
@@ -1834,6 +1846,10 @@
     if (elementIndex.hasAttribute('data-add-favicon')) {
       addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
       addFavicon = (addFavicon === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-preload')) {
+      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
+      preload = (preload === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-stars')) {
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);

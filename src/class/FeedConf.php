@@ -96,6 +96,11 @@ class FeedConf
     public $addFavicon = false;
 
     /**
+     * Preload feed items
+     */
+    public $preload = false;
+
+    /**
      * Target _blank
      */
     public $blank = false;
@@ -571,6 +576,16 @@ class FeedConf
     }
 
     /**
+     * Add preload setter
+     *
+     * @param bool $preload
+     */
+    public function setPreload($preload)
+    {
+        $this->preload = $preload;
+    }
+
+    /**
      * Shaarli setter
      *
      * @param string $url New shaarli
@@ -794,7 +809,7 @@ class FeedConf
                           'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
-                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
                           'pagingMarkAs', 'disableSessionProtection', 'blank');
             $out = '<?php';
             $out .= "\n";
