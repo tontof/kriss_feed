@@ -175,6 +175,20 @@
                   </div>
 
                   <div class="control-group">
+                    <label class="control-label">Preload option</label>
+                    <div class="controls">
+                      <label for="donotpreload">
+                        <input type="radio" id="donotpreload" name="preload" value="0" <?php echo (!$kfcpreload ? 'checked="checked"' : ''); ?>/>
+                        Do not preload items.
+                      </label>
+                      <label for="preload">
+                        <input type="radio" id="preload" name="preload" value="1" <?php echo ($kfcpreload ? 'checked="checked"' : ''); ?>/>
+                        Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you don't read all the page items.
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
                     <label class="control-label">Auto target="_blank"</label>
                     <div class="controls">
                       <label for="donotblank">
