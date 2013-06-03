@@ -107,8 +107,9 @@
     xhr: null,
     callinprogress: false,
     userhandler: null,
-    init: function(url) {
+    init: function(url, obj) {
       this.url = url;
+      this.obj = obj;
       this.xhr = new getXHR();
     },
     asyncGET: function (handler) {
@@ -173,7 +174,7 @@
         // Download complete
         case 4:
         try {
-          client.userhandler.onSuccess(client.xhr.responseText);
+          client.userhandler.onSuccess(client.xhr.responseText, client.obj);
         }
         catch (e) { /* Handler method not defined */ }
         finally { client.callinprogress = false; }
@@ -189,7 +190,7 @@
     onInit: function() {},
     onError: function(status, statusText) {},
     onProgress: function(responseText, length) {},
-    onSuccess: function(responseText) {
+    onSuccess: function(responseText, noFocus) {
       var result = JSON.parse(responseText);
 
       if (result['logout'] && isLogged) {
@@ -197,7 +198,7 @@
       }
       if (result['item']) {
         cache['item-' + result['item']['itemHash']] = result['item'];
-        loadDivItem(result['item']['itemHash']);
+        loadDivItem(result['item']['itemHash'], noFocus);
       }
       if (result['page']) {
         updateListItems(result['page']);
@@ -711,20 +712,23 @@
   /**
    * Div item functions
    */
-  function loadDivItem(itemHash) {
+  function loadDivItem(itemHash, noFocus) {
     var element, url, client, cacheItem;
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
       if (cacheItem !== null) {
         setDivItem(element, cacheItem);
+        if(!noFocus) {
+          setItemFocus(element);
+        }
         removeCacheItem(itemHash);
       } else {
         url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
           '&current=' + itemHash +
           '&ajax';
         client = new HTTPClient();
-        client.init(url, element);
+        client.init(url, noFocus);
         try {
           client.asyncGET(ajaxHandler);
         } catch (e) {
@@ -1121,7 +1125,7 @@
     // Pre-fetch items from top to bottom
     for(var i = 0, len = listItemsHash.length; i < len; ++i)
     {
-      loadDivItem(listItemsHash[i]);
+      loadDivItem(listItemsHash[i], true);
     }
   }
 
@@ -1246,9 +1250,24 @@
   /**
    * Navigation
    */
-  function setWindowLocation() {
-    if (currentItemHash !== '' && autofocus) {
-      window.location = '#item-' + currentItemHash;
+  function setItemFocus(item) {
+    if(autofocus) {
+      // First, let the browser do some rendering
+      // Indeed, the div might not be visible yet, so there is no scroll
+      setTimeout(function()
+      {
+        // Dummy implementation
+        var container = document.getElementById('main-container'),
+          scrollPos = container.scrollTop,
+          itemPos = item.offsetTop,
+          current = itemPos - scrollPos;
+        // Scroll only if necessary
+        // current < 0: Happens when asking for previous item and displayed item is filling the screen
+        // Or check if item bottom is outside screen
+        if(current < 0 || current + item.offsetHeight > container.clientHeight) {
+          container.scrollTop = itemPos;
+        }
+      }, 0);
     }
   }
 
@@ -1400,9 +1419,11 @@
       }
 
       if (currentItemHash !== '') {
-        addClass(document.getElementById('item-'+currentItemHash), 'current');
-        addClass(document.getElementById('item-div-'+currentItemHash), 'current');
-        setWindowLocation();
+        var item = document.getElementById('item-'+currentItemHash),
+          itemDiv = document.getElementById('item-div-'+currentItemHash);
+        addClass(item, 'current');
+        addClass(itemDiv, 'current');
+        setItemFocus(itemDiv);
         updateItemButton();
       }
     }
