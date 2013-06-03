@@ -1260,7 +1260,12 @@
         var container = document.getElementById('main-container'),
           scrollPos = container.scrollTop,
           itemPos = item.offsetTop,
-          current = itemPos - scrollPos;
+          temp = item;
+        while(temp.offsetParent != document.body) {
+          temp = temp.offsetParent;
+          itemPos += temp.offsetTop;
+        }
+        var current = itemPos - scrollPos;
         // Scroll only if necessary
         // current < 0: Happens when asking for previous item and displayed item is filling the screen
         // Or check if item bottom is outside screen
