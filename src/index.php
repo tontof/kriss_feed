@@ -1355,54 +1355,6 @@ dd {
   bottom: 0;
   left: 0;
 }
-.ico-home-triangle {
-  border-color: transparent transparent #000000;
-  border-image: none;
-  border-style: solid;
-  border-width: 8px;
-  bottom: 7px;
-  height: 0;
-  left: 0;
-  position: absolute;
-  width: 0;
-}
-.ico-home-square {
-  background-color: #000000;
-  border-bottom-left-radius: 1px;
-  border-bottom-right-radius: 1px;
-  bottom: 1px;
-  height: 10px;
-  left: 3px;
-  position: absolute;
-  width: 10px;
-}
-.ico-home-line {
-  background-color: #000000;
-  border-radius: 1px 1px 1px 1px;
-  height: 5px;
-  left: 3px;
-  position: absolute;
-  top: 2px;
-  width: 2px;
-}
-.ico-update-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 1px;
-  left: 2px;
-}
-.ico-update-triangle {
-  border: 4px solid;
-  border-color: transparent #fff #000 transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
 .ico-b-disc {
   background-color: #000;
   border-radius:8px;
@@ -1430,24 +1382,6 @@ dd {
   top: 4px;
   left: 7px;
 }
-.ico-w-triangle-up {
-  border: 4px solid #fff;
-  border-color: transparent transparent #fff transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 10px;
-  left: 4px;
-}
-.ico-w-triangle-down {
-  border: 4px solid #fff;
-  border-color: #fff transparent transparent transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  top: 10px;
-  left: 4px;
-}
 .ico-w-circle {
   border: #fff 2px solid;
   width: 8px;
@@ -1457,359 +1391,102 @@ dd {
   bottom: 2px;
   left: 2px;
 }
-.ico-eye-triangle-left {
-  border: 4px solid #fff;
-  border-color: transparent #fff transparent transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 4px;
-  right: 11px;
-}
-.ico-eye-triangle-right {
-  border: 4px solid #fff;
-  border-color: transparent transparent transparent #fff;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 4px;
-  left: 11px;
-}
-.ico-eye-circle-1 {
-  border: #fff 2px solid;
-  width: 6px;
-  height: 6px;
-  border-radius: 6px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-eye-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  border-radius: 1px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-eye-circle-3 {
-  background-color: #fff;
-  border-radius: 6px;
-  width: 10px;
-  height: 10px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-edit-square {
-  border: #fff 1px solid;
-  width: 4px;
-  height: 4px;
-  position: absolute;
-  top: 5px;
-  left: 5px;
-}
-.ico-edit-circle-1 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-left-radius: 4px;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-}
-.ico-edit-circle-2 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  top: 2px;
-  right: 2px;
-}
-.ico-edit-circle-3 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-}
-.ico-edit-circle-4 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-bottom-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-}
-.ico-help-circle {
-  border: #fff 2px solid;
-  border-color: #fff #fff #fff transparent;
-  width: 4px;
-  height: 4px;
-  border-radius: 4px;
-  position: absolute;
-  top: 2px;
-  left: 4px;
-}
-.ico-help-line {
-  background-color: #fff;
-  width: 2px;
-  height: 6px;
-  border-radius: 1px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-help-line-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 13px;
-  position: absolute;
-  bottom: 0;
-  left: 4px;
-}
-.ico-help-line-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 7px;
-  position: absolute;
-  bottom: 0;
-  left: 7px;
-}
-.ico-help-line-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 6px;
-  position: absolute;
-  bottom: 0;
-  left: 10px;
-}
-.ico-help-line-4 {
-  background-color: #fff;
-  width: 2px;
-  height: 4px;
-  position: absolute;
-  bottom: 0;
-  left: 13px;
-}
-.ico-onoff-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 1px;
-  left: 2px;
-}
-.ico-onoff-line {
-  background-color: #fff;
-  border: #000 1px solid;
-  width: 2px;
-  height: 6px;
-  border-radius: 1px;
-  position: absolute;
-  top: 1px;
-  left: 6px;
-}
-.ico-expanded-line-1 {
-  background-color: #fff;
-  width: 10px;
-  height: 4px;
-  position: absolute;
-  top: 2px;
-  left: 3px;
-}
-.ico-expanded-line-2 {
-  background-color: #fff;
-  width: 10px;
-  height: 4px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-expanded-line-3 {
-  background-color: #fff;
-  width: 10px;
-  height: 2px;
-  position: absolute;
-  top: 12px;
-  left: 3px;
-}
-.ico-list-line-1 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-list-line-2 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 5px;
-  left: 3px;
-}
-.ico-list-line-3 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-list-line-4 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 9px;
-  left: 3px;
-}
-.ico-list-line-5 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 11px;
-  left: 3px;
-}
-.ico-list-feeds-line-1 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-list-feeds-line-2 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-list-feeds-line-3 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 10px;
-  left: 3px;
-}
-.ico-list-feeds-line-4 {
-  background-color: #fff;
-  width: 5px;
-  height: 7px;
-  position: absolute;
-  top: 4px;
-  left: 8px;
-}
-.ico-list-feeds-line-5 {
-  background-color: #fff;
-  width: 10px;
-  height: 7px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-config-circle-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-config-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-config-circle-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 11px;
-}
-.ico-item-circle-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-item-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-item-circle-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 10px;
-  left: 3px;
-}
-.ico-item-line-1 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 4px;
-  left: 6px;
-}
-.ico-item-line-2 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 6px;
-}
-.ico-item-line-3 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 10px;
-  left: 6px;
-}
 
 .ico-toggle-item {
   float: right;
 }
 
-/*
- .menu-ico {
-  display: inline-block;
+.menu-ico {
+  text-decoration: none !important;
 }
-*/</style>
+
+.menu-ico:before {
+  content: "";
+  speak: none;
+  display: none;
+  text-decoration: none !important;
+}
+
+.ico-star:before {
+  content: "\2605";
+}
+
+.ico-unstar:before {
+  content: "\2606";
+}
+
+.ico-update:before {
+  content: "\21BA";
+}
+
+.ico-add-feed:before {
+  content: "\271A";
+}
+
+.ico-home:before {
+  content: "\23CF";
+}
+
+.ico-help:before {
+  content: "\2048";
+}
+
+.ico-edit:before {
+  content: "\2318";
+}
+
+.ico-config:before {
+  content: "\273F";
+}
+
+.ico-order-older:before {
+  content: "\25BC";
+}
+
+.ico-order-newer:before {
+  content: "\25B2";
+}
+
+.ico-login:before {
+  content: "\2611";
+}
+
+.ico-logout:before {
+  content: "\2612";
+}
+
+.ico-list-feeds-hide:before {
+  content: "\25FB";
+}
+
+.ico-list-feeds-show:before {
+  content: "\25E7";
+}
+
+.ico-list:before {
+  content: "\2630";
+}
+
+.ico-expanded:before {
+  content: "\2B12";
+}
+
+.ico-mark-as-read:before {
+  content: "\25C9";
+}
+
+.ico-mark-as-unread:before {
+  content: "\25CE";
+}
+
+.ico-filter-all:before {
+  content: "\26C3";
+}
+
+.ico-filter-unread:before {
+  content: "\26C0";
+}
+</style>
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
 <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
@@ -1989,14 +1666,7 @@ dd {
         menu
       </a>
 
-      <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
-        <span class="ico-navbar">
-          <span class="ico">
-            <span class="ico-home-square"></span>
-            <span class="ico-home-triangle"></span>
-            <span class="ico-home-line"></span>
-          </span>
-        </span>
+      <a id="nav-home" class="brand ico-home" href="<?php echo MyTool::getUrl(); ?>" title="Home">
       </a>
 
       <?php if (isset($currentHashView)) { ?>
@@ -2017,17 +1687,7 @@ dd {
                 case 'menuView': ?>
           <?php if ($view === 'expanded') { ?>
           <li>
-            <a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)">
-              <span class="menu-ico ico-list">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-list-line-1"></span>
-                  <span class="ico-list-line-2"></span>
-                  <span class="ico-list-line-3"></span>
-                  <span class="ico-list-line-4"></span>
-                  <span class="ico-list-line-5"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)" class="menu-ico ico-list">
               <span class="menu-text menu-list">
                 View as list
               </span>
@@ -2035,15 +1695,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a href="<?php echo $query.'view=expanded'; ?>" title="Switch to expanded view">
-              <span class="menu-ico ico-expanded">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-expanded-line-1"></span>
-                  <span class="ico-expanded-line-2"></span>
-                  <span class="ico-expanded-line-3"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'view=expanded'; ?>" title="Switch to expanded view" class="menu-ico ico-expanded">
               <span class="menu-text menu-expanded">
                 View as expanded
               </span>
@@ -2054,13 +1706,7 @@ dd {
           <?php case 'menuListFeeds': ?>
           <?php if ($listFeeds == 'show') { ?>
           <li>
-            <a href="<?php echo $query.'listFeeds=hide'; ?>" title="Hide the feeds list">
-              <span class="menu-ico ico-list-feeds-hide">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-list-feeds-line-5"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'listFeeds=hide'; ?>" title="Hide the feeds list" class="menu-ico ico-list-feeds-hide">
               <span class="menu-text menu-list-feeds-hide">
                 Hide feeds list
               </span>
@@ -2068,16 +1714,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a href="<?php echo $query.'listFeeds=show'; ?>" title="Show the feeds list">
-              <span class="menu-ico ico-list-feeds-show">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-list-feeds-line-1"></span>
-                  <span class="ico-list-feeds-line-2"></span>
-                  <span class="ico-list-feeds-line-3"></span>
-                  <span class="ico-list-feeds-line-4"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'listFeeds=show'; ?>" title="Show the feeds list" class="menu-ico ico-list-feeds-show">
               <span class="menu-text menu-list-feeds-show">
                 Show feeds list
               </span>
@@ -2088,18 +1725,7 @@ dd {
           <?php case 'menuFilter': ?>
           <?php if ($filter === 'unread') { ?>
           <li>
-            <a href="<?php echo $query.'filter=all'; ?>" title="Filter: show all (read and unread) items">
-              <span class="menu-ico ico-filter-all">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-item-circle-1"></span>
-                  <span class="ico-item-circle-2"></span>
-                  <span class="ico-item-circle-3"></span>
-                  <span class="ico-item-line-1"></span>
-                  <span class="ico-item-line-2"></span>
-                  <span class="ico-item-line-3"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'filter=all'; ?>" title="Filter: show all (read and unread) items" class="menu-ico ico-filter-all">
               <span class="menu-text menu-filter-all">
                 Show all items
               </span>
@@ -2107,16 +1733,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a href="<?php echo $query.'filter=unread'; ?>" title="Filter: show unread items">
-              <span class="menu-ico ico-filter-unread">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-item-circle-1"></span>
-                  <span class="ico-item-circle-2"></span>
-                  <span class="ico-item-line-1"></span>
-                  <span class="ico-item-line-2"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'filter=unread'; ?>" title="Filter: show unread items" class="menu-ico ico-filter-unread">
               <span class="menu-text menu-filter-unread">
                 Show unread items
               </span>
@@ -2127,14 +1744,7 @@ dd {
           <?php case 'menuOrder': ?>
           <?php if ($order === 'newerFirst') { ?>
           <li>
-            <a href="<?php echo $query.'order=olderFirst'; ?>" title="Show older first items">
-              <span class="menu-ico ico-order-older">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-w-triangle-down"></span>
-                  <span class="ico-w-line-v"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'order=olderFirst'; ?>" title="Show older first items" class="menu-ico ico-order-older">
               <span class="menu-text menu-order">
                 Show older first
               </span>
@@ -2142,14 +1752,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a class="repeat" href="<?php echo $query.'order=newerFirst'; ?>" title="Show newer first items">
-              <span class="menu-ico ico-order-newer">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-w-triangle-up"></span>
-                  <span class="ico-w-line-v"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'order=newerFirst'; ?>" title="Show newer first items" class="menu-ico ico-order-newer">
               <span class="menu-text menu-order">         
                 Show newer first
               </span>
@@ -2159,13 +1762,7 @@ dd {
           <?php break; ?>
           <?php case 'menuUpdate': ?>
           <li>
-            <a href="<?php echo $query.'update='.$currentHash; ?>" title="Update <?php echo $currentHashType; ?> manually">
-              <span class="menu-ico ico-update">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-update-circle"></span>
-                  <span class="ico-update-triangle"></span>
-                </span>
+            <a href="<?php echo $query.'update='.$currentHash; ?>" title="Update <?php echo $currentHashType; ?> manually" class="menu-ico ico-update">
               </span>
               <span class="menu-text menu-update">
                 Update <?php echo $currentHashType; ?>
@@ -2175,16 +1772,7 @@ dd {
           <?php break; ?>
           <?php case 'menuRead': ?>
           <li>
-            <a href="<?php echo $query.'read='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as read">
-              <span class="menu-ico ico-mark-as-read">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-eye-triangle-left"></span>
-                  <span class="ico-eye-triangle-right"></span>
-                  <span class="ico-eye-circle-1"></span>
-                  <span class="ico-eye-circle-2"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'read='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as read" class="menu-ico ico-mark-as-read">
               <span class="menu-text menu-mark-as-read">
                 Mark <?php echo $currentHashType; ?> as read
               </span>
@@ -2193,15 +1781,7 @@ dd {
           <?php break; ?>
           <?php case 'menuUnread': ?>
           <li>
-            <a href="<?php echo $query.'unread='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as unread">
-              <span class="menu-ico ico-mark-as-unread">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-eye-triangle-left"></span>
-                  <span class="ico-eye-triangle-right"></span>
-                  <span class="ico-eye-circle-3"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'unread='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as unread" class="menu-ico ico-mark-as-unread">
               <span class="menu-text menu-mark-as-unread">
                 Mark <?php echo $currentHashType; ?> as unread
               </span>
@@ -2210,17 +1790,7 @@ dd {
           <?php break; ?>
           <?php case 'menuEdit': ?>
           <li>
-            <a href="<?php echo $query.'edit='.$currentHash; ?>" title="Edit <?php echo $currentHashType; ?>">
-              <span class="menu-ico ico-edit">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-edit-square"></span>
-                  <span class="ico-edit-circle-1"></span>
-                  <span class="ico-edit-circle-2"></span>
-                  <span class="ico-edit-circle-3"></span>
-                  <span class="ico-edit-circle-4"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'edit='.$currentHash; ?>" title="Edit <?php echo $currentHashType; ?>" class="menu-ico ico-edit">
               <span class="menu-text menu-edit">
                 Edit <?php echo $currentHashType; ?>
               </span>
@@ -2229,14 +1799,7 @@ dd {
           <?php break; ?>
           <?php case 'menuAdd': ?>
           <li>
-            <a href="<?php echo $query.'add'; ?>" title="Add a new feed">
-              <span class="menu-ico ico-add-feed">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-w-line-h"></span>
-                  <span class="ico-w-line-v"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'add'; ?>" title="Add a new feed" class="menu-ico ico-add-feed">
               <span class="menu-text menu-add-feed">
                 Add a new feed
               </span>
@@ -2245,16 +1808,7 @@ dd {
           <?php break; ?>
           <?php case 'menuHelp': ?>
           <li>
-            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed">
-              <span class="menu-ico ico-help">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-help-line-1"></span>
-                  <span class="ico-help-line-2"></span>
-                  <span class="ico-help-line-3"></span>
-                  <span class="ico-help-line-4"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed" class="menu-ico ico-help">
               <span class="menu-text menu-help">
                 Help
               </span>
@@ -2265,7 +1819,11 @@ dd {
              if($template === 'index'){
              ?>
           <li>
-            <a href="<?php echo $query.'stars'; ?>" title="Show starred items">Starred Items</a>
+            <a href="<?php echo $query.'stars'; ?>" title="Show starred items" class="menu-ico ico-star">
+              <span class="menu-text menu-help">
+                Starred Items
+              </span>
+            </a>
           </li>
           <?php }
              break; ?>
@@ -2275,15 +1833,7 @@ dd {
           <?php } ?>
           <?php if ($kf->kfc->isLogged()) { ?>
           <li>
-            <a href="?config" title="Configuration">
-              <span class="menu-ico ico-config">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-config-circle-1"></span>
-                  <span class="ico-config-circle-2"></span>
-                  <span class="ico-config-circle-3"></span>
-                </span>
-              </span>
+            <a href="?config" title="Configuration" class="menu-ico ico-config">
               <span class="menu-text menu-config">
                 Configuration
               </span>
@@ -2292,28 +1842,14 @@ dd {
           <?php } ?>
           <?php if (Session::isLogged()) { ?>
           <li>
-            <a href="?logout" title="Logout">
-              <span class="menu-ico ico-logout">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-onoff-circle"></span>
-                  <span class="ico-onoff-line"></span>
-                </span>
-              </span>
+            <a href="?logout" title="Logout" class="menu-ico ico-logout">
               <span class="menu-text menu-logout">
                 Logout
               </span>
             </a></li>
           <?php } else { ?>
           <li>
-            <a href="?login">
-              <span class="menu-ico ico-login">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-onoff-circle"></span>
-                  <span class="ico-onoff-line"></span>
-                </span>
-              </span>
+            <a href="?login" class="menu-ico ico-login">
               <span class="menu-text menu-login">
                 Login
               </span>

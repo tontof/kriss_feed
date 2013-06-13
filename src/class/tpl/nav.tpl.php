@@ -7,7 +7,7 @@
         menu
       </a>
 
-      <a id="nav-home" class="brand menu-ico ico-home" href="<?php echo MyTool::getUrl(); ?>" title="Home">
+      <a id="nav-home" class="brand ico-home" href="<?php echo MyTool::getUrl(); ?>" title="Home">
       </a>
 
       <?php if (isset($currentHashView)) { ?>

@@ -750,12 +750,8 @@ dd {
 .menu-ico:before {
   content: "";
   speak: none;
-  display: inline-block;
-}
-
-.menu-ico:before {
-  display: inline-block;
-/*  display: none; */
+  display: none;
+  text-decoration: none !important;
 }
 
 .ico-star:before {
