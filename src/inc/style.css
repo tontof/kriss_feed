@@ -702,54 +702,6 @@ dd {
   bottom: 0;
   left: 0;
 }
-.ico-home-triangle {
-  border-color: transparent transparent #000000;
-  border-image: none;
-  border-style: solid;
-  border-width: 8px;
-  bottom: 7px;
-  height: 0;
-  left: 0;
-  position: absolute;
-  width: 0;
-}
-.ico-home-square {
-  background-color: #000000;
-  border-bottom-left-radius: 1px;
-  border-bottom-right-radius: 1px;
-  bottom: 1px;
-  height: 10px;
-  left: 3px;
-  position: absolute;
-  width: 10px;
-}
-.ico-home-line {
-  background-color: #000000;
-  border-radius: 1px 1px 1px 1px;
-  height: 5px;
-  left: 3px;
-  position: absolute;
-  top: 2px;
-  width: 2px;
-}
-.ico-update-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 1px;
-  left: 2px;
-}
-.ico-update-triangle {
-  border: 4px solid;
-  border-color: transparent #fff #000 transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
 .ico-b-disc {
   background-color: #000;
   border-radius:8px;
@@ -777,24 +729,6 @@ dd {
   top: 4px;
   left: 7px;
 }
-.ico-w-triangle-up {
-  border: 4px solid #fff;
-  border-color: transparent transparent #fff transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 10px;
-  left: 4px;
-}
-.ico-w-triangle-down {
-  border: 4px solid #fff;
-  border-color: #fff transparent transparent transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  top: 10px;
-  left: 4px;
-}
 .ico-w-circle {
   border: #fff 2px solid;
   width: 8px;
@@ -804,356 +738,102 @@ dd {
   bottom: 2px;
   left: 2px;
 }
-.ico-eye-triangle-left {
-  border: 4px solid #fff;
-  border-color: transparent #fff transparent transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 4px;
-  right: 11px;
-}
-.ico-eye-triangle-right {
-  border: 4px solid #fff;
-  border-color: transparent transparent transparent #fff;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 4px;
-  left: 11px;
-}
-.ico-eye-circle-1 {
-  border: #fff 2px solid;
-  width: 6px;
-  height: 6px;
-  border-radius: 6px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-eye-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  border-radius: 1px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-eye-circle-3 {
-  background-color: #fff;
-  border-radius: 6px;
-  width: 10px;
-  height: 10px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-edit-square {
-  border: #fff 1px solid;
-  width: 4px;
-  height: 4px;
-  position: absolute;
-  top: 5px;
-  left: 5px;
-}
-.ico-edit-circle-1 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-left-radius: 4px;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-}
-.ico-edit-circle-2 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  top: 2px;
-  right: 2px;
-}
-.ico-edit-circle-3 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-}
-.ico-edit-circle-4 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-bottom-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-}
-.ico-help-circle {
-  border: #fff 2px solid;
-  border-color: #fff #fff #fff transparent;
-  width: 4px;
-  height: 4px;
-  border-radius: 4px;
-  position: absolute;
-  top: 2px;
-  left: 4px;
-}
-.ico-help-line {
-  background-color: #fff;
-  width: 2px;
-  height: 6px;
-  border-radius: 1px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-help-line-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 13px;
-  position: absolute;
-  bottom: 0;
-  left: 4px;
-}
-.ico-help-line-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 7px;
-  position: absolute;
-  bottom: 0;
-  left: 7px;
-}
-.ico-help-line-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 6px;
-  position: absolute;
-  bottom: 0;
-  left: 10px;
-}
-.ico-help-line-4 {
-  background-color: #fff;
-  width: 2px;
-  height: 4px;
-  position: absolute;
-  bottom: 0;
-  left: 13px;
-}
-.ico-onoff-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 1px;
-  left: 2px;
-}
-.ico-onoff-line {
-  background-color: #fff;
-  border: #000 1px solid;
-  width: 2px;
-  height: 6px;
-  border-radius: 1px;
-  position: absolute;
-  top: 1px;
-  left: 6px;
-}
-.ico-expanded-line-1 {
-  background-color: #fff;
-  width: 10px;
-  height: 4px;
-  position: absolute;
-  top: 2px;
-  left: 3px;
-}
-.ico-expanded-line-2 {
-  background-color: #fff;
-  width: 10px;
-  height: 4px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-expanded-line-3 {
-  background-color: #fff;
-  width: 10px;
-  height: 2px;
-  position: absolute;
-  top: 12px;
-  left: 3px;
-}
-.ico-list-line-1 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-list-line-2 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 5px;
-  left: 3px;
-}
-.ico-list-line-3 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-list-line-4 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 9px;
-  left: 3px;
-}
-.ico-list-line-5 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 11px;
-  left: 3px;
-}
-.ico-list-feeds-line-1 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-list-feeds-line-2 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-list-feeds-line-3 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 10px;
-  left: 3px;
-}
-.ico-list-feeds-line-4 {
-  background-color: #fff;
-  width: 5px;
-  height: 7px;
-  position: absolute;
-  top: 4px;
-  left: 8px;
-}
-.ico-list-feeds-line-5 {
-  background-color: #fff;
-  width: 10px;
-  height: 7px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-config-circle-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-config-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-config-circle-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 11px;
-}
-.ico-item-circle-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-item-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-item-circle-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 10px;
-  left: 3px;
-}
-.ico-item-line-1 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 4px;
-  left: 6px;
-}
-.ico-item-line-2 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 6px;
-}
-.ico-item-line-3 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 10px;
-  left: 6px;
-}
 
 .ico-toggle-item {
   float: right;
 }
 
-/*
- .menu-ico {
+.menu-ico {
+  text-decoration: none !important;
+}
+
+.menu-ico:before {
+  content: "";
+  speak: none;
   display: inline-block;
 }
-*/
+
+.menu-ico:before {
+  display: inline-block;
+/*  display: none; */
+}
+
+.ico-star:before {
+  content: "\2605";
+}
+
+.ico-unstar:before {
+  content: "\2606";
+}
+
+.ico-update:before {
+  content: "\21BA";
+}
+
+.ico-add-feed:before {
+  content: "\271A";
+}
+
+.ico-home:before {
+  content: "\23CF";
+}
+
+.ico-help:before {
+  content: "\2048";
+}
+
+.ico-edit:before {
+  content: "\2318";
+}
+
+.ico-config:before {
+  content: "\273F";
+}
+
+.ico-order-older:before {
+  content: "\25BC";
+}
+
+.ico-order-newer:before {
+  content: "\25B2";
+}
+
+.ico-login:before {
+  content: "\2611";
+}
+
+.ico-logout:before {
+  content: "\2612";
+}
+
+.ico-list-feeds-hide:before {
+  content: "\25FB";
+}
+
+.ico-list-feeds-show:before {
+  content: "\25E7";
+}
+
+.ico-list:before {
+  content: "\2630";
+}
+
+.ico-expanded:before {
+  content: "\2B12";
+}
+
+.ico-mark-as-read:before {
+  content: "\25C9";
+}
+
+.ico-mark-as-unread:before {
+  content: "\25CE";
+}
+
+.ico-filter-all:before {
+  content: "\26C3";
+}
+
+.ico-filter-unread:before {
+  content: "\26C0";
+}
