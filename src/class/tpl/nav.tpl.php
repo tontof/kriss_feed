@@ -30,7 +30,7 @@
           <li>
             <a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)" class="menu-ico ico-list">
               <span class="menu-text menu-list">
-                <?php echo _("View as list"); ?>
+                <?php echo __("View as list"); ?>
               </span>
             </a>
           </li>

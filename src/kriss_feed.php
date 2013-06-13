@@ -59,7 +59,7 @@ if (!is_dir(DATA_DIR)) {
     }
 }
 
-function _($s) {
+function __($s) {
     if ($s == "View as list") {
         return "Youpi";
     }
