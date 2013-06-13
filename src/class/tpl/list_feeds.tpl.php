@@ -2,6 +2,7 @@
   <?php
      if ($listFeeds == 'show') {
      ?>
+	 <input type="text" id="Nbunread" style="display:none;" value='<?php echo $feedsView['all']['nbUnread']; ?>'>
   <ul class="unstyled">
     <li id="all-subscriptions" class="folder<?php if ($currentHash == 'all') echo ' current-folder'; ?>">
       <?php if (isset($_GET['stars'])) { ?>

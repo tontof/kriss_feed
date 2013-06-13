@@ -98,6 +98,8 @@ class FeedConf
 
     public $addFavicon = false;
 
+    public $preload = false;
+
     public $blank = false;
 
     public $visibility = 'private';
@@ -421,6 +423,11 @@ class FeedConf
         $this->addFavicon = $addFavicon;
     }
 
+    public function setPreload($preload)
+    {
+        $this->preload = $preload;
+    }
+
     public function setShaarli($url)
     {
         $this->shaarli = $url;
@@ -615,7 +622,7 @@ class FeedConf
                           'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
-                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
                           'pagingMarkAs', 'disableSessionProtection', 'blank');
             $out = '<?php';
             $out .= "\n";
@@ -650,7 +657,11 @@ class FeedPage
 <title><?php echo $pagetitle;?></title>
 <meta charset="utf-8">
 
-<!-- <link href="images/favicon.ico" rel="shortcut icon" type="image/x-icon"> -->
+<?php if (is_file('inc/favicon.ico')) { ?>
+<link href="inc/favicon.ico" rel="icon" type="image/x-icon">
+<?php } else { ?>
+<link href="?file=favicon" rel="icon" type="image/x-icon">
+<?php } ?>
 <?php if (is_file('inc/style.css')) { ?>
 <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
 <?php } else { ?>
@@ -680,7 +691,7 @@ html, body, .full-height {
 
 img {
   max-width: 100%;
-  height: 100%;
+  height: auto;
   vertical-align: middle;
   border: 0;
 }
@@ -1344,54 +1355,6 @@ dd {
   bottom: 0;
   left: 0;
 }
-.ico-home-triangle {
-  border-color: transparent transparent #000000;
-  border-image: none;
-  border-style: solid;
-  border-width: 8px;
-  bottom: 7px;
-  height: 0;
-  left: 0;
-  position: absolute;
-  width: 0;
-}
-.ico-home-square {
-  background-color: #000000;
-  border-bottom-left-radius: 1px;
-  border-bottom-right-radius: 1px;
-  bottom: 1px;
-  height: 10px;
-  left: 3px;
-  position: absolute;
-  width: 10px;
-}
-.ico-home-line {
-  background-color: #000000;
-  border-radius: 1px 1px 1px 1px;
-  height: 5px;
-  left: 3px;
-  position: absolute;
-  top: 2px;
-  width: 2px;
-}
-.ico-update-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 1px;
-  left: 2px;
-}
-.ico-update-triangle {
-  border: 4px solid;
-  border-color: transparent #fff #000 transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
 .ico-b-disc {
   background-color: #000;
   border-radius:8px;
@@ -1419,24 +1382,6 @@ dd {
   top: 4px;
   left: 7px;
 }
-.ico-w-triangle-up {
-  border: 4px solid #fff;
-  border-color: transparent transparent #fff transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 10px;
-  left: 4px;
-}
-.ico-w-triangle-down {
-  border: 4px solid #fff;
-  border-color: #fff transparent transparent transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  top: 10px;
-  left: 4px;
-}
 .ico-w-circle {
   border: #fff 2px solid;
   width: 8px;
@@ -1446,359 +1391,102 @@ dd {
   bottom: 2px;
   left: 2px;
 }
-.ico-eye-triangle-left {
-  border: 4px solid #fff;
-  border-color: transparent #fff transparent transparent;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 4px;
-  right: 11px;
-}
-.ico-eye-triangle-right {
-  border: 4px solid #fff;
-  border-color: transparent transparent transparent #fff;
-  height: 0;
-  width: 0;
-  position: absolute;
-  bottom: 4px;
-  left: 11px;
-}
-.ico-eye-circle-1 {
-  border: #fff 2px solid;
-  width: 6px;
-  height: 6px;
-  border-radius: 6px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-eye-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  border-radius: 1px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-eye-circle-3 {
-  background-color: #fff;
-  border-radius: 6px;
-  width: 10px;
-  height: 10px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-edit-square {
-  border: #fff 1px solid;
-  width: 4px;
-  height: 4px;
-  position: absolute;
-  top: 5px;
-  left: 5px;
-}
-.ico-edit-circle-1 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-left-radius: 4px;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-}
-.ico-edit-circle-2 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  top: 2px;
-  right: 2px;
-}
-.ico-edit-circle-3 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-}
-.ico-edit-circle-4 {
-  border: #fff 1px solid;
-  width: 2px;
-  height: 2px;
-  border-bottom-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-}
-.ico-help-circle {
-  border: #fff 2px solid;
-  border-color: #fff #fff #fff transparent;
-  width: 4px;
-  height: 4px;
-  border-radius: 4px;
-  position: absolute;
-  top: 2px;
-  left: 4px;
-}
-.ico-help-line {
-  background-color: #fff;
-  width: 2px;
-  height: 6px;
-  border-radius: 1px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-help-line-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 13px;
-  position: absolute;
-  bottom: 0;
-  left: 4px;
-}
-.ico-help-line-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 7px;
-  position: absolute;
-  bottom: 0;
-  left: 7px;
-}
-.ico-help-line-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 6px;
-  position: absolute;
-  bottom: 0;
-  left: 10px;
-}
-.ico-help-line-4 {
-  background-color: #fff;
-  width: 2px;
-  height: 4px;
-  position: absolute;
-  bottom: 0;
-  left: 13px;
-}
-.ico-onoff-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 1px;
-  left: 2px;
-}
-.ico-onoff-line {
-  background-color: #fff;
-  border: #000 1px solid;
-  width: 2px;
-  height: 6px;
-  border-radius: 1px;
-  position: absolute;
-  top: 1px;
-  left: 6px;
-}
-.ico-expanded-line-1 {
-  background-color: #fff;
-  width: 10px;
-  height: 4px;
-  position: absolute;
-  top: 2px;
-  left: 3px;
-}
-.ico-expanded-line-2 {
-  background-color: #fff;
-  width: 10px;
-  height: 4px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-expanded-line-3 {
-  background-color: #fff;
-  width: 10px;
-  height: 2px;
-  position: absolute;
-  top: 12px;
-  left: 3px;
-}
-.ico-list-line-1 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.ico-list-line-2 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 5px;
-  left: 3px;
-}
-.ico-list-line-3 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-list-line-4 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 9px;
-  left: 3px;
-}
-.ico-list-line-5 {
-  background-color: #fff;
-  width: 10px;
-  height: 1px;
-  position: absolute;
-  top: 11px;
-  left: 3px;
-}
-.ico-list-feeds-line-1 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-list-feeds-line-2 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-list-feeds-line-3 {
-  background-color: #fff;
-  width: 4px;
-  height: 1px;
-  position: absolute;
-  top: 10px;
-  left: 3px;
-}
-.ico-list-feeds-line-4 {
-  background-color: #fff;
-  width: 5px;
-  height: 7px;
-  position: absolute;
-  top: 4px;
-  left: 8px;
-}
-.ico-list-feeds-line-5 {
-  background-color: #fff;
-  width: 10px;
-  height: 7px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-config-circle-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-config-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 7px;
-}
-.ico-config-circle-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 11px;
-}
-.ico-item-circle-1 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 4px;
-  left: 3px;
-}
-.ico-item-circle-2 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 3px;
-}
-.ico-item-circle-3 {
-  background-color: #fff;
-  width: 2px;
-  height: 2px;
-  position: absolute;
-  top: 10px;
-  left: 3px;
-}
-.ico-item-line-1 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 4px;
-  left: 6px;
-}
-.ico-item-line-2 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 7px;
-  left: 6px;
-}
-.ico-item-line-3 {
-  background-color: #fff;
-  width: 7px;
-  height: 2px;
-  position: absolute;
-  top: 10px;
-  left: 6px;
-}
 
 .ico-toggle-item {
   float: right;
 }
 
-/*
- .menu-ico {
-  display: inline-block;
+.menu-ico {
+  text-decoration: none !important;
 }
-*/</style>
+
+.menu-ico:before {
+  content: "";
+  speak: none;
+  display: none;
+  text-decoration: none !important;
+}
+
+.ico-star:before {
+  content: "\2605";
+}
+
+.ico-unstar:before {
+  content: "\2606";
+}
+
+.ico-update:before {
+  content: "\21BA";
+}
+
+.ico-add-feed:before {
+  content: "\271A";
+}
+
+.ico-home:before {
+  content: "\23CF";
+}
+
+.ico-help:before {
+  content: "\2048";
+}
+
+.ico-edit:before {
+  content: "\2318";
+}
+
+.ico-config:before {
+  content: "\273F";
+}
+
+.ico-order-older:before {
+  content: "\25BC";
+}
+
+.ico-order-newer:before {
+  content: "\25B2";
+}
+
+.ico-login:before {
+  content: "\2611";
+}
+
+.ico-logout:before {
+  content: "\2612";
+}
+
+.ico-list-feeds-hide:before {
+  content: "\25FB";
+}
+
+.ico-list-feeds-show:before {
+  content: "\25E7";
+}
+
+.ico-list:before {
+  content: "\2630";
+}
+
+.ico-expanded:before {
+  content: "\2B12";
+}
+
+.ico-mark-as-read:before {
+  content: "\25C9";
+}
+
+.ico-mark-as-unread:before {
+  content: "\25CE";
+}
+
+.ico-filter-all:before {
+  content: "\26C3";
+}
+
+.ico-filter-unread:before {
+  content: "\26C0";
+}
+</style>
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
 <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
@@ -1978,14 +1666,7 @@ dd {
         menu
       </a>
 
-      <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
-        <span class="ico-navbar">
-          <span class="ico">
-            <span class="ico-home-square"></span>
-            <span class="ico-home-triangle"></span>
-            <span class="ico-home-line"></span>
-          </span>
-        </span>
+      <a id="nav-home" class="brand ico-home" href="<?php echo MyTool::getUrl(); ?>" title="Home">
       </a>
 
       <?php if (isset($currentHashView)) { ?>
@@ -2006,17 +1687,7 @@ dd {
                 case 'menuView': ?>
           <?php if ($view === 'expanded') { ?>
           <li>
-            <a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)">
-              <span class="menu-ico ico-list">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-list-line-1"></span>
-                  <span class="ico-list-line-2"></span>
-                  <span class="ico-list-line-3"></span>
-                  <span class="ico-list-line-4"></span>
-                  <span class="ico-list-line-5"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)" class="menu-ico ico-list">
               <span class="menu-text menu-list">
                 View as list
               </span>
@@ -2024,15 +1695,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a href="<?php echo $query.'view=expanded'; ?>" title="Switch to expanded view">
-              <span class="menu-ico ico-expanded">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-expanded-line-1"></span>
-                  <span class="ico-expanded-line-2"></span>
-                  <span class="ico-expanded-line-3"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'view=expanded'; ?>" title="Switch to expanded view" class="menu-ico ico-expanded">
               <span class="menu-text menu-expanded">
                 View as expanded
               </span>
@@ -2043,13 +1706,7 @@ dd {
           <?php case 'menuListFeeds': ?>
           <?php if ($listFeeds == 'show') { ?>
           <li>
-            <a href="<?php echo $query.'listFeeds=hide'; ?>" title="Hide the feeds list">
-              <span class="menu-ico ico-list-feeds-hide">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-list-feeds-line-5"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'listFeeds=hide'; ?>" title="Hide the feeds list" class="menu-ico ico-list-feeds-hide">
               <span class="menu-text menu-list-feeds-hide">
                 Hide feeds list
               </span>
@@ -2057,16 +1714,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a href="<?php echo $query.'listFeeds=show'; ?>" title="Show the feeds list">
-              <span class="menu-ico ico-list-feeds-show">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-list-feeds-line-1"></span>
-                  <span class="ico-list-feeds-line-2"></span>
-                  <span class="ico-list-feeds-line-3"></span>
-                  <span class="ico-list-feeds-line-4"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'listFeeds=show'; ?>" title="Show the feeds list" class="menu-ico ico-list-feeds-show">
               <span class="menu-text menu-list-feeds-show">
                 Show feeds list
               </span>
@@ -2077,18 +1725,7 @@ dd {
           <?php case 'menuFilter': ?>
           <?php if ($filter === 'unread') { ?>
           <li>
-            <a href="<?php echo $query.'filter=all'; ?>" title="Filter: show all (read and unread) items">
-              <span class="menu-ico ico-filter-all">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-item-circle-1"></span>
-                  <span class="ico-item-circle-2"></span>
-                  <span class="ico-item-circle-3"></span>
-                  <span class="ico-item-line-1"></span>
-                  <span class="ico-item-line-2"></span>
-                  <span class="ico-item-line-3"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'filter=all'; ?>" title="Filter: show all (read and unread) items" class="menu-ico ico-filter-all">
               <span class="menu-text menu-filter-all">
                 Show all items
               </span>
@@ -2096,16 +1733,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a href="<?php echo $query.'filter=unread'; ?>" title="Filter: show unread items">
-              <span class="menu-ico ico-filter-unread">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-item-circle-1"></span>
-                  <span class="ico-item-circle-2"></span>
-                  <span class="ico-item-line-1"></span>
-                  <span class="ico-item-line-2"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'filter=unread'; ?>" title="Filter: show unread items" class="menu-ico ico-filter-unread">
               <span class="menu-text menu-filter-unread">
                 Show unread items
               </span>
@@ -2116,14 +1744,7 @@ dd {
           <?php case 'menuOrder': ?>
           <?php if ($order === 'newerFirst') { ?>
           <li>
-            <a href="<?php echo $query.'order=olderFirst'; ?>" title="Show older first items">
-              <span class="menu-ico ico-order-older">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-w-triangle-down"></span>
-                  <span class="ico-w-line-v"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'order=olderFirst'; ?>" title="Show older first items" class="menu-ico ico-order-older">
               <span class="menu-text menu-order">
                 Show older first
               </span>
@@ -2131,14 +1752,7 @@ dd {
           </li>
           <?php } else { ?>
           <li>
-            <a class="repeat" href="<?php echo $query.'order=newerFirst'; ?>" title="Show newer first items">
-              <span class="menu-ico ico-order-newer">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-w-triangle-up"></span>
-                  <span class="ico-w-line-v"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'order=newerFirst'; ?>" title="Show newer first items" class="menu-ico ico-order-newer">
               <span class="menu-text menu-order">         
                 Show newer first
               </span>
@@ -2148,13 +1762,7 @@ dd {
           <?php break; ?>
           <?php case 'menuUpdate': ?>
           <li>
-            <a href="<?php echo $query.'update='.$currentHash; ?>" title="Update <?php echo $currentHashType; ?> manually">
-              <span class="menu-ico ico-update">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-update-circle"></span>
-                  <span class="ico-update-triangle"></span>
-                </span>
+            <a href="<?php echo $query.'update='.$currentHash; ?>" title="Update <?php echo $currentHashType; ?> manually" class="menu-ico ico-update">
               </span>
               <span class="menu-text menu-update">
                 Update <?php echo $currentHashType; ?>
@@ -2164,16 +1772,7 @@ dd {
           <?php break; ?>
           <?php case 'menuRead': ?>
           <li>
-            <a href="<?php echo $query.'read='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as read">
-              <span class="menu-ico ico-mark-as-read">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-eye-triangle-left"></span>
-                  <span class="ico-eye-triangle-right"></span>
-                  <span class="ico-eye-circle-1"></span>
-                  <span class="ico-eye-circle-2"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'read='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as read" class="menu-ico ico-mark-as-read">
               <span class="menu-text menu-mark-as-read">
                 Mark <?php echo $currentHashType; ?> as read
               </span>
@@ -2182,15 +1781,7 @@ dd {
           <?php break; ?>
           <?php case 'menuUnread': ?>
           <li>
-            <a href="<?php echo $query.'unread='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as unread">
-              <span class="menu-ico ico-mark-as-unread">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-eye-triangle-left"></span>
-                  <span class="ico-eye-triangle-right"></span>
-                  <span class="ico-eye-circle-3"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'unread='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as unread" class="menu-ico ico-mark-as-unread">
               <span class="menu-text menu-mark-as-unread">
                 Mark <?php echo $currentHashType; ?> as unread
               </span>
@@ -2199,17 +1790,7 @@ dd {
           <?php break; ?>
           <?php case 'menuEdit': ?>
           <li>
-            <a href="<?php echo $query.'edit='.$currentHash; ?>" title="Edit <?php echo $currentHashType; ?>">
-              <span class="menu-ico ico-edit">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-edit-square"></span>
-                  <span class="ico-edit-circle-1"></span>
-                  <span class="ico-edit-circle-2"></span>
-                  <span class="ico-edit-circle-3"></span>
-                  <span class="ico-edit-circle-4"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'edit='.$currentHash; ?>" title="Edit <?php echo $currentHashType; ?>" class="menu-ico ico-edit">
               <span class="menu-text menu-edit">
                 Edit <?php echo $currentHashType; ?>
               </span>
@@ -2218,14 +1799,7 @@ dd {
           <?php break; ?>
           <?php case 'menuAdd': ?>
           <li>
-            <a href="<?php echo $query.'add'; ?>" title="Add a new feed">
-              <span class="menu-ico ico-add-feed">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-w-line-h"></span>
-                  <span class="ico-w-line-v"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'add'; ?>" title="Add a new feed" class="menu-ico ico-add-feed">
               <span class="menu-text menu-add-feed">
                 Add a new feed
               </span>
@@ -2234,16 +1808,7 @@ dd {
           <?php break; ?>
           <?php case 'menuHelp': ?>
           <li>
-            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed">
-              <span class="menu-ico ico-help">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-help-line-1"></span>
-                  <span class="ico-help-line-2"></span>
-                  <span class="ico-help-line-3"></span>
-                  <span class="ico-help-line-4"></span>
-                </span>
-              </span>
+            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed" class="menu-ico ico-help">
               <span class="menu-text menu-help">
                 Help
               </span>
@@ -2254,7 +1819,11 @@ dd {
              if($template === 'index'){
              ?>
           <li>
-            <a href="<?php echo $query.'stars'; ?>" title="Show starred items">Starred Items</a>
+            <a href="<?php echo $query.'stars'; ?>" title="Show starred items" class="menu-ico ico-star">
+              <span class="menu-text menu-help">
+                Starred Items
+              </span>
+            </a>
           </li>
           <?php }
              break; ?>
@@ -2264,15 +1833,7 @@ dd {
           <?php } ?>
           <?php if ($kf->kfc->isLogged()) { ?>
           <li>
-            <a href="?config" title="Configuration">
-              <span class="menu-ico ico-config">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-config-circle-1"></span>
-                  <span class="ico-config-circle-2"></span>
-                  <span class="ico-config-circle-3"></span>
-                </span>
-              </span>
+            <a href="?config" title="Configuration" class="menu-ico ico-config">
               <span class="menu-text menu-config">
                 Configuration
               </span>
@@ -2281,28 +1842,14 @@ dd {
           <?php } ?>
           <?php if (Session::isLogged()) { ?>
           <li>
-            <a href="?logout" title="Logout">
-              <span class="menu-ico ico-logout">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-onoff-circle"></span>
-                  <span class="ico-onoff-line"></span>
-                </span>
-              </span>
+            <a href="?logout" title="Logout" class="menu-ico ico-logout">
               <span class="menu-text menu-logout">
                 Logout
               </span>
             </a></li>
           <?php } else { ?>
           <li>
-            <a href="?login">
-              <span class="menu-ico ico-login">
-                <span class="ico">
-                  <span class="ico-b-disc"></span>
-                  <span class="ico-onoff-circle"></span>
-                  <span class="ico-onoff-line"></span>
-                </span>
-              </span>
+            <a href="?login" class="menu-ico ico-login">
               <span class="menu-text menu-login">
                 Login
               </span>
@@ -2530,6 +2077,20 @@ dd {
                       <label for="addfavicon">
                         <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php echo ($kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
                         Add favicon next to feed on list of feeds/items<br><strong>Warning: It depends on http://getfavicon.appspot.com/ <?php if (in_array('curl', get_loaded_extensions())) { echo 'but it will cache favicon on your server'; } ?></strong>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label">Preload option</label>
+                    <div class="controls">
+                      <label for="donotpreload">
+                        <input type="radio" id="donotpreload" name="preload" value="0" <?php echo (!$kfcpreload ? 'checked="checked"' : ''); ?>/>
+                        Do not preload items.
+                      </label>
+                      <label for="preload">
+                        <input type="radio" id="preload" name="preload" value="1" <?php echo ($kfcpreload ? 'checked="checked"' : ''); ?>/>
+                        Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you don't read all the page items.
                       </label>
                     </div>
                   </div>
@@ -3264,6 +2825,7 @@ dd {
   <?php
      if ($listFeeds == 'show') {
      ?>
+	 <input type="text" id="Nbunread" style="display:none;" value='<?php echo $feedsView['all']['nbUnread']; ?>'>
   <ul class="unstyled">
     <li id="all-subscriptions" class="folder<?php if ($currentHash == 'all') echo ' current-folder'; ?>">
       <?php if (isset($_GET['stars'])) { ?>
@@ -3549,7 +3111,7 @@ dd {
     <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -3585,6 +3147,8 @@ dd {
     <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
     <?php } else { ?>
     <script type="text/javascript">
+/*jshint sub:true, evil:true */
+
 (function () {
 
   var view = '', // data-view
@@ -3603,6 +3167,7 @@ dd {
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
       addFavicon = false, // data-add-favicon
+      preload = false, // data-preload
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
@@ -3620,7 +3185,12 @@ dd {
     };
   }
   function stopBubbling(event) {
-    event.stopPropagation ? event.stopPropagation() : (event.cancelBubble=true);
+    if(event.stopPropagation) {
+      event.stopPropagation();
+    }
+    else {
+      event.cancelBubble = true;
+    }
   }
 
   if (!window.JSON) {
@@ -3655,7 +3225,7 @@ dd {
         try {
           httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
         }
-        catch (e) {}
+        catch (e2) {}
       }
     }
 
@@ -3663,21 +3233,22 @@ dd {
   }
 
   // Constructor for generic HTTP client
-  function HTTPClient() {};
+  function HTTPClient() {}
   HTTPClient.prototype = {
     url: null,
     xhr: null,
     callinprogress: false,
     userhandler: null,
-    init: function(url) {
+    init: function(url, obj) {
       this.url = url;
+      this.obj = obj;
       this.xhr = new getXHR();
     },
     asyncGET: function (handler) {
       // Prevent multiple calls
       if (this.callinprogress) {
         throw "Call in progress";
-      };
+      }
       this.callinprogress = true;
       this.userhandler = handler;
       // Open an async request - third argument makes it async
@@ -3686,7 +3257,7 @@ dd {
       // Assign a closure to the onreadystatechange callback
       this.xhr.onreadystatechange = function() {
         self.stateChangeCallback(self);
-      }
+      };
       this.xhr.send(null);
     },
     stateChangeCallback: function(client) {
@@ -3735,20 +3306,20 @@ dd {
         // Download complete
         case 4:
         try {
-          client.userhandler.onSuccess(client.xhr.responseText);
+          client.userhandler.onSuccess(client.xhr.responseText, client.obj);
         }
         catch (e) { /* Handler method not defined */ }
         finally { client.callinprogress = false; }
         break;
       }
     }
-  }
+  };
 
   var ajaxHandler = {
     onInit: function() {},
     onError: function(status, statusText) {},
     onProgress: function(responseText, length) {},
-    onSuccess: function(responseText) {
+    onSuccess: function(responseText, noFocus) {
       var result = JSON.parse(responseText);
 
       if (result['logout'] && isLogged) {
@@ -3756,11 +3327,14 @@ dd {
       }
       if (result['item']) {
         cache['item-' + result['item']['itemHash']] = result['item'];
-        loadDivItem(result['item']['itemHash']);
+        loadDivItem(result['item']['itemHash'], noFocus);
       }
       if (result['page']) {
         updateListItems(result['page']);
         setCurrentItem();
+        if (preload) {
+          preloadItems();
+        }
       }
       if (result['read']) {
         markAsRead(result['read']);
@@ -3915,7 +3489,7 @@ dd {
         via = '';
       }
       sel = getSelectionHtml();
-      if (sel != '') {
+      if (sel !== '') {
         sel = '«' + sel + '»';
       }
 
@@ -4136,9 +3710,9 @@ dd {
         addClass(item, 'read');
         toggleMarkAsLinkItem(itemHash);
         if (filter === 'unread') {
-          url += '&currentHash=' + currentHash
-               + '&page=' + currentPage
-               + '&last=' + listItemsHash[listItemsHash.length - 1];
+          url += '&currentHash=' + currentHash +
+            '&page=' + currentPage +
+            '&last=' + listItemsHash[listItemsHash.length - 1];
 
           removeElement(item);
           indexItem = listItemsHash.indexOf(itemHash);
@@ -4150,8 +3724,8 @@ dd {
         }
       }
     } else {
-      url = '?currentHash=' + currentHash
-          + '&page=' + currentPage;
+      url = '?currentHash=' + currentHash +
+        '&page=' + currentPage;
     }
 
     client = new HTTPClient();
@@ -4243,20 +3817,23 @@ dd {
     setNbUnread(currentUnread + 1);
   }
 
-  function loadDivItem(itemHash) {
+  function loadDivItem(itemHash, noFocus) {
     var element, url, client, cacheItem;
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
-      if (cacheItem != null) {
+      if (cacheItem !== null) {
         setDivItem(element, cacheItem);
+        if(!noFocus) {
+          setItemFocus(element);
+        }
         removeCacheItem(itemHash);
       } else {
-        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash
-            + '&current=' + itemHash
-            + '&ajax';
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
+          '&current=' + itemHash +
+          '&ajax';
         client = new HTTPClient();
-        client.init(url, element);
+        client.init(url, noFocus);
         try {
           client.asyncGET(ajaxHandler);
         } catch (e) {
@@ -4360,7 +3937,7 @@ dd {
   }
 
   function getLiItem(element) {
-    var item = null
+    var item = null;
 
     while (item === null && element !== null) {
       if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
@@ -4627,11 +4204,11 @@ dd {
   function initListItems() {
     var url, client;
 
-    url = '?currentHash=' + currentHash
-        + '&page=' + currentPage
-        + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax'
-        + (stars?'&stars':'');
+    url = '?currentHash=' + currentHash +
+      '&page=' + currentPage +
+      '&last=' + listItemsHash[listItemsHash.length -1] +
+      '&ajax' +
+      (stars?'&stars':'');
 
     client = new HTTPClient();
     client.init(url);
@@ -4639,6 +4216,15 @@ dd {
       client.asyncGET(ajaxHandler);
     } catch (e) {
       alert(e);
+    }
+  }
+
+  function preloadItems()
+  {
+    // Pre-fetch items from top to bottom
+    for(var i = 0, len = listItemsHash.length; i < len; ++i)
+    {
+      loadDivItem(listItemsHash[i], true);
     }
   }
 
@@ -4757,9 +4343,29 @@ dd {
     window.setTimeout(updateNextFeed, 1000);
   }
 
-  function setWindowLocation() {
-    if (currentItemHash != '' && autofocus) {
-      window.location = '#item-' + currentItemHash;
+  function setItemFocus(item) {
+    if(autofocus) {
+      // First, let the browser do some rendering
+      // Indeed, the div might not be visible yet, so there is no scroll
+      setTimeout(function()
+      {
+        // Dummy implementation
+        var container = document.getElementById('main-container'),
+          scrollPos = container.scrollTop,
+          itemPos = item.offsetTop,
+          temp = item;
+        while(temp.offsetParent != document.body) {
+          temp = temp.offsetParent;
+          itemPos += temp.offsetTop;
+        }
+        var current = itemPos - scrollPos;
+        // Scroll only if necessary
+        // current < 0: Happens when asking for previous item and displayed item is filling the screen
+        // Or check if item bottom is outside screen
+        if(current < 0 || current + item.offsetHeight > container.clientHeight) {
+          container.scrollTop = itemPos;
+        }
+      }, 0);
     }
   }
 
@@ -4786,7 +4392,7 @@ dd {
     if (currentPage > Math.ceil(currentNbItems / byPage)) {
       currentPage = Math.ceil(currentNbItems / byPage);
     }
-    if (listItemsHash.length == 0) {
+    if (listItemsHash.length === 0) {
       currentPage = 1;
     }
     listItemsHash = [];
@@ -4911,9 +4517,11 @@ dd {
       }
 
       if (currentItemHash !== '') {
-        addClass(document.getElementById('item-'+currentItemHash), 'current');
-        addClass(document.getElementById('item-div-'+currentItemHash), 'current');
-        setWindowLocation();
+        var item = document.getElementById('item-'+currentItemHash),
+          itemDiv = document.getElementById('item-div-'+currentItemHash);
+        addClass(item, 'current');
+        addClass(itemDiv, 'current');
+        setItemFocus(itemDiv);
         updateItemButton();
       }
     }
@@ -4947,7 +4555,7 @@ dd {
       start = { time: ( new Date() ).getTime(),
                 coords: [ touch.pageX, touch.pageY ] },
       stop;
-      function moveHandler( e ) {
+      var moveHandler = function ( e ) {
 
         if ( !start ) {
           return;
@@ -4958,21 +4566,22 @@ dd {
           stop = { time: ( new Date() ).getTime(),
                    coords: [ touch.pageX, touch.pageY ] };
         }
-      }
+      };
 
       addEvent(window, 'touchmove', moveHandler);
       addEvent(window, 'touchend', function (e) {
         removeEvent(window, 'touchmove', moveHandler);
         if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold
-            && Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-             > horizontalDistanceThreshold
-            && Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] )
-             < verticalDistanceThreshold
+          if ( stop.time - start.time < durationThreshold &&
+            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
              ) {
-            start.coords[0] > stop.coords[ 0 ]
-                ? nextItem()
-                : previousItem() ;
+            if ( start.coords[0] > stop.coords[ 0 ] ) {
+              nextItem();
+            }
+            else {
+              previousItem();
+            }
           }
           start = stop = undefined;
         }
@@ -4995,18 +4604,18 @@ dd {
         if (window.confirm('Mark all current as read ?')) {
           window.location.href = '?read=' + currentHash;
         }
-        break;
+		break;
         case 67: // 'C'
         window.location.href = '?config';
         break;
         case 69: // 'E'
-        window.location.href = (currentHash==''?'?edit':'?edit='+currentHash);
+        window.location.href = (currentHash===''?'?edit':'?edit='+currentHash);
         break;
         case 70: // 'F'
         if (listFeeds =='show') {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
         } else {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
         }
         break;
         case 72: // 'H'
@@ -5061,14 +4670,30 @@ dd {
         toggleCurrentItem();
         break;
         case 85: // 'U'
-        window.location.href = (currentHash==''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
+        window.location.href = (currentHash===''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
         break;
         case 86: // 'V'
         if (view == 'list') {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
         } else {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=list';
         }
+        break;
+        case 90: // 'z'
+		if (filter == 'unread') {
+			while(listItemsHash.indexOf(currentItemHash) != -1) {
+				window.open(getUrlItem(currentItemHash),'_blank');
+				markAsCurrentItem();
+			}
+        } else if (filter == 'all') {
+			for (var i=0;i<listItemsHash.length;i++){
+				if (!hasClass(getItem(listItemsHash[i]), 'read')){
+					window.open(getUrlItem(currentItemHash),'_blank');
+					markAsCurrentItem();
+				}
+				nextItem();
+			}
+		}
         break;
         case 112: // 'F1'
         case 188: // '?'
@@ -5130,8 +4755,7 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
           if (currentPage === 1) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5143,8 +4767,7 @@ dd {
           }
         }
         if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
           if (currentPage === maxPage) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5168,8 +4791,7 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
           if (currentPage === 1) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5181,8 +4803,7 @@ dd {
           }
         }
         if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
           if (currentPage === maxPage) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -5241,12 +4862,10 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
         }
         if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
 
         }
       }
@@ -5257,13 +4876,10 @@ dd {
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
         }
         if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
-
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
         }
       }
     }
@@ -5346,6 +4962,10 @@ dd {
     if (elementIndex.hasAttribute('data-add-favicon')) {
       addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
       addFavicon = (addFavicon === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-preload')) {
+      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
+      preload = (preload === 1)?true:false;
     }
     if (elementIndex.hasAttribute('data-stars')) {
       stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
@@ -5433,6 +5053,198 @@ dd {
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
 })();
+
+// unread count for favicon part
+if(typeof GM_getValue == 'undefined') {
+	GM_getValue = function(name, fallback) {
+		return fallback;
+	};
+}
+
+// Register GM Commands and Methods
+if(typeof GM_registerMenuCommand !== 'undefined') {
+  var setOriginalFavicon = function(val) { GM_setValue('originalFavicon', val); };
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false); } );
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true); } );
+}
+
+(function FaviconAlerts() {
+	var self = this;
+
+	this.construct = function() {
+		this.head = document.getElementsByTagName('head')[0];
+		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1]]}};
+
+		this.timer = setInterval(this.poll, 500);
+		this.poll();
+
+		return true;
+	};
+
+	this.drawUnreadCount = function(unread, callback) {
+		if(!self.textedCanvas) {
+			self.textedCanvas = [];
+		}
+
+		if(!self.textedCanvas[unread]) {
+			self.getUnreadCanvas(function(iconCanvas) {
+				var textedCanvas = document.createElement('canvas');
+				textedCanvas.height = textedCanvas.width = iconCanvas.width;
+				var ctx = textedCanvas.getContext('2d');
+				ctx.drawImage(iconCanvas, 0, 0);
+
+				ctx.fillStyle = '#b7bfc9';
+				ctx.strokeStyle = '#7792ba';
+				ctx.strokeWidth = 1;
+
+				var count = unread.length;
+
+				if(count > 4) {
+					unread = '1k+';
+					count = unread.length;
+				}
+
+				var bgHeight = self.pixelMaps.numbers[0].length;
+				var bgWidth = 0;
+				var padding = count < 4 ? 1 : 0;
+				var topMargin = 0;
+
+				for(var index = 0; index < count; index++) {
+					bgWidth += self.pixelMaps.numbers[unread[index]][0].length;
+					if(index < count-1) {
+						bgWidth += padding;
+					}
+				}
+				bgWidth = bgWidth > textedCanvas.width-4 ? textedCanvas.width-4 : bgWidth;
+
+				ctx.fillRect(textedCanvas.width-bgWidth-4,topMargin,bgWidth+4,bgHeight+4);
+
+				var digit;
+				var digitsWidth = bgWidth;
+				for(index = 0; index < count; index++) {
+					digit = unread[index];
+
+					if (self.pixelMaps.numbers[digit]) {
+						var map = self.pixelMaps.numbers[digit];
+						var height = map.length;
+						var width = map[0].length;
+
+						ctx.fillStyle = '#2c3323';
+
+						for (var y = 0; y < height; y++) {
+							for (var x = 0; x < width; x++) {
+								if(map[y][x]) {
+									ctx.fillRect(14- digitsWidth + x, y+topMargin+2, 1, 1);
+								}
+							}
+						}
+
+						digitsWidth -= width + padding;
+					}
+				}
+
+				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+0.5,bgWidth+3,bgHeight+3);
+
+				self.textedCanvas[unread] = textedCanvas;
+
+				callback(self.textedCanvas[unread]);
+			});
+      callback(self.textedCanvas[unread]);
+		}
+	};
+	this.getIcon = function(callback) {
+		self.getUnreadCanvas(function(canvas) {
+			callback(canvas.toDataURL('image/png'));
+		});
+	};
+  this.getIconSrc = function() {
+    var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].rel === 'icon') {
+        return links[i].href;
+      }
+    }
+    return false;
+  };
+	this.getUnreadCanvas = function(callback) {
+		if(!self.unreadCanvas) {
+			self.unreadCanvas = document.createElement('canvas');
+			self.unreadCanvas.height = self.unreadCanvas.width = 16;
+
+			var ctx = self.unreadCanvas.getContext('2d');
+			var img = new Image();
+
+			img.addEventListener('load', function() {
+				ctx.drawImage(img, 0, 0);
+				callback(self.unreadCanvas);
+			}, true);
+
+		//	if(GM_getValue('originalFavicon', false)) {
+		//		img.src = self.icons.original;
+		//	} else {
+		//		img.src = self.icons.current;
+		//	}
+		// img.src = 'inc/favicon.ico';
+                  img.src = self.getIconSrc();
+		} else {
+			callback(self.unreadCanvas);
+		}
+	};
+	this.getUnreadCount = function() {
+		matches = self.getSearchText().match(/\((.*)\)/);
+		return matches ? matches[1] : false;
+	};
+	this.getUnreadCountIcon = function(callback) {
+		var unread = self.getUnreadCount();
+    self.drawUnreadCount(unread, function(icon) {
+      if(icon) {
+        callback(icon.toDataURL('image/png'));
+      }
+    });
+	};
+	this.getSearchText = function() {
+		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
+		return Nbunread;
+	};
+	this.poll = function() {
+		if(self.getUnreadCount() != "0") {
+			self.getUnreadCountIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		} else {
+			self.getIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		}
+	};
+
+	this.setIcon = function(icon) {
+		var links = self.head.getElementsByTagName('link');
+		for (var i = 0; i < links.length; i++)
+			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
+        links[i].href != icon)
+				self.head.removeChild(links[i]);
+			else if(links[i].href == icon)
+				return;
+
+		var newIcon = document.createElement('link');
+		newIcon.type = 'image/png';
+		newIcon.rel = 'shortcut icon';
+		newIcon.href = icon;
+		self.head.appendChild(newIcon);
+
+		// Chrome hack for updating the favicon
+		var shim = document.createElement('iframe');
+		shim.width = shim.height = 0;
+		document.body.appendChild(shim);
+		shim.src = 'icon';
+		document.body.removeChild(shim);
+	};
+
+	this.toString = function() { return '[object FaviconAlerts]'; };
+
+	return this.construct();
+}());
     </script>
     <?php } ?>
   </body>
@@ -5450,6 +5262,8 @@ class Feed
     public $kfc;
 
     private $_data = array();
+
+    private $_headers = array();
 
     public function __construct($dataFile, $cacheDir, $kfc)
     {
@@ -6308,6 +6122,7 @@ class Feed
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
             curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
             curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $opts['http']['headers']);
         }
         curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -6320,17 +6135,27 @@ class Feed
 
         return $output;
     }
- 
+
     public function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
         if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
-            curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
+            curl_setopt($ch, CURLOPT_HEADER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
             curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
-            return curl_exec($ch);
+            curl_setopt($ch, CURLOPT_HEADERFUNCTION, array($this, readHeader));
+
+            $data = curl_exec($ch);
+
+            $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header = substr($data, 0, $header_size);
+
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            $data = substr($data, strpos($data, "\r\n\r\n")+4);
         } else {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
             curl_setopt($ch, CURLOPT_HEADER, true);
             curl_setopt($ch, CURLOPT_FORBID_REUSE, false);
+            curl_setopt($ch, CURLOPT_HEADERFUNCTION, array($this, readHeader));
 
             do {
                 $data = curl_exec($ch);
@@ -6344,12 +6169,11 @@ class Feed
                 if ($code != 301 && $code != 302 && $code!=303 && $code!=307)
                     break;
 
-                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE); 
-                $header = substr($data, 0, $header_size); 
-                if (!preg_match('/^(?:Location|URI): ([^\r\n]*)[\r\n]*$/im', $header, $matches)) { 
-                    break; 
-                } 
-
+                $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                $header = substr($data, 0, $header_size);
+                if (!preg_match('/^(?:Location|URI): ([^\r\n]*)[\r\n]*$/im', $header, $matches)) {
+                    break;
+                }
                 curl_setopt($ch, CURLOPT_URL, $matches[1]);
             } while (--$redirects);
             if (!$redirects)
@@ -6357,12 +6181,34 @@ class Feed
             if (!$curloptHeader)
                 $data = substr($data, strpos($data, "\r\n\r\n")+4);
 
-            return $data;
         }
+
+        return array(
+            'data' => $data,
+            'header' => $header,
+            'code' => $code,
+            'error' => curl_error(),
+            'isnew' => $code != 304, // really new (2XX) and errors (4XX and 5XX) are considered new
+            'etag' => $this->_headers['etag'],
+            'last-modified' => $this->_headers['last-modified']
+        );
     }
 
-    public function loadXml($xmlUrl)
+    public function readHeader($url, $str) {
+        if (preg_match('/^ETag: ([^\r\n]*)[\r\n]*$/im', $str, $matches)) {
+            $this->_headers['etag'] = $matches[1];
+        } else if (preg_match('/^Last-Modified: ([^\r\n]*)[\r\n]*$/im', $str, $matches)) {
+            $this->_headers['last-modified'] = $matches[1];
+        }
+
+        return strlen($str);
+    }
+
+    public function loadXml($xmlUrl, &$etag, &$lastModified)
     {
+        // reinitialize cache headers
+        $this->_headers = array();
+
         // hide warning/error
         set_error_handler(array('MyTool', 'silence_errors'));
 
@@ -6374,11 +6220,26 @@ class Feed
                 'user_agent' => 'KrISS feed agent '.$this->kfc->version.' by Tontof.net http://github.com/tontof/kriss_feed',
                 )
             );
+
+        // http headers
+        $opts['http']['headers'] = array();
+        if (!empty($lastModified)) {
+            $opts['http']['headers'][] = 'If-Modified-Since: ' . $lastModified;
+        }
+        if (!empty($etag)) {
+            $opts['http']['headers'][] = 'If-None-Match: ' . $etag;
+        }
+
         $document = new DOMDocument();
 
         if (in_array('curl', get_loaded_extensions())) {
             $output = $this->loadUrl($xmlUrl, $opts);
-            $document->loadXML($output);
+            if ($output['isnew']) {
+                $etag = $output['etag'];
+                $lastModified = $output['last-modified'];
+            }
+
+            $document->loadXML($output['data']);
         } else {
             // try using libxml
             $context = stream_context_create($opts);
@@ -6397,7 +6258,14 @@ class Feed
     {
         $feedHash = MyTool::smallHash($xmlUrl);
         if (!isset($this->_data['feeds'][$feedHash])) {
-            $xml = $this->loadXml($xmlUrl);
+            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified']);
+            if (empty($this->_data['feeds'][$feedHash]['etag'])) {
+                unset($this->_data['feeds'][$feedHash]['etag']);
+            }
+
+            if (empty($this->_data['feeds'][$feedHash]['lastModified'])) {
+                unset($this->_data['feeds'][$feedHash]['lastModified']);
+            }
 
             if (!$xml) {
                 return false;
@@ -6432,6 +6300,8 @@ class Feed
                 $channel['nbAll'] = count($items);
                 $channel['timeUpdate'] = 'auto';
                 $channel['lastUpdate'] = time();
+                $channel['etag'] = $this->_data['feeds'][$feedHash]['etag'];
+                $channel['lastModified'] = $this->_data['feeds'][$feedHash]['lastModified'];
 
                 $this->_data['feeds'][$feedHash] = $channel;
                 $this->_data['needSort'] = true;
@@ -6485,7 +6355,14 @@ class Feed
 
         unset($this->_data['feeds'][$feedHash]['error']);
         $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
-        $xml = $this->loadXml($xmlUrl);
+        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified']);
+        if (empty($this->_data['feeds'][$feedHash]['etag'])) {
+            unset($this->_data['feeds'][$feedHash]['etag']);
+        }
+        
+        if (empty($this->_data['feeds'][$feedHash]['lastModified'])) {
+            unset($this->_data['feeds'][$feedHash]['lastModified']);
+        }
 
         if (!$xml) {
             if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
@@ -6507,6 +6384,7 @@ class Feed
                     $this->_data['feeds'][$feedHash]['description'] = ' ';
                 }
             }
+
 
             $this->loadFeed($feedHash);
             $oldItems = $this->_data['feeds'][$feedHash]['items'];
@@ -7834,6 +7712,7 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
@@ -8072,6 +7951,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
@@ -8486,6 +8366,35 @@ if (isset($_GET['login'])) {
     $shaarli = str_replace('${via}', urlencode($via), $shaarli);
 
     header('Location: '.$shaarli);
+} elseif (isset($_GET['file'])) {
+    if ($_GET['file'] == 'favicon') {
+        $favicon = '
+AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAA
+AAAAAAD2+f3/ocLv/0yS6f83hen/NYLn/zR/5v8zfOX/M3rj/zJ44v8ydeH/MXPg/zFx3/8ycd//
+SYTi/6HB7//2+f3/ocLv/0SW8f84l/f/NY/0/zKI8P8ygu3/MXzq/y925/8rb+T/Kmrh/ytn3/8p
+Yd3/Jl3b/yhe2/88d+H/ocDv/02U6v85mvn/OZz6/1qp+P9trvb/P4/x/zGB7f8+hOv/caHu/2ua
+7P80cOL/Tn/k/3OY6P9YgeL/K2Db/0mE4v84iuv/N5j4/1eq+v/g7/7//P3//5vH+f8xh/D/ZqLy
+//j6/v/d6Pv/P3zm/5y68f//////r8Py/ytg2/8ycd//N4nr/zWV9/9lr/n/9Pn///////+22Pz/
+NY/0/5XC+P//////w9j4/zh86P+50Pb//////5q27/8pYd3/MXLf/zaH6v82k/X/Ppn3/43E+/+v
+1/z/XK36/1Sm+P/f7f3//////4i29P9Giez/4ez8//7+//90nev/KWXf/zFz4P82hun/NpDz/zWS
+9f8ylPb/NZf4/1eq+v/I4/7//////9Tn/P9Fk/H/hLT0//7////j7Pz/SIPn/ytr4v8ydeH/NYTo
+/zSL8f9Dl/T/cLP4/53M+//i8P7//////+fz/v9psPn/Tp31/9vq/P//////osP1/y925/8uceT/
+Mnji/zWC5/8xhu//bav0//j7/////////f7//9Po/f9os/r/RqL6/7vb/P//////4O39/1KV7/8v
+eun/MHfn/zN64/80gOb/MILt/2Sj8v/V5/z/vtv7/4W9+f9Gnvf/Uab5/7zd/f/+////9Pn//3y2
+9/8yiPD/MoLt/zF86v80fOX/NH7l/zJ/6/83he3/QI7w/z2Q8f9OnfT/i8H5/97u/v//////8/n/
+/43G/P85mPf/NpD0/zSJ8P8zg+3/NH/m/zN85P8veun/UpPu/6fK9//D3Pr/5/H9//3+////////
+3+7+/3u7+v86nPn/OJv5/ziX9/82kPT/NYnw/zWC5/80e+P/LHTm/2ug7v/7/P////////v9///g
+7f3/oMr5/1Ki9v81lfb/OJj4/zmb+f85nPn/OJf3/zeQ9P83hun/Sonl/y1y5P9SjOr/pcX1/5S8
+9P9wqPL/SZTw/zSL8f8zjvP/NpP1/zeW9v84mfj/OZv5/zmc+v84l/f/TJLp/6DA7/8+geb/LnTl
+/y525v8ueej/L37r/zGD7f80iO//NYzx/zaQ8/83lPX/OJf3/zmZ+P85mvn/RJbx/6DB7//2+f3/
+oMHv/0qJ5f80e+P/NHzk/zR+5f81gOb/NYLn/zaE6P82hun/N4jq/zeJ6/84i+v/TZTq/6DB7//2
++f3/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAA==
+';
+        header('Content-Type: image/vnd.microsoft.icon');
+        echo base64_decode($favicon);
+        exit();
+    }
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();

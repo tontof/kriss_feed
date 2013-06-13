@@ -132,6 +132,7 @@ $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
 $pb->assign('version', FEED_VERSION);
@@ -370,6 +371,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
@@ -784,6 +786,15 @@ if (isset($_GET['login'])) {
     $shaarli = str_replace('${via}', urlencode($via), $shaarli);
 
     header('Location: '.$shaarli);
+} elseif (isset($_GET['file'])) {
+    if ($_GET['file'] == 'favicon') {
+        $favicon = '
+<?php include("inc/favicon.ico"); ?>
+';
+        header('Content-Type: image/vnd.microsoft.icon');
+        echo base64_decode($favicon);
+        exit();
+    }
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
