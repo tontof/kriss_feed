@@ -247,6 +247,8 @@ class Feed
 
     /**
      * Return a link to favicon
+     * TODO: Try using Bronco one :
+     * http://www.warriordudimanche.net/article164/hands-up-give-me-your-favicon-right-now
      *
      * @param string $feedHash Hash corresponding to a feed
      *
