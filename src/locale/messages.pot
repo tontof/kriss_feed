@@ -737,6 +737,39 @@ msgstr ""
 msgid "Overwrite existing feeds"
 msgstr ""
 
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:93
+msgid "top"
+msgstr ""
+
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:56
+#: class/tpl/list_items.tpl.php:94
+msgid "share"
+msgstr ""
+
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:36
+#: class/tpl/list_items.tpl.php:61 class/tpl/list_items.tpl.php:99
+msgid "read"
+msgstr ""
+
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:34
+#: class/tpl/list_items.tpl.php:59 class/tpl/list_items.tpl.php:97
+msgid "unread"
+msgstr ""
+
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:67
+#: class/tpl/list_items.tpl.php:105
+msgid "star"
+msgstr ""
+
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:65
+#: class/tpl/list_items.tpl.php:103
+msgid "unstar"
+msgstr ""
+
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:76
+msgid "from"
+msgstr ""
+
 #: class/tpl/install.tpl.php:13
 msgid "KrISS feed installation"
 msgstr ""
@@ -753,36 +786,6 @@ msgstr ""
 
 #: class/tpl/install.tpl.php:28
 msgid "Install KrISS feed"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:34 class/tpl/list_items.tpl.php:59
-#: class/tpl/list_items.tpl.php:97
-msgid "unread"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:36 class/tpl/list_items.tpl.php:61
-#: class/tpl/list_items.tpl.php:99
-msgid "read"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:56 class/tpl/list_items.tpl.php:94
-msgid "share"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:65 class/tpl/list_items.tpl.php:103
-msgid "unstar"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:67 class/tpl/list_items.tpl.php:105
-msgid "star"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:76
-msgid "from"
-msgstr ""
-
-#: class/tpl/list_items.tpl.php:93
-msgid "top"
 msgstr ""
 
 #: class/tpl/login.tpl.php:13
