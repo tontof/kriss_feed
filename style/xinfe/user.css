@@ -2,7 +2,7 @@
 
 KriSS Feed theme: Pastel
 By Xinfe
-Version 0.7
+Version 0.8
 
 */
 
@@ -76,8 +76,18 @@ li > ul >.folder{
 	/* Indent sub-folders */
 	margin-left: 7pt;
 }
-
-
+.feed-favicon > img{
+	/* Favicon customising */
+	font-size: 0;
+	overflow: hidden;
+	display: inline-block;
+}
+.mark-as > .label{
+	width: 2em;
+	display: inline-block;
+	text-align: center;
+	padding: 0;
+}
 
 /* Main content styling */
 
@@ -92,8 +102,8 @@ li > ul >.folder{
 }
 #nav-home{
 	/* Home icon margins */
-	padding: 0 1em;
-	line-height: 0;
+	padding: 0 0.8em;
+	margin-left: 1em;
 }
 #nav-home + span{
 	/* Align text with Home icon */
@@ -168,16 +178,40 @@ li.current{
 }
 .btn, button{
 	background: rgb(226, 255, 216);
-	background: rgb(226, 255, 216) linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
-	background: rgb(226, 255, 216) -moz-linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
-	background: rgb(226, 255, 216) -webkit-linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
+	background: rgb(226, 255, 216) linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(226, 255, 216) -moz-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(226, 255, 216) -webkit-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
 	color: #000;
 }
 .disabled{
 	background: rgb(240, 240, 240);
-        background: rgb(240, 240, 240) linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
-        background: rgb(240, 240, 240) -moz-linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
-	background: rgb(240, 240, 240) -webkit-linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
+        background: rgb(240, 240, 240) linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+        background: rgb(240, 240, 240) -moz-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(240, 240, 240) -webkit-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
 	cursor: not-allowed;
 }
 .disabled:hover{
@@ -185,9 +219,21 @@ li.current{
 }
 .btn.btn-info[href="?read=all"]{
 	background: rgb(255, 217, 134);
-        background: rgb(255, 217, 134) linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
-        background: rgb(255, 217, 134) -moz-linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
-	background: rgb(255, 217, 134) -webkit-linear-gradient(top, hsla(0, 100%, 100%, 0) 1%, hsla(0, 100%, 100%, 0) 30%,hsla(0, 0%, 0%, 0.01) 70%,hsla(0, 0%, 0%, 0.25) 100%);
+        background: rgb(255, 217, 134) linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+        background: rgb(255, 217, 134) -moz-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(255, 217, 134) -webkit-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
 }
 
 /* Shape */
