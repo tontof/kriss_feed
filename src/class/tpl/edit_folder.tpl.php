@@ -11,17 +11,17 @@
           <form class="form-horizontal" method="post" action="">
             <fieldset>
               <div class="control-group">
-                <label class="control-label" for="foldertitle">Folder title</label>
+                <label class="control-label" for="foldertitle"><?php echo Intl::msg('Folder title'); ?></label>
                 <div class="controls">
                   <input type="text" id="foldertitle" name="foldertitle" value="<?php echo $foldertitle; ?>">
-                  <span class="help-block">Leave empty to delete</span>
+                  <span class="help-block"><?php echo Intl::msg('Leave empty to delete'); ?></span>
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                  <input class="btn" type="submit" name="save" value="Save" />
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                 </div>
               </div>
             </fieldset>

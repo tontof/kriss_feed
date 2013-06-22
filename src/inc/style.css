@@ -811,7 +811,7 @@ dd {
 }
 
 .ico-list:before {
-  content: "\2630";
+  content: "\2630 ";
 }
 
 .ico-expanded:before {

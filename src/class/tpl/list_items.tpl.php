@@ -31,9 +31,9 @@
         <span class="item-title">
           <?php if (!isset($_GET['stars'])) { ?>
           <?php if ($item['read'] == 1) { ?>
-          <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label">unread</span></a>
+          <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('unread'); ?></span></a>
           <?php } else { ?>
-          <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
+          <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('read'); ?></span></a>
           <?php } ?>
           <?php } ?>
           <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
@@ -53,18 +53,18 @@
     <div id="item-div-<?php echo $itemHash; ?>" class="item collapse<?php echo (($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open'])))?' in well':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
-        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label">share</span></a>
+        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('share'); ?></span></a>
         <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as"><?php echo Intl::msg('unread'); ?></span></a>
         <?php } else { ?>
-        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as"><?php echo Intl::msg('read'); ?></span></a>
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label">unstar</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('unstar'); ?></span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label">star</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('star'); ?></span></a>
         <?php }?>
         <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
@@ -73,7 +73,7 @@
         <?php echo $item['time']['expanded']; ?>
       </div>
       <div class="item-info-end item-info-author">
-        from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
+        <?php echo Intl::msg('from'); ?> <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
         <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
           <span class="ico">
             <span class="ico-feed-dot"></span>
@@ -90,19 +90,19 @@
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
-        <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
-        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
+        <a class="item-top" href="#status"><span class="label label-expanded"><?php echo Intl::msg('top'); ?></span></a> 
+        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('share'); ?></span></a>
         <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('unread'); ?></span></a>
         <?php } else { ?>
-        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('read'); ?></span></a>
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label label-expanded">unstar</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('unstar'); ?></span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label label-expanded">star</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('star'); ?></span></a>
         <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">

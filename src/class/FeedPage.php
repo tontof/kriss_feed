@@ -5,7 +5,6 @@
 class FeedPage
 {
     public static $var = array();
-    private static $_instance;
 
     /**
      * initialize private instance of FeedPage class
