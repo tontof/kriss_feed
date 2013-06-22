@@ -10,22 +10,22 @@
           <div id="install">
             <form class="form-horizontal" method="post" action="" name="installform">
               <fieldset>
-                <legend>KrISS feed installation</legend>
+                <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
                 <div class="control-group">
-                  <label class="control-label" for="setlogin">Login</label>
+                  <label class="control-label" for="setlogin"><?php echo Intl::msg('Login'); ?></label>
                   <div class="controls">
-                    <input type="text" id="setlogin" name="setlogin" placeholder="Login">
+                    <input type="text" id="setlogin" name="setlogin" placeholder="<?php echo Intl::msg('Login'); ?>">
                   </div>
                 </div>
                 <div class="control-group">
-                  <label class="control-label" for="setlogin">Password</label>
+                  <label class="control-label" for="setlogin"><?php echo Intl::msg('Password'); ?></label>
                   <div class="controls">
-                    <input type="password" id="setpassword" name="setpassword" placeholder="Password">
+                    <input type="password" id="setpassword" name="setpassword" placeholder="<?php echo Intl::msg('Password'); ?>">
                   </div>
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <button type="submit" class="btn">Submit</button>
+                    <button type="submit" class="btn"><?php echo Intl::msg('Install KrISS feed'); ?></button>
                   </div>
                 </div>
                 <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">

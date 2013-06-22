@@ -146,6 +146,11 @@ class FeedConf
     public $currentPage = 1;
 
     /**
+     * language (en_GB, fr_FR, etc.)
+     */
+    public $lang = 'en_GB';
+
+    /**
      * menu personnalization
      */
     public $menuView = 1;
@@ -208,6 +213,7 @@ class FeedConf
             unset($_SESSION['filter']);
             unset($_SESSION['order']);
             unset($_SESSION['byPage']);
+            unset($_SESSION['lang']);
         }
 
         $view = $this->getView();
@@ -215,18 +221,21 @@ class FeedConf
         $filter = $this->getFilter();
         $order = $this->getOrder();
         $byPage = $this->getByPage();
+        $lang = $this->getLang();
 
         if ($this->view != $view
             || $this->listFeeds != $listFeeds
             || $this->filter != $filter
             || $this->order != $order
             || $this->byPage != $byPage
+            || $this->lang != $lang
         ) {
             $this->view = $view;
             $this->listFeeds = $listFeeds;
             $this->filter = $filter;
             $this->order = $order;
             $this->byPage = $byPage;
+            $this->lang = $lang;
 
             $this->write();
         }
@@ -237,6 +246,7 @@ class FeedConf
             $_SESSION['filter'] = $filter;
             $_SESSION['order'] = $order;
             $_SESSION['byPage'] = $byPage;
+            $_SESSION['lang'] = $lang;
         }
     }
 
@@ -287,6 +297,23 @@ class FeedConf
         }
 
         $this->write();
+    }
+
+    /**
+     * Get current lang
+     *
+     * @return string 'en_GB', 'fr_FR', etc.
+     */
+    public function getLang()
+    {
+        $lang = $this->lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
+        }
+
+        return $lang;
     }
 
     /**
@@ -810,7 +837,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
             $out = '<?php';
             $out .= "\n";
 

@@ -15,11 +15,11 @@
                 <ul class="unstyled">
                   <?php $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')?>
                 </ul>
-                <a class="btn" href="?">Go home</a>
+                <a class="btn ico-home" href="<?php echo MyTool::getUrl(); ?>" title="<?php echo Intl::msg('Home'); ?>"></a>
                 <?php if (!empty($referer)) { ?>
-                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
+                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>"><?php echo Intl::msg('Go back'); ?></a>
                 <?php } ?>
-                <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>">Force update</a>
+                <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>"><?php echo Intl::msg('Force update'); ?></a>
               </div>
             </div>
           </div>

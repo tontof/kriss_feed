@@ -11,34 +11,34 @@
           <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
-              <legend>Feed main information</legend>
+              <legend><?php echo Intl::msg('Feed main information'); ?></legend>
               <div class="control-group">
-                <label class="control-label" for="title">Feed title</label>
+                <label class="control-label" for="title"><?php echo Intl::msg('Feed title'); ?></label>
                 <div class="controls">
                   <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($feed['title']); ?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Feed XML url</label>
+                <label class="control-label"><?php echo Intl::msg('Feed XML URL'); ?></label>
                 <div class="controls">
                   <input type="text" readonly="readonly" name="xmlUrl" value="<?php echo htmlspecialchars($feed['xmlUrl']); ?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Feed main url</label>
+                <label class="control-label"><?php echo Intl::msg('Feed main URL'); ?></label>
                 <div class="controls">
                   <input type="text" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="description">Feed description</label>
+                <label class="control-label" for="description"><?php echo Intl::msg('Feed description'); ?></label>
                 <div class="controls">
                   <input type="text" id="description" name="description" value="<?php echo htmlspecialchars($feed['description']); ?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Feed folders</legend>
+              <legend><?php echo Intl::msg('Feed folders'); ?></legend>
               <?php
                  foreach ($folders as $hash => $folder) {
               $checked = '';
@@ -55,23 +55,23 @@
               </div>
               <?php } ?>
               <div class="control-group">
-                <label class="control-label" for="newfolder">New folder</label>
+                <label class="control-label" for="newfolder"><?php echo Intl::msg('New folder'); ?></label>
                 <div class="controls">
-                  <input type="text" name="newfolder" value="" placeholder="New folder">
+                  <input type="text" name="newfolder" value="" placeholder="<?php echo Intl::msg('New folder'); ?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Feed preferences</legend>
+              <legend><?php echo Intl::msg('Feed preferences'); ?></legend>
               <div class="control-group">
-                <label class="control-label" for="timeUpdate">Time update </label>
+                <label class="control-label" for="timeUpdate"><?php echo Intl::msg('Time update'); ?></label>
                 <div class="controls">
                   <input type="text" id="timeUpdate" name="timeUpdate" value="<?php echo $feed['timeUpdate']; ?>">
-                  <span class="help-block">'auto', 'max' or a number of minutes less than 'max' define in <a href="?config">config</a></span>
+                  <span class="help-block"><?php echo Intl::msg('"auto", "max" or a number of minutes less than "max" define in <a href="?config">configuration</a>'); ?></span>
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Last update</label>
+                <label class="control-label"><?php echo Intl::msg('Last update'); ?></label>
                 <div class="controls">
                   <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate; ?>">
                 </div>
@@ -79,9 +79,9 @@
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="save" value="Save" />
-                  <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                  <input class="btn" type="submit" name="delete" value="Delete"/>
+                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
+                  <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg('Delete feed'); ?>"/>
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
                 </div>
               </div>
             </fieldset>

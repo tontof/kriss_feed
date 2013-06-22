@@ -59,14 +59,6 @@ if (!is_dir(DATA_DIR)) {
     }
 }
 
-function __($s) {
-    if ($s == "View as list") {
-        return "Youpi";
-    }
-
-    return $s;
-}
-
 /**
  * autoload class
  *
@@ -95,6 +87,12 @@ $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
+
+Plugin::init();
+
+/* ?><?php include("plugins"); ?><?php */
+
+Intl::init($kfc->lang);
 
 // List or Expanded ?
 $view = $kfc->view;
@@ -165,7 +163,7 @@ if (isset($_GET['login'])) {
         }
         die("Login failed !");
     } else {
-        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         $pb->renderPage('login');
     }
 } elseif (isset($_GET['logout'])) {
@@ -182,7 +180,7 @@ if (isset($_GET['login'])) {
     } elseif (isset($_POST['cancel'])) {
         MyTool::redirect();
     }
-    $pb->assign('pagetitle', 'Change your password');
+    $pb->assign('pagetitle', Intl::msg('Change your password').' - '.strip_tags($kfc->title));
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
     if (isset($_GET['stars'])) {
@@ -291,7 +289,7 @@ if (isset($_GET['login'])) {
     }
     MyTool::renderJson($result);
 } elseif (isset($_GET['help']) && ($kfc->isLogged() || $kfc->visibility === 'protected')) {
-    $pb->assign('pagetitle', 'Help for KrISS feed');
+    $pb->assign('pagetitle', Intl::msg('Help').' - '.strip_tags($kfc->title));
     $pb->renderPage('help');
 } elseif ((isset($_GET['update'])
           && ($kfc->isLogged()
@@ -336,7 +334,7 @@ if (isset($_GET['login'])) {
     } else {
         $pb->assign('feedsHash', $feedsHash);
         $pb->assign('forceUpdate', $forceUpdate);
-        $pb->assign('pagetitle', 'Update');
+        $pb->assign('pagetitle', Intl::msg('Update').' - '.strip_tags($kfc->title));
         $pb->renderPage('update');
     }
 } elseif (isset($_GET['config']) && $kfc->isLogged()) {
@@ -356,7 +354,7 @@ if (isset($_GET['login'])) {
         $paging = $kfc->getPaging();
 
         $pb->assign('page', 'config');
-        $pb->assign('pagetitle', 'Config - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Configuration').' - '.strip_tags($kfc->title));
         $pb->assign('kfctitle', htmlspecialchars($kfc->title));
         $pb->assign('kfcredirector', htmlspecialchars($kfc->redirector));
         $pb->assign('kfcshaarli', htmlspecialchars($kfc->shaarli));
@@ -407,7 +405,7 @@ if (isset($_GET['login'])) {
     } else if (isset($_POST['cancel'])) {
         MyTool::redirect();
     } else {
-        $pb->assign('pagetitle', 'Import');
+        $pb->assign('pagetitle', Intl::msg('Import').' - '.strip_tags($kfc->title));
         $pb->renderPage('import');
     }
 } elseif (isset($_GET['export']) && $kfc->isLogged()) {
@@ -455,7 +453,7 @@ if (isset($_GET['login'])) {
         $newfeed = htmlspecialchars($_GET['newfeed']);
     }
     $pb->assign('page', 'add');
-    $pb->assign('pagetitle', 'Add a new feed');
+    $pb->assign('pagetitle', Intl::msg('Add a new feed').' - '.strip_tags($kfc->title));
     $pb->assign('newfeed', $newfeed);
     $pb->assign('folders', $kf->getFolders());
     
@@ -584,16 +582,16 @@ if (isset($_GET['login'])) {
     $hashView = '';
     switch($currentHashType){
     case 'all':
-        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     case 'feed':
-        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     case 'folder':
-        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     default:
-        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     }
     
@@ -613,13 +611,13 @@ if (isset($_GET['login'])) {
         $pb->assign('feedsView', $ks->getFeedsView());
     }
     $pb->assign('kf', $ks);
-    $pb->assign('pagetitle', 'Starred items');
+    $pb->assign('pagetitle', Intl::msg('Starred items').' - '.strip_tags($kfc->title));
     $pb->renderPage('index');
 } elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
     $pb->assign('page', 'edit');
-    $pb->assign('pagetitle', 'edit');
+    $pb->assign('pagetitle', Intl::msg('Edit').' - '.strip_tags($kfc->title));
     
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
     // type : 'feed', 'folder', 'all', 'item'
@@ -870,16 +868,16 @@ if (isset($_GET['login'])) {
         $hashView = '';
         switch($currentHashType){
         case 'all':
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         case 'feed':
-            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         case 'folder':
-            $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         default:
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         }
 
@@ -901,11 +899,11 @@ if (isset($_GET['login'])) {
 
         $pb->renderPage('index');
     } else {
-        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         if (!empty($_SERVER['QUERY_STRING'])) {
             $pb->assign('referer', MyTool::getUrl().'?'.$_SERVER['QUERY_STRING']);
         }
         $pb->renderPage('login');
     }
 }
-//print(number_format(microtime(true)-START_TIME,3).' secondes');
+

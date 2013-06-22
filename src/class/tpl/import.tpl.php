@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span4 offset4">
           <?php FeedPage::statusTpl(); ?>
+          <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data">
             <fieldset>
-              <legend>Import Opml file</legend>
-              Import an opml file as exported by Google Reader, Tiny Tiny RSS, RSS lounge...
-              
+              <legend><?php echo Intl::msg('Import opml file'); ?></legend>
               <div class="control-group">
-                <label class="control-label" for="filetoupload">File (Size max: <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>)</label>
+                <label class="control-label" for="filetoupload"><?php echo Intl::msg('Opml file:'); ?></label>
                 <div class="controls">
                   <input class="btn" type="file" id="filetoupload" name="filetoupload">
+                  <span class="help-block"><?php echo Intl::msg('Size max:'); ?> <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>
+                    </span>
                 </div>
               </div>
 
@@ -24,15 +25,15 @@
                 <div class="controls">
                   <label for="overwrite">
                     <input type="checkbox" name="overwrite" id="overwrite">
-                    Overwrite existing feeds
+                    <?php echo Intl::msg('Overwrite existing feeds'); ?>
                   </label>
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="import" value="Import">
-                  <input class="btn" type="submit" name="cancel" value="Cancel">
+                  <input class="btn" type="submit" name="import" value="<?php echo Intl::msg('Import opml file'); ?>">
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>">
                 </div>
               </div>
 

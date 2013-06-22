@@ -118,6 +118,8 @@ class FeedConf
 
     public $currentPage = 1;
 
+    public $lang = 'en_GB';
+
     public $menuView = 1;
     public $menuListFeeds = 2;
     public $menuFilter = 3;
@@ -169,6 +171,7 @@ class FeedConf
             unset($_SESSION['filter']);
             unset($_SESSION['order']);
             unset($_SESSION['byPage']);
+            unset($_SESSION['lang']);
         }
 
         $view = $this->getView();
@@ -176,18 +179,21 @@ class FeedConf
         $filter = $this->getFilter();
         $order = $this->getOrder();
         $byPage = $this->getByPage();
+        $lang = $this->getLang();
 
         if ($this->view != $view
             || $this->listFeeds != $listFeeds
             || $this->filter != $filter
             || $this->order != $order
             || $this->byPage != $byPage
+            || $this->lang != $lang
         ) {
             $this->view = $view;
             $this->listFeeds = $listFeeds;
             $this->filter = $filter;
             $this->order = $order;
             $this->byPage = $byPage;
+            $this->lang = $lang;
 
             $this->write();
         }
@@ -198,6 +204,7 @@ class FeedConf
             $_SESSION['filter'] = $filter;
             $_SESSION['order'] = $order;
             $_SESSION['byPage'] = $byPage;
+            $_SESSION['lang'] = $lang;
         }
     }
 
@@ -240,6 +247,18 @@ class FeedConf
         }
 
         $this->write();
+    }
+
+    public function getLang()
+    {
+        $lang = $this->lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
+        }
+
+        return $lang;
     }
 
     public function getView()
@@ -623,7 +642,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
             $out = '<?php';
             $out .= "\n";
 
@@ -643,7 +662,6 @@ class FeedConf
 class FeedPage
 {
     public static $var = array();
-    private static $_instance;
 
     public static function init($var)
     {
@@ -654,18 +672,17 @@ class FeedPage
     {
         extract(FeedPage::$var);
 ?>
-<title><?php echo $pagetitle;?></title>
-<meta charset="utf-8">
-
+    <title><?php echo $pagetitle;?></title>
+    <meta charset="utf-8">
 <?php if (is_file('inc/favicon.ico')) { ?>
-<link href="inc/favicon.ico" rel="icon" type="image/x-icon">
+    <link href="inc/favicon.ico" rel="icon" type="image/x-icon">
 <?php } else { ?>
-<link href="?file=favicon" rel="icon" type="image/x-icon">
+    <link href="?file=favicon" rel="icon" type="image/x-icon">
 <?php } ?>
 <?php if (is_file('inc/style.css')) { ?>
-<link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
+    <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
 <?php } else { ?>
-<style>
+    <style>
 article,
 footer,
 header,
@@ -1464,7 +1481,7 @@ dd {
 }
 
 .ico-list:before {
-  content: "\2630";
+  content: "\2630 ";
 }
 
 .ico-expanded:before {
@@ -1486,12 +1503,12 @@ dd {
 .ico-filter-unread:before {
   content: "\26C0";
 }
-</style>
+    </style>
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
-<link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
+    <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
 <?php } ?>
-<meta name="viewport" content="width=device-width">
+    <meta name="viewport" content="width=device-width">
 <?php
     }
 
@@ -1511,22 +1528,22 @@ dd {
           <div id="install">
             <form class="form-horizontal" method="post" action="" name="installform">
               <fieldset>
-                <legend>KrISS feed installation</legend>
+                <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
                 <div class="control-group">
-                  <label class="control-label" for="setlogin">Login</label>
+                  <label class="control-label" for="setlogin"><?php echo Intl::msg('Login'); ?></label>
                   <div class="controls">
-                    <input type="text" id="setlogin" name="setlogin" placeholder="Login">
+                    <input type="text" id="setlogin" name="setlogin" placeholder="<?php echo Intl::msg('Login'); ?>">
                   </div>
                 </div>
                 <div class="control-group">
-                  <label class="control-label" for="setlogin">Password</label>
+                  <label class="control-label" for="setlogin"><?php echo Intl::msg('Password'); ?></label>
                   <div class="controls">
-                    <input type="password" id="setpassword" name="setpassword" placeholder="Password">
+                    <input type="password" id="setpassword" name="setpassword" placeholder="<?php echo Intl::msg('Password'); ?>">
                   </div>
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <button type="submit" class="btn">Submit</button>
+                    <button type="submit" class="btn"><?php echo Intl::msg('Install KrISS feed'); ?></button>
                   </div>
                 </div>
                 <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
@@ -1562,28 +1579,28 @@ dd {
           <div id="login">
             <form class="form-horizontal" method="post" action="?login" name="loginform">
               <fieldset>
-                <legend>Welcome to KrISS feed</legend>
+     <legend><?php echo Intl::msg('Welcome to KrISS feed'); ?></legend>
                 <div class="control-group">
-                  <label class="control-label" for="login">Login</label>
+     <label class="control-label" for="login"><?php echo Intl::msg('Login'); ?></label>
                   <div class="controls">
-                    <input type="text" id="login" name="login" placeholder="Login" tabindex="1">
+                    <input type="text" id="login" name="login" placeholder="<?php echo Intl::msg('Login'); ?>" tabindex="1">
                   </div>
                 </div>
                 <div class="control-group">
-                  <label class="control-label" for="password">Password</label>
+                  <label class="control-label" for="password"><?php echo Intl::msg('Password'); ?></label>
                   <div class="controls">
-                    <input type="password" id="password" name="password" placeholder="Password" tabindex="2">
+                    <input type="password" id="password" name="password" placeholder="<?php echo Intl::msg('Password'); ?>" tabindex="2">
                   </div>
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;Stay signed in (Do not check on public computers)</label>
+                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;<?php echo Intl::msg('Stay signed in (do not check on public computers)'); ?></label>
                   </div>
                 </div>
                 
                 <div class="control-group">
                   <div class="controls">
-                    <button type="submit" class="btn" tabindex="4">Sign in</button>
+                    <button type="submit" class="btn" tabindex="4"><?php echo Intl::msg('Sign in'); ?></button>
                   </div>
                 </div>
               </fieldset>
@@ -1613,23 +1630,24 @@ dd {
       <div class="row-fluid">
         <div class="span6 offset3">
           <div id="config">
+            <?php FeedPage::statusTpl(); ?>
             <?php FeedPage::navTpl(); ?>
             <div id="section">
               <form class="form-horizontal" method="post" action="">
                 <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
                 <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
                 <fieldset>
-                  <legend>Change your password</legend>
+                  <legend><?php echo Intl::msg('Change your password'); ?></legend>
 
                   <div class="control-group">
-                    <label class="control-label" for="oldpassword">Old password</label>
+                    <label class="control-label" for="oldpassword"><?php echo Intl::msg('Old password'); ?></label>
                     <div class="controls">
                       <input type="password" id="oldpassword" name="oldpassword">
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label" for="newpassword">New password</label>
+                    <label class="control-label" for="newpassword"><?php echo Intl::msg('New password'); ?></label>
                     <div class="controls">
                       <input type="password" id="newpassword" name="newpassword">
                     </div>
@@ -1637,8 +1655,8 @@ dd {
 
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save new password" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save new password'); ?>" />
                     </div>
                   </div>
                 </fieldset>
@@ -1657,229 +1675,167 @@ dd {
     {
         extract(FeedPage::$var);
 ?>
+
 <div id="menu" class="navbar">
   <div class="navbar-inner">
     <div class="container">
-      
-      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-      <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse">
-        menu
-      </a>
-
-      <a id="nav-home" class="brand ico-home" href="<?php echo MyTool::getUrl(); ?>" title="Home">
-      </a>
-
-      <?php if (isset($currentHashView)) { ?>
-      <span class="brand">
-        <?php echo $currentHashView ?>
-      </span>
-      <?php } ?>
+      <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse" title="<?php echo Intl::msg('Menu'); ?>"><?php echo Intl::msg('Menu'); ?></a>
+      <a id="nav-home" class="brand ico-home" href="<?php echo MyTool::getUrl(); ?>" title="<?php echo Intl::msg('Home'); ?>"></a>
+      <?php if (isset($currentHashView)) { ?><span class="brand"><?php echo $currentHashView ?></span><?php } ?>
 
       <div id="menu-collapse" class="nav-collapse collapse">
-        <ul class="nav">
-          <?php
-             switch($template) {
-             case 'stars':
-             case 'index':
-             ?>
-          <?php foreach(array_keys($menu) as $menuOpt) { ?>
-          <?php switch($menuOpt) {
-                case 'menuView': ?>
-          <?php if ($view === 'expanded') { ?>
-          <li>
-            <a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)" class="menu-ico ico-list">
-              <span class="menu-text menu-list">
-                View as list
-              </span>
-            </a>
-          </li>
-          <?php } else { ?>
-          <li>
-            <a href="<?php echo $query.'view=expanded'; ?>" title="Switch to expanded view" class="menu-ico ico-expanded">
-              <span class="menu-text menu-expanded">
-                View as expanded
-              </span>
-            </a>
-          </li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuListFeeds': ?>
-          <?php if ($listFeeds == 'show') { ?>
-          <li>
-            <a href="<?php echo $query.'listFeeds=hide'; ?>" title="Hide the feeds list" class="menu-ico ico-list-feeds-hide">
-              <span class="menu-text menu-list-feeds-hide">
-                Hide feeds list
-              </span>
-            </a>
-          </li>
-          <?php } else { ?>
-          <li>
-            <a href="<?php echo $query.'listFeeds=show'; ?>" title="Show the feeds list" class="menu-ico ico-list-feeds-show">
-              <span class="menu-text menu-list-feeds-show">
-                Show feeds list
-              </span>
-            </a>
-          </li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuFilter': ?>
-          <?php if ($filter === 'unread') { ?>
-          <li>
-            <a href="<?php echo $query.'filter=all'; ?>" title="Filter: show all (read and unread) items" class="menu-ico ico-filter-all">
-              <span class="menu-text menu-filter-all">
-                Show all items
-              </span>
-            </a>
-          </li>
-          <?php } else { ?>
-          <li>
-            <a href="<?php echo $query.'filter=unread'; ?>" title="Filter: show unread items" class="menu-ico ico-filter-unread">
-              <span class="menu-text menu-filter-unread">
-                Show unread items
-              </span>
-            </a>
-          </li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuOrder': ?>
-          <?php if ($order === 'newerFirst') { ?>
-          <li>
-            <a href="<?php echo $query.'order=olderFirst'; ?>" title="Show older first items" class="menu-ico ico-order-older">
-              <span class="menu-text menu-order">
-                Show older first
-              </span>
-            </a>
-          </li>
-          <?php } else { ?>
-          <li>
-            <a href="<?php echo $query.'order=newerFirst'; ?>" title="Show newer first items" class="menu-ico ico-order-newer">
-              <span class="menu-text menu-order">         
-                Show newer first
-              </span>
-            </a>
-          </li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuUpdate': ?>
-          <li>
-            <a href="<?php echo $query.'update='.$currentHash; ?>" title="Update <?php echo $currentHashType; ?> manually" class="menu-ico ico-update">
-              </span>
-              <span class="menu-text menu-update">
-                Update <?php echo $currentHashType; ?>
-              </span>
-            </a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuRead': ?>
-          <li>
-            <a href="<?php echo $query.'read='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as read" class="menu-ico ico-mark-as-read">
-              <span class="menu-text menu-mark-as-read">
-                Mark <?php echo $currentHashType; ?> as read
-              </span>
-            </a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuUnread': ?>
-          <li>
-            <a href="<?php echo $query.'unread='.$currentHash; ?>" title="Mark <?php echo $currentHashType; ?> as unread" class="menu-ico ico-mark-as-unread">
-              <span class="menu-text menu-mark-as-unread">
-                Mark <?php echo $currentHashType; ?> as unread
-              </span>
-            </a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuEdit': ?>
-          <li>
-            <a href="<?php echo $query.'edit='.$currentHash; ?>" title="Edit <?php echo $currentHashType; ?>" class="menu-ico ico-edit">
-              <span class="menu-text menu-edit">
-                Edit <?php echo $currentHashType; ?>
-              </span>
-            </a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuAdd': ?>
-          <li>
-            <a href="<?php echo $query.'add'; ?>" title="Add a new feed" class="menu-ico ico-add-feed">
-              <span class="menu-text menu-add-feed">
-                Add a new feed
-              </span>
-            </a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuHelp': ?>
-          <li>
-            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed" class="menu-ico ico-help">
-              <span class="menu-text menu-help">
-                Help
-              </span>
-            </a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuStars': 
-             if($template === 'index'){
-             ?>
-          <li>
-            <a href="<?php echo $query.'stars'; ?>" title="Show starred items" class="menu-ico ico-star">
-              <span class="menu-text menu-help">
-                Starred Items
-              </span>
-            </a>
-          </li>
-          <?php }
-             break; ?>
-          <?php default: ?>
-          <?php break; ?>
-          <?php } ?>
-          <?php } ?>
-          <?php if ($kf->kfc->isLogged()) { ?>
-          <li>
-            <a href="?config" title="Configuration" class="menu-ico ico-config">
-              <span class="menu-text menu-config">
-                Configuration
-              </span>
-            </a>
-          </li>
-          <?php } ?>
-          <?php if (Session::isLogged()) { ?>
-          <li>
-            <a href="?logout" title="Logout" class="menu-ico ico-logout">
-              <span class="menu-text menu-logout">
-                Logout
-              </span>
-            </a></li>
-          <?php } else { ?>
-          <li>
-            <a href="?login" class="menu-ico ico-login">
-              <span class="menu-text menu-login">
-                Login
-              </span>
-            </a>
-          </li>
-          <?php } ?>
-          <?php
-             break;
-             case 'config':
-             ?>
-          <li><a href="?password" title="Change your password">Change password</a></li>
-          <li><a href="?import" title="Import OPML file">Import</a></li>
-          <li><a href="?export" title="Export OPML file">Export</a></li>
-          <li><a href="?logout" title="Logout">Logout</a></li>
-          <?php
-             break;
-             default:
-             ?>
-          <?php if ($kf->kfc->isLogged()) { ?>
-          <li><a href="?config" title="Configuration">Configuration</a></li>
-          <?php } ?>
-          <?php if (Session::isLogged()) { ?>
-          <li><a href="?logout" title="Logout">Logout</a></li>
-          <?php } else { ?>
-          <li><a href="?login">Login</a></li>
-          <?php } ?>
-          <?php
-             break;
+        <ul class="nav"><?php
+switch($template) {
+  case 'stars':
+  case 'index':
+    foreach(array_keys($menu) as $menuOpt) {
+      switch($menuOpt) {
+        case 'menuView':
+          if ($view === 'expanded') { ?>
+
+          <li><a href="<?php echo $query.'view=list'; ?>" title="<?php echo Intl::msg('View as list'); ?>" class="menu-ico ico-list"><span class="menu-text menu-list"> <?php echo Intl::msg('View as list'); ?></span></a></li><?php } else { ?>
+
+          <li><a href="<?php echo $query.'view=expanded'; ?>" title="<?php echo Intl::msg('View as expanded'); ?>" class="menu-ico ico-expanded"><span class="menu-text menu-expanded"> <?php echo Intl::msg('View as expanded'); ?></span></a></li><?php } break;
+        case 'menuListFeeds':
+          if ($listFeeds == 'show') { ?>
+
+          <li><a href="<?php echo $query.'listFeeds=hide'; ?>" title="<?php echo Intl::msg('Hide feeds list'); ?>" class="menu-ico ico-list-feeds-hide"><span class="menu-text menu-list-feeds-hide"> <?php echo Intl::msg('Hide feeds list'); ?></span></a></li><?php } else { ?>
+
+          <li><a href="<?php echo $query.'listFeeds=show'; ?>" title="<?php echo Intl::msg('Show feeds list'); ?>" class="menu-ico ico-list-feeds-show"><span class="menu-text menu-list-feeds-show"> <?php echo Intl::msg('Show feeds list'); ?></span></a></li><?php } break;
+        case 'menuFilter':
+          if ($filter === 'unread') { ?>
+
+          <li><a href="<?php echo $query.'filter=all'; ?>" title="<?php echo Intl::msg('Show all items'); ?>" class="menu-ico ico-filter-all"><span class="menu-text menu-filter-all"> <?php echo Intl::msg('Show all items'); ?></span></a></li><?php } else { ?>
+
+          <li><a href="<?php echo $query.'filter=unread'; ?>" title="<?php echo Intl::msg('Show unread items'); ?>" class="menu-ico ico-filter-unread"><span class="menu-text menu-filter-unread"> <?php echo Intl::msg('Show unread items'); ?></span></a></li><?php } break;
+        case 'menuOrder':
+          if ($order === 'newerFirst') { ?>
+
+          <li><a href="<?php echo $query.'order=olderFirst'; ?>" title="<?php echo Intl::msg('Show older first'); ?>" class="menu-ico ico-order-older"><span class="menu-text menu-order"> <?php echo Intl::msg('Show older first'); ?></span></a></li><?php } else { ?>
+
+          <li><a href="<?php echo $query.'order=newerFirst'; ?>" title="<?php echo Intl::msg('Show newer first'); ?>" class="menu-ico ico-order-newer"><span class="menu-text menu-order"> <?php echo Intl::msg('Show newer first'); ?></span></a></li><?php } break;
+        case 'menuUpdate':
+          switch($currentHashType) {
+            case 'all':
+              $intl = Intl::msg('Update all');
+              break;
+            case 'folder':
+              $intl = Intl::msg('Update folder');
+              break;
+            case 'feed':
+              $intl = Intl::msg('Update feed');
+              break;
+            default;
+              break;
+          } ?>
+
+          <li><a href="<?php echo $query.'update='.$currentHash; ?>" title="<?php echo $intl; ?>" class="menu-ico ico-update"><span class="menu-text menu-update"> <?php echo $intl; ?></span></a></li><?php
+          break; 
+        case 'menuRead':
+          switch($currentHashType) {
+            case 'all':
+              $intl = Intl::msg('Mark all as read');
+              break;
+            case 'folder':
+              $intl = Intl::msg('Mark folder as read');
+              break;
+            case 'feed':
+              $intl = Intl::msg('Mark feed as read');
+              break;
+            default;
+              break;
+          } ?>
+
+          <li><a href="<?php echo $query.'read='.$currentHash; ?>" title="<?php echo $intl; ?>" class="menu-ico ico-mark-as-read"><span class="menu-text menu-mark-as-read"> <?php echo $intl; ?></span></a></li><?php
+          break;
+        case 'menuUnread':
+          switch($currentHashType) {
+            case 'all':
+              $intl = Intl::msg('Mark all as unread');
+              break;
+            case 'folder':
+              $intl = Intl::msg('Mark folder as unread');
+              break;
+            case 'feed':
+              $intl = Intl::msg('Mark feed as unread');
+              break;
+            default;
+              break;
+          } ?>
+
+          <li><a href="<?php echo $query.'unread='.$currentHash; ?>" title="<?php echo $intl; ?>" class="menu-ico ico-mark-as-unread"><span class="menu-text menu-mark-as-unread"> <?php echo $intl; ?></span></a></li><?php
+          break;
+        case 'menuEdit':
+          switch($currentHashType) {
+            case 'all':
+              $intl = Intl::msg('Edit all');
+              break;
+            case 'folder':
+              $intl = Intl::msg('Edit folder');
+              break;
+            case 'feed':
+              $intl = Intl::msg('Edit feed');
+              break;
+            default;
+              break;
+          } ?>
+
+          <li><a href="<?php echo $query.'edit='.$currentHash; ?>" title="<?php echo $intl; ?>" class="menu-ico ico-edit"><span class="menu-text menu-edit"> <?php echo $intl; ?></span></a></li><?php
+          break;
+        case 'menuAdd': ?>
+
+          <li><a href="<?php echo $query.'add'; ?>" title="<?php echo Intl::msg('Add a new feed'); ?>" class="menu-ico ico-add-feed"><span class="menu-text menu-add-feed"> <?php echo Intl::msg('Add a new feed'); ?></span></a></li><?php
+          break;
+        case 'menuHelp': ?>
+
+          <li><a href="<?php echo $query.'help'; ?>" title="<?php echo Intl::msg('Help'); ?>" class="menu-ico ico-help"><span class="menu-text menu-help"> <?php echo Intl::msg('Help'); ?></span></a></li><?php
+          break;
+        case 'menuStars':
+             if($template === 'index'){ ?>
+
+          <li><a href="<?php echo $query.'stars'; ?>" title="<?php echo Intl::msg('Starred items'); ?>" class="menu-ico ico-star"><span class="menu-text menu-help"> <?php echo Intl::msg('Starred items'); ?></span></a></li><?php
              }
-             ?>
+          break;
+        default:
+          break;
+      }
+    }
+
+    if ($kf->kfc->isLogged()) { ?>
+
+          <li><a href="?config" title="<?php echo Intl::msg('Configuration'); ?>" class="menu-ico ico-config"><span class="menu-text menu-config"> <?php echo Intl::msg('Configuration'); ?></span></a></li><?php
+    }
+    if (Session::isLogged()) { ?>
+
+          <li><a href="?logout" title="<?php echo Intl::msg('Sign out'); ?>" class="menu-ico ico-logout"><span class="menu-text menu-logout"> <?php echo Intl::msg('Sign out'); ?></span></a></li><?php
+    } else { ?>
+
+          <li><a href="?login" title="<?php echo Intl::msg('Sign in'); ?>" class="menu-ico ico-login"><span class="menu-text menu-login"> <?php echo Intl::msg('Sign in'); ?></span></a></li><?php
+    }
+
+    break;
+  case 'config': ?>
+
+          <li><a href="?password" title="<?php echo Intl::msg('Change password'); ?>"> <?php echo Intl::msg('Change password'); ?></a></li>
+          <li><a href="?import" title="<?php echo Intl::msg('Import opml file'); ?>"> <?php echo Intl::msg('Import opml file'); ?></a></li>
+          <li><a href="?export" title="<?php echo Intl::msg('Export opml file'); ?>"> <?php echo Intl::msg('Export opml file'); ?></a></li>
+          <li><a href="?logout" title="<?php echo Intl::msg('Sign out'); ?>"> <?php echo Intl::msg('Sign out'); ?></a></li><?php
+    break;
+  default:
+    if ($kf->kfc->isLogged()) { ?>
+
+          <li><a href="?config" title="<?php echo Intl::msg('Configuration'); ?>"> <?php echo Intl::msg('Configuration'); ?></a></li><?php
+    }
+    if (Session::isLogged()) { ?>
+
+          <li><a href="?logout" title="<?php echo Intl::msg('Sign out'); ?>"> <?php echo Intl::msg('Sign out'); ?></a></li><?php
+    } else { ?>
+
+          <li><a href="?login" title="<?php echo Intl::msg('Sign in'); ?>"> <?php echo Intl::msg('Sign in'); ?></a></li><?php
+    } 
+    break;
+} ?>
+
         </ul>
         <div class="clear"></div>
       </div>
@@ -1896,7 +1852,7 @@ dd {
 ?>
 <div id="status" class="text-center">
   <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version; ?></a>
-  <span class="hidden-phone"> - A simple and smart (or stupid) feed reader</span>. By <a href="http://tontof.net">Tontof</a>
+  <span class="hidden-phone"> - <?php echo Intl::msg('A simple and smart (or stupid) feed reader'); ?></span>. <?php /* KrISS: By Tontof */echo Intl::msg('By'); ?> <a href="http://tontof.net">Tontof</a>
 </div>
 <?php
     }
@@ -1913,75 +1869,76 @@ dd {
       <div class="row-fluid">
         <div class="span6 offset3">
           <div id="config">
+            <?php FeedPage::statusTpl(); ?>
             <?php FeedPage::navTpl(); ?>
             <div id="section">
               <form class="form-horizontal" method="post" action="">
                 <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
                 <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
                 <fieldset>
-                  <legend>KrISS feed Reader information</legend>
+                  <legend><?php echo Intl::msg('KrISS feed main information'); ?></legend>
 
                   <div class="control-group">
-                    <label class="control-label" for="title">Feed reader title</label>
+                    <label class="control-label" for="title"><?php echo Intl::msg('KrISS feed title'); ?></label>
                     <div class="controls">
                       <input type="text" id="title" name="title" value="<?php echo $kfctitle; ?>">
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Public/protected/private reader</label>
+                    <label class="control-label"><?php echo Intl::msg('KrISS feed visibility'); ?></label>
                     <div class="controls">
                       <label for="publicReader">
                         <input type="radio" id="publicReader" name="visibility" value="public" <?php echo ($kfcvisibility==='public'? 'checked="checked"' : ''); ?>/>
-                        Public kriss feed
-                      </label>
-                       <span class="help-block">
-                         No restriction. Anyone can modify configuration, mark as read items, update feeds...
-                       </span>
-                      <label for="protectedReader">
-                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo ($kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
-                        Protected kriss feed
+                        <?php echo Intl::msg('Public KrISS feed'); ?>
                       </label>
                       <span class="help-block">
-                        Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...
+                        <?php echo Intl::msg('No restriction. Anyone can modify configuration, mark as read items, update feeds...'); ?>
+                      </span>
+                      <label for="protectedReader">
+                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php echo ($kfcvisibility==='protected'? 'checked="checked"' : ''); ?>/>
+                        <?php echo Intl::msg('Protected KrISS feed'); ?>
+                      </label>
+                      <span class="help-block">
+                        <?php echo Intl::msg('Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...'); ?>
                       </span>
                       <label for="privateReader">
                         <input type="radio" id="privateReader" name="visibility" value="private" <?php echo ($kfcvisibility==='private'? 'checked="checked"' : ''); ?>/>
-                        Private kriss feed
+                        <?php echo Intl::msg('Private KrISS feed'); ?>
                       </label>
                       <span class="help-block">
-                        Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds...
+                        <?php echo Intl::msg('Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds...'); ?>
                       </span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label" for="shaarli">Shaarli url</label>
+                    <label class="control-label" for="shaarli"><?php echo Intl::msg('Shaarli URL'); ?></label>
                     <div class="controls">
                       <input type="text" id="shaarli" name="shaarli" value="<?php echo $kfcshaarli; ?>">
-                      <span class="help-block">options :<br>
-                        - ${url}: link of item<br>
-                        - ${title}: title of item<br>
-                        - ${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code><br>
-                        - ${sel}: <strong>Only available</strong> with javascript: <code>« selected text »</code><br>
-                        - example with shaarli : <code>http://your-shaarli/?post=${url}&title=${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>
+                      <span class="help-block"><?php echo Intl::msg('Options:'); ?><br>
+                        - <?php echo Intl::msg('${url}: item link'); ?><br>
+                        - <?php echo Intl::msg('${title}: item title'); ?><br>
+                        - <?php echo Intl::msg('${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code>'); ?><br>
+                        - <?php echo Intl::msg('${sel}: <strong>Only available</strong> with javascript: <code>selected text</code>'); ?><br>
+                        - <?php echo Intl::msg('example with shaarli:'); ?> <code>http://your-shaarli/?post=${url}&title=${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>
                       </span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label" for="redirector">Feed reader redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)</label>
+                    <label class="control-label" for="redirector"><?php echo Intl::msg('KrISS feed redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)'); ?></label>
                     <div class="controls">
                       <input type="text" id="redirector" name="redirector" value="<?php echo $kfcredirector; ?>">
-                      <span class="help-block"><strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property</span>
+                      <span class="help-block"><?php echo Intl::msg('<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property'); ?></span>
                     </div>
                   </div>
 
                   <div class="control-group">
                     <label class="control-label" for="disablesessionprotection">Session protection</label>
                     <div class="controls">
-                      <label><input type="checkbox" id="disablesessionprotection" name="disableSessionProtection"<?php echo ($kfcdisablesessionprotection ? ' checked="checked"' : ''); ?>>Disable session cookie hijacking protection</label>
-                      <span class="help-block">Check this if you get disconnected often or if your IP address changes often.</span>
+                      <label><input type="checkbox" id="disablesessionprotection" name="disableSessionProtection"<?php echo ($kfcdisablesessionprotection ? ' checked="checked"' : ''); ?>><?php echo Intl::msg('Disable session cookie hijacking protection'); ?></label>
+                      <span class="help-block"><?php echo Intl::msg('Check this if you get disconnected often or if your IP address changes often.'); ?></span>
                     </div>
                   </div>
 
@@ -1993,104 +1950,104 @@ dd {
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>KrISS feed reader preferences</legend>
+                  <legend><?php echo Intl::msg('KrISS feed preferences'); ?></legend>
 
                   <div class="control-group">
-                    <label class="control-label" for="maxItems">Maximum number of items by feed</label>
+                    <label class="control-label" for="maxItems"><?php echo Intl::msg('Maximum number of items by feed'); ?></label>
                     <div class="controls">
                       <input type="text" maxlength="3" id="maxItems" name="maxItems" value="<?php echo $kfcmaxitems; ?>">
-                      <span class="help-block">Need update to be taken into consideration</span>
+                      <span class="help-block"><?php echo Intl::msg('Need update to be taken into consideration'); ?></span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label" for="maxUpdate">Maximum delay between feed update (in minutes)</label>
+                    <label class="control-label" for="maxUpdate"><?php echo Intl::msg('Maximum delay between feed update (in minutes)'); ?></label>
                     <div class="controls">
                       <input type="text" maxlength="3" id="maxUpdate" name="maxUpdate" value="<?php echo $kfcmaxupdate; ?>">
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto read next item option</label>
+                    <label class="control-label"><?php echo Intl::msg('Auto read next item option'); ?></label>
                     <div class="controls">
                       <label for="donotautoreaditem">
                         <input type="radio" id="donotautoreaditem" name="autoreadItem" value="0" <?php echo (!$kfcautoreaditem ? 'checked="checked"' : ''); ?>/>
-                        Do not mark as read when next item
+                        <?php echo Intl::msg('Do not mark as read when next item'); ?>
                       </label>
                       <label for="autoread">
                         <input type="radio" id="autoread" name="autoreadItem" value="1" <?php echo ($kfcautoreaditem ? 'checked="checked"' : ''); ?>/>
-                        Auto mark current as read when next item
+                        <?php echo Intl::msg('Auto mark current as read when next item'); ?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto read next page option</label>
+                    <label class="control-label"><?php echo Intl::msg('Auto read next page option'); ?></label>
                     <div class="controls">
                       <label for="donotautoreadpage">
                         <input type="radio" id="donotautoreadpage" name="autoreadPage" value="0" <?php echo (!$kfcautoreadpage ? 'checked="checked"' : ''); ?>/>
-                        Do not mark as read when next page
+                        <?php echo Intl::msg('Do not mark as read when next page'); ?>
                       </label>
                       <label for="autoreadpage">
                         <input type="radio" id="autoreadpage" name="autoreadPage" value="1" <?php echo ($kfcautoreadpage ? 'checked="checked"' : ''); ?>/>
-                        Auto mark current as read when next page
+                        <?php echo Intl::msg('Auto mark current as read when next page'); ?>
                       </label>
-                      <span class="help-block"><strong>Not implemented yet</strong></span>
+                      <span class="help-block"><strong><?php echo Intl::msg('Not implemented yet'); ?></strong></span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto hide option</label>
+                    <label class="control-label"><?php echo Intl::msg('Auto hide option'); ?></label>
                     <div class="controls">
                       <label for="donotautohide">
                         <input type="radio" id="donotautohide" name="autohide" value="0" <?php echo (!$kfcautohide ? 'checked="checked"' : ''); ?>/>
-                        Always show feed in feeds list
+                        <?php echo Intl::msg('Always show feed in feeds list'); ?>
                       </label>
                       <label for="autohide">
                         <input type="radio" id="autohide" name="autohide" value="1" <?php echo ($kfcautohide ? 'checked="checked"' : ''); ?>/>
-                        Automatically hide feed when 0 unread item
+                        <?php echo Intl::msg('Automatically hide feed when 0 unread item'); ?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto focus option</label>
+                    <label class="control-label"><?php echo Intl::msg('Auto focus option'); ?></label>
                     <div class="controls">
                       <label for="donotautofocus">
                         <input type="radio" id="donotautofocus" name="autofocus" value="0" <?php echo (!$kfcautofocus ? 'checked="checked"' : ''); ?>/>
-                        Do not automatically jump to current item when it changes
+                        <?php echo Intl::msg('Do not automatically jump to current item when it changes'); ?>
                       </label>
                       <label for="autofocus">
                         <input type="radio" id="autofocus" name="autofocus" value="1" <?php echo ($kfcautofocus ? 'checked="checked"' : ''); ?>/>
-                        Automatically jump to the current item position
+                        <?php echo Intl::msg('Automatically jump to the current item position'); ?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Add favicon option</label>
+                    <label class="control-label"><?php echo Intl::msg('Add favicon option'); ?></label>
                     <div class="controls">
                       <label for="donotaddfavicon">
                         <input type="radio" id="donotaddfavicon" name="addFavicon" value="0" <?php echo (!$kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
-                        Do not add favicon next to feed on list of feeds/items
+                        <?php echo Intl::msg('Do not add favicon next to feed on list of feeds/items'); ?>
                       </label>
                       <label for="addfavicon">
                         <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php echo ($kfcaddfavicon ? 'checked="checked"' : ''); ?>/>
-                        Add favicon next to feed on list of feeds/items<br><strong>Warning: It depends on http://getfavicon.appspot.com/ <?php if (in_array('curl', get_loaded_extensions())) { echo 'but it will cache favicon on your server'; } ?></strong>
+                        <?php echo Intl::msg('Add favicon next to feed on list of feeds/items'); ?><br><strong><?php echo Intl::msg('Warning: It depends on http://getfavicon.appspot.com/'); ?> <?php if (in_array('curl', get_loaded_extensions())) { echo Intl::msg('but it will cache favicon on your server'); } ?></strong>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Preload option</label>
+                    <label class="control-label"><?php echo Intl::msg('Preload option'); ?></label>
                     <div class="controls">
                       <label for="donotpreload">
                         <input type="radio" id="donotpreload" name="preload" value="0" <?php echo (!$kfcpreload ? 'checked="checked"' : ''); ?>/>
-                        Do not preload items.
+                        <?php echo Intl::msg('Do not preload items.'); ?>
                       </label>
                       <label for="preload">
                         <input type="radio" id="preload" name="preload" value="1" <?php echo ($kfcpreload ? 'checked="checked"' : ''); ?>/>
-                        Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you don't read all the page items.
+                        <?php echo Intl::msg('Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you do not read all the page items.'); ?>
                       </label>
                     </div>
                   </div>
@@ -2100,25 +2057,25 @@ dd {
                     <div class="controls">
                       <label for="donotblank">
                         <input type="radio" id="donotblank" name="blank" value="0" <?php echo (!$kfcblank ? 'checked="checked"' : ''); ?>/>
-                        Do not open link in new tab
+                        <?php echo Intl::msg('Do not open link in new tab'); ?>
                       </label>
                       <label for="doblank">
                         <input type="radio" id="doblank" name="blank" value="1" <?php echo ($kfcblank ? 'checked="checked"' : ''); ?>/>
-                        Automatically open link in new tab
+                        <?php echo Intl::msg('Automatically open link in new tab'); ?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto update with javascript</label>
+                    <label class="control-label"><?php echo Intl::msg('Auto update with javascript'); ?></label>
                     <div class="controls">
                       <label for="donotautoupdate">
                         <input type="radio" id="donotautoupdate" name="autoUpdate" value="0" <?php echo (!$kfcautoupdate ? 'checked="checked"' : ''); ?>/>
-                        Do not auto update with javascript
+                        <?php echo Intl::msg('Do not auto update with javascript'); ?>
                       </label>
                       <label for="autoupdate">
                         <input type="radio" id="autoupdate" name="autoUpdate" value="1" <?php echo ($kfcautoupdate ? 'checked="checked"' : ''); ?>/>
-                        Auto update with javascript
+                        <?php echo Intl::msg('Auto update with javascript'); ?>
                       </label>
                     </div>
                   </div>
@@ -2131,83 +2088,83 @@ dd {
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>KrISS feed menu preferences</legend>
-                  You can order or remove elements in the menu. Set a position or leave empty if you don't want the element to appear in the menu.
+                  <legend><?php echo Intl::msg('KrISS feed menu preferences'); ?></legend>
+                  <?php echo Intl::msg('You can order or remove elements in the menu. Set a position or leave empty if you do not want the element to appear in the menu.'); ?>
                   <div class="control-group">
-                    <label class="control-label" for="menuView">View</label>
+                    <label class="control-label" for="menuView"><?php echo Intl::msg('View'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuView" name="menuView" value="<?php echo empty($kfcmenu['menuView'])?'0':$kfcmenu['menuView']; ?>">
-                      <span class="help-block">If you want to switch between list and expanded view</span>
+                      <span class="help-block"><?php echo Intl::msg('View as list'); ?>/<?php echo Intl::msg('View as expanded'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuListFeeds">List of feeds</label>
+                    <label class="control-label" for="menuListFeeds"><?php echo Intl::msg('Feeds'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuListFeeds" name="menuListFeeds" value="<?php echo empty($kfcmenu['menuListFeeds'])?'0':$kfcmenu['menuListFeeds']; ?>">
-                      <span class="help-block">If you want to show or hide list of feeds</span>
+                      <span class="help-block"><?php echo Intl::msg('Hide feeds list'); ?>/<?php echo Intl::msg('Show feeds list'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuFilter">Filter</label>
+                    <label class="control-label" for="menuFilter"><?php echo Intl::msg('Filter'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuFilter" name="menuFilter" value="<?php echo empty($kfcmenu['menuFilter'])?'0':$kfcmenu['menuFilter']; ?>">
-                      <span class="help-block">If you want to filter all or unread items</span>
+                      <span class="help-block"><?php echo Intl::msg('Show all items'); ?>/<?php echo Intl::msg('Show unread items'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuOrder">Order</label>
+                    <label class="control-label" for="menuOrder"><?php echo Intl::msg('Order'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuOrder" name="menuOrder" value="<?php echo empty($kfcmenu['menuOrder'])?'0':$kfcmenu['menuOrder']; ?>">
-                      <span class="help-block">If you want to order by newer or older items</span>
+                      <span class="help-block"><?php echo Intl::msg('Show older first'); ?>/<?php echo Intl::msg('Show newer first'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuUpdate">Update</label>
+                    <label class="control-label" for="menuUpdate"><?php echo Intl::msg('Update'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuUpdate" name="menuUpdate" value="<?php echo empty($kfcmenu['menuUpdate'])?'0':$kfcmenu['menuUpdate']; ?>">
-                      <span class="help-block">If you want to update all, folder or a feed</span>
+                      <span class="help-block"><?php echo Intl::msg('Update all'); ?>/<?php echo Intl::msg('Update folder'); ?>/<?php echo Intl::msg('Update feed'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuRead">Read</label>
+                    <label class="control-label" for="menuRead"><?php echo Intl::msg('Mark as read'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuRead" name="menuRead" value="<?php echo empty($kfcmenu['menuRead'])?'0':$kfcmenu['menuRead']; ?>">
-                      <span class="help-block">If you want to mark all, folder or a feed as read</span>
+                      <span class="help-block"><?php echo Intl::msg('Mark all as read'); ?>/<?php echo Intl::msg('Mark folder as read'); ?>/<?php echo Intl::msg('Mark feed as read'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuUnread">Unread</label>
+                    <label class="control-label" for="menuUnread"><?php echo Intl::msg('Mark as unread'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuUnread" name="menuUnread" value="<?php echo empty($kfcmenu['menuUnread'])?'0':$kfcmenu['menuUnread']; ?>">
-                      <span class="help-block">If you want to mark all, folder or a feed as unread</span>
+                      <span class="help-block"><?php echo Intl::msg('Mark all as unread'); ?>/<?php echo Intl::msg('Mark folder as unread'); ?>/<?php echo Intl::msg('Mark feed as unread'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuEdit">Edit</label>
+                    <label class="control-label" for="menuEdit"><?php echo Intl::msg('Edit'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuEdit" name="menuEdit" value="<?php echo empty($kfcmenu['menuEdit'])?'0':$kfcmenu['menuEdit']; ?>">
-                      <span class="help-block">If you want to edit all, folder or a feed</span>
+                      <span class="help-block"><?php echo Intl::msg('Edit all'); ?>/<?php echo Intl::msg('Edit folder'); ?>/<?php echo Intl::msg('Edit feed'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuAdd">Add</label>
+                    <label class="control-label" for="menuAdd"><?php echo Intl::msg('Add a new feed'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuAdd" name="menuAdd" value="<?php echo empty($kfcmenu['menuAdd'])?'0':$kfcmenu['menuAdd']; ?>">
-                      <span class="help-block">If you want to add a feed</span>
+                      <span class="help-block"><?php echo Intl::msg('Add a new feed'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuHelp">Help</label>
+                    <label class="control-label" for="menuHelp"><?php echo Intl::msg('Help'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuHelp" name="menuHelp" value="<?php echo empty($kfcmenu['menuHelp'])?'0':$kfcmenu['menuHelp']; ?>">
-                      <span class="help-block">If you want to add a link to the help</span>
+                      <span class="help-block"><?php echo Intl::msg('Help'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuStars">Starred</label>
+                    <label class="control-label" for="menuStars"><?php echo Intl::msg('Starred items'); ?></label>
                     <div class="controls">
                       <input type="text" id="menuStars" name="menuStars" value="<?php echo empty($kfcmenu['menuStars'])?'0':$kfcmenu['menuStars']; ?>">
-                      <span class="help-block">If you want to add a link to the starred items</span>
+                      <span class="help-block"><?php echo Intl::msg('Starred items'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
@@ -2218,33 +2175,33 @@ dd {
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>KrISS feed paging menu preferences</legend>
+                  <legend><?php echo Intl::msg('KrISS feed paging menu preferences'); ?></legend>
                   <div class="control-group">
-                    <label class="control-label" for="pagingItem">Item</label>
+                    <label class="control-label" for="pagingItem"><?php echo Intl::msg('Item'); ?></label>
                     <div class="controls">
                       <input type="text" id="pagingItem" name="pagingItem" value="<?php echo empty($kfcpaging['pagingItem'])?'0':$kfcpaging['pagingItem']; ?>">
-                      <span class="help-block">If you want to go previous and next item </span>
+                      <span class="help-block"><?php echo Intl::msg('If you want to go previous and next item'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="pagingPage">Page</label>
+                    <label class="control-label" for="pagingPage"><?php echo Intl::msg('Page'); ?></label>
                     <div class="controls">
                       <input type="text" id="pagingPage" name="pagingPage" value="<?php echo empty($kfcpaging['pagingPage'])?'0':$kfcpaging['pagingPage']; ?>">
-                      <span class="help-block">If you want to go previous and next page </span>
+                      <span class="help-block"><?php echo Intl::msg('If you want to go previous and next page'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="pagingByPage">Items by page</label>
+                    <label class="control-label" for="pagingByPage"><?php echo Intl::msg('Items by page'); ?></label>
                     <div class="controls">
                       <input type="text" id="pagingByPage" name="pagingByPage" value="<?php echo empty($kfcpaging['pagingByPage'])?'0':$kfcpaging['pagingByPage']; ?>">
-                      <span class="help-block">If you want to modify number of items by page</span>
+                      <span class="help-block"><?php echo Intl::msg('If you want to modify number of items by page'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="pagingMarkAs">Mark as read</label>
+                    <label class="control-label" for="pagingMarkAs"><?php echo Intl::msg('Mark as read'); ?></label>
                     <div class="controls">
                       <input type="text" id="pagingMarkAs" name="pagingMarkAs" value="<?php echo empty($kfcpaging['pagingMarkAs'])?'0':$kfcpaging['pagingMarkAs']; ?>">
-                      <span class="help-block">If you add a mark as read button into paging</span>
+                      <span class="help-block"><?php echo Intl::msg('If you want to add a mark as read button into paging'); ?></span>
                     </div>
                   </div>
                   <div class="control-group">
@@ -2255,16 +2212,14 @@ dd {
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>Cron configuration</legend>
+                  <legend><?php echo Intl::msg('Cron configuration'); ?></legend>
                   <code><?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?></code>
-                  You can use <code>&force</code> to force update.<br>
-                  To update every 15 minutes:<br>
-                  <code>*/15 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code><br>
-                  To update every hour:<br>
+                  <?php echo Intl::msg('You can use <code>&force</code> to force update.'); ?><br>
+                  <?php echo Intl::msg('To update every hour:'); ?><br>
                   <code>0 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code><br>
-                  If you can not use wget, you may try php command line:<br>
+                  <?php echo Intl::msg('If you can not use wget, you may try php command line:'); ?><br>
                   <code>0 * * * * php -f <?php echo $_SERVER["SCRIPT_FILENAME"].' update '.$kfccron; ?> > /tmp/kf.cron</code><br>
-                  If previous solutions do not work, try to create an update.php file into data directory containing:<br>
+                  <?php echo Intl::msg('If previous solutions do not work, try to create an update.php file into data directory containing:'); ?><br>
                   <code>
                   &lt;?php<br>
                   $url = "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>";<br>
@@ -2273,13 +2228,13 @@ dd {
                   $data=file_get_contents($url,false,$context);<br>
                   print($data);
                   </code><br>
-                  Then set up your cron with:<br>
+                  <?php echo Intl::msg('Then set up your cron with:'); ?><br>
                   <code>0 * * * * php -f <?php echo dirname($_SERVER["SCRIPT_FILENAME"]).'/data/update.php'; ?> > /tmp/kf.cron</code><br>
-                  Don't forget to check right permissions !<br>
+                  <?php echo Intl::msg('Do not forget to check right permissions!'); ?><br>
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                     </div>
                   </div>
                 </fieldset>
@@ -2308,104 +2263,120 @@ dd {
           <div id="config">
             <?php FeedPage::navTpl(); ?>
             <div id="section">
-              <h2>Keyboard shortcut</h2>
+              <h2><?php echo Intl::msg('Keyboard shortcuts'); ?></h2>
               <fieldset>
-                <legend>Items navigation</legend>
+                <legend><?php echo Intl::msg('Key legend'); ?></legend>
                 <dl class="dl-horizontal">
-                  <dt>'space' or 't'</dt>
-                  <dd>When viewing items as list, let you open or close current item (<strong>t</strong>oggle current item)</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'m'</dt>
-                  <dd><strong>M</strong>ark current item as read if unread or unread if read</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'shift' + 'm'</dt>
-                  <dd><strong>M</strong>ark current item as read if unread or unread if read and open current (useful in list view and unread filter)</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'n' or right arrow</dt>
-                  <dd>Go to <strong>n</strong>ext item</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'p' or left arrow</dt>
-                  <dd>Go to <strong>p</strong>revious item</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'shift' + 'n'</dt>
-                  <dd>Go to <strong>n</strong>ext page</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'shift' + 'p'</dt>
-                  <dd>Go to <strong>p</strong>revious page</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'j'</dt>
-                  <dd>Go to <strong>n</strong>ext item and open it (in list view)</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'k'</dt>
-                  <dd>Go to <strong>p</strong>revious item and open it (in list view)</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'o'</dt>
-                  <dd><strong>O</strong>pen current item in new tab</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'shift' + 'o'</dt>
-                  <dd><strong>O</strong>pen current item in current window</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'s'</dt>
-                  <dd><strong>S</strong>hare current item (go in <a href="?config" title="configuration">configuration</a> to set up your link)</dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>'a'</dt>
-                  <dd>Mark <strong>a</strong>ll items, <strong>a</strong>ll items from current feed or <strong>a</strong>ll items from current folder as read</dd>
+                  <dt>&#x23b5;</dt>
+                  <dd><?php echo Intl::msg('Space key'); ?></dd>
+                  <dt>&#x21e7;</dt>
+                  <dd><?php echo Intl::msg('Shift key'); ?></dd>
+                  <dt>&#x2192;</dt>
+                  <dd><?php echo Intl::msg('Right arrow key'); ?></dd>
+                  <dt>&#x2190;</dt>
+                  <dd><?php echo Intl::msg('Left arrow key'); ?></dd>
                 </dl>
               </fieldset>
               <fieldset>
-                <legend>Menu navigation</legend>
+                <legend><?php echo Intl::msg('Items navigation'); ?></legend>
                 <dl class="dl-horizontal">
-                  <dt>'h'</dt>
-                  <dd>Go to <strong>H</strong>ome page</dd>
+                  <dt>&#x23b5;, t</dt>
+                  <dd><?php echo Intl::msg('Toggle current item (open, close item in list view)'); ?></dd>
                 </dl>
                 <dl class="dl-horizontal">
-                  <dt>'v'</dt>
-                  <dd>Change <strong>v</strong>iew as list or expanded</dd>
+                  <dt>m</dt>
+                  <dd><?php echo Intl::msg('Mark current item as read if unread or unread if read'); ?></dd>
                 </dl>
                 <dl class="dl-horizontal">
-                  <dt>'f'</dt>
-                  <dd>Show or hide list of <strong>f</strong>eeds/<strong>f</strong>olders</dd>
+                  <dt>&#x21e7; + m</dt>
+                  <dd><?php echo Intl::msg('Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)'); ?></dd>
                 </dl>
                 <dl class="dl-horizontal">
-                  <dt>'e'</dt>
-                  <dd><strong>E</strong>dit current selection (all, folder or feed)</dd>
+                  <dt>&#x2192;, n</dt>
+                  <dd><?php echo Intl::msg('Go to next item'); ?></dd>
                 </dl>
                 <dl class="dl-horizontal">
-                  <dt>'u'</dt>
-                  <dd><strong>U</strong>pdate current selection (all, folder or feed)</dd>
+                  <dt>&#x2190;, p</dt>
+                  <dd><?php echo Intl::msg('Go to previous item'); ?></dd>
                 </dl>
                 <dl class="dl-horizontal">
-                  <dt>'r'</dt>
-                  <dd><strong>R</strong>eload the page as the 'F5' key in most of browsers</dd>
+                  <dt>&#x21e7; + n</dt>
+                  <dd><?php echo Intl::msg('Go to next page'); ?></dd>
                 </dl>
                 <dl class="dl-horizontal">
-                  <dt>'?' or 'F1'</dt>
-                  <dd>Go to Help page (actually it's shortcut to go to this page)</dd>
+                  <dt>&#x21e7; + p</dt>
+                  <dd><?php echo Intl::msg('Go to previous page'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>j</dt>
+                  <dd><?php echo Intl::msg('Go to next item and open it (in list view)'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>k</dt>
+                  <dd><?php echo Intl::msg('Go to previous item and open it (in list view)'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>o</dt>
+                  <dd><?php echo Intl::msg('Open current item in new tab'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + o</dt>
+                  <dd><?php echo Intl::msg('Open current item in current window'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>s</dt>
+                  <dd><?php echo Intl::msg('Share current item'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>a</dt>
+                  <dd><?php echo Intl::msg('Mark all items, all items from current feed or all items from current folder as read'); ?></dd>
                 </dl>
               </fieldset>
-              <h2>Check configuration</h2>
-              <dl class="dl-horizontal">
-                <dt>open_ssl</dt>
-                <dd>
-                  <?php if (extension_loaded('openssl')) { ?>
-                  <span class="text-success">You should be able to load https:// rss links.</span>
-                  <?php } else { ?>
-                  <span class="text-error">You may have problems using https:// rss links.</span>
-                  <?php } ?>
-                </dd>
-              </dl>
+              <fieldset>
+                <legend><?php echo Intl::msg('Menu navigation'); ?></legend>
+                <dl class="dl-horizontal">
+                  <dt>h</dt>
+                  <dd><?php echo Intl::msg('Go to Home page'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>v</dt>
+                  <dd><?php echo Intl::msg('Change view as list or expanded'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>f</dt>
+                  <dd><?php echo Intl::msg('Show or hide list of feeds/folders'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>e</dt>
+                  <dd><?php echo Intl::msg('Edit current selection (all, folder or feed)'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>u</dt>
+                  <dd><?php echo Intl::msg('Update current selection (all, folder or feed)'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>r</dt>
+                  <dd><?php echo Intl::msg('Reload the page as the F5 key in most of browsers'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>?, F1</dt>
+                  <dd><?php echo Intl::msg('Go to Help page (this page)'); ?></dd>
+                </dl>
+              </fieldset>
+              <h2><?php echo Intl::msg('Configuration check'); ?></h2>
+              <fieldset>
+                <legend><?php echo Intl::msg('PHP configuration'); ?></legend>
+                <dl class="dl-horizontal">
+                  <dt>open_ssl</dt>
+                  <dd>
+                    <?php if (extension_loaded('openssl')) { ?>
+                    <span class="text-success"><?php echo Intl::msg('You should be able to load https:// rss links.'); ?></span>
+                    <?php } else { ?>
+                    <span class="text-error"><?php echo Intl::msg('You may have problems using https:// rss links.'); ?></span>
+                    <?php } ?>
+                  </dd>
+                </dl>
+              </fieldset>
             </div>
           </div>
         </div>
@@ -2433,41 +2404,41 @@ dd {
           <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" action="?add" method="POST">
             <fieldset>
-              <legend>Add a new feed</legend>
+              <legend><?php echo Intl::msg('Add a new feed'); ?></legend>
               <div class="control-group">
-                <label class="control-label" > Feed url</label>
+                <label class="control-label" ><?php echo Intl::msg('Feed URL'); ?></label>
                 <div class="controls">
                   <input type="text" id="newfeed" name="newfeed" value="<?php echo $newfeed; ?>">                  
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Add selected folders to feed</legend>
+              <legend><?php echo Intl::msg('Add selected folders to feed'); ?></legend>
               <div class="control-group">
                 <div class="controls">
                   <?php foreach ($folders as $hash => $folder) { ?>
                   <label for="add-folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="folders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="folders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>"><?php echo Intl::msg('Edit feed'); ?></a>)
                   </label>
                   <?php } ?>
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" >Add to a new folder</label>
+                <label class="control-label"><?php echo Intl::msg('Add a new folder'); ?></label>
                 <div class="controls">
                   <input type="text" name="newfolder" value="">
                 </div>
               </div>
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="add" value="Add new feed"/>
+                  <input class="btn" type="submit" name="add" value="<?php echo Intl::msg('Add new feed'); ?>"/>
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Use bookmarklet to add a new feed</legend>
+              <legend><?php echo Intl::msg('Use bookmarklet to add a new feed'); ?></legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>Add KF</b></a>
+                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF</b></a>
               </div>
             </fieldset>
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
@@ -2498,12 +2469,12 @@ dd {
           <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
-              <legend>Reorder folders</legend>
+              <legend><?php echo Intl::msg('Reorder folders'); ?></legend>
               <div class="control-group">
                 <div class="controls">
                   <?php $i=0; foreach ($folders as $hash => $folder) { ?>
                   <label for="order-folder-<?php echo $hash; ?>">
-                    <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>) <br>
+                    <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>"><?php echo Intl::msg('Edit folder'); ?></a>) <br>
                     <input type="text" id="order-folder-<?php echo $hash; ?>" name="order-folder-<?php echo $hash; ?>" value="<?php echo $i; $i++; ?>">
                   </label>
                   <?php } ?>
@@ -2511,16 +2482,16 @@ dd {
               </div>
             </fieldset>
 
-            <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="save" value="Save modifications" />
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
 
             <fieldset>
-              <legend>Add selected folders to selected feeds</legend>
+              <legend><?php echo Intl::msg('Add selected folders to selected feeds'); ?></legend>
               <div class="control-group">
                 <div class="controls">
                   <?php foreach ($folders as $hash => $folder) { ?>
                   <label for="add-folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="addfolders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="addfolders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>"><?php echo Intl::msg('Edit folder'); ?></a>)
                   </label>
                   <?php } ?>
                 </div>
@@ -2530,34 +2501,37 @@ dd {
               </div>
             </fieldset>
 
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
+
             <fieldset>
-              <legend>Remove selected folders to selected feeds</legend>
+              <legend><?php echo Intl::msg('Remove selected folders to selected feeds'); ?></legend>
               <div class="control-group">
                 <div class="controls">
                   <?php foreach ($folders as $hash => $folder) { ?>
                   <label for="remove-folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="remove-folder-<?php echo $hash; ?>" name="removefolders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                    <input type="checkbox" id="remove-folder-<?php echo $hash; ?>" name="removefolders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>"><?php echo Intl::msg('Edit folder'); ?></a>)
                   </label>
                   <?php } ?>
                 </div>
               </div>
             </fieldset>
 
-            <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="save" value="Save modifications" />
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
 
             <fieldset>
-              <legend>List of feeds</legend>
+              <legend><?php echo Intl::msg('List of feeds'); ?></legend>
 
-              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = true; }" value="Select all">
-              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = false; }" value="Unselect all">
+              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = true; }" value="<?php echo Intl::msg('Select all'); ?>">
+              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = false; }" value="<?php echo Intl::msg('Unselect all'); ?>">
 
               <ul class="unstyled">
                 <?php foreach ($listFeeds as $feedHash => $feed) { ?>
                 <li>
                   <label for="feed-<?php echo $feedHash; ?>">
                     <input type="checkbox" id="feed-<?php echo $feedHash; ?>" name="feeds[]" value="<?php echo $feedHash; ?>">
-                    <?php echo htmlspecialchars($feed['title']); ?> (<a href="?edit=<?php echo $feedHash; ?>">edit</a>)
+                    <?php echo htmlspecialchars($feed['title']); ?> (<a href="?edit=<?php echo $feedHash; ?>"><?php echo Intl::msg('Edit feed'); ?></a>)
                   </label>
                 </li>
                 <?php } ?>
@@ -2566,9 +2540,9 @@ dd {
 
             <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-            <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
-            <input class="btn" type="submit" name="save" value="Save modifications" />
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+            <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg('Delete selected feeds'); ?>" onclick="return confirm('<?php echo Intl::msg('Do you really want to delete all selected feeds?'); ?>');"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
           </form>
         </div>
       </div>
@@ -2594,17 +2568,17 @@ dd {
           <form class="form-horizontal" method="post" action="">
             <fieldset>
               <div class="control-group">
-                <label class="control-label" for="foldertitle">Folder title</label>
+                <label class="control-label" for="foldertitle"><?php echo Intl::msg('Folder title'); ?></label>
                 <div class="controls">
                   <input type="text" id="foldertitle" name="foldertitle" value="<?php echo $foldertitle; ?>">
-                  <span class="help-block">Leave empty to delete</span>
+                  <span class="help-block"><?php echo Intl::msg('Leave empty to delete'); ?></span>
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                  <input class="btn" type="submit" name="save" value="Save" />
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                 </div>
               </div>
             </fieldset>
@@ -2637,34 +2611,34 @@ dd {
           <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
-              <legend>Feed main information</legend>
+              <legend><?php echo Intl::msg('Feed main information'); ?></legend>
               <div class="control-group">
-                <label class="control-label" for="title">Feed title</label>
+                <label class="control-label" for="title"><?php echo Intl::msg('Feed title'); ?></label>
                 <div class="controls">
                   <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($feed['title']); ?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Feed XML url</label>
+                <label class="control-label"><?php echo Intl::msg('Feed XML URL'); ?></label>
                 <div class="controls">
                   <input type="text" readonly="readonly" name="xmlUrl" value="<?php echo htmlspecialchars($feed['xmlUrl']); ?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Feed main url</label>
+                <label class="control-label"><?php echo Intl::msg('Feed main URL'); ?></label>
                 <div class="controls">
                   <input type="text" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="description">Feed description</label>
+                <label class="control-label" for="description"><?php echo Intl::msg('Feed description'); ?></label>
                 <div class="controls">
                   <input type="text" id="description" name="description" value="<?php echo htmlspecialchars($feed['description']); ?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Feed folders</legend>
+              <legend><?php echo Intl::msg('Feed folders'); ?></legend>
               <?php
                  foreach ($folders as $hash => $folder) {
               $checked = '';
@@ -2681,23 +2655,23 @@ dd {
               </div>
               <?php } ?>
               <div class="control-group">
-                <label class="control-label" for="newfolder">New folder</label>
+                <label class="control-label" for="newfolder"><?php echo Intl::msg('New folder'); ?></label>
                 <div class="controls">
-                  <input type="text" name="newfolder" value="" placeholder="New folder">
+                  <input type="text" name="newfolder" value="" placeholder="<?php echo Intl::msg('New folder'); ?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Feed preferences</legend>
+              <legend><?php echo Intl::msg('Feed preferences'); ?></legend>
               <div class="control-group">
-                <label class="control-label" for="timeUpdate">Time update </label>
+                <label class="control-label" for="timeUpdate"><?php echo Intl::msg('Time update'); ?></label>
                 <div class="controls">
                   <input type="text" id="timeUpdate" name="timeUpdate" value="<?php echo $feed['timeUpdate']; ?>">
-                  <span class="help-block">'auto', 'max' or a number of minutes less than 'max' define in <a href="?config">config</a></span>
+                  <span class="help-block"><?php echo Intl::msg('"auto", "max" or a number of minutes less than "max" define in <a href="?config">configuration</a>'); ?></span>
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Last update</label>
+                <label class="control-label"><?php echo Intl::msg('Last update'); ?></label>
                 <div class="controls">
                   <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate; ?>">
                 </div>
@@ -2705,9 +2679,9 @@ dd {
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="save" value="Save" />
-                  <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                  <input class="btn" type="submit" name="delete" value="Delete"/>
+                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
+                  <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg('Delete feed'); ?>"/>
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
                 </div>
               </div>
             </fieldset>
@@ -2743,11 +2717,11 @@ dd {
                 <ul class="unstyled">
                   <?php $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')?>
                 </ul>
-                <a class="btn" href="?">Go home</a>
+                <a class="btn ico-home" href="<?php echo MyTool::getUrl(); ?>" title="<?php echo Intl::msg('Home'); ?>"></a>
                 <?php if (!empty($referer)) { ?>
-                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
+                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>"><?php echo Intl::msg('Go back'); ?></a>
                 <?php } ?>
-                <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>">Force update</a>
+                <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>"><?php echo Intl::msg('Force update'); ?></a>
               </div>
             </div>
           </div>
@@ -2769,22 +2743,23 @@ dd {
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span4 offset4">
           <?php FeedPage::statusTpl(); ?>
+          <?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data">
             <fieldset>
-              <legend>Import Opml file</legend>
-              Import an opml file as exported by Google Reader, Tiny Tiny RSS, RSS lounge...
-              
+              <legend><?php echo Intl::msg('Import opml file'); ?></legend>
               <div class="control-group">
-                <label class="control-label" for="filetoupload">File (Size max: <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>)</label>
+                <label class="control-label" for="filetoupload"><?php echo Intl::msg('Opml file:'); ?></label>
                 <div class="controls">
                   <input class="btn" type="file" id="filetoupload" name="filetoupload">
+                  <span class="help-block"><?php echo Intl::msg('Size max:'); ?> <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>
+                    </span>
                 </div>
               </div>
 
@@ -2792,15 +2767,15 @@ dd {
                 <div class="controls">
                   <label for="overwrite">
                     <input type="checkbox" name="overwrite" id="overwrite">
-                    Overwrite existing feeds
+                    <?php echo Intl::msg('Overwrite existing feeds'); ?>
                   </label>
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="import" value="Import">
-                  <input class="btn" type="submit" name="cancel" value="Cancel">
+                  <input class="btn" type="submit" name="import" value="<?php echo Intl::msg('Import opml file'); ?>">
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>">
                 </div>
               </div>
 
@@ -2952,9 +2927,9 @@ dd {
         <span class="item-title">
           <?php if (!isset($_GET['stars'])) { ?>
           <?php if ($item['read'] == 1) { ?>
-          <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label">unread</span></a>
+          <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('unread'); ?></span></a>
           <?php } else { ?>
-          <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
+          <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('read'); ?></span></a>
           <?php } ?>
           <?php } ?>
           <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>">
@@ -2974,18 +2949,18 @@ dd {
     <div id="item-div-<?php echo $itemHash; ?>" class="item collapse<?php echo (($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open'])))?' in well':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
       <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
       <div class="item-title">
-        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label">share</span></a>
+        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('share'); ?></span></a>
         <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as"><?php echo Intl::msg('unread'); ?></span></a>
         <?php } else { ?>
-        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as"><?php echo Intl::msg('read'); ?></span></a>
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label">unstar</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('unstar'); ?></span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label">star</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label"><?php echo Intl::msg('star'); ?></span></a>
         <?php }?>
         <a<?php if ($blank) { echo ' target="_blank"'; } ?><?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> class="item-link" href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['link']; ?>"><?php echo $item['title']; ?></a>
       </div>
@@ -2994,7 +2969,7 @@ dd {
         <?php echo $item['time']['expanded']; ?>
       </div>
       <div class="item-info-end item-info-author">
-        from <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
+        <?php echo Intl::msg('from'); ?> <a class="item-via"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['via']; ?>"><?php echo $item['author']; ?></a>
         <a class="item-xml"<?php echo ($redirector==='noreferrer'?' rel="noreferrer"':''); ?> href="<?php echo ($redirector!='noreferrer'?$redirector:'').$item['xmlUrl']; ?>">
           <span class="ico">
             <span class="ico-feed-dot"></span>
@@ -3011,19 +2986,19 @@ dd {
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
-        <a class="item-top" href="#status"><span class="label label-expanded">top</span></a> 
-        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
+        <a class="item-top" href="#status"><span class="label label-expanded"><?php echo Intl::msg('top'); ?></span></a> 
+        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('share'); ?></span></a>
         <?php if (!isset($_GET['stars'])) { ?>
         <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('unread'); ?></span></a>
         <?php } else { ?>
-        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
+        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('read'); ?></span></a>
         <?php } ?>
         <?php } ?>
         <?php if (isset($item['starred']) && $item['starred']===1) { ?>
-        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label label-expanded">unstar</span></a>
+        <a class="item-starred" href="<?php echo $query.'unstar='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('unstar'); ?></span></a>
         <?php } else { ?>
-        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label label-expanded">star</span></a>
+        <a class="item-starred" href="<?php echo $query.'star='.$itemHash; ?>"><span class="label label-expanded"><?php echo Intl::msg('star'); ?></span></a>
         <?php }?>
         <?php if ($view==='list') { ?>
         <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
@@ -3048,34 +3023,39 @@ dd {
     {
         extract(FeedPage::$var);
 ?>
-<ul class="inline">
-  <?php foreach(array_keys($paging) as $pagingOpt) { ?>
-  <?php switch($pagingOpt) {
-        case 'pagingItem': ?>
+
+<ul class="inline"><?php
+foreach(array_keys($paging) as $pagingOpt) {
+  switch($pagingOpt) {
+    case 'pagingItem': ?>
+
   <li>
     <div class="btn-group">
-      <a class="btn btn2 btn-info previous-item" href="<?php echo $query.'previous='.$currentItemHash; ?>">Previous item</a>
-      <a class="btn btn2 btn-info next-item" href="<?php echo $query.'next='.$currentItemHash; ?>">Next item</a>
+      <a class="btn btn2 btn-info previous-item" href="<?php echo $query.'previous='.$currentItemHash; ?>" title="<?php echo Intl::msg("Previous item"); ?>"><?php echo Intl::msg("Previous item"); ?></a>
+      <a class="btn btn2 btn-info next-item" href="<?php echo $query.'next='.$currentItemHash; ?>" title="<?php echo Intl::msg("Next item"); ?>"><?php echo Intl::msg("Next item"); ?></a>
     </div>
-  </li>
-  <?php break; ?>
-  <?php case 'pagingMarkAs': ?>
+  </li><?php
+      break;
+    case 'pagingMarkAs': ?>
+
   <li>
     <div class="btn-group">
-      <a class="btn btn-info" href="<?php echo $query.'read='.$currentHash; ?>">Mark as read</a>
+      <a class="btn btn-info" href="<?php echo $query.'read='.$currentHash; ?>" title="<?php echo Intl::msg("Mark as read"); ?>"><?php echo Intl::msg("Mark as read"); ?></a>
     </div>
-  </li>
-  <?php break; ?>
-  <?php case 'pagingPage': ?>
+  </li><?php
+      break;
+    case 'pagingPage': ?>
+
   <li>
     <div class="btn-group">
-      <a class="btn btn3 btn-info previous-page<?php echo ($currentPage === 1)?' disabled':''; ?>" href="<?php echo $query.'previousPage='.$currentPage; ?>">Previous page</a>
+      <a class="btn btn3 btn-info previous-page<?php echo ($currentPage === 1)?' disabled':''; ?>" href="<?php echo $query.'previousPage='.$currentPage; ?>" title="<?php echo Intl::msg("Previous page"); ?>"><?php echo Intl::msg("Previous page"); ?></a>
       <button class="btn btn3 disabled current-max-page"><?php echo $currentPage.' / '.$maxPage; ?></button>
-      <a class="btn btn3 btn-info next-page<?php echo ($currentPage === $maxPage)?' disabled':''; ?>" href="<?php echo $query.'nextPage='.$currentPage; ?>">Next page</a>
+      <a class="btn btn3 btn-info next-page<?php echo ($currentPage === $maxPage)?' disabled':''; ?>" href="<?php echo $query.'nextPage='.$currentPage; ?>" title="<?php echo Intl::msg("Next page"); ?>"><?php echo Intl::msg("Next page"); ?></a>
     </div>
-  </li>
-  <?php break; ?>
-  <?php case 'pagingByPage': ?>
+  </li><?php
+      break;
+    case 'pagingByPage': ?>
+
   <li>
     <div class="btn-group">
       <form class="form-inline" action="<?php echo $kfurl; ?>" method="GET">
@@ -3085,17 +3065,18 @@ dd {
           <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=50'; ?>">50</a>
           <div class="btn-break"></div>
           <input class="btn2 input-by-page input-mini" type="text" name="byPage">
-            <input type="hidden" name="currentHash" value="<?php echo $currentHash; ?>">
-              <button type="submit" class="btn btn2">items per page</button>
+          <input type="hidden" name="currentHash" value="<?php echo $currentHash; ?>">
+          <button type="submit" class="btn btn2"><?php echo Intl::msg("Items per page"); ?></button>
         </div>
       </form>
     </div>
-  </li>
-  <?php break; ?>
-  <?php default: ?>
-  <?php break; ?>
-  <?php } ?>
-  <?php } ?>
+  </li><?php
+      break;
+    default:
+      break;
+  }
+} ?>
+
 </ul>
 <div class="clear"></div>
 <?php
@@ -3108,7 +3089,7 @@ dd {
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
 <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
@@ -5371,7 +5352,7 @@ class Feed
 
     public function getFeedsView()
     {
-        $feedsView = array('all' => array('title' => 'All feeds', 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
+        $feedsView = array('all' => array('title' => Intl::msg('All feeds'), 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
         
         foreach ($this->_data['feeds'] as $feedHash => $feed) {
             if (isset($feed['error'])) {
@@ -6752,6 +6733,191 @@ class Feed
 }
 
 
+class Intl
+{
+    public static $lazy;
+    public static $lang;
+    public static $dir;
+    public static $domain;
+    public static $messages = array();
+
+    public static function init($lang = "en_GB",
+                                $dir = "locale",
+                                $domain = "messages")
+    {
+        self::$lazy = false;
+        self::$lang = $lang;
+        self::$dir = $dir;
+        self::$domain = $domain;
+    }
+
+    public static function load($lang) {
+        self::$lazy = true;
+
+        if (file_exists(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po')) {
+            self::$messages[$lang] = self::phpmo_parse_po_file(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po');
+        } else {
+            Plugin::callHook('Intl_init_'.$lang, array(&self::$messages));
+        }
+        
+        return isset(self::$messages[$lang])?self::$messages[$lang]:array();
+    }
+
+    public static function msg($string, $context = "")
+    {
+        if (!self::$lazy) {
+            self::load(self::$lang);
+        }
+
+        return self::n_msg($string, '', 0, $context);
+    }
+
+    public static function n_msg($string, $plural, $count, $context = "")
+    {
+        if (!self::$lazy) {
+            self::load(self::$lang);
+        }
+
+        // TODO extract Plural-Forms from po file
+        // https://www.gnu.org/savannah-checkouts/gnu/gettext/manual/html_node/Plural-forms.html
+        $count = $count > 1 ? 1 : 0;
+
+        if (isset(self::$messages[self::$lang][$string])
+            && !empty(self::$messages[self::$lang][$string]['msgstr'][$count])) {
+            return self::$messages[self::$lang][$string]['msgstr'][$count];
+        }
+
+        if ($count != 0) {
+            return $plural;
+        }
+
+        return $string;
+    }
+
+    /* Parse gettext .po files.
+     *
+     * based on
+     * php.mo 0.1 by Joss Crowcroft (http://www.josscrowcroft.com)
+     * @link https://github.com/josscrowcroft/php.mo
+     * @link http://www.gnu.org/software/gettext/manual/gettext.html */
+    public static function phpmo_parse_po_file($in) {
+	// read .po file
+	$fh = fopen($in, 'r');
+	if ($fh === false) {
+            // Could not open file resource
+            return false;
+	}
+
+	// results array
+	$hash = array ();
+	// temporary array
+	$temp = array ();
+	// state
+	$state = null;
+	$fuzzy = false;
+
+	// iterate over lines
+	while(($line = fgets($fh, 65536)) !== false) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, ' ') === false)
+                continue;
+
+            list ($key, $data) = preg_split('/\s/', $line, 2);
+		
+            switch ($key) {
+            case '#,' : // flag...
+                $fuzzy = in_array('fuzzy', preg_split('/,\s*/', $data));
+            case '#' : // translator-comments
+            case '#.' : // extracted-comments
+            case '#:' : // reference...
+            case '#|' : // msgid previous-untranslated-string
+                // start a new entry
+                if (sizeof($temp) && array_key_exists('msgid', $temp) && array_key_exists('msgstr', $temp)) {
+                    if (!$fuzzy)
+                        $hash[] = $temp;
+                    $temp = array ();
+                    $state = null;
+                    $fuzzy = false;
+                }
+                break;
+            case 'msgctxt' :
+                // context
+            case 'msgid' :
+                // untranslated-string
+            case 'msgid_plural' :
+                // untranslated-string-plural
+                $state = $key;
+                $temp[$state] = $data;
+                break;
+            case 'msgstr' :
+                // translated-string
+                $state = 'msgstr';
+                $temp[$state][] = $data;
+                break;
+            default :
+                if (strpos($key, 'msgstr[') !== FALSE) {
+                    // translated-string-case-n
+                    $state = 'msgstr';
+                    $temp[$state][] = $data;
+                } else {
+                    // continued lines
+                    switch ($state) {
+                    case 'msgctxt' :
+                    case 'msgid' :
+                    case 'msgid_plural' :
+                        $temp[$state] .= "\n" . $line;
+                        break;
+                    case 'msgstr' :
+                        $temp[$state][sizeof($temp[$state]) - 1] .= "\n" . $line;
+                        break;
+                    default :
+                        // parse error
+                        fclose($fh);
+                        return FALSE;
+                    }
+                }
+                break;
+            }
+	}
+	fclose($fh);
+	
+	// add final entry
+	if ($state == 'msgstr')
+            $hash[] = $temp;
+
+	// Cleanup data, merge multiline entries, reindex hash for ksort
+	$temp = $hash;
+	$hash = array ();
+	foreach ($temp as $entry) {
+            foreach ($entry as & $v) {
+                $v = self::phpmo_clean_helper($v);
+                if ($v === FALSE) {
+                    // parse error
+                    return FALSE;
+                }
+            }
+            $hash[$entry['msgid']] = $entry;
+	}
+
+	return $hash;
+    }
+
+    public static function phpmo_clean_helper($x) {
+	if (is_array($x)) {
+            foreach ($x as $k => $v) {
+                $x[$k] = self::phpmo_clean_helper($v);
+            }
+	} else {
+            if ($x[0] == '"')
+                $x = substr($x, 1, -1);
+            $x = str_replace("\"\n\"", '', $x);
+            // TODO: check with phpmo escape $
+            // $x = str_replace('$', '\\$', $x);
+	}
+	return $x;
+    }
+}
+
 class MyTool
 {
     public static function initPhp()
@@ -7377,6 +7543,37 @@ class PageBuilder
     }
 }
 
+class Plugin
+{
+    public static $dir = "plugins";
+    public static $hooks = array();
+
+    public static function init() {
+        $arrayPlugins = glob(self::$dir. '/*.php');
+      
+        if(is_array($arrayPlugins)) {  
+            foreach($arrayPlugins as $plugin) {  
+                include $plugin;  
+            }  
+        }
+    }
+
+    public static function addHook($hookName, $functionName, $priority = 10) {
+        self::$hooks[$hookName][$priority][] = $functionName;
+    } 
+
+    public static function callHook($hookName, $hookArguments = null) {
+	if(isset(self::$hooks[$hookName])) {
+            ksort(self::$hooks[$hookName]);
+            foreach (self::$hooks[$hookName] as $hooks) {
+                foreach($hooks as $functionName) {
+                    call_user_func_array($functionName, $hookArguments);
+                }    
+            }
+        } 
+    }
+}
+
 class Session
 {
     private static $_instance;
@@ -7676,6 +7873,20 @@ $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
 
+Plugin::init();
+
+
+if (!function_exists('fr_FR')) {
+    function fr_FR(&$messages) {
+        $messages['fr_FR'] = unserialize(gzinflate(base64_decode("
+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")));
+    }
+}
+Plugin::addHook('Intl_init_fr_FR', 'fr_FR');
+
+
+Intl::init($kfc->lang);
+
 // List or Expanded ?
 $view = $kfc->view;
 // show or hide list of feeds ?
@@ -7745,7 +7956,7 @@ if (isset($_GET['login'])) {
         }
         die("Login failed !");
     } else {
-        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         $pb->renderPage('login');
     }
 } elseif (isset($_GET['logout'])) {
@@ -7762,7 +7973,7 @@ if (isset($_GET['login'])) {
     } elseif (isset($_POST['cancel'])) {
         MyTool::redirect();
     }
-    $pb->assign('pagetitle', 'Change your password');
+    $pb->assign('pagetitle', Intl::msg('Change your password').' - '.strip_tags($kfc->title));
     $pb->renderPage('changePassword');
 } elseif (isset($_GET['ajax'])) {
     if (isset($_GET['stars'])) {
@@ -7871,7 +8082,7 @@ if (isset($_GET['login'])) {
     }
     MyTool::renderJson($result);
 } elseif (isset($_GET['help']) && ($kfc->isLogged() || $kfc->visibility === 'protected')) {
-    $pb->assign('pagetitle', 'Help for KrISS feed');
+    $pb->assign('pagetitle', Intl::msg('Help').' - '.strip_tags($kfc->title));
     $pb->renderPage('help');
 } elseif ((isset($_GET['update'])
           && ($kfc->isLogged()
@@ -7916,7 +8127,7 @@ if (isset($_GET['login'])) {
     } else {
         $pb->assign('feedsHash', $feedsHash);
         $pb->assign('forceUpdate', $forceUpdate);
-        $pb->assign('pagetitle', 'Update');
+        $pb->assign('pagetitle', Intl::msg('Update').' - '.strip_tags($kfc->title));
         $pb->renderPage('update');
     }
 } elseif (isset($_GET['config']) && $kfc->isLogged()) {
@@ -7936,7 +8147,7 @@ if (isset($_GET['login'])) {
         $paging = $kfc->getPaging();
 
         $pb->assign('page', 'config');
-        $pb->assign('pagetitle', 'Config - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Configuration').' - '.strip_tags($kfc->title));
         $pb->assign('kfctitle', htmlspecialchars($kfc->title));
         $pb->assign('kfcredirector', htmlspecialchars($kfc->redirector));
         $pb->assign('kfcshaarli', htmlspecialchars($kfc->shaarli));
@@ -7987,7 +8198,7 @@ if (isset($_GET['login'])) {
     } else if (isset($_POST['cancel'])) {
         MyTool::redirect();
     } else {
-        $pb->assign('pagetitle', 'Import');
+        $pb->assign('pagetitle', Intl::msg('Import').' - '.strip_tags($kfc->title));
         $pb->renderPage('import');
     }
 } elseif (isset($_GET['export']) && $kfc->isLogged()) {
@@ -8035,7 +8246,7 @@ if (isset($_GET['login'])) {
         $newfeed = htmlspecialchars($_GET['newfeed']);
     }
     $pb->assign('page', 'add');
-    $pb->assign('pagetitle', 'Add a new feed');
+    $pb->assign('pagetitle', Intl::msg('Add a new feed').' - '.strip_tags($kfc->title));
     $pb->assign('newfeed', $newfeed);
     $pb->assign('folders', $kf->getFolders());
     
@@ -8164,16 +8375,16 @@ if (isset($_GET['login'])) {
     $hashView = '';
     switch($currentHashType){
     case 'all':
-        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     case 'feed':
-        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     case 'folder':
-        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     default:
-        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> starred items</span>';
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     }
     
@@ -8193,13 +8404,13 @@ if (isset($_GET['login'])) {
         $pb->assign('feedsView', $ks->getFeedsView());
     }
     $pb->assign('kf', $ks);
-    $pb->assign('pagetitle', 'Starred items');
+    $pb->assign('pagetitle', Intl::msg('Starred items').' - '.strip_tags($kfc->title));
     $pb->renderPage('index');
 } elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
     $pb->assign('page', 'edit');
-    $pb->assign('pagetitle', 'edit');
+    $pb->assign('pagetitle', Intl::msg('Edit').' - '.strip_tags($kfc->title));
     
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
     // type : 'feed', 'folder', 'all', 'item'
@@ -8369,27 +8580,35 @@ if (isset($_GET['login'])) {
 } elseif (isset($_GET['file'])) {
     if ($_GET['file'] == 'favicon') {
         $favicon = '
-AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAA
-AAAAAAD2+f3/ocLv/0yS6f83hen/NYLn/zR/5v8zfOX/M3rj/zJ44v8ydeH/MXPg/zFx3/8ycd//
-SYTi/6HB7//2+f3/ocLv/0SW8f84l/f/NY/0/zKI8P8ygu3/MXzq/y925/8rb+T/Kmrh/ytn3/8p
-Yd3/Jl3b/yhe2/88d+H/ocDv/02U6v85mvn/OZz6/1qp+P9trvb/P4/x/zGB7f8+hOv/caHu/2ua
-7P80cOL/Tn/k/3OY6P9YgeL/K2Db/0mE4v84iuv/N5j4/1eq+v/g7/7//P3//5vH+f8xh/D/ZqLy
-//j6/v/d6Pv/P3zm/5y68f//////r8Py/ytg2/8ycd//N4nr/zWV9/9lr/n/9Pn///////+22Pz/
-NY/0/5XC+P//////w9j4/zh86P+50Pb//////5q27/8pYd3/MXLf/zaH6v82k/X/Ppn3/43E+/+v
-1/z/XK36/1Sm+P/f7f3//////4i29P9Giez/4ez8//7+//90nev/KWXf/zFz4P82hun/NpDz/zWS
-9f8ylPb/NZf4/1eq+v/I4/7//////9Tn/P9Fk/H/hLT0//7////j7Pz/SIPn/ytr4v8ydeH/NYTo
-/zSL8f9Dl/T/cLP4/53M+//i8P7//////+fz/v9psPn/Tp31/9vq/P//////osP1/y925/8uceT/
-Mnji/zWC5/8xhu//bav0//j7/////////f7//9Po/f9os/r/RqL6/7vb/P//////4O39/1KV7/8v
-eun/MHfn/zN64/80gOb/MILt/2Sj8v/V5/z/vtv7/4W9+f9Gnvf/Uab5/7zd/f/+////9Pn//3y2
-9/8yiPD/MoLt/zF86v80fOX/NH7l/zJ/6/83he3/QI7w/z2Q8f9OnfT/i8H5/97u/v//////8/n/
-/43G/P85mPf/NpD0/zSJ8P8zg+3/NH/m/zN85P8veun/UpPu/6fK9//D3Pr/5/H9//3+////////
-3+7+/3u7+v86nPn/OJv5/ziX9/82kPT/NYnw/zWC5/80e+P/LHTm/2ug7v/7/P////////v9///g
-7f3/oMr5/1Ki9v81lfb/OJj4/zmb+f85nPn/OJf3/zeQ9P83hun/Sonl/y1y5P9SjOr/pcX1/5S8
-9P9wqPL/SZTw/zSL8f8zjvP/NpP1/zeW9v84mfj/OZv5/zmc+v84l/f/TJLp/6DA7/8+geb/LnTl
-/y525v8ueej/L37r/zGD7f80iO//NYzx/zaQ8/83lPX/OJf3/zmZ+P85mvn/RJbx/6DB7//2+f3/
-oMHv/0qJ5f80e+P/NHzk/zR+5f81gOb/NYLn/zaE6P82hun/N4jq/zeJ6/84i+v/TZTq/6DB7//2
-+f3/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-AAAAAAAAAAAAAA==
+AAABAAIAEBAAAAEACABoBQAAJgAAABAQAgABAAEAsAAAAI4FAAAoAAAAEAAAACAAAAABAAgAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACZd2wAoXtsAK2DbAClh3QApZd8AK2ffAC1y5AAudOUA
+LHTmAC525gAueegAL3rpADh86AAvfusAMn/rAE5/5ABYgeIAMILtADKC7QAzg+0AN4XtADGG7wAy
+iPAANYnwAEaJ7AA0i/EAUozqAECO8AA1j/QANpDzAD2Q8QA2kPQAN5D0ADWS9QA2k/UARZPxAFKT
+7gAylPYANZX3ADWX+AA4l/cAQ5f0ADmY9wA3mPgAOJn4ADmZ+ABzmOgAPpn3ADma+QA4m/kAOZv5
+ADmc+QA6nPkAOZz6AE6d9ABOnfUARp73AGug7gBGovoAZKPyAFGm+QBUpvgAWqn4AFeq+gBtq/QA
+XK36AG2u9gBlr/kAabD5AGiz+gBws/gAhLT0AIi29ACatu8AnLrxAJS89ACFvfkAi8H5AK/D8gCN
+xPsApcX1AI3G/ACnyvcAncz7ALnQ9gCv1/wAttj8ALvb/AC+2/sAw9z6ALzd/QDI4/4A1Of8ANXn
+/ADT6P0A4ez8AODv/gDi8P4A5/H9AOfz/gDz+f8A9Pn/APj7/wD7/P8A/P3/AP3+/wD+//8A////
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMSkdFxMAAAAABgQBAgMAADE2P0MA
+AAAAAAAQLxEDAAAsQGFpAAAAAAAAS2xPAwAAJ0RmbFcAAAAADVVsSgQAACMwUFZCPgAASRlgAAAF
+AAAeIiYoQFxsXSRIAAAAAAAAGipHVGJsZEU4AAAAAAAAABZBZ2xqX0Y7WAAAAAAAAAASPF5ZTTk9
+W2tmAAAAAAAADxUcHzdOAABlUisAABQAAAwlU1pjAAAAADUyKSAYAAAJOmhsAAAAAAAAMzQpIQAA
+BxtRTAAAAAAAAC0zNikAAAgICgsOAAAAADEpLjExAAAAAAAAAAAAAAAAAAAAAAABgAAAAYAAAAPA
+AAADwAAAAYAAAAAAAAAADAAAAB8AAAAfAAAADAAAAAAAAAGAAAADwAAAA8AAAAGAAAABgAAAKAAA
+ABAAAAAgAAAAAQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAD/
+/wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//
+AAA=
 ';
         header('Content-Type: image/vnd.microsoft.icon');
         echo base64_decode($favicon);
@@ -8470,16 +8689,16 @@ AAAAAAAAAAAAAA==
         $hashView = '';
         switch($currentHashType){
         case 'all':
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         case 'feed':
-            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         case 'folder':
-            $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         default:
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         }
 
@@ -8501,11 +8720,11 @@ AAAAAAAAAAAAAA==
 
         $pb->renderPage('index');
     } else {
-        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         if (!empty($_SERVER['QUERY_STRING'])) {
             $pb->assign('referer', MyTool::getUrl().'?'.$_SERVER['QUERY_STRING']);
         }
         $pb->renderPage('login');
     }
 }
-//print(number_format(microtime(true)-START_TIME,3).' secondes');
+

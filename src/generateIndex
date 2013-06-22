@@ -1,4 +1,31 @@
 file="kriss_feed.php"
+
+xgettext --from-code=UTF-8 --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c  --omit-header $file class/*.php class/tpl/*.php -o locale/messages.pot
+
+function echoerr() {
+  echo "$@" 1>&2;
+}
+
+# generate Intl plugins
+for i in locale/*
+do
+  if [ -d $i ]
+  then
+    lang=$(basename $i)
+    echo '<?php' > plugins/$lang.php
+    echo 'if (!function_exists('"'$lang'"')) {' >> plugins/$lang.php
+    echo '    function '"$lang"'(&$messages) {' >> plugins/$lang.php
+    echo '        $messages['"'$lang'"'] = unserialize(gzinflate(base64_decode("' >> plugins/$lang.php 
+    php5 -r "include('class/Plugin.php');include('class/Intl.php');Intl::init('$lang');echo base64_encode(gzdeflate(serialize(Intl::load('$lang'))));" >> plugins/$lang.php
+    echo '")));' >> plugins/$lang.php
+    echo '    }' >> plugins/$lang.php
+    echo '}' >> plugins/$lang.php
+    echo "Plugin::addHook('Intl_init_$lang', '$lang');" >> plugins/$lang.php
+    echo  >> plugins/$lang.php
+  fi
+done
+
+
 n=$(\grep "function __autoload" ${file} -n | cut -d ":" -f 1)
 nt=$(cat ${file} | wc -l)
 
@@ -32,7 +59,21 @@ function includeFile {
         then
           catFile $fic2
         else
-          catFile class/$fic2
+          if [ -f class/$fic2 ]
+          then
+            catFile class/$fic2
+          else
+            if [[ "$fic2" == "plugins" ]]
+            then
+              for i in plugins/*.php
+              do
+                echo -n "del>"
+                cat $i
+              done | sed -e 's:del><?php::g' | removeComments
+            else
+              echoerr "erreur catFile $fic2"
+            fi
+          fi
         fi
     else
         printf "%s\n" "$line"

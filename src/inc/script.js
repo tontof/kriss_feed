@@ -1,7 +1,7 @@
 /*jshint sub:true, evil:true */
 
 (function () {
-
+  "use strict";
   var view = '', // data-view
       listFeeds = '', // data-list-feeds
       filter = '', // data-filter
@@ -28,7 +28,14 @@
       currentItemHash = '',
       currentUnread = 0,
       title = '',
-      cache = {};
+      cache = {},
+      intlTop = 'top',
+      intlShare = 'share',
+      intlRead = 'read',
+      intlUnread = 'unread',
+      intlStar = 'star',
+      intlUnstar = 'unstar',
+      intlFrom = 'from';
 
   /**
    * trim function
@@ -882,14 +889,14 @@
   }
 
   function setDivItem(div, item) {
-    var markAs = 'read', starred = 'star', target = ' target="_blank"';
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"';
 
     if (item['read'] == 1) {
-      markAs = 'unread';
+      markAs = intlUnread;
     }
 
     if (item['starred'] == 1) {
-      starred = 'unstar';
+      starred = intlUnstar;
     }
 
     if (!blank) {
@@ -897,7 +904,7 @@
     }
 
     div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">' + intlShare + '</span></a> ' +
       (stars?'':
       '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
       '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
@@ -910,7 +917,7 @@
       item['time']['expanded'] +
       '</div>' +
       '<div class="item-info-end item-info-authors">' +
-      'from <a class="item-via" href="' + item['via'] + '">' +
+      intlFrom + ' <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
       '</a> ' +
       '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
@@ -927,8 +934,8 @@
       '</article></div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
-      '<a class="item-top" href="#status"><span class="label label-expanded">top</span></a> ' +
-      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">' + intlShare + '</span></a> ' +
       (stars?'':
       '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
       '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
@@ -948,10 +955,10 @@
   }
 
   function setLiItem(li, item) {
-    var markAs = 'read', target = ' target="_blank"';
+    var markAs = intlRead, target = ' target="_blank"';
 
     if (item['read'] == 1) {
-      markAs = 'unread';
+      markAs = intlUnread;
     }
 
     if (!blank) {
@@ -1888,6 +1895,27 @@
     if (elementIndex.hasAttribute('data-is-logged')) {
       isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
       isLogged = (isLogged === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-intl-top')) {
+      intlTop = elementIndex.getAttribute('data-intl-top');
+    }
+    if (elementIndex.hasAttribute('data-intl-share')) {
+      intlShare = elementIndex.getAttribute('data-intl-share');
+    }
+    if (elementIndex.hasAttribute('data-intl-read')) {
+      intlRead = elementIndex.getAttribute('data-intl-read');
+    }
+    if (elementIndex.hasAttribute('data-intl-unread')) {
+      intlUnread = elementIndex.getAttribute('data-intl-unread');
+    }
+    if (elementIndex.hasAttribute('data-intl-star')) {
+      intlStar = elementIndex.getAttribute('data-intl-star');
+    }
+    if (elementIndex.hasAttribute('data-intl-unstar')) {
+      intlUnstar = elementIndex.getAttribute('data-intl-unstar');
+    }
+    if (elementIndex.hasAttribute('data-intl-from')) {
+      intlFrom = elementIndex.getAttribute('data-intl-from');
     }
 
     status = document.getElementById('status').innerHTML;
