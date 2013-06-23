@@ -7389,9 +7389,6 @@ class Opml
         // with folder outline node
         foreach ($withFolder as $folderHash => $arrayHashUrl) {
             $outline = $opmlData->createElement('outline');
-            $outlineTitle = $opmlData->createAttribute('title');
-            $outlineTitle->value = htmlspecialchars($folders[$folderHash]['title']);
-            $outline->appendChild($outlineTitle);
             $outlineText = $opmlData->createAttribute('text');
             $outlineText->value = htmlspecialchars($folders[$folderHash]['title']);
             $outline->appendChild($outlineText);
