@@ -691,7 +691,7 @@ section {
   display: block;
 }
 
-html {
+html, button {
   font-size: 100%;
 }
 
