@@ -115,6 +115,7 @@ class Intl
             case '#,' : // flag...
                 $fuzzy = in_array('fuzzy', preg_split('/,\s*/', $data));
             case '#' : // translator-comments
+            case '#~' : // translator-comments
             case '#.' : // extracted-comments
             case '#:' : // reference...
             case '#|' : // msgid previous-untranslated-string

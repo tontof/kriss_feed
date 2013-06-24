@@ -785,12 +785,16 @@ if (isset($_GET['login'])) {
 
     header('Location: '.$shaarli);
 } elseif (isset($_GET['file'])) {
-    if ($_GET['file'] == 'favicon') {
+    if ($_GET['file'] == 'favicon.ico') {
         $favicon = '
 <?php include("inc/favicon.ico"); ?>
 ';
         header('Content-Type: image/vnd.microsoft.icon');
         echo base64_decode($favicon);
+        exit();
+    } else if ($_GET['file'] == 'style.css') {
+        exit();
+    } else if ($_GET['file'] == 'script.js') {
         exit();
     }
 } else {
