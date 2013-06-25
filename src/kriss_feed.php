@@ -69,6 +69,10 @@ function __autoload($className)
     include_once 'class/'. $className . '.php';
 }
 
+Plugin::init();
+
+/* ?><?php include("plugins"); ?><?php */
+
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
@@ -87,10 +91,6 @@ $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
 $pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
-
-Plugin::init();
-
-/* ?><?php include("plugins"); ?><?php */
 
 Intl::init($kfc->lang);
 

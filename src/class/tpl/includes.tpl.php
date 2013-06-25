@@ -3,7 +3,7 @@
 <?php if (is_file('inc/favicon.ico')) { ?>
     <link href="inc/favicon.ico" rel="icon" type="image/x-icon">
 <?php } else { ?>
-    <link href="?file=favicon" rel="icon" type="image/x-icon">
+    <link href="?file=favicon.ico" rel="icon" type="image/x-icon">
 <?php } ?>
 <?php if (is_file('inc/style.css')) { ?>
     <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
