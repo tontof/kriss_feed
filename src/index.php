@@ -6214,7 +6214,7 @@ class Feed
         return strlen($str);
     }
 
-    public function loadXml($xmlUrl, &$etag, &$lastModified)
+    public function loadXml($xmlUrl, &$etag, &$lastModified, &$error = '')
     {
         // reinitialize cache headers
         $this->_headers = array();
@@ -6248,6 +6248,7 @@ class Feed
                 $etag = $output['etag'];
                 $lastModified = $output['last-modified'];
             }
+            $error = $output['error'];
 
             $document->loadXML($output['data']);
         } else {
@@ -6365,7 +6366,7 @@ class Feed
 
         unset($this->_data['feeds'][$feedHash]['error']);
         $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
-        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified']);
+        $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified'], $error);
         if (empty($this->_data['feeds'][$feedHash]['etag'])) {
             unset($this->_data['feeds'][$feedHash]['etag']);
         }
@@ -6376,7 +6377,9 @@ class Feed
 
         if (!$xml) {
             if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
-                $error = ERROR_LAST_UPDATE;
+                if (empty($error)) {
+                    $error = ERROR_LAST_UPDATE;
+                }
             } else {
                 $error = ERROR_NO_XML;
             }
@@ -6502,7 +6505,8 @@ class Feed
                 }
                 $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
             } else {
-                $error = ERROR_UNKNOWN;
+                // Feed may not be modified : code 304
+                // $error = ERROR_UNKNOWN;
             }
         }
 
@@ -6751,11 +6755,13 @@ class Feed
             return 'Items may have been missed since last update';
             break;
         case ERROR_LAST_UPDATE:
-        case ERROR_UNKNOWN:
             return 'Problem with the last update';
             break;
+        case ERROR_UNKNOWN:
+            return 'Unknown problem';
+            break;
         default:
-            return 'unknown error';
+            return $error;
             break;
         }
     }
