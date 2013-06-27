@@ -1246,8 +1246,9 @@ class Feed
             }
 
             $error = $output['error'];
+
             $isXml = $document->loadXML($output['data']);
-            if ($isXml === false && empty($error)) {
+            if ($isXml === false && empty($error) && $output['code'] !== 304) {
                 $error = ERROR_NO_XML;
             }
         } else {
@@ -1257,7 +1258,7 @@ class Feed
 
             // request a file through HTTP
             $isXml = $document->load($xmlUrl);
-            if ($isXml === false && empty($error)) {
+            if ($isXml === false && empty($error) && $output['code'] !== 304) {
                 $error = ERROR_NO_XML;
             }            
         }
@@ -1288,8 +1289,8 @@ class Feed
                 unset($this->_data['feeds'][$feedHash]['lastModified']);
             }
 
-            if (!empty($error)) {
-                return false;
+            if ($error !== '') {
+                return array('error' => $this->getError($error));
             } else {
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
@@ -1331,9 +1332,11 @@ class Feed
 
                 return true;
             }
+        } else {
+            return array('error' => Intl::msg('Duplicated feed'));
         }
 
-        return false;
+        return array('error' => $this->getError(ERROR_UNKNOWN));
     }
 
     /**
@@ -1384,7 +1387,7 @@ class Feed
      *
      * @return array feed information, error, lastUpdate and newItems
      */
-    public function updateChannel($feedHash)
+    public function updateChannel($feedHash, $force)
     {
         $error = '';
         $newItems = array();
@@ -1398,6 +1401,10 @@ class Feed
 
         unset($this->_data['feeds'][$feedHash]['error']);
         $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
+        if ($force) {
+            $this->_data['feeds'][$feedHash]['etag'] = '';
+            $this->_data['feeds'][$feedHash]['lastModified'] = '';
+        }
         $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified'], $error);
         if (empty($this->_data['feeds'][$feedHash]['etag'])) {
             unset($this->_data['feeds'][$feedHash]['etag']);
@@ -1407,7 +1414,6 @@ class Feed
             unset($this->_data['feeds'][$feedHash]['lastModified']);
         }
 
-        if (empty($error)) {
             // if feed description is empty try to update description
             // (after opml import, description is often empty)
             if (empty($this->_data['feeds'][$feedHash]['description'])) {
@@ -1528,12 +1534,7 @@ class Feed
                     }
                 }
                 $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
-            } else {
-                if (empty($error)) {
-                    $error = ERROR_UNKNOWN;
-                }
             }
-        }
 
         // update feed information
         $this->_data['feeds'][$feedHash]['lastUpdate'] = time();
@@ -1602,7 +1603,7 @@ class Feed
             ob_flush();
             flush();
             if ($force or $this->needUpdate($feed)) {
-                $info = $this->updateChannel($feedHash);
+                $info = $this->updateChannel($feedHash, $force);
                 $str = '<li>'.number_format(microtime(true)-$start,3).' seconds: Updated: <span class="text-success">'.count($info['newItems']).' new item(s)</span>';
                 if (empty($info['error'])) {
                     $str .= '</li>';
@@ -1846,16 +1847,16 @@ class Feed
     {
         switch ($error) {
         case ERROR_NO_XML:
-            return 'Feed is not in XML format';
+            return Intl::msg('Feed is not a valid XML');
             break;
         case ERROR_ITEMS_MISSED:
-            return 'Items may have been missed since last update';
+            return Intl::msg('Items may have been missed since last update');
             break;
         case ERROR_LAST_UPDATE:
-            return 'Problem with the last update';
+            return Intl::msg('Problem with the last update');
             break;
         case ERROR_UNKNOWN:
-            return 'Unknown problem';
+            return Intl::msg('Unknown problem');
             break;
         default:
             return $error;

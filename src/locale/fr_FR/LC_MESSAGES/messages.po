@@ -12,7 +12,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: kriss_feed.php:166
-#: kriss_feed.php:902
+#: kriss_feed.php:906
 #: class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136
 #: class/tpl/nav.tpl.php:157
@@ -59,30 +59,50 @@ msgstr "Ajouter un nouveau flux"
 #: kriss_feed.php:591
 #: kriss_feed.php:594
 msgid "starred items"
-msgstr "articles favoris"
+msgstr "articles conservés"
 
 #: kriss_feed.php:614
 #: class/tpl/config.tpl.php:301
 #: class/tpl/config.tpl.php:304
 #: class/tpl/nav.tpl.php:119
 msgid "Starred items"
-msgstr "Articles favoris"
+msgstr "Articles conservés"
 
 #: kriss_feed.php:620
 #: class/tpl/config.tpl.php:280
 msgid "Edit"
 msgstr "Édition"
 
-#: kriss_feed.php:871
-#: kriss_feed.php:874
-#: kriss_feed.php:877
-#: kriss_feed.php:880
+#: kriss_feed.php:875
+#: kriss_feed.php:878
+#: kriss_feed.php:881
+#: kriss_feed.php:884
 msgid "unread items"
 msgstr "articles non lus"
 
 #: class/Feed.php:183
 msgid "All feeds"
 msgstr "Tous les flux"
+
+#: class/Feed.php:1336
+msgid "Duplicated feed"
+msgstr "Flux déjà présent"
+
+#: class/Feed.php:1850
+msgid "Feed is not a valid XML"
+msgstr "Le flux XML n'est pas valide"
+
+#: class/Feed.php:1853
+msgid "Items may have been missed since last update"
+msgstr "Des articles peuvent être manquants depuis la dernière mise à jour"
+
+#: class/Feed.php:1856
+msgid "Problem with the last update"
+msgstr "Problème avec la dernière mise à jour"
+
+#: class/Feed.php:1859
+msgid "Unknown problem"
+msgstr "Problème inconnu"
 
 #: class/tpl/add_feed.tpl.php:16
 msgid "Feed URL"
@@ -317,7 +337,7 @@ msgstr "Ne précharge pas les articles"
 
 #: class/tpl/config.tpl.php:187
 msgid "Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you do not read all the page items."
-msgstr "Précharge les articles de la page courante. Cela permet d'améliorer la rapidité de chargement à l'ouvertur d'un nouvel article. Note : cela va utiliser beaucoup plus de bande passant si vous ne lisez pas tous les articles de la page."
+msgstr "Précharge les articles de la page courante. Cela permet d'améliorer la rapidité de chargement à l'ouverture d'un nouvel article. Note : cela va utiliser beaucoup plus de bande passante si vous ne lisez pas tous les articles de la page."
 
 #: class/tpl/config.tpl.php:197
 msgid "Do not open link in new tab"
@@ -536,7 +556,7 @@ msgstr "Pensez à vérifier les droits !"
 #: class/tpl/edit_feed.tpl.php:82
 #: class/tpl/edit_folder.tpl.php:24
 msgid "Save modifications"
-msgstr "Enregister les modifications"
+msgstr "Enregistrer les modifications"
 
 #: class/tpl/edit_all.tpl.php:14
 msgid "Reorder folders"
@@ -773,6 +793,48 @@ msgstr "Taille maximale :"
 msgid "Overwrite existing feeds"
 msgstr "Écraser les flux existants"
 
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:93
+msgid "top"
+msgstr "haut"
+
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:56
+#: class/tpl/list_items.tpl.php:94
+msgid "share"
+msgstr "partager"
+
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:36
+#: class/tpl/list_items.tpl.php:61
+#: class/tpl/list_items.tpl.php:99
+msgid "read"
+msgstr "lire"
+
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:34
+#: class/tpl/list_items.tpl.php:59
+#: class/tpl/list_items.tpl.php:97
+msgid "unread"
+msgstr "à lire"
+
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:67
+#: class/tpl/list_items.tpl.php:105
+msgid "star"
+msgstr "conserver"
+
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:65
+#: class/tpl/list_items.tpl.php:103
+msgid "unstar"
+msgstr "oublier"
+
+#: class/tpl/index.tpl.php:7
+#: class/tpl/list_items.tpl.php:76
+msgid "from"
+msgstr "de"
+
 #: class/tpl/install.tpl.php:13
 msgid "KrISS feed installation"
 msgstr "Installation de KrISS feed"
@@ -794,41 +856,6 @@ msgstr "Mot de passe"
 #: class/tpl/install.tpl.php:28
 msgid "Install KrISS feed"
 msgstr "Installer KrISS feed"
-
-#: class/tpl/list_items.tpl.php:34
-#: class/tpl/list_items.tpl.php:59
-#: class/tpl/list_items.tpl.php:97
-msgid "unread"
-msgstr "à lire"
-
-#: class/tpl/list_items.tpl.php:36
-#: class/tpl/list_items.tpl.php:61
-#: class/tpl/list_items.tpl.php:99
-msgid "read"
-msgstr "lire"
-
-#: class/tpl/list_items.tpl.php:56
-#: class/tpl/list_items.tpl.php:94
-msgid "share"
-msgstr "partager"
-
-#: class/tpl/list_items.tpl.php:65
-#: class/tpl/list_items.tpl.php:103
-msgid "unstar"
-msgstr "défavoriser"
-
-#: class/tpl/list_items.tpl.php:67
-#: class/tpl/list_items.tpl.php:105
-msgid "star"
-msgstr "favoriser"
-
-#: class/tpl/list_items.tpl.php:76
-msgid "from"
-msgstr "de"
-
-#: class/tpl/list_items.tpl.php:93
-msgid "top"
-msgstr "haut"
 
 #: class/tpl/login.tpl.php:13
 msgid "Welcome to KrISS feed"

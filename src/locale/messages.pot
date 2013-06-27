@@ -51,6 +51,26 @@ msgstr ""
 msgid "All feeds"
 msgstr ""
 
+#: class/Feed.php:1336
+msgid "Duplicated feed"
+msgstr ""
+
+#: class/Feed.php:1850
+msgid "Feed is not a valid XML"
+msgstr ""
+
+#: class/Feed.php:1853
+msgid "Items may have been missed since last update"
+msgstr ""
+
+#: class/Feed.php:1856
+msgid "Problem with the last update"
+msgstr ""
+
+#: class/Feed.php:1859
+msgid "Unknown problem"
+msgstr ""
+
 #: class/tpl/add_feed.tpl.php:16
 msgid "Feed URL"
 msgstr ""
@@ -90,7 +110,9 @@ msgstr ""
 msgid "New password"
 msgstr ""
 
-#: class/tpl/change_password.tpl.php:34 class/tpl/config.tpl.php:373
+#: class/tpl/change_password.tpl.php:34 class/tpl/config.tpl.php:84
+#: class/tpl/config.tpl.php:222 class/tpl/config.tpl.php:309
+#: class/tpl/config.tpl.php:346 class/tpl/config.tpl.php:373
 #: class/tpl/edit_all.tpl.php:27 class/tpl/edit_all.tpl.php:46
 #: class/tpl/edit_all.tpl.php:62 class/tpl/edit_all.tpl.php:85
 #: class/tpl/edit_feed.tpl.php:84 class/tpl/edit_folder.tpl.php:23
@@ -195,6 +217,15 @@ msgstr ""
 #: class/tpl/config.tpl.php:78
 msgid ""
 "Check this if you get disconnected often or if your IP address changes often."
+msgstr ""
+
+#: class/tpl/config.tpl.php:85 class/tpl/config.tpl.php:223
+#: class/tpl/config.tpl.php:310 class/tpl/config.tpl.php:347
+#: class/tpl/config.tpl.php:374 class/tpl/edit_all.tpl.php:28
+#: class/tpl/edit_all.tpl.php:47 class/tpl/edit_all.tpl.php:63
+#: class/tpl/edit_all.tpl.php:87 class/tpl/edit_feed.tpl.php:82
+#: class/tpl/edit_folder.tpl.php:24
+msgid "Save modifications"
 msgstr ""
 
 #: class/tpl/config.tpl.php:90
@@ -489,13 +520,6 @@ msgstr ""
 
 #: class/tpl/config.tpl.php:370
 msgid "Do not forget to check right permissions!"
-msgstr ""
-
-#: class/tpl/config.tpl.php:374 class/tpl/edit_all.tpl.php:28
-#: class/tpl/edit_all.tpl.php:47 class/tpl/edit_all.tpl.php:63
-#: class/tpl/edit_all.tpl.php:87 class/tpl/edit_feed.tpl.php:82
-#: class/tpl/edit_folder.tpl.php:24
-msgid "Save modifications"
 msgstr ""
 
 #: class/tpl/edit_all.tpl.php:14

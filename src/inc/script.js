@@ -660,10 +660,10 @@
           url = listLinks[i].href;
           if (listLinks[i].href.indexOf('unstar=') > -1) {
             listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
-            listLinks[i].firstChild.innerHTML = 'star';
+            listLinks[i].firstChild.innerHTML = intlStar;
           } else {
             listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
-            listLinks[i].firstChild.innerHTML = 'unstar';
+            listLinks[i].firstChild.innerHTML = intlUnstar;
           }
         }
       }

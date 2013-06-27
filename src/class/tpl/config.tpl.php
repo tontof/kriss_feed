@@ -81,8 +81,8 @@
 
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                     </div>
                   </div>
                 </fieldset>
@@ -219,8 +219,8 @@
 
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                     </div>
                   </div>
                 </fieldset>
@@ -306,8 +306,8 @@
                   </div>
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                     </div>
                   </div>
                 </fieldset>
@@ -343,8 +343,8 @@
                   </div>
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg('Save modifications'); ?>" />
                     </div>
                   </div>
                 </fieldset>

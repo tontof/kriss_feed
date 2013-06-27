@@ -417,7 +417,8 @@ if (isset($_GET['login'])) {
     $kf->loadData();
 
     if (isset($_POST['newfeed']) && !empty($_POST['newfeed'])) {
-        if ($kf->addChannel($_POST['newfeed'])) {
+        $addc = $kf->addChannel($_POST['newfeed']);
+        if (empty($addc['error'])) {
             // Add success
             $folders = array();
             if (!empty($_POST['folders'])) {
@@ -440,8 +441,7 @@ if (isset($_GET['login'])) {
             $returnurl = empty($_SERVER['HTTP_REFERER'])
                 ? MyTool::getUrl()
                 : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("The feed you are trying to add already exists'
-                . ' or is wrong. Check your feed or try again later.");'
+            echo '<script>alert("' . $addc['error'] . '");'
                 . 'document.location=\'' . htmlspecialchars($returnurl)
                 . '\';</script>';
             exit;
