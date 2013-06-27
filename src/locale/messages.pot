@@ -1,4 +1,4 @@
-#: kriss_feed.php:166 kriss_feed.php:906 class/tpl/login.tpl.php:34
+#: kriss_feed.php:166 kriss_feed.php:915 class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136 class/tpl/nav.tpl.php:157
 msgid "Sign in"
 msgstr ""
@@ -43,7 +43,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: kriss_feed.php:875 kriss_feed.php:878 kriss_feed.php:881 kriss_feed.php:884
+#: kriss_feed.php:884 kriss_feed.php:887 kriss_feed.php:890 kriss_feed.php:893
 msgid "unread items"
 msgstr ""
 

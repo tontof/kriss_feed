@@ -176,8 +176,8 @@ class FeedConf
     /**
      * Constructor
      *
-     * @param string    $configFile Configuration file
-     * @param string    $version    Kriss feed version
+     * @param string $configFile Configuration file
+     * @param string $version    Kriss feed version
      */
     public function __construct($configFile, $version)
     {
@@ -449,14 +449,14 @@ class FeedConf
     {
         $currentPage = $this->currentPage;
         if (isset($_GET['page']) && !empty($_GET['page'])) {
-            $currentPage = (int)$_GET['page'];
+            $currentPage = (int) $_GET['page'];
         } else if (isset($_GET['previousPage']) && !empty($_GET['previousPage'])) {
-            $currentPage = (int)$_GET['previousPage'] - 1;
+            $currentPage = (int) $_GET['previousPage'] - 1;
             if ($currentPage < 1) {
                 $currentPage = 1;
             }
         } else if (isset($_GET['nextPage']) && !empty($_GET['nextPage'])) {
-            $currentPage = (int)$_GET['nextPage'] + 1;
+            $currentPage = (int) $_GET['nextPage'] + 1;
         }
 
         return $currentPage;
@@ -662,6 +662,11 @@ class FeedConf
         $this->blank = $blank;
     }
 
+    /**
+     * Get menu
+     *
+     * @return array of menu sorted elements
+     */
     public function getMenu()
     {
         $menu = array();

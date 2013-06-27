@@ -32,7 +32,7 @@ define('ERROR_LAST_UPDATE', 3);
 define('ERROR_UNKNOWN', 4);
 
 // fix some warning
-date_default_timezone_set('Europe/Paris'); 
+date_default_timezone_set('Europe/Paris');
 
 if (!is_dir(DATA_DIR)) {
     if (!@mkdir(DATA_DIR, 0755)) {
@@ -46,9 +46,9 @@ if (!is_dir(DATA_DIR)) {
     @chmod(DATA_DIR, 0755);
     if (!is_file(DATA_DIR.'/.htaccess')) {
         if (!@file_put_contents(
-                DATA_DIR.'/.htaccess',
-                "Allow from none\nDeny from all\n"
-                )) {
+            DATA_DIR.'/.htaccess',
+            "Allow from none\nDeny from all\n"
+        )) {
             echo '
 <script>
  alert("Can not protect '.DATA_DIR.'");
@@ -359,14 +359,14 @@ class FeedConf
     {
         $currentPage = $this->currentPage;
         if (isset($_GET['page']) && !empty($_GET['page'])) {
-            $currentPage = (int)$_GET['page'];
+            $currentPage = (int) $_GET['page'];
         } else if (isset($_GET['previousPage']) && !empty($_GET['previousPage'])) {
-            $currentPage = (int)$_GET['previousPage'] - 1;
+            $currentPage = (int) $_GET['previousPage'] - 1;
             if ($currentPage < 1) {
                 $currentPage = 1;
             }
         } else if (isset($_GET['nextPage']) && !empty($_GET['nextPage'])) {
-            $currentPage = (int)$_GET['nextPage'] + 1;
+            $currentPage = (int) $_GET['nextPage'] + 1;
         }
 
         return $currentPage;
@@ -3481,15 +3481,19 @@ foreach(array_keys($paging) as $pagingOpt) {
         sel = '«' + sel + '»';
       }
 
-      window.open(
-        shaarli
-        .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
-        .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
-        .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
-        .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
-        '_blank',
-        'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
-      );
+      if (shaarli !== '') {
+        window.open(
+          shaarli
+          .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
+          .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
+          .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
+          .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
+          '_blank',
+          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
+        );
+      } else {
+        alert('Please configure your share link first');
+      }
     } else {
       loadDivItem(itemHash);
       alert('Sorry ! This item is not loaded, try again !');
@@ -8074,7 +8078,7 @@ if (isset($_GET['login'])) {
             }
         }
         $i = 0;
-        foreach(array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
+        foreach (array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
             if (isset($_GET['stars'])) {
                 $result['page'][$i] = $kf->getItem($itemHash);
             } else {
@@ -8223,7 +8227,7 @@ if (isset($_GET['login'])) {
                 . '\';</script>';
             exit;
         }
-        
+
         $kf->loadData();
         $kf->setData(Opml::importOpml($kf->getData()));
         $kf->sortFeeds();
@@ -8283,7 +8287,7 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', Intl::msg('Add a new feed').' - '.strip_tags($kfc->title));
     $pb->assign('newfeed', $newfeed);
     $pb->assign('folders', $kf->getFolders());
-    
+
     $pb->renderPage('addFeed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
@@ -8335,7 +8339,7 @@ if (isset($_GET['login'])) {
 
         $item = $kf->loadItem($hash, false);
         $feed = $kf->getFeed(substr($hash, 0, 6));
-        
+
         $needSave = $ks->markItem($hash, $starred, $feed, $item);
     } else {
         $hash = $_GET['unstar'];
@@ -8376,9 +8380,9 @@ if (isset($_GET['login'])) {
         if (isset($_GET['next'])) {
             if ($index < count($listHash)-1) {
                 $index++;
-            } 
+            }
         }
-        
+
         if (isset($_GET['previous'])) {
             if ($index > 0) {
                 $index--;
@@ -8391,7 +8395,7 @@ if (isset($_GET['login'])) {
     } else {
         $index = count($listHash) - 1;
     }
-    
+
     // pagination
     $currentPage = (int) ($index/$byPage)+1;
     if ($currentPage <= 0) {
@@ -8400,10 +8404,10 @@ if (isset($_GET['login'])) {
     $begin = ($currentPage - 1) * $byPage;
     $maxPage = (count($listItems) <= $byPage) ? '1' : ceil(count($listItems) / $byPage);
     $nbItems = count($listItems);
-    
+
     // list items
     $listItems = array_slice($listItems, $begin, $byPage, true);
-    
+
     // type : 'feed', 'folder', 'all', 'item'
     $currentHashType = $kf->hashType($currentHash);
     $hashView = '';
@@ -8421,15 +8425,15 @@ if (isset($_GET['login'])) {
         $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
         break;
     }
-    
+
     $menu = $kfc->getMenu();
     $paging = $kfc->getPaging();
 
-    $pb->assign('menu',  $menu);
-    $pb->assign('paging',  $paging);
+    $pb->assign('menu', $menu);
+    $pb->assign('paging', $paging);
     $pb->assign('currentHashType', $currentHashType);
     $pb->assign('currentHashView', $hashView);
-    $pb->assign('currentPage',  (int) $currentPage);
+    $pb->assign('currentPage', (int) $currentPage);
     $pb->assign('maxPage', (int) $maxPage);
     $pb->assign('currentItemHash', $currentItemHash);
     $pb->assign('nbItems', $nbItems);
@@ -8445,7 +8449,7 @@ if (isset($_GET['login'])) {
     $kf->loadData();
     $pb->assign('page', 'edit');
     $pb->assign('pagetitle', Intl::msg('Edit').' - '.strip_tags($kfc->title));
-    
+
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($currentHash);
@@ -8593,24 +8597,33 @@ if (isset($_GET['login'])) {
     $kf->loadData();
     $item = $kf->getItem($_GET['shaarli'], false);
     $shaarli = $kfc->shaarli;
-    // remove sel used with javascript
-    $shaarli = str_replace('${sel}', '', $shaarli);
+    if (!empty($shaarli)) {
+        // remove sel used with javascript
+        $shaarli = str_replace('${sel}', '', $shaarli);
 
-    $url = htmlspecialchars_decode($item['link']);
-    $via = htmlspecialchars_decode($item['via']);
-    $title = htmlspecialchars_decode($item['title']);
+        $url = htmlspecialchars_decode($item['link']);
+        $via = htmlspecialchars_decode($item['via']);
+        $title = htmlspecialchars_decode($item['title']);
 
-    if (parse_url($url, PHP_URL_HOST) !== parse_url($via, PHP_URL_HOST)) {
-        $via = 'via '.$via;
+        if (parse_url($url, PHP_URL_HOST) !== parse_url($via, PHP_URL_HOST)) {
+            $via = 'via '.$via;
+        } else {
+            $via = '';
+        }
+
+        $shaarli = str_replace('${url}', urlencode($url), $shaarli);
+        $shaarli = str_replace('${title}', urlencode($title), $shaarli);
+        $shaarli = str_replace('${via}', urlencode($via), $shaarli);
+
+        header('Location: '.$shaarli);
     } else {
-        $via = '';
+        echo '
+<script>
+ alert("Please configure your share link first");
+ document.location="'.MyTool::getUrl().'";
+</script>';
+        exit();
     }
-
-    $shaarli = str_replace('${url}', urlencode($url), $shaarli);
-    $shaarli = str_replace('${title}', urlencode($title), $shaarli);
-    $shaarli = str_replace('${via}', urlencode($via), $shaarli);
-
-    header('Location: '.$shaarli);
 } elseif (isset($_GET['file'])) {
     if ($_GET['file'] == 'favicon.ico') {
         $favicon = '
@@ -8688,7 +8701,7 @@ AAA=
             if (isset($_GET['next'])) {
                 if ($index < count($listHash)-1) {
                     $index++;
-                } 
+                }
             }
 
             if (isset($_GET['previous'])) {
@@ -8742,11 +8755,11 @@ AAA=
 
         $menu = $kfc->getMenu();
         $paging = $kfc->getPaging();
-        $pb->assign('menu',  $menu);
-        $pb->assign('paging',  $paging);
+        $pb->assign('menu', $menu);
+        $pb->assign('paging', $paging);
         $pb->assign('currentHashType', $currentHashType);
         $pb->assign('currentHashView', $hashView);
-        $pb->assign('currentPage',  (int) $currentPage);
+        $pb->assign('currentPage', (int) $currentPage);
         $pb->assign('maxPage', (int) $maxPage);
         $pb->assign('currentItemHash', $currentItemHash);
         $pb->assign('nbItems', $nbItems);
