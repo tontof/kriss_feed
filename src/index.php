@@ -6214,7 +6214,7 @@ class Feed
         return strlen($str);
     }
 
-    public function loadXml($xmlUrl, &$etag, &$lastModified, &$error = '')
+    public function loadXml($xmlUrl, &$etag, &$lastModified, &$error)
     {
         // reinitialize cache headers
         $this->_headers = array();
@@ -6248,16 +6248,22 @@ class Feed
                 $etag = $output['etag'];
                 $lastModified = $output['last-modified'];
             }
-            $error = $output['error'];
 
-            $document->loadXML($output['data']);
+            $error = $output['error'];
+            $isXml = $document->loadXML($output['data']);
+            if ($isXml === false && empty($error)) {
+                $error = ERROR_NO_XML;
+            }
         } else {
             // try using libxml
             $context = stream_context_create($opts);
             libxml_set_streams_context($context);
 
             // request a file through HTTP
-            $document->load($xmlUrl);
+            $isXml = $document->load($xmlUrl);
+            if ($isXml === false && empty($error)) {
+                $error = ERROR_NO_XML;
+            }            
         }
         // show back warning/error
         restore_error_handler();
@@ -6268,8 +6274,9 @@ class Feed
     public function addChannel($xmlUrl)
     {
         $feedHash = MyTool::smallHash($xmlUrl);
+        $error = '';
         if (!isset($this->_data['feeds'][$feedHash])) {
-            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified']);
+            $xml = $this->loadXml($xmlUrl, $this->_data['feeds'][$feedHash]['etag'], $this->_data['feeds'][$feedHash]['lastModified'], $error);
             if (empty($this->_data['feeds'][$feedHash]['etag'])) {
                 unset($this->_data['feeds'][$feedHash]['etag']);
             }
@@ -6278,7 +6285,7 @@ class Feed
                 unset($this->_data['feeds'][$feedHash]['lastModified']);
             }
 
-            if (!$xml) {
+            if (!empty($error)) {
                 return false;
             } else {
                 $channel = $this->getChannelFromXml($xml);
@@ -6375,15 +6382,7 @@ class Feed
             unset($this->_data['feeds'][$feedHash]['lastModified']);
         }
 
-        if (!$xml) {
-            if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
-                if (empty($error)) {
-                    $error = ERROR_LAST_UPDATE;
-                }
-            } else {
-                $error = ERROR_NO_XML;
-            }
-        } else {
+        if (empty($error)) {
             // if feed description is empty try to update description
             // (after opml import, description is often empty)
             if (empty($this->_data['feeds'][$feedHash]['description'])) {
@@ -6505,8 +6504,9 @@ class Feed
                 }
                 $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
             } else {
-                // Feed may not be modified : code 304
-                // $error = ERROR_UNKNOWN;
+                if (empty($error)) {
+                    $error = ERROR_UNKNOWN;
+                }
             }
         }
 
