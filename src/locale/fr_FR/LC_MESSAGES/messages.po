@@ -185,7 +185,7 @@ msgstr "KrISS feed protégé"
 
 #: class/tpl/config.tpl.php:40
 msgid "Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds..."
-msgstr "N'importe qui peut accéder aux flux et articles mais seulement vous pouver modifier la configuration, marquer les articles comme lus, mettre à jour les flux..."
+msgstr "N'importe qui peut accéder aux flux et articles mais seulement vous pouvez modifier la configuration, marquer les articles comme lus, mettre à jour les flux..."
 
 #: class/tpl/config.tpl.php:44
 msgid "Private KrISS feed"
