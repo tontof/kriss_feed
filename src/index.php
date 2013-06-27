@@ -6145,7 +6145,7 @@ class Feed
         return $output;
     }
 
-    public function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
+    public function curl_exec_follow(&$ch, $redirects = 20) {
         if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
             curl_setopt($ch, CURLOPT_HEADER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
@@ -6159,7 +6159,7 @@ class Feed
 
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-            $data = substr($data, strpos($data, "\r\n\r\n")+4);
+            $data = substr($data, $header_size);
         } else {
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
             curl_setopt($ch, CURLOPT_HEADER, true);
@@ -6185,10 +6185,11 @@ class Feed
                 }
                 curl_setopt($ch, CURLOPT_URL, $matches[1]);
             } while (--$redirects);
-            if (!$redirects)
+            if (!$redirects) {
                 trigger_error('Too many redirects. When following redirects, libcurl hit the maximum amount.', E_USER_WARNING);
-            if (!$curloptHeader)
-                $data = substr($data, strpos($data, "\r\n\r\n")+4);
+            }
+
+            $data = substr($data, $header_size);
 
         }
 
