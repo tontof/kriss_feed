@@ -324,6 +324,10 @@ class FeedConf
             $lang = $_SESSION['lang'];
         }
 
+        if (!in_array($lang, array_keys(Intl::$langList))) {
+            $lang = $this->lang;
+        }
+
         return $lang;
     }
 
