@@ -1,74 +1,131 @@
-#: kriss_feed.php:166 kriss_feed.php:915 class/tpl/login.tpl.php:34
+#: kriss_feed.php:76 class/FeedConf.php:201 class/FeedConf.php:207
+#, php-format
+msgid "Can not create %s directory, check permissions"
+msgstr ""
+
+#: kriss_feed.php:85
+#, php-format
+msgid "Can not protect %s directory with .htaccess, check permissions"
+msgstr ""
+
+#: kriss_feed.php:94
+msgid "Wrong token"
+msgstr ""
+
+#: kriss_feed.php:173
+msgid "Login failed!"
+msgstr ""
+
+#: kriss_feed.php:176 kriss_feed.php:916 class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136 class/tpl/nav.tpl.php:157
 msgid "Sign in"
 msgstr ""
 
-#: kriss_feed.php:183 class/tpl/change_password.tpl.php:16
+#: kriss_feed.php:193 class/tpl/change_password.tpl.php:16
 msgid "Change your password"
 msgstr ""
 
-#: kriss_feed.php:292 class/tpl/config.tpl.php:294
+#: kriss_feed.php:302 class/tpl/config.tpl.php:294
 #: class/tpl/config.tpl.php:297 class/tpl/nav.tpl.php:114
 msgid "Help"
 msgstr ""
 
-#: kriss_feed.php:337 class/tpl/config.tpl.php:259
+#: kriss_feed.php:347 class/tpl/config.tpl.php:259
 msgid "Update"
 msgstr ""
 
-#: kriss_feed.php:357 class/tpl/nav.tpl.php:129 class/tpl/nav.tpl.php:150
+#: kriss_feed.php:351 class/tpl/nav.tpl.php:144
+msgid "Plugins management"
+msgstr ""
+
+#: kriss_feed.php:370 class/tpl/nav.tpl.php:129 class/tpl/nav.tpl.php:150
 msgid "Configuration"
 msgstr ""
 
-#: kriss_feed.php:408
+#: kriss_feed.php:405
+#, php-format
+msgid ""
+"The file you are trying to upload is probably bigger than what this "
+"webserver can accept (%s). Please upload in smaller chunks."
+msgstr ""
+
+#: kriss_feed.php:418
 msgid "Import"
 msgstr ""
 
-#: kriss_feed.php:456 class/tpl/add_feed.tpl.php:14
+#: kriss_feed.php:461 class/tpl/add_feed.tpl.php:14
 #: class/tpl/config.tpl.php:287 class/tpl/config.tpl.php:290
 #: class/tpl/nav.tpl.php:110
 msgid "Add a new feed"
 msgstr ""
 
-#: kriss_feed.php:585 kriss_feed.php:588 kriss_feed.php:591 kriss_feed.php:594
+#: kriss_feed.php:590 kriss_feed.php:593 kriss_feed.php:596 kriss_feed.php:599
 msgid "starred items"
 msgstr ""
 
-#: kriss_feed.php:614 class/tpl/config.tpl.php:301
+#: kriss_feed.php:619 class/tpl/config.tpl.php:301
 #: class/tpl/config.tpl.php:304 class/tpl/nav.tpl.php:119
 msgid "Starred items"
 msgstr ""
 
-#: kriss_feed.php:620 class/tpl/config.tpl.php:280
+#: kriss_feed.php:625 class/tpl/config.tpl.php:280
 msgid "Edit"
 msgstr ""
 
-#: kriss_feed.php:884 kriss_feed.php:887 kriss_feed.php:890 kriss_feed.php:893
+#: kriss_feed.php:794
+msgid "Please configure your share link first"
+msgstr ""
+
+#: kriss_feed.php:885 kriss_feed.php:888 kriss_feed.php:891 kriss_feed.php:894
 msgid "unread items"
+msgstr ""
+
+#: class/FeedConf.php:273
+msgid "Your simple and smart (or stupid) feed reader is now configured."
+msgstr ""
+
+#: class/FeedConf.php:275
+msgid "Continue"
+msgstr ""
+
+#: class/FeedConf.php:285 class/tpl/install.tpl.php:13
+msgid "KrISS feed installation"
 msgstr ""
 
 #: class/Feed.php:183
 msgid "All feeds"
 msgstr ""
 
-#: class/Feed.php:1336
+#: class/Feed.php:1340
 msgid "Duplicated feed"
 msgstr ""
 
-#: class/Feed.php:1850
+#: class/Feed.php:1854
 msgid "Feed is not a valid XML"
 msgstr ""
 
-#: class/Feed.php:1853
+#: class/Feed.php:1857
 msgid "Items may have been missed since last update"
 msgstr ""
 
-#: class/Feed.php:1856
+#: class/Feed.php:1860
 msgid "Problem with the last update"
 msgstr ""
 
-#: class/Feed.php:1859
+#: class/Feed.php:1863
 msgid "Unknown problem"
+msgstr ""
+
+#: class/Opml.php:100
+#, php-format
+msgid "File %s (%s) was successfully processed: %d links imported"
+msgstr ""
+
+#: class/Opml.php:117
+#, php-format
+msgid ""
+"File %s (%s) has an unknown file format. Check encoding, try to remove "
+"accents and try again. Nothing was imported."
 msgstr ""
 
 #: class/tpl/add_feed.tpl.php:16
@@ -519,7 +576,7 @@ msgid "Then set up your cron with:"
 msgstr ""
 
 #: class/tpl/config.tpl.php:370
-msgid "Do not forget to check right permissions!"
+msgid "Do not forget to check permissions"
 msgstr ""
 
 #: class/tpl/edit_all.tpl.php:14
@@ -612,140 +669,140 @@ msgstr ""
 msgid "Leave empty to delete"
 msgstr ""
 
-#: class/tpl/help.tpl.php:11
+#: class/tpl/help.tpl.php:12
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: class/tpl/help.tpl.php:13
+#: class/tpl/help.tpl.php:14
 msgid "Key legend"
 msgstr ""
 
-#: class/tpl/help.tpl.php:16
+#: class/tpl/help.tpl.php:17
 msgid "Space key"
 msgstr ""
 
-#: class/tpl/help.tpl.php:18
+#: class/tpl/help.tpl.php:19
 msgid "Shift key"
 msgstr ""
 
-#: class/tpl/help.tpl.php:20
+#: class/tpl/help.tpl.php:21
 msgid "Right arrow key"
 msgstr ""
 
-#: class/tpl/help.tpl.php:22
+#: class/tpl/help.tpl.php:23
 msgid "Left arrow key"
 msgstr ""
 
-#: class/tpl/help.tpl.php:26
+#: class/tpl/help.tpl.php:27
 msgid "Items navigation"
 msgstr ""
 
-#: class/tpl/help.tpl.php:29
+#: class/tpl/help.tpl.php:30
 msgid "Toggle current item (open, close item in list view)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:33
+#: class/tpl/help.tpl.php:34
 msgid "Mark current item as read if unread or unread if read"
 msgstr ""
 
-#: class/tpl/help.tpl.php:37
+#: class/tpl/help.tpl.php:38
 msgid ""
 "Mark current item as read if unread or unread if read and open current "
 "(useful in list view and unread filter)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:41
+#: class/tpl/help.tpl.php:42
 msgid "Go to next item"
 msgstr ""
 
-#: class/tpl/help.tpl.php:45
+#: class/tpl/help.tpl.php:46
 msgid "Go to previous item"
 msgstr ""
 
-#: class/tpl/help.tpl.php:49
+#: class/tpl/help.tpl.php:50
 msgid "Go to next page"
 msgstr ""
 
-#: class/tpl/help.tpl.php:53
+#: class/tpl/help.tpl.php:54
 msgid "Go to previous page"
 msgstr ""
 
-#: class/tpl/help.tpl.php:57
+#: class/tpl/help.tpl.php:58
 msgid "Go to next item and open it (in list view)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:61
+#: class/tpl/help.tpl.php:62
 msgid "Go to previous item and open it (in list view)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:65
+#: class/tpl/help.tpl.php:66
 msgid "Open current item in new tab"
 msgstr ""
 
-#: class/tpl/help.tpl.php:69
+#: class/tpl/help.tpl.php:70
 msgid "Open current item in current window"
 msgstr ""
 
-#: class/tpl/help.tpl.php:73
+#: class/tpl/help.tpl.php:74
 msgid "Share current item"
 msgstr ""
 
-#: class/tpl/help.tpl.php:77
+#: class/tpl/help.tpl.php:78
 msgid ""
 "Mark all items, all items from current feed or all items from current folder "
 "as read"
 msgstr ""
 
-#: class/tpl/help.tpl.php:81
+#: class/tpl/help.tpl.php:82
 msgid "Menu navigation"
 msgstr ""
 
-#: class/tpl/help.tpl.php:84
+#: class/tpl/help.tpl.php:85
 msgid "Go to Home page"
 msgstr ""
 
-#: class/tpl/help.tpl.php:88
+#: class/tpl/help.tpl.php:89
 msgid "Change view as list or expanded"
 msgstr ""
 
-#: class/tpl/help.tpl.php:92
+#: class/tpl/help.tpl.php:93
 msgid "Show or hide list of feeds/folders"
 msgstr ""
 
-#: class/tpl/help.tpl.php:96
+#: class/tpl/help.tpl.php:97
 msgid "Edit current selection (all, folder or feed)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:100
+#: class/tpl/help.tpl.php:101
 msgid "Update current selection (all, folder or feed)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:104
+#: class/tpl/help.tpl.php:105
 msgid "Reload the page as the F5 key in most of browsers"
 msgstr ""
 
-#: class/tpl/help.tpl.php:108
+#: class/tpl/help.tpl.php:109
 msgid "Go to Help page (this page)"
 msgstr ""
 
-#: class/tpl/help.tpl.php:111
+#: class/tpl/help.tpl.php:112
 msgid "Configuration check"
 msgstr ""
 
-#: class/tpl/help.tpl.php:113
+#: class/tpl/help.tpl.php:114
 msgid "PHP configuration"
 msgstr ""
 
-#: class/tpl/help.tpl.php:118
+#: class/tpl/help.tpl.php:119
 msgid "You should be able to load https:// rss links."
 msgstr ""
 
-#: class/tpl/help.tpl.php:120
+#: class/tpl/help.tpl.php:121
 msgid "You may have problems using https:// rss links."
 msgstr ""
 
 #: class/tpl/import.tpl.php:14 class/tpl/import.tpl.php:35
-#: class/tpl/nav.tpl.php:143
+#: class/tpl/nav.tpl.php:142
 msgid "Import opml file"
 msgstr ""
 
@@ -794,21 +851,17 @@ msgstr ""
 msgid "from"
 msgstr ""
 
-#: class/tpl/install.tpl.php:13
-msgid "KrISS feed installation"
-msgstr ""
-
-#: class/tpl/install.tpl.php:15 class/tpl/install.tpl.php:17
+#: class/tpl/install.tpl.php:20 class/tpl/install.tpl.php:22
 #: class/tpl/login.tpl.php:15 class/tpl/login.tpl.php:17
 msgid "Login"
 msgstr ""
 
-#: class/tpl/install.tpl.php:21 class/tpl/install.tpl.php:23
+#: class/tpl/install.tpl.php:26 class/tpl/install.tpl.php:28
 #: class/tpl/login.tpl.php:21 class/tpl/login.tpl.php:23
 msgid "Password"
 msgstr ""
 
-#: class/tpl/install.tpl.php:28
+#: class/tpl/install.tpl.php:33
 msgid "Install KrISS feed"
 msgstr ""
 
@@ -818,6 +871,14 @@ msgstr ""
 
 #: class/tpl/login.tpl.php:28
 msgid "Stay signed in (do not check on public computers)"
+msgstr ""
+
+#: class/tpl/message.tpl.php:12
+msgid "Click on flag to select your language."
+msgstr ""
+
+#: class/tpl/message.tpl.php:20
+msgid "Try again"
 msgstr ""
 
 #: class/tpl/nav.tpl.php:5
@@ -833,11 +894,11 @@ msgstr ""
 msgid "Sign out"
 msgstr ""
 
-#: class/tpl/nav.tpl.php:142
+#: class/tpl/nav.tpl.php:141
 msgid "Change password"
 msgstr ""
 
-#: class/tpl/nav.tpl.php:144
+#: class/tpl/nav.tpl.php:143
 msgid "Export opml file"
 msgstr ""
 

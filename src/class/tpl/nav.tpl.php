@@ -138,10 +138,10 @@ switch($template) {
 
     break;
   case 'config': ?>
-
           <li><a href="?password" title="<?php echo Intl::msg('Change password'); ?>"> <?php echo Intl::msg('Change password'); ?></a></li>
           <li><a href="?import" title="<?php echo Intl::msg('Import opml file'); ?>"> <?php echo Intl::msg('Import opml file'); ?></a></li>
           <li><a href="?export" title="<?php echo Intl::msg('Export opml file'); ?>"> <?php echo Intl::msg('Export opml file'); ?></a></li>
+          <li><a href="?plugins" title="<?php echo Intl::msg('Plugins management'); ?>"> <?php echo Intl::msg('Plugins management'); ?></a></li>
           <li><a href="?logout" title="<?php echo Intl::msg('Sign out'); ?>"> <?php echo Intl::msg('Sign out'); ?></a></li><?php
     break;
   default:

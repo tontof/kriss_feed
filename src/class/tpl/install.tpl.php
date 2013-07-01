@@ -11,6 +11,11 @@
             <form class="form-horizontal" method="post" action="" name="installform">
               <fieldset>
                 <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
+          <div class="text-center">
+<?php foreach(Intl::$langList as $lang => $info) { ?>
+<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
+<?php } ?>
+          </div>
                 <div class="control-group">
                   <label class="control-label" for="setlogin"><?php echo Intl::msg('Login'); ?></label>
                   <div class="controls">

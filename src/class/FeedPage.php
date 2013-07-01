@@ -29,6 +29,17 @@ class FeedPage
     }
 
     /**
+     * messageTpl
+     */
+    public static function messageTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/message.tpl.php"); ?>
+<?php
+    }
+
+    /**
      * installTpl
      * 
      */
@@ -97,6 +108,18 @@ class FeedPage
         extract(FeedPage::$var);
 ?>
 <?php include("tpl/config.tpl.php"); ?>
+<?php
+    }
+
+    /**
+     * pluginsTpl
+     * 
+     */
+    public static function pluginsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php include("tpl/plugins.tpl.php"); ?>
 <?php
     }
 

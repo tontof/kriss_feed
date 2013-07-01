@@ -17,11 +17,17 @@ class Plugin
         }
     }
 
+    public static function listAll() {
+        $list = array();
+        self::callHook('Plugin_registry', array(&$list));
+        return $list;
+    }
+
     public static function addHook($hookName, $functionName, $priority = 10) {
         self::$hooks[$hookName][$priority][] = $functionName;
     } 
 
-    public static function callHook($hookName, $hookArguments = null) {
+    public static function callHook($hookName, $hookArguments = array()) {
 	if(isset(self::$hooks[$hookName])) {
             ksort(self::$hooks[$hookName]);
             foreach (self::$hooks[$hookName] as $hooks) {

@@ -539,10 +539,10 @@
         if (hasClass(listLinks[i], 'item-mark-as')) {
           if (listLinks[i].href.indexOf('unread=') > -1) {
             listLinks[i].href = listLinks[i].href.replace('unread=','read=');
-            listLinks[i].firstChild.innerHTML = 'read';
+            listLinks[i].firstChild.innerHTML = intlRead;
           } else {
             listLinks[i].href = listLinks[i].href.replace('read=','unread=');
-            listLinks[i].firstChild.innerHTML = 'unread';
+            listLinks[i].firstChild.innerHTML = intlUnread;
           }
         }
       }

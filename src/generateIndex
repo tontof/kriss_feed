@@ -12,16 +12,21 @@ do
   if [ -d $i ]
   then
     lang=$(basename $i)
-    echo '<?php' > plugins/$lang.php
-    echo 'if (!function_exists('"'$lang'"')) {' >> plugins/$lang.php
-    echo '    function '"$lang"'(&$messages) {' >> plugins/$lang.php
-    echo '        $messages['"'$lang'"'] = unserialize(gzinflate(base64_decode("' >> plugins/$lang.php 
-    php5 -r "include('class/Plugin.php');include('class/Intl.php');Intl::init('$lang');echo base64_encode(gzdeflate(serialize(Intl::load('$lang'))));" >> plugins/$lang.php
-    echo '")));' >> plugins/$lang.php
-    echo '    }' >> plugins/$lang.php
-    echo '}' >> plugins/$lang.php
-    echo "Plugin::addHook('Intl_init_$lang', '$lang');" >> plugins/$lang.php
-    echo  >> plugins/$lang.php
+    lang2letters=$(echo $lang | cut -d '_' -f 2 | tr '[A-Z]' '[a-z]')
+    language=$(grep "Language:" locale/${lang}/LC_MESSAGES/messages.po | cut -d " " -f 2- | sed -e 's:\\n"::')
+    intlFile="plugins/Intl_${lang}.php"
+    echo '<?php' > ${intlFile}
+    echo "if (!class_exists('Intl_$lang')) {" >> ${intlFile}
+    echo "    class Intl_$lang {" >> ${intlFile}
+    echo '        public static function init(&$messages) {' >> ${intlFile}
+    echo '            $messages['"'$lang'"'] = unserialize(gzinflate(base64_decode("' >> ${intlFile} 
+    php5 -r "include('class/Plugin.php');include('class/Intl.php');echo base64_encode(gzdeflate(serialize(Intl::load('$lang'))));" >> ${intlFile}
+    echo '")));' >> ${intlFile}
+    echo '        }' >> ${intlFile}
+    echo '    }' >> ${intlFile}
+    echo "    Intl::addLang('$lang', '$language', 'flag-$lang2letters');" >> ${intlFile}
+    echo '}' >> ${intlFile}
+    echo  >> ${intlFile}
   fi
 done
 
@@ -90,4 +95,4 @@ do
  cat $i | includeFile | includeFile
 done | sed -e 's:del><?php::g' | removeComments
 
-tail -n $(( ${nt} - $((${n} + 3)) )) ${file} | removeComments | includeFile
+tail -n $(( ${nt} - $((${n} + 5)) )) ${file} | removeComments | includeFile

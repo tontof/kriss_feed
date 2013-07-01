@@ -34,31 +34,6 @@ define('ERROR_UNKNOWN', 4);
 // fix some warning
 date_default_timezone_set('Europe/Paris');
 
-if (!is_dir(DATA_DIR)) {
-    if (!@mkdir(DATA_DIR, 0755)) {
-        echo '
-<script>
- alert("Error: can not create '.DATA_DIR.' directory, check permissions");
- document.location=window.location.href;
-</script>';
-        exit();
-    }
-    @chmod(DATA_DIR, 0755);
-    if (!is_file(DATA_DIR.'/.htaccess')) {
-        if (!@file_put_contents(
-            DATA_DIR.'/.htaccess',
-            "Allow from none\nDeny from all\n"
-        )) {
-            echo '
-<script>
- alert("Can not protect '.DATA_DIR.'");
- document.location=window.location.href;
-</script>';
-            exit();
-        }
-    }
-}
-
 /**
  * autoload class
  *
@@ -66,7 +41,9 @@ if (!is_dir(DATA_DIR)) {
  */
 function __autoload($className)
 {
-    include_once 'class/'. $className . '.php';
+    if (file_exists('class/'. $className . '.php')) {
+        include_once 'class/'. $className . '.php';
+    }
 }
 
 Plugin::init();
@@ -76,11 +53,46 @@ Plugin::init();
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init(BAN_FILE);
+Session::init('kriss', BAN_FILE);
+
+// Initialize internationalization
+Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
+Intl::addLang('en_US', 'English (America)', 'flag-us');
+Intl::init();
+
+$ref = MyTool::getUrl();
+$referer = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
+if (substr($referer, 0, strlen($ref)) !== $ref) {
+    $referer = $ref;
+}
+
+$pb = new PageBuilder('FeedPage');
+$pb->assign('version', FEED_VERSION);
+$pb->assign('pagetitle', 'KrISS feed');
+$pb->assign('referer', $referer);
+
+if (!is_dir(DATA_DIR)) {
+    if (!@mkdir(DATA_DIR, 0755)) {
+        $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), DATA_DIR));
+        $pb->renderPage('message');
+    }
+    @chmod(DATA_DIR, 0755);
+    if (!is_file(DATA_DIR.'/.htaccess')) {
+        if (!@file_put_contents(
+            DATA_DIR.'/.htaccess',
+            "Allow from none\nDeny from all\n"
+        )) {
+            $pb->assign('message', sprintf(Intl::msg('Can not protect %s directory with .htaccess, check permissions'), DATA_DIR));
+            $pb->renderPage('message');
+        }
+    }
+}
+
 // XSRF protection with token
 if (!empty($_POST)) {
     if (!Session::isToken($_POST['token'])) {
-        die('Wrong token.');
+        $pb->assign('message', Intl::msg('Wrong token'));
+        $pb->renderPage('message');
     }
     unset($_SESSION['tokens']);
 }
@@ -89,10 +101,7 @@ $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
 $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
-$pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
-
-Intl::init($kfc->lang);
 
 // List or Expanded ?
 $view = $kfc->view;
@@ -133,9 +142,9 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
-$pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
 $pb->assign('isLogged', $kfc->isLogged());
+$pb->assign('pagetitle', strip_tags($kfc->title));
 
 if (isset($_GET['login'])) {
     // Login
@@ -161,7 +170,8 @@ if (isset($_GET['login'])) {
 
             MyTool::redirect();
         }
-        die("Login failed !");
+        $pb->assign('message', Intl::msg('Login failed!'));
+        $pb->renderPage('message');
     } else {
         $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         $pb->renderPage('login');
@@ -337,6 +347,9 @@ if (isset($_GET['login'])) {
         $pb->assign('pagetitle', Intl::msg('Update').' - '.strip_tags($kfc->title));
         $pb->renderPage('update');
     }
+} elseif (isset($_GET['plugins']) && $kfc->isLogged()) {
+    $pb->assign('pagetitle', Intl::msg('Plugins management').' - '.strip_tags($kfc->title));
+    $pb->renderPage('plugins');
 } elseif (isset($_GET['config']) && $kfc->isLogged()) {
     // Config
     if (isset($_POST['save'])) {
@@ -388,13 +401,10 @@ if (isset($_GET['login'])) {
             $rurl = empty($_SERVER['HTTP_REFERER'])
                 ? '?'
                 : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("The file you are trying to upload'
-                . ' is probably bigger than what this webserver can accept '
-                . '(' . MyTool::humanBytes(MyTool::getMaxFileSize())
-                . ' bytes). Please upload in smaller chunks.");'
-                . 'document.location=\'' . htmlspecialchars($rurl)
-                . '\';</script>';
-            exit;
+
+            $pb->assign('message', sprintf(Intl::msg('The file you are trying to upload is probably bigger than what this webserver can accept (%s). Please upload in smaller chunks.'), MyTool::humanBytes(MyTool::getMaxFileSize())));
+            $pb->assign('referer', $rurl);
+            $pb->renderPage('message');
         }
 
         $kf->loadData();
@@ -438,13 +448,8 @@ if (isset($_GET['login'])) {
             MyTool::redirect('?currentHash='.$hash);
         } else {
             // Add fail
-            $returnurl = empty($_SERVER['HTTP_REFERER'])
-                ? MyTool::getUrl()
-                : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("' . $addc['error'] . '");'
-                . 'document.location=\'' . htmlspecialchars($returnurl)
-                . '\';</script>';
-            exit;
+            $pb->assign('message', $addc['error']);
+            $pb->renderPage('message');
         }
     }
 
@@ -786,12 +791,8 @@ if (isset($_GET['login'])) {
 
         header('Location: '.$shaarli);
     } else {
-        echo '
-<script>
- alert("Please configure your share link first");
- document.location="'.MyTool::getUrl().'";
-</script>';
-        exit();
+        $pb->assign('message', Intl::msg('Please configure your share link first'));
+        $pb->renderPage('message');
     }
 } elseif (isset($_GET['file'])) {
     if ($_GET['file'] == 'favicon.ico') {

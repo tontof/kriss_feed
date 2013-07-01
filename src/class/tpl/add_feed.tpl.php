@@ -45,7 +45,7 @@
             <fieldset>
               <legend><?php echo Intl::msg('Use bookmarklet to add a new feed'); ?></legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF</b></a>
+                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
               </div>
             </fieldset>
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">

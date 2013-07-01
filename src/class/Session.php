@@ -20,9 +20,6 @@
  *   to sign forms (HMAC) (See $_SESSION['uid'] )
  * - Token management to prevent XSRF attacks.
  *
- * TODO:
- * - log login fail
- *
  * HOWTOUSE:
  * - Just call Session::init(); to initialize session and
  *   check if connected with Session::isLogged()
@@ -30,13 +27,8 @@
 class Session
 {
     /**
-     * Static session
-     */
-    private static $_instance;
-
-    /**
      * If the user does not access any page within this time,
-     * his/her session is considered expired (in seconds).
+     * his/her session is considered expired (3600 sec. = 1 hour).
      */
     public static $inactivityTimeout = 3600;
 
@@ -53,25 +45,19 @@ class Session
      * $banDuration: Ban duration for IP address after login failures
      *               (in seconds) (1800 sec. = 30 minutes)
      */
-    public static $banFile = 'ipbans.php';
     public static $banAfter = 4;
     public static $banDuration = 1800;
+    public static $banFile;
 
     /**
-     * constructor
+     * initialize private instance of session class
      */
-    private function __construct($banFile)
+    public static function init($sessionName = '', $banFile = '')
     {
-        // Check ban configuration
         self::$banFile = $banFile;
 
-        if (!is_file(self::$banFile)) {
-            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
-        }
-        include self::$banFile;
-
         // Force cookie path (but do not change lifetime)
-        $cookie=session_get_cookie_params();
+        $cookie = session_get_cookie_params();
         // Default cookie expiration and path.
         $cookiedir = '';
         if(dirname($_SERVER['SCRIPT_NAME'])!='/') {
@@ -85,72 +71,11 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
-            session_name('kriss');
+            if (!empty($sessionName)) {
+                session_name($sessionName);
+            }
             session_start();
         }
-    }
-
-    /**
-     * initialize private instance of session class
-     */
-    public static function init($banFile)
-    {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new Session($banFile);
-        }
-    }
-
-    /**
-     * Signal a failed login. Will ban the IP if too many failures:
-     */
-    public static function banLoginFailed()
-    {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-
-        if (!isset($gb['FAILURES'][$ip])) {
-            $gb['FAILURES'][$ip] = 0;
-        }
-        $gb['FAILURES'][$ip]++;
-        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
-            $gb['BANS'][$ip]= time() + self::$banDuration;
-        }
-
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-    }
-
-    /**
-     * Signals a successful login. Resets failed login counter.
-     */
-    public static function banLoginOk()
-    {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-    }
-
-    /**
-     * Checks if the user CAN login. If 'true', the user can try to login.
-     */
-    public static function banCanLogin()
-    {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        if (isset($gb['BANS'][$ip])) {
-            // User is banned. Check if the ban has expired:
-            if ($gb['BANS'][$ip] <= time()) {
-                // Ban expired, user can try to login again.
-                unset($gb['FAILURES'][$ip]);
-                unset($gb['BANS'][$ip]);
-                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-                return true; // Ban has expired, user can login.
-            }
-            return false; // User is banned.
-        }
-        return true; // User is not banned.
     }
 
     /**
@@ -187,6 +112,7 @@ class Session
         $passwordTest,
         $pValues = array())
     {
+        self::banInit();
         if (!self::banCanLogin()) {
             die('I said: NO. You are banned for the moment. Go away.');
         }
@@ -276,4 +202,68 @@ class Session
 
         return false; // Wrong token, or already used.
     }
-}//end class
+
+    /**
+     * Signal a failed login. Will ban the IP if too many failures:
+     */
+    public static function banLoginFailed()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+
+        if (!isset($gb['FAILURES'][$ip])) {
+            $gb['FAILURES'][$ip] = 0;
+        }
+        $gb['FAILURES'][$ip]++;
+        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
+            $gb['BANS'][$ip]= time() + self::$banDuration;
+        }
+
+        $GLOBALS['IPBANS'] = $gb;
+        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+    }
+
+    /**
+     * Signals a successful login. Resets failed login counter.
+     */
+    public static function banLoginOk()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
+        $GLOBALS['IPBANS'] = $gb;
+        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+    }
+
+    public static function banInit()
+    {
+        if (!is_file(self::$banFile) && self::$banFile !== '') {
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
+        }
+        if (self::$banFile !== '') {
+            include self::$banFile;
+        }
+    }
+
+    /**
+     * Checks if the user CAN login. If 'true', the user can try to login.
+     */
+    public static function banCanLogin()
+    {
+
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+        if (isset($gb['BANS'][$ip])) {
+            // User is banned. Check if the ban has expired:
+            if ($gb['BANS'][$ip] <= time()) {
+                // Ban expired, user can try to login again.
+                unset($gb['FAILURES'][$ip]);
+                unset($gb['BANS'][$ip]);
+                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+                return true; // Ban has expired, user can login.
+            }
+            return false; // User is banned.
+        }
+        return true; // User is not banned.
+    }
+}

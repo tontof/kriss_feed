@@ -34,31 +34,6 @@ define('ERROR_UNKNOWN', 4);
 // fix some warning
 date_default_timezone_set('Europe/Paris');
 
-if (!is_dir(DATA_DIR)) {
-    if (!@mkdir(DATA_DIR, 0755)) {
-        echo '
-<script>
- alert("Error: can not create '.DATA_DIR.' directory, check permissions");
- document.location=window.location.href;
-</script>';
-        exit();
-    }
-    @chmod(DATA_DIR, 0755);
-    if (!is_file(DATA_DIR.'/.htaccess')) {
-        if (!@file_put_contents(
-            DATA_DIR.'/.htaccess',
-            "Allow from none\nDeny from all\n"
-        )) {
-            echo '
-<script>
- alert("Can not protect '.DATA_DIR.'");
- document.location=window.location.href;
-</script>';
-            exit();
-        }
-    }
-}
-
 
 class FeedConf
 {
@@ -118,7 +93,7 @@ class FeedConf
 
     public $currentPage = 1;
 
-    public $lang = 'en_GB';
+    public $lang = '';
 
     public $menuView = 1;
     public $menuListFeeds = 2;
@@ -141,6 +116,7 @@ class FeedConf
     {
         $this->_file = $configFile;
         $this->version = $version;
+        $this->lang = Intl::$lang;
 
         // Loading user config
         if (file_exists($this->_file)) {
@@ -155,12 +131,14 @@ class FeedConf
             /* favicon dir */
             if (!is_dir(INC_DIR)) {
                 if (!@mkdir(INC_DIR, 0755)) {
-                    die("Can not create inc dir: ".INC_DIR);
+                    $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
+                    $pb->renderPage('message');
                 }
             }
             if (!is_dir(FAVICON_DIR)) {
                 if (!@mkdir(FAVICON_DIR, 0755)) {
-                    die("Can not create inc dir: ".FAVICON_DIR);
+                    $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
+                    $pb->renderPage('message');
                 }
             }
         }
@@ -206,6 +184,8 @@ class FeedConf
             $_SESSION['byPage'] = $byPage;
             $_SESSION['lang'] = $lang;
         }
+
+        Intl::$lang = $this->lang;
     }
 
     private function _install()
@@ -216,17 +196,23 @@ class FeedConf
             $this->setHash($_POST['setpassword']);
 
             $this->write();
-            echo '
-<script>
- alert("Your simple and smart (or stupid) feed reader is now configured.");
- document.location="'.MyTool::getUrl().'?import'.'";
-</script>';
-            exit();
+
+            FeedPage::init(
+                array(
+                    'class' => 'text-success',
+                    'message' => Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'),
+                    'referer' => MyTool::getUrl().'?import',
+                    'button' => Intl::msg('Continue'),
+                    'version' => $this->version,
+                    'pagetitle' => 'KrISS feed installation'
+                )
+            );
+            FeedPage::messageTpl();
         } else {
             FeedPage::init(
                 array(
                     'version' => $this->version,
-                    'pagetitle' => 'KrISS feed installation'
+                    'pagetitle' => Intl::msg('KrISS feed installation')
                 )
             );
             FeedPage::installTpl();
@@ -645,11 +631,9 @@ class FeedConf
                           'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
             $out = '<?php';
             $out .= "\n";
-
             foreach ($data as $key) {
                 $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
             }
-
             $out .= '?>';
 
             if (!@file_put_contents($this->_file, $out)) {
@@ -1503,12 +1487,72 @@ dd {
 .ico-filter-unread:before {
   content: "\26C0";
 }
+
+#flags-sel + #flags {
+  display: none;
+}
+
+#flags-sel:target + #flags {
+  display: block;
+}
+
+#flags-sel:target #hide-flags, #flags-sel #show-flags {
+  display: inline-block;
+}
+
+#flags-sel:target #show-flags, #flags-sel #hide-flags {
+  display: none;
+}
+.flag {
+  display: inline-block;
+  width: 16px;
+  height: 11px;
+  background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAWCAYAAAChWZ5EAAAFVElEQVRIia2Vf2yW1RXHP/ftqxmDwSxM6FghGMt0Thbn2M9SFCmo+2miIAjbZE5jRubCmJUtGwQM2zCiYcSGH6EsA3GhyUTXJlNWu7oEdabggAmEho0h0Flmbd++7/Pce885++N5W374x/6gJzl57n2eJ/ec7/ec+z3OzLgcW/7MoYsO0Kj88BujERHSNEVEiDHinOOa2TehBYgpRECB/GVFL9tddR8HwNRQNaqqPsIgMDNDVTEzrnh8PRYD6j0WAuceWz08CWDQXwyIZMEGBgYws6HgzjlEhNGnT6E+xXwKY8cRgdxlB9cMuYghqkQxcrkcZoZzbmitqqhP0DRFQ4p5PzwliFERVUQUESOqYFZOQhVVGyqHphl69QHnPX44EvA+omqIKEEViUZFRUWGGMjnQNXhnMsSCB71Hhfj8DDgY0Z7ECWKEqMO1X/QRTJWzKeI95gP5IaLgcTHrPZRsySCZOjLnS9yfp8FT9EQIIbhYSBJYhY8KjEKIepQwA94mmbXMARcFOJwJFD0nhiVD4+oQCLEmBvq/kFzLuuBivFVaIw4iZgMEwPFYmTt9oMkiaeYRAqJZ+KIKrz3hCTBi+C9J0kSpv2mCeW8CgK4DZvabGrtNF7tOEZ3D4AgKjy26EYOrd2IiXDjzx/hR+tfx0KOgWJCdc0IZh1o5cTX5nH2jUukXBU0Ah4wwLN58l6sOEDPu2fx5eCDieQrx4xi7vE25jx0D13/HmDf/jOIOWqmVDL1ppHgU2xKJXd8vpoQhdobxjK9YxM0r2NDy9ucpcCWxi+xo8NYMFN59pUcC2cYv+1wLK6NNLXnkVtvxww+anqBRCutrbvJtx0vMaF+Nrfteo5rP3E1135zFr9s/AfOAW91QUhwDk6eM1aNO07Fqy/jfrKGpt0H+fW617jz5k+zo8PY1aHsaAdRZeteQwy2vORIYuSBl34G/+2Fvveh0A/FIm7hHVz/5l8zKX7nzHus7JnGSbkGWbOKFQ9/KqOz1A+lEgBPnGhk5Jxajt61hFl3PsehI30kaQoETOH5BiNVeKEhIAYtjxZJonHYQXHlSgpPPUnfls307tyJa59EafFSCg824I52nbOaKZUZ4ktt3jxIU9iz5wOfzKDzyH9ofOoodQu+TFObIpohjwFSMw6TEot/I57ZCMUiFApYkoD35JZ8i9cOd5I/+PjTTP3sSHjrOIQA3p9/qmJpSrzllmx4hGyUIkL+uon86c0CzP4FC2cYW/caf2xIqF/zIVoa+piw1vPPZUr10pS+pm0XiZOq0jv+at5r3f1/GKirQ9JAxev7yh3tskOwjIGjPWxev58v3lvPtpeF1AwNcNC6kfQI/EvgpBBHr82QpymkKZYk5H4wnxe7juBmfvsF+3pdNZ1vdPPTR77ADRME/+iPuXLrduzm6YgI+QOdgHL6ttkcm7+cBavfobb+YzS/uJeT+5dRVTWJEMJFCC9dX7gvlUpMuQI2Pr+DfJJExo+9kp2b5lJYvZL3R4xi6VUP8TvK41MVzPjKrbt4pb2NMVu2caC+g83Tl9G8JzJx+9O42+8m19KGdXdDby8UCpknCVYsgvfYhesQ0OXfZcypE+QXLa7hvq9eR/KrFfx95vdobj9N5SjBDNz1E3EaMDOqP1nJou80s+T7M5iz5D4efuAeuu+fT9e9n2Hy5Kn0f24Go3yCWXbHL52IZkaMgSSpBE4hoty9YRX5M++e45k5D/KHmpl07vwLIZaIItw/r4bWfb1YjMx9u4ff7/kzqLC7pYNxk65ixRPrOLaikZF9z9JtmbL1ldWNC5QuAfqBYtlD+d3gf/8DcCnYzK68GQMAAAAASUVORK5CYII=) no-repeat
+}
+
+.flag.flag-fr {background-position: -16px 0}
+.flag.flag-gb {background-position: 0 -11px}
+.flag.flag-us {background-position: -16px -11px}
     </style>
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
     <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
 <?php } ?>
     <meta name="viewport" content="width=device-width">
+<?php
+    }
+
+    public static function messageTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head>
+<?php FeedPage::includesTpl(); ?>
+  </head>
+  <body onload="document.getElementById('again').focus();">
+    <div class="container-fluid full-height">
+      <div class="row-fluid full-height">
+        <div id="main-container" class="span12 full-height">
+          <?php FeedPage::statusTpl(); ?>
+          <div class="text-center">
+     <?php echo Intl::msg('Click on flag to select your language.').'<br>';
+     
+ foreach(Intl::$langList as $lang => $info) { ?>
+<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
+<?php } ?>
+          </div>
+          <div class="<?php if (empty($class)) { echo 'text-error'; } else { echo $class; } ?> text-center">
+            <?php echo $message; ?><br>
+     <a id="again" tabindex="1" class="btn" href="<?php echo $referer; ?>"><?php if (empty($button)) { echo Intl::msg('Try again'); } else { echo $button; } ?></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
 <?php
     }
 
@@ -1529,6 +1573,11 @@ dd {
             <form class="form-horizontal" method="post" action="" name="installform">
               <fieldset>
                 <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
+          <div class="text-center">
+<?php foreach(Intl::$langList as $lang => $info) { ?>
+<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
+<?php } ?>
+          </div>
                 <div class="control-group">
                   <label class="control-label" for="setlogin"><?php echo Intl::msg('Login'); ?></label>
                   <div class="controls">
@@ -1815,10 +1864,10 @@ switch($template) {
 
     break;
   case 'config': ?>
-
           <li><a href="?password" title="<?php echo Intl::msg('Change password'); ?>"> <?php echo Intl::msg('Change password'); ?></a></li>
           <li><a href="?import" title="<?php echo Intl::msg('Import opml file'); ?>"> <?php echo Intl::msg('Import opml file'); ?></a></li>
           <li><a href="?export" title="<?php echo Intl::msg('Export opml file'); ?>"> <?php echo Intl::msg('Export opml file'); ?></a></li>
+          <li><a href="?plugins" title="<?php echo Intl::msg('Plugins management'); ?>"> <?php echo Intl::msg('Plugins management'); ?></a></li>
           <li><a href="?logout" title="<?php echo Intl::msg('Sign out'); ?>"> <?php echo Intl::msg('Sign out'); ?></a></li><?php
     break;
   default:
@@ -1853,6 +1902,15 @@ switch($template) {
 <div id="status" class="text-center">
   <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version; ?></a>
   <span class="hidden-phone"> - <?php echo Intl::msg('A simple and smart (or stupid) feed reader'); ?></span>. <?php /* KrISS: By Tontof */echo Intl::msg('By'); ?> <a href="http://tontof.net">Tontof</a>
+<span id="flags-sel">
+  <a id="hide-flags" href="#flags" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
+  <a id="show-flags" href="#flags-sel" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
+</span>
+<div id="flags">
+<?php foreach(Intl::$langList as $lang => $info) { ?>
+<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
+<?php } ?>
+</div>
 </div>
 <?php
     }
@@ -2230,7 +2288,7 @@ switch($template) {
                   </code><br>
                   <?php echo Intl::msg('Then set up your cron with:'); ?><br>
                   <code>0 * * * * php -f <?php echo dirname($_SERVER["SCRIPT_FILENAME"]).'/data/update.php'; ?> > /tmp/kf.cron</code><br>
-                  <?php echo Intl::msg('Do not forget to check right permissions!'); ?><br>
+                  <?php echo Intl::msg('Do not forget to check permissions'); ?><br>
                   <div class="control-group">
                     <div class="controls">
                       <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>"/>
@@ -2241,6 +2299,26 @@ switch($template) {
               </form><br>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<?php
+    }
+
+    public static function pluginsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head><?php FeedPage::includesTpl(); ?></head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span6 offset3">
+        <?php print_r(Plugin::listAll()); ?>
         </div>
       </div>
     </div>
@@ -2261,6 +2339,7 @@ switch($template) {
       <div class="row-fluid">
         <div class="span6 offset3">
           <div id="config">
+            <?php FeedPage::statusTpl(); ?>
             <?php FeedPage::navTpl(); ?>
             <div id="section">
               <h2><?php echo Intl::msg('Keyboard shortcuts'); ?></h2>
@@ -2438,7 +2517,7 @@ switch($template) {
             <fieldset>
               <legend><?php echo Intl::msg('Use bookmarklet to add a new feed'); ?></legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF</b></a>
+                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
               </div>
             </fieldset>
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
@@ -2719,7 +2798,7 @@ switch($template) {
                 </ul>
                 <a class="btn ico-home" href="<?php echo MyTool::getUrl(); ?>" title="<?php echo Intl::msg('Home'); ?>"></a>
                 <?php if (!empty($referer)) { ?>
-                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>"><?php echo Intl::msg('Go back'); ?></a>
+                <a class="btn" href="<?php echo $referer; ?>"><?php echo Intl::msg('Go back'); ?></a>
                 <?php } ?>
                 <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>"><?php echo Intl::msg('Force update'); ?></a>
               </div>
@@ -3628,10 +3707,10 @@ foreach(array_keys($paging) as $pagingOpt) {
         if (hasClass(listLinks[i], 'item-mark-as')) {
           if (listLinks[i].href.indexOf('unread=') > -1) {
             listLinks[i].href = listLinks[i].href.replace('unread=','read=');
-            listLinks[i].firstChild.innerHTML = 'read';
+            listLinks[i].firstChild.innerHTML = intlRead;
           } else {
             listLinks[i].href = listLinks[i].href.replace('read=','unread=');
-            listLinks[i].firstChild.innerHTML = 'unread';
+            listLinks[i].firstChild.innerHTML = intlUnread;
           }
         }
       }
@@ -6290,11 +6369,21 @@ class Feed
                 unset($this->_data['feeds'][$feedHash]['lastModified']);
             }
 
-            if ($error !== '') {
+            if (!empty($error)) {
                 return array('error' => $this->getError($error));
             } else {
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
+
+                $channel['xmlUrl'] = $xmlUrl;
+                if (!MyTool::isUrl($channel['htmlUrl'])) {
+                    $channel['htmlUrl'] = '';
+                }
+                $channel['foldersHash'] = array();
+                $channel['timeUpdate'] = 'auto';
+                $channel['lastUpdate'] = time();
+                $channel['etag'] = $this->_data['feeds'][$feedHash]['etag'];
+                $channel['lastModified'] = $this->_data['feeds'][$feedHash]['lastModified'];
 
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
@@ -6317,21 +6406,15 @@ class Feed
                     unset($items[$itemHash]);
                 }
 
-                $channel['xmlUrl'] = $xmlUrl;
-                $channel['foldersHash'] = array();
                 $channel['nbUnread'] = count($items);
                 $channel['nbAll'] = count($items);
-                $channel['timeUpdate'] = 'auto';
-                $channel['lastUpdate'] = time();
-                $channel['etag'] = $this->_data['feeds'][$feedHash]['etag'];
-                $channel['lastModified'] = $this->_data['feeds'][$feedHash]['lastModified'];
 
                 $this->_data['feeds'][$feedHash] = $channel;
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
 
-                return true;
+                return array('error' => '');
             }
         } else {
             return array('error' => Intl::msg('Duplicated feed'));
@@ -6775,32 +6858,58 @@ class Feed
 
 class Intl
 {
-    public static $lazy;
-    public static $lang;
-    public static $dir;
-    public static $domain;
+    public static $lazy = false;
+    public static $lang = "en_US";
+    public static $dir = "locale";
+    public static $domain = "messages";
     public static $messages = array();
+    public static $langList = array();
 
-    public static function init($lang = "en_GB",
-                                $dir = "locale",
-                                $domain = "messages")
+    public static function init()
     {
-        self::$lazy = false;
-        self::$lang = $lang;
-        self::$dir = $dir;
-        self::$domain = $domain;
+        $lang = self::$lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+            $_SESSION['lang'] = $lang;
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
+        }
+         
+        if (in_array($lang, array_keys(self::$langList))) {
+            self::$lang = $lang;
+        } else {
+            unset($_SESSION['lang']);
+        }
+    }
+
+    public static function addLang($lang, $name, $class) {
+        self::$langList[$lang] = array(
+            'name' => $name,
+            'class' => $class
+        );
     }
 
     public static function load($lang) {
         self::$lazy = true;
 
         if (file_exists(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po')) {
-            self::$messages[$lang] = self::phpmo_parse_po_file(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po');
-        } else {
-            Plugin::callHook('Intl_init_'.$lang, array(&self::$messages));
+            self::$messages[$lang] = self::compress(self::read(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po'));
+        } else if (class_exists('Intl_'.$lang)) {
+            call_user_func_array(
+                array('Intl_'.$lang, 'init'),
+                array(&self::$messages)
+            );
         }
         
         return isset(self::$messages[$lang])?self::$messages[$lang]:array();
+    }
+
+    public static function compress($hash) {
+        foreach ($hash as $hashId => $hashArray) {
+            $hash[$hashId] = $hashArray['msgstr'];
+        }
+
+        return $hash;
     }
 
     public static function msg($string, $context = "")
@@ -6823,8 +6932,8 @@ class Intl
         $count = $count > 1 ? 1 : 0;
 
         if (isset(self::$messages[self::$lang][$string])
-            && !empty(self::$messages[self::$lang][$string]['msgstr'][$count])) {
-            return self::$messages[self::$lang][$string]['msgstr'][$count];
+            && !empty(self::$messages[self::$lang][$string][$count])) {
+            return self::$messages[self::$lang][$string][$count];
         }
 
         if ($count != 0) {
@@ -6834,53 +6943,84 @@ class Intl
         return $string;
     }
 
-    /* Parse gettext .po files.
-     *
-     * based on
-     * php.mo 0.1 by Joss Crowcroft (http://www.josscrowcroft.com)
-     * @link https://github.com/josscrowcroft/php.mo
-     * @link http://www.gnu.org/software/gettext/manual/gettext.html */
-    public static function phpmo_parse_po_file($in) {
-	// read .po file
-	$fh = fopen($in, 'r');
-	if ($fh === false) {
-            // Could not open file resource
-            return false;
-	}
+    public static function read($pofile)
+    {
+        $handle = fopen( $pofile, 'r' );
+        $hash = array();
+        $fuzzy = false;
+        $tcomment = $ccomment = $reference = null;
+        $entry = $entryTemp = array();
+        $state = null;
+        $just_new_entry = false; // A new entry has ben just inserted
 
-	// results array
-	$hash = array ();
-	// temporary array
-	$temp = array ();
-	// state
-	$state = null;
-	$fuzzy = false;
+        while(!feof($handle)) {
+            $line = trim( fgets($handle) );
 
-	// iterate over lines
-	while(($line = fgets($fh, 65536)) !== false) {
-            $line = trim($line);
-            if ($line === '' || strpos($line, ' ') === false)
-                continue;
-
-            list ($key, $data) = preg_split('/\s/', $line, 2);
-		
-            switch ($key) {
-            case '#,' : // flag...
-                $fuzzy = in_array('fuzzy', preg_split('/,\s*/', $data));
-            case '#' : // translator-comments
-            case '#~' : // translator-comments
-            case '#.' : // extracted-comments
-            case '#:' : // reference...
-            case '#|' : // msgid previous-untranslated-string
-                // start a new entry
-                if (sizeof($temp) && array_key_exists('msgid', $temp) && array_key_exists('msgstr', $temp)) {
-                    if (!$fuzzy)
-                        $hash[] = $temp;
-                    $temp = array ();
-                    $state = null;
-                    $fuzzy = false;
+            if($line==='') {
+                if($just_new_entry) {
+                    // Two consecutive blank lines
+                    continue;
                 }
+
+                // A new entry is found!
+                $hash[] = $entry;
+                $entry = array();
+                $state= null;
+                $just_new_entry = true;
+                continue;
+            }
+
+            $just_new_entry = false;
+
+            $split = preg_split('/\s/ ', $line, 2 );
+            $key = $split[0];
+            $data = isset($split[1])? $split[1]:null;
+                        
+            switch($key) {
+            case '#,':  //flag
+                $entry['fuzzy'] = in_array('fuzzy', preg_split('/,\s*/', $data) );
+                $entry['flags'] = $data;
                 break;
+
+            case '#':   //translation-comments
+                $entryTemp['tcomment'] = $data;
+                $entry['tcomment'] = $data;
+                break;
+
+            case '#.':  //extracted-comments
+                $entryTemp['ccomment'] = $data;
+                break;
+
+            case '#:':  //reference
+                $entryTemp['reference'][] = addslashes($data);
+                $entry['reference'][] = addslashes($data);
+                break;
+
+            case '#|':  //msgid previous-untranslated-string
+                // start a new entry
+                break;
+                                
+            case '#@':  // ignore #@ default
+                $entry['@'] = $data;
+                break;
+
+                // old entry
+            case '#~':
+                $key = explode(' ', $data );
+                $entry['obsolete'] = true;
+                switch( $key[0] )
+                {
+                case 'msgid': $entry['msgid'] = trim($data,'"');
+                    break;
+
+                case 'msgstr':  $entry['msgstr'][] = trim($data,'"');
+                    break;
+                default:        break;
+                }
+                                                        
+                continue;
+                break;
+
             case 'msgctxt' :
                 // context
             case 'msgid' :
@@ -6888,76 +7028,104 @@ class Intl
             case 'msgid_plural' :
                 // untranslated-string-plural
                 $state = $key;
-                $temp[$state] = $data;
+                $entry[$state] = $data;
                 break;
+                                
             case 'msgstr' :
                 // translated-string
                 $state = 'msgstr';
-                $temp[$state][] = $data;
+                $entry[$state][] = $data;
                 break;
+
             default :
-                if (strpos($key, 'msgstr[') !== FALSE) {
+
+                if( strpos($key, 'msgstr[') !== FALSE ) {
                     // translated-string-case-n
                     $state = 'msgstr';
-                    $temp[$state][] = $data;
+                    $entry[$state][] = $data;
                 } else {
                     // continued lines
-                    switch ($state) {
+                    //echo "O NDE ELSE:".$state.':'.$entry['msgid'];
+                    switch($state) {
                     case 'msgctxt' :
                     case 'msgid' :
                     case 'msgid_plural' :
-                        $temp[$state] .= "\n" . $line;
+                        //$entry[$state] .= "\n" . $line;
+                        if(is_string($entry[$state])) {
+                            // Convert it to array
+                            $entry[$state] = array( $entry[$state] );
+                        }
+                        $entry[$state][] = $line;
                         break;
+                                                                
                     case 'msgstr' :
-                        $temp[$state][sizeof($temp[$state]) - 1] .= "\n" . $line;
+                        //Special fix where msgid is ""
+                        if($entry['msgid']=="\"\"") {
+                            $entry['msgstr'][] = trim($line,'"');
+                        } else {
+                            //$entry['msgstr'][sizeof($entry['msgstr']) - 1] .= "\n" . $line;
+                            $entry['msgstr'][]= trim($line,'"');
+                        }
                         break;
+                                                                
                     default :
-                        // parse error
-                        fclose($fh);
+                        throw new Exception('Parse ERROR!');
                         return FALSE;
                     }
                 }
                 break;
             }
-	}
-	fclose($fh);
-	
-	// add final entry
-	if ($state == 'msgstr')
-            $hash[] = $temp;
+        }
+        fclose($handle);
 
-	// Cleanup data, merge multiline entries, reindex hash for ksort
-	$temp = $hash;
-	$hash = array ();
-	foreach ($temp as $entry) {
-            foreach ($entry as & $v) {
-                $v = self::phpmo_clean_helper($v);
-                if ($v === FALSE) {
+        // add final entry
+        if($state == 'msgstr') {
+            $hash[] = $entry;
+        }
+
+        // Cleanup data, merge multiline entries, reindex hash for ksort
+        $temp = $hash;
+        $entries = array ();
+        foreach($temp as $entry) {
+            foreach($entry as & $v) {
+                $v = self::clean($v);
+                if($v === FALSE) {
                     // parse error
                     return FALSE;
                 }
             }
-            $hash[$entry['msgid']] = $entry;
-	}
 
-	return $hash;
+            $id = is_array($entry['msgid'])? implode('',$entry['msgid']):$entry['msgid'];
+                        
+            $entries[ $id ] = $entry;
+        }
+
+        return $entries;
     }
 
-    public static function phpmo_clean_helper($x) {
-	if (is_array($x)) {
-            foreach ($x as $k => $v) {
-                $x[$k] = self::phpmo_clean_helper($v);
+    public function clean($x)
+    {
+        if(is_array($x)) {
+            foreach($x as $k => $v) {
+                $x[$k] = self::clean($v);
             }
-	} else {
-            if ($x[0] == '"')
+        } else {
+            // Remove " from start and end
+            if($x == '') {
+                return '';
+            }
+
+            if($x[0]=='"') {
                 $x = substr($x, 1, -1);
-            $x = str_replace("\"\n\"", '', $x);
-            // TODO: check with phpmo escape $
-            // $x = str_replace('$', '\\$', $x);
-	}
-	return $x;
+            }
+
+            $x = stripcslashes( $x );
+        }
+
+        return $x;
     }
 }
+
 
 class MyTool
 {
@@ -7304,21 +7472,32 @@ class Opml
                 }
             }
 
-            echo '<script>alert("File '
-                . htmlspecialchars($filename) . ' (' . MyTool::humanBytes($filesize)
-                . ') was successfully processed: ' . $importCount
-                . ' links imported.");document.location=\'?\';</script>';
+            FeedPage::init(
+                array(
+                    'message' => Intl::msg('File %s (%s) was successfully processed: %d links imported'),
+                    'referer' => MyTool::getUrl(),
+                    'version' => $this->version,
+                    'pagetitle' => 'KrISS feed installation'
+                )
+            );
+            FeedPage::messageTpl();
 
             $kfData['feeds'] = $feeds;
             $kfData['folders'] = $folders;
 
             return $kfData;
         } else {
-            echo '<script>alert("File ' . htmlspecialchars($filename) . ' ('
-                . MyTool::humanBytes($filesize) . ') has an unknown'
-                . ' file format. Check encoding, try to remove accents'
-                . ' and try again. Nothing was imported.");'
-                . 'document.location=\'?\';</script>';
+
+            FeedPage::init(
+                array(
+                    'class' => 'text-success',
+                    'message' => Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),
+                    'referer' => MyTool::getUrl().'?import',
+                    'version' => $this->version,
+                    'pagetitle' => 'KrISS feed installation'
+                )
+            );
+            FeedPage::messageTpl();
             exit;
         }
     }
@@ -7545,8 +7724,6 @@ class PageBuilder
     private function initialize()
     {
         $this->tpl = true;
-        $ref = empty($_SERVER['HTTP_REFERER']) ? '' : $_SERVER['HTTP_REFERER'];
-        $this->assign('referer', $ref);
     }
 
     // 
@@ -7562,7 +7739,7 @@ class PageBuilder
         }
     }
 
-    public function renderPage($page)
+    public function renderPage($page, $exit = true)
     {
         if ($this->tpl===false) {
             $this->initialize(); // Lazy initialization
@@ -7576,8 +7753,13 @@ class PageBuilder
             $classPage->$method();
             ob_end_flush();
         } else {
-            die("renderPage does not exist: ".$page);
+            return false;
         }
+        if ($exit) {
+            exit();
+        }
+
+        return true;
     }
 }
 
@@ -7596,11 +7778,17 @@ class Plugin
         }
     }
 
+    public static function listAll() {
+        $list = array();
+        self::callHook('Plugin_registry', array(&$list));
+        return $list;
+    }
+
     public static function addHook($hookName, $functionName, $priority = 10) {
         self::$hooks[$hookName][$priority][] = $functionName;
     } 
 
-    public static function callHook($hookName, $hookArguments = null) {
+    public static function callHook($hookName, $hookArguments = array()) {
 	if(isset(self::$hooks[$hookName])) {
             ksort(self::$hooks[$hookName]);
             foreach (self::$hooks[$hookName] as $hooks) {
@@ -7614,28 +7802,20 @@ class Plugin
 
 class Session
 {
-    private static $_instance;
-
     public static $inactivityTimeout = 3600;
 
     public static $disableSessionProtection = false;
 
-    public static $banFile = 'ipbans.php';
     public static $banAfter = 4;
     public static $banDuration = 1800;
+    public static $banFile;
 
-    private function __construct($banFile)
+    public static function init($sessionName = '', $banFile = '')
     {
-        // Check ban configuration
         self::$banFile = $banFile;
 
-        if (!is_file(self::$banFile)) {
-            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
-        }
-        include self::$banFile;
-
         // Force cookie path (but do not change lifetime)
-        $cookie=session_get_cookie_params();
+        $cookie = session_get_cookie_params();
         // Default cookie expiration and path.
         $cookiedir = '';
         if(dirname($_SERVER['SCRIPT_NAME'])!='/') {
@@ -7649,60 +7829,11 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
-            session_name('kriss');
+            if (!empty($sessionName)) {
+                session_name($sessionName);
+            }
             session_start();
         }
-    }
-
-    public static function init($banFile)
-    {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new Session($banFile);
-        }
-    }
-
-    public static function banLoginFailed()
-    {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-
-        if (!isset($gb['FAILURES'][$ip])) {
-            $gb['FAILURES'][$ip] = 0;
-        }
-        $gb['FAILURES'][$ip]++;
-        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
-            $gb['BANS'][$ip]= time() + self::$banDuration;
-        }
-
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-    }
-
-    public static function banLoginOk()
-    {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-    }
-
-    public static function banCanLogin()
-    {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        if (isset($gb['BANS'][$ip])) {
-            // User is banned. Check if the ban has expired:
-            if ($gb['BANS'][$ip] <= time()) {
-                // Ban expired, user can try to login again.
-                unset($gb['FAILURES'][$ip]);
-                unset($gb['BANS'][$ip]);
-                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-                return true; // Ban has expired, user can login.
-            }
-            return false; // User is banned.
-        }
-        return true; // User is not banned.
     }
 
     private static function _allIPs()
@@ -7721,6 +7852,7 @@ class Session
         $passwordTest,
         $pValues = array())
     {
+        self::banInit();
         if (!self::banCanLogin()) {
             die('I said: NO. You are banned for the moment. Go away.');
         }
@@ -7790,7 +7922,62 @@ class Session
 
         return false; // Wrong token, or already used.
     }
-}//end class
+
+    public static function banLoginFailed()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+
+        if (!isset($gb['FAILURES'][$ip])) {
+            $gb['FAILURES'][$ip] = 0;
+        }
+        $gb['FAILURES'][$ip]++;
+        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
+            $gb['BANS'][$ip]= time() + self::$banDuration;
+        }
+
+        $GLOBALS['IPBANS'] = $gb;
+        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+    }
+
+    public static function banLoginOk()
+    {
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
+        $GLOBALS['IPBANS'] = $gb;
+        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+    }
+
+    public static function banInit()
+    {
+        if (!is_file(self::$banFile) && self::$banFile !== '') {
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
+        }
+        if (self::$banFile !== '') {
+            include self::$banFile;
+        }
+    }
+
+    public static function banCanLogin()
+    {
+
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $gb = $GLOBALS['IPBANS'];
+        if (isset($gb['BANS'][$ip])) {
+            // User is banned. Check if the ban has expired:
+            if ($gb['BANS'][$ip] <= time()) {
+                // Ban expired, user can try to login again.
+                unset($gb['FAILURES'][$ip]);
+                unset($gb['BANS'][$ip]);
+                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+                return true; // Ban has expired, user can login.
+            }
+            return false; // User is banned.
+        }
+        return true; // User is not banned.
+    }
+}
 
 class Star extends Feed
 {
@@ -7895,23 +8082,60 @@ class Star extends Feed
 Plugin::init();
 
 
-if (!function_exists('fr_FR')) {
-    function fr_FR(&$messages) {
-        $messages['fr_FR'] = unserialize(gzinflate(base64_decode("
-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")));
+if (!class_exists('Intl_fr_FR')) {
+    class Intl_fr_FR {
+        public static function init(&$messages) {
+            $messages['fr_FR'] = unserialize(gzinflate(base64_decode("
+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")));
+        }
     }
+    Intl::addLang('fr_FR', 'Français (France)', 'flag-fr');
 }
-Plugin::addHook('Intl_init_fr_FR', 'fr_FR');
 
 
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init(BAN_FILE);
+Session::init('kriss', BAN_FILE);
+
+// Initialize internationalization
+Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
+Intl::addLang('en_US', 'English (America)', 'flag-us');
+Intl::init();
+
+$ref = MyTool::getUrl();
+$referer = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
+if (substr($referer, 0, strlen($ref)) !== $ref) {
+    $referer = $ref;
+}
+
+$pb = new PageBuilder('FeedPage');
+$pb->assign('version', FEED_VERSION);
+$pb->assign('pagetitle', 'KrISS feed');
+$pb->assign('referer', $referer);
+
+if (!is_dir(DATA_DIR)) {
+    if (!@mkdir(DATA_DIR, 0755)) {
+        $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), DATA_DIR));
+        $pb->renderPage('message');
+    }
+    @chmod(DATA_DIR, 0755);
+    if (!is_file(DATA_DIR.'/.htaccess')) {
+        if (!@file_put_contents(
+            DATA_DIR.'/.htaccess',
+            "Allow from none\nDeny from all\n"
+        )) {
+            $pb->assign('message', sprintf(Intl::msg('Can not protect %s directory with .htaccess, check permissions'), DATA_DIR));
+            $pb->renderPage('message');
+        }
+    }
+}
+
 // XSRF protection with token
 if (!empty($_POST)) {
     if (!Session::isToken($_POST['token'])) {
-        die('Wrong token.');
+        $pb->assign('message', Intl::msg('Wrong token'));
+        $pb->renderPage('message');
     }
     unset($_SESSION['tokens']);
 }
@@ -7920,10 +8144,7 @@ $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
 $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
-$pb = new PageBuilder('FeedPage');
 $kfp = new FeedPage(STYLE_FILE);
-
-Intl::init($kfc->lang);
 
 // List or Expanded ?
 $view = $kfc->view;
@@ -7964,9 +8185,9 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
-$pb->assign('version', FEED_VERSION);
 $pb->assign('kfurl', MyTool::getUrl());
 $pb->assign('isLogged', $kfc->isLogged());
+$pb->assign('pagetitle', strip_tags($kfc->title));
 
 if (isset($_GET['login'])) {
     // Login
@@ -7992,7 +8213,8 @@ if (isset($_GET['login'])) {
 
             MyTool::redirect();
         }
-        die("Login failed !");
+        $pb->assign('message', Intl::msg('Login failed!'));
+        $pb->renderPage('message');
     } else {
         $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         $pb->renderPage('login');
@@ -8168,6 +8390,9 @@ if (isset($_GET['login'])) {
         $pb->assign('pagetitle', Intl::msg('Update').' - '.strip_tags($kfc->title));
         $pb->renderPage('update');
     }
+} elseif (isset($_GET['plugins']) && $kfc->isLogged()) {
+    $pb->assign('pagetitle', Intl::msg('Plugins management').' - '.strip_tags($kfc->title));
+    $pb->renderPage('plugins');
 } elseif (isset($_GET['config']) && $kfc->isLogged()) {
     // Config
     if (isset($_POST['save'])) {
@@ -8219,13 +8444,10 @@ if (isset($_GET['login'])) {
             $rurl = empty($_SERVER['HTTP_REFERER'])
                 ? '?'
                 : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("The file you are trying to upload'
-                . ' is probably bigger than what this webserver can accept '
-                . '(' . MyTool::humanBytes(MyTool::getMaxFileSize())
-                . ' bytes). Please upload in smaller chunks.");'
-                . 'document.location=\'' . htmlspecialchars($rurl)
-                . '\';</script>';
-            exit;
+
+            $pb->assign('message', sprintf(Intl::msg('The file you are trying to upload is probably bigger than what this webserver can accept (%s). Please upload in smaller chunks.'), MyTool::humanBytes(MyTool::getMaxFileSize())));
+            $pb->assign('referer', $rurl);
+            $pb->renderPage('message');
         }
 
         $kf->loadData();
@@ -8269,13 +8491,8 @@ if (isset($_GET['login'])) {
             MyTool::redirect('?currentHash='.$hash);
         } else {
             // Add fail
-            $returnurl = empty($_SERVER['HTTP_REFERER'])
-                ? MyTool::getUrl()
-                : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("' . $addc['error'] . '");'
-                . 'document.location=\'' . htmlspecialchars($returnurl)
-                . '\';</script>';
-            exit;
+            $pb->assign('message', $addc['error']);
+            $pb->renderPage('message');
         }
     }
 
@@ -8617,12 +8834,8 @@ if (isset($_GET['login'])) {
 
         header('Location: '.$shaarli);
     } else {
-        echo '
-<script>
- alert("Please configure your share link first");
- document.location="'.MyTool::getUrl().'";
-</script>';
-        exit();
+        $pb->assign('message', Intl::msg('Please configure your share link first'));
+        $pb->renderPage('message');
     }
 } elseif (isset($_GET['file'])) {
     if ($_GET['file'] == 'favicon.ico') {

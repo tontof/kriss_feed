@@ -31,8 +31,6 @@ class PageBuilder
     private function initialize()
     {
         $this->tpl = true;
-        $ref = empty($_SERVER['HTTP_REFERER']) ? '' : $_SERVER['HTTP_REFERER'];
-        $this->assign('referer', $ref);
     }
 
     // 
@@ -60,8 +58,10 @@ class PageBuilder
      * eg. pb.renderPage('picwall')
      * 
      * @param string $page page to render
+     *
+     * @return boolean true if no problem, false if page does not exist
      */
-    public function renderPage($page)
+    public function renderPage($page, $exit = true)
     {
         if ($this->tpl===false) {
             $this->initialize(); // Lazy initialization
@@ -75,7 +75,12 @@ class PageBuilder
             $classPage->$method();
             ob_end_flush();
         } else {
-            die("renderPage does not exist: ".$page);
+            return false;
         }
+        if ($exit) {
+            exit();
+        }
+
+        return true;
     }
 }

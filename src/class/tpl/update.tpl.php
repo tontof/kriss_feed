@@ -17,7 +17,7 @@
                 </ul>
                 <a class="btn ico-home" href="<?php echo MyTool::getUrl(); ?>" title="<?php echo Intl::msg('Home'); ?>"></a>
                 <?php if (!empty($referer)) { ?>
-                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>"><?php echo Intl::msg('Go back'); ?></a>
+                <a class="btn" href="<?php echo $referer; ?>"><?php echo Intl::msg('Go back'); ?></a>
                 <?php } ?>
                 <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>"><?php echo Intl::msg('Force update'); ?></a>
               </div>

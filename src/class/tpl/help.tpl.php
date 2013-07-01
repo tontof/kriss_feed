@@ -6,6 +6,7 @@
       <div class="row-fluid">
         <div class="span6 offset3">
           <div id="config">
+            <?php FeedPage::statusTpl(); ?>
             <?php FeedPage::navTpl(); ?>
             <div id="section">
               <h2><?php echo Intl::msg('Keyboard shortcuts'); ?></h2>

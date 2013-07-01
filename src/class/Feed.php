@@ -1289,11 +1289,21 @@ class Feed
                 unset($this->_data['feeds'][$feedHash]['lastModified']);
             }
 
-            if ($error !== '') {
+            if (!empty($error)) {
                 return array('error' => $this->getError($error));
             } else {
                 $channel = $this->getChannelFromXml($xml);
                 $items = $this->getItemsFromXml($xml);
+
+                $channel['xmlUrl'] = $xmlUrl;
+                if (!MyTool::isUrl($channel['htmlUrl'])) {
+                    $channel['htmlUrl'] = '';
+                }
+                $channel['foldersHash'] = array();
+                $channel['timeUpdate'] = 'auto';
+                $channel['lastUpdate'] = time();
+                $channel['etag'] = $this->_data['feeds'][$feedHash]['etag'];
+                $channel['lastModified'] = $this->_data['feeds'][$feedHash]['lastModified'];
 
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
@@ -1316,21 +1326,15 @@ class Feed
                     unset($items[$itemHash]);
                 }
 
-                $channel['xmlUrl'] = $xmlUrl;
-                $channel['foldersHash'] = array();
                 $channel['nbUnread'] = count($items);
                 $channel['nbAll'] = count($items);
-                $channel['timeUpdate'] = 'auto';
-                $channel['lastUpdate'] = time();
-                $channel['etag'] = $this->_data['feeds'][$feedHash]['etag'];
-                $channel['lastModified'] = $this->_data['feeds'][$feedHash]['lastModified'];
 
                 $this->_data['feeds'][$feedHash] = $channel;
                 $this->_data['needSort'] = true;
 
                 $this->writeFeed($feedHash, $items);
 
-                return true;
+                return array('error' => '');
             }
         } else {
             return array('error' => Intl::msg('Duplicated feed'));
