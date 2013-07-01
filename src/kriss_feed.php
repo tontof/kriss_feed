@@ -2,6 +2,7 @@
 // kriss_feed simple and smart (or stupid) feed reader
 // 2012 - Copyleft - Tontof - http://tontof.net
 // use KrISS feed at your own risk
+define('BASE_URL', '');
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
@@ -124,6 +125,11 @@ if (!empty($currentHash) and $currentHash !== 'all') {
     $query .= 'currentHash='.$currentHash.'&';
 }
 
+$base = BASE_URL;
+if (empty($bases)) {
+    $base = MyTool::getUrl();
+}
+
 $pb->assign('view', $view);
 $pb->assign('listFeeds', $listFeeds);
 $pb->assign('filter', $filter);
@@ -142,7 +148,7 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
-$pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('base', $base);
 $pb->assign('isLogged', $kfc->isLogged());
 $pb->assign('pagetitle', strip_tags($kfc->title));
 
@@ -803,8 +809,16 @@ if (isset($_GET['login'])) {
         echo base64_decode($favicon);
         exit();
     } else if ($_GET['file'] == 'style.css') {
+        header('Content-type: text/css');
+?>
+<?php include("inc/style.css"); ?>
+<?php
         exit();
     } else if ($_GET['file'] == 'script.js') {
+        header('Content-type: text/javascript');
+?>
+<?php include("inc/script.js"); ?>
+<?php
         exit();
     }
 } else {

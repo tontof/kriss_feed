@@ -39,9 +39,7 @@
     <?php if (is_file('inc/script.js')) { ?>
     <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
     <?php } else { ?>
-    <script type="text/javascript">
-      <?php include("inc/script.js"); ?>
-    </script>
+    <script type="text/javascript" src="?file=script.js&amp;version=<?php echo $version;?>"></script>
     <?php } ?>
   </body>
 </html>

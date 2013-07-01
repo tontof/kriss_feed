@@ -2,6 +2,7 @@
 // kriss_feed simple and smart (or stupid) feed reader
 // 2012 - Copyleft - Tontof - http://tontof.net
 // use KrISS feed at your own risk
+define('BASE_URL', '');
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
@@ -242,6 +243,10 @@ class FeedConf
             $lang = $_GET['lang'];
         } else if (isset($_SESSION['lang'])) {
             $lang = $_SESSION['lang'];
+        }
+
+        if (!in_array($lang, array_keys(Intl::$langList))) {
+            $lang = $this->lang;
         }
 
         return $lang;
@@ -656,6 +661,7 @@ class FeedPage
     {
         extract(FeedPage::$var);
 ?>
+    <base href="<?php echo $base;?>">
     <title><?php echo $pagetitle;?></title>
     <meta charset="utf-8">
 <?php if (is_file('inc/favicon.ico')) { ?>
@@ -666,854 +672,7 @@ class FeedPage
 <?php if (is_file('inc/style.css')) { ?>
     <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
 <?php } else { ?>
-    <style>
-article,
-footer,
-header,
-nav,
-section {
-  display: block;
-}
-
-html, button {
-  font-size: 100%;
-}
-
-body {
-  font-family: Helvetica, Arial, sans-serif;
-}
-
-html, body, .full-height {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: auto;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-  vertical-align: middle;
-  border: 0;
-}
-
-a {
-  color: #666;
-  text-decoration: none;
-}
-
-a:hover {
-  color: #000;
-  text-decoration: underline;
-}
-
-small {
-  font-size: 85%;
-}
-
-strong {
-  font-weight: bold;
-}
-
-em {
-  font-style: italic;
-}
-
-cite {
-  font-style: normal;
-}
-
-ol,
-ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-code {
-  font-family: "Courier New", monospace;
-  font-size: 12px;
-  color: #333333;
-  border-radius: 3px;
-  padding: 2px 4px;
-  color: #d14;
-  background-color: #f7f7f9;
-  border: 1px solid #e1e1e8;
-}
-
-.muted {
-  color: #999999;
-}
-
-.text-warning {
-  color: #c09853;
-}
-
-.text-error {
-  color: #b94a48;
-}
-
-.text-info {
-  color: #3a87ad;
-}
-
-.text-success {
-  color: #468847;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.collapse {
-  position: relative;
-  height: 0;
-  overflow: hidden;
-}
-
-.collapse.in {
-  height: auto;
-}
-
-.row-fluid .span12 {
-  width: 99%;
-}
-
-.row-fluid .span9 {
-  width: 75%;
-}
-
-.row-fluid .span6 {
-  width: 49%;
-}
-
-.row-fluid .span4 {
-  width: 33%;
-}
-
-.row-fluid .span3 {
-  width: 24%;
-}
-
-.row-fluid .offset4 {
-  margin-left: 33%;
-}
-
-.row-fluid .offset3 {
-  margin-left: 24%;
-}
-
-.container {
-  margin: auto;
-  padding: 10px;
-}
-
-.well {
-  border: 1px solid black;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-.form-horizontal .control-label {
-  display: block;
-  float: left;
-  width: 20%;
-  padding-top: 5px;
-  text-align: right;
-}
-
-.form-horizontal .controls {
-  margin-left: 22%;
-  width: 78%;
-}
-
-label {
-  display: block;
-}
-
-input[type="text"],
-input[type="password"] {
-  width: 90%;
-  position: relative;
-  display: inline-block;
-  line-height: 20px;
-  height: 20px;
-  padding: 5px;
-  margin-left: -1px;
-  border: 1px solid #444;
-  vertical-align: middle;
-  margin-bottom: 0;
-  border-radius: 0;
-}
-
-input[readonly="readonly"]{
-  opacity: 0.4;
-}
-
-
-.input-mini {
-  width: 24px !important;
-}
-
-button::-moz-focus-inner,
-input::-moz-focus-inner {
-  padding: 0;
-  border: 0;
-}
-
-.control-group {
-  clear: both;
-  margin-bottom: 10px;
-}
-
-.help-block {
-  color: #666;
-  display: block;
-  font-size: 90%;
-  margin-bottom: 10px;
-}
-
-.navbar {
-  background-color: #fafafa;
-  border: 1px solid #444;
-  border-radius: 4px;
-}
-
-.nav-collapse.collapse {
-  height: auto;
-  overflow: visible;
-  float: left;
-}
-
-.navbar .brand {
-  padding: 5px;
-  font-size: 18px;
-  display: block;
-  float: left;
-}
-
-.navbar .btn-navbar {
-  padding: 5px !important;
-  margin: 5px !important;
-  font-size: 18px;
-  display: none;
-  float: right;
-}
-
-.navbar .nav {
-  display: block;
-  float: left;
-}
-
-.navbar .nav > li {
-  float: left;
-}
-
-.navbar .nav > li > a {
-  display: block;
-  padding: 10px 15px;
-}
-
-.menu-ico {
-  display: none;
-}
-
-#paging-up,
-#paging-down {
-  margin: 10px;
-}
-
-.input-append,
-.input-prepend,
-.btn-group {
-  position: relative;
-  display: inline-block;
-  font-size: 0;
-  white-space: nowrap;
-}
-
-.btn, button {
-  display: inline-block;
-  line-height: 20px;
-  font-size: 14px;
-  text-align: center;
-  border: 1px solid #444;
-  background-color: #ddd;
-  vertical-align: middle;
-  padding: 5px;
-  margin: 0;
-  margin-left: -1px;
-  min-width: 20px;
-  border-radius: 0;
-}
-
-.btn-break {
-  display: none;
-}
-
-ul.inline > li,
-ol.inline > li {
-  float: left;
-  padding-right: 5px;
-  padding-left: 5px;
-}
-
-li.feed {
-  margin-left: 4px;
-}
-
-li.feed:hover {
-  background-color: #eee;
-}
-
-li.feed.has-unread {
-  font-weight: bold;
-}
-
-.item-favicon {
-  float: left;
-  margin-right: 2px;
-}
-
-li.folder > h4 {
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 2px;
-  margin: 0;
-}
-
-li.folder > h5 {
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 2px;
-  margin: 2px 0;
-}
-
-li.folder > h4:hover,
-li.folder > h5:hover {
-  background-color: #eee;
-}
-
-.mark-as {
-  float: right;
-}
-
-li.item-list {
-  border-bottom: 1px solid #ddd;
-}
-
-.current, .current-feed, .current-folder > h5, .current-folder > h4 {
-  background-color: #eee;
-}
-
-.current .item-title {
-  font-weight: bold;
-}
-
-dl {
-  margin: 0 !important;
-}
-
-dt,
-dd {
-  line-height: 20px;
-}
-
-.dl-horizontal dt {
-  float: left;
-  width: 18%;
-  overflow: hidden;
-  clear: left;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dl-horizontal dd {
-  margin-left: 20%;
-}
-
-.item-info {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item-link {
-  color: #000;
-}
-
-.read {
-  opacity: 0.4;
-}
-
-.autohide-feed,.autohide-folder {
-  display: none;
-}
-
-#main-container {
-  float: right;
-}
-
-#minor-container {
-  margin-left: 0;
-}
-
-.clear {
-  clear: both;
-}
-
-#menu-toggle {
-  color: #000 !important;
-}
-
-#status {
-  font-size: 85%;
-}
-
-.item-toggle-plus {
-  float: right;
-}
-
-.item-content {
-  margin: 10px 0;
-}
-
-.item-info-end {
-  float: right;
-}
-
-.folder-toggle:focus, .folder-toggle:hover, .folder-toggle:active, .item-toggle:focus, .item-toggle:hover, .item-toggle:active, .mark-as:hover, .mark-as:active {
-  text-decoration: none;
-}
-
-.folder-toggle-open, .item-toggle-open, .item-close {
-  display: none;
-}
-
-.folder-toggle-close, .item-toggle-close, .item-open {
-  display: block;
-}
-
-.label,
-.badge {
-  padding: 2px 4px;
-  font-size: 11px;
-  line-height: 14px;
-  font-weight: bold;
-  color: #ffffff;
-  background-color: #999999;
-  border-radius: 3px;
-}
-
-.label-expanded {
-  padding: 6px;
-}
-
-/* Large desktop */
-@media (min-width: 1200px) {
-
-}
-
-/* Portrait tablet to landscape and desktop */
-@media (min-width: 768px) and (max-width: 979px) {
-
-  .hidden-desktop {
-    display: inherit !important;
-  }
-  .visible-desktop {
-    display: none !important ;
-  }
-  .visible-tablet {
-    display: inherit !important;
-  }
-  .hidden-tablet {
-    display: none !important;
-  }
-}
-
-@media (min-width: 768px) {
-  .nav-collapse.collapse {
-    height: auto !important;
-    overflow: visible !important;
-  }
-}
-
-/* Landscape phone to portrait tablet */
-@media (max-width: 767px) {
-  input[type="text"],
-  input[type="password"] {
-    padding: 10px 0 !important;
-  }
-
-  .btn {
-    padding: 10px !important;
-  }
-
-  .label {
-    padding: 10px !important;
-    border-radius: 10px !important;
-  }
-
-  .item-top > .label,
-  .item-shaarli > .label,
-  .item-starred > .label,
-  .item-mark-as > .label {
-    display: block;
-    float: left;
-    margin: 5px;
-  }
-
-  .item-link {
-    clear: both;
-  }
-
-  li.feed, li.folder > h4,  li.folder > h5{
-    padding: 10px 0;
-  }
-  .row-fluid .span12,
-  .row-fluid .span9,
-  .row-fluid .span6,
-  .row-fluid .span4,
-  .row-fluid .span3 {
-    width: 99%;
-  }
-  .row-fluid .offset4,
-  .row-fluid .offset3 {
-    margin-left: 0;
-  }
-
-  #main-container {
-    float: none;
-    margin: auto;
-  }
-
-  #minor-container {
-    margin: auto;
-  }
-
-  .hidden-desktop {
-    display: inherit !important;
-  }
-  .visible-desktop {
-    display: none !important;
-  }
-  .visible-phone {
-    display: inherit !important;
-  }
-  .hidden-phone {
-    display: none !important;
-  }
-  html, body, .full-height {
-    height: auto;
-  }
-
-  .navbar .container {
-    width: auto;
-  }
-
-  .nav-collapse.collapse {
-    float: none;
-    clear: both;
-  }
-
-  .nav-collapse .nav,
-  .nav-collapse .nav > li {
-    float: none;
-  }
-
-  .nav-collapse .nav > li > a {
-    display: block;
-    padding: 10px;
-  }
-  .nav-collapse .btn {
-    font-weight: normal;
-  }
-  .nav-collapse .nav > li > a:hover,
-  .nav-collapse .nav > li > a:focus {
-    background-color: #f2f2f2;
-  }
-
-  .nav-collapse.collapse {
-    height: 0;
-    overflow: hidden;
-  }
-  .navbar .btn-navbar {
-    display: block;
-  }
-
-  .dl-horizontal dt {
-    float: none;
-    width: auto;
-    clear: none;
-    text-align: left;
-    padding: 10px;
-  }
-
-  .dl-horizontal dd {
-    clear: both;
-    padding: 10px;
-    margin-left: 0;
-  }
-}
-
-/* Landscape phones and down */
-@media (max-width: 480px) {
-  ul.inline {
-    width: 100%;
-  }
-
-  ul.inline > li {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .btn-group {
-    width: 100%;
-    margin: 5px auto;
-  }
-
-  .btn-group .btn {
-    width: 100%;
-    padding: 10px 0 !important;
-    margin: auto;
-  }
-
-  .btn-break {
-    display: block;
-  }
-
-  .btn2 {
-    width: 50% !important;
-  }
-
-  .btn3 {
-    width: 33.333% !important;
-  }
-
-  .paging-by-page {
-    width: 100%;
-  }
-
-  .paging-by-page > input {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .item-toggle-plus {
-    padding: 10px;
-  }
-
-  .item-info {
-    white-space: normal;
-  }
-
-  .item-description {
-    display: none;
-  }
-}
-
-/* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
-/* https://github.com/lucianmarin/peculiar */
-.ico {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  margin-right: 4px;
-  margin-left: 4px;
-}
-.ico-feed-dot {
-  background-color: #000;
-  width: 4px;
-  height: 4px;
-  border-radius: 3px;
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-}
-.ico-feed-circle-1 {
-  border: #000 2px solid;
-  border-bottom-color: transparent;
-  border-left-color: transparent;
-  width: 6px;
-  height: 6px;
-  border-radius: 6px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-.ico-feed-circle-2 {
-  border: #000 2px solid;
-  border-bottom-color: transparent;
-  border-left-color: transparent;
-  width: 9px;
-  height: 9px;
-  border-radius: 4px 7px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-.ico-b-disc {
-  background-color: #000;
-  border-radius:8px;
-  width: 16px;
-  height: 16px;
-  position: absolute;
-  top:0;
-  left:0;
-}
-.ico-w-line-h {
-  background-color: #fff;
-  width: 8px;
-  height: 2px;
-  border-radius: 1px;
-  position: absolute;
-  top:7px;
-  left: 4px;
-}
-.ico-w-line-v {
-  background-color: #fff;
-  width: 2px;
-  height: 8px;
-  border-radius: 1px;
-  position: absolute;
-  top: 4px;
-  left: 7px;
-}
-.ico-w-circle {
-  border: #fff 2px solid;
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-}
-
-.ico-toggle-item {
-  float: right;
-}
-
-.menu-ico {
-  text-decoration: none !important;
-}
-
-.menu-ico:before {
-  content: "";
-  speak: none;
-  display: none;
-  text-decoration: none !important;
-}
-
-.ico-star:before {
-  content: "\2605";
-}
-
-.ico-unstar:before {
-  content: "\2606";
-}
-
-.ico-update:before {
-  content: "\21BA";
-}
-
-.ico-add-feed:before {
-  content: "\271A";
-}
-
-.ico-home:before {
-  content: "\23CF";
-}
-
-.ico-help:before {
-  content: "\2048";
-}
-
-.ico-edit:before {
-  content: "\2318";
-}
-
-.ico-config:before {
-  content: "\273F";
-}
-
-.ico-order-older:before {
-  content: "\25BC";
-}
-
-.ico-order-newer:before {
-  content: "\25B2";
-}
-
-.ico-login:before {
-  content: "\2611";
-}
-
-.ico-logout:before {
-  content: "\2612";
-}
-
-.ico-list-feeds-hide:before {
-  content: "\25FB";
-}
-
-.ico-list-feeds-show:before {
-  content: "\25E7";
-}
-
-.ico-list:before {
-  content: "\2630 ";
-}
-
-.ico-expanded:before {
-  content: "\2B12";
-}
-
-.ico-mark-as-read:before {
-  content: "\25C9";
-}
-
-.ico-mark-as-unread:before {
-  content: "\25CE";
-}
-
-.ico-filter-all:before {
-  content: "\26C3";
-}
-
-.ico-filter-unread:before {
-  content: "\26C0";
-}
-
-#flags-sel + #flags {
-  display: none;
-}
-
-#flags-sel:target + #flags {
-  display: block;
-}
-
-#flags-sel:target #hide-flags, #flags-sel #show-flags {
-  display: inline-block;
-}
-
-#flags-sel:target #show-flags, #flags-sel #hide-flags {
-  display: none;
-}
-.flag {
-  display: inline-block;
-  width: 16px;
-  height: 11px;
-  background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAWCAYAAAChWZ5EAAAFVElEQVRIia2Vf2yW1RXHP/ftqxmDwSxM6FghGMt0Thbn2M9SFCmo+2miIAjbZE5jRubCmJUtGwQM2zCiYcSGH6EsA3GhyUTXJlNWu7oEdabggAmEho0h0Flmbd++7/Pce885++N5W374x/6gJzl57n2eJ/ec7/ec+z3OzLgcW/7MoYsO0Kj88BujERHSNEVEiDHinOOa2TehBYgpRECB/GVFL9tddR8HwNRQNaqqPsIgMDNDVTEzrnh8PRYD6j0WAuceWz08CWDQXwyIZMEGBgYws6HgzjlEhNGnT6E+xXwKY8cRgdxlB9cMuYghqkQxcrkcZoZzbmitqqhP0DRFQ4p5PzwliFERVUQUESOqYFZOQhVVGyqHphl69QHnPX44EvA+omqIKEEViUZFRUWGGMjnQNXhnMsSCB71Hhfj8DDgY0Z7ECWKEqMO1X/QRTJWzKeI95gP5IaLgcTHrPZRsySCZOjLnS9yfp8FT9EQIIbhYSBJYhY8KjEKIepQwA94mmbXMARcFOJwJFD0nhiVD4+oQCLEmBvq/kFzLuuBivFVaIw4iZgMEwPFYmTt9oMkiaeYRAqJZ+KIKrz3hCTBi+C9J0kSpv2mCeW8CgK4DZvabGrtNF7tOEZ3D4AgKjy26EYOrd2IiXDjzx/hR+tfx0KOgWJCdc0IZh1o5cTX5nH2jUukXBU0Ah4wwLN58l6sOEDPu2fx5eCDieQrx4xi7vE25jx0D13/HmDf/jOIOWqmVDL1ppHgU2xKJXd8vpoQhdobxjK9YxM0r2NDy9ucpcCWxi+xo8NYMFN59pUcC2cYv+1wLK6NNLXnkVtvxww+anqBRCutrbvJtx0vMaF+Nrfteo5rP3E1135zFr9s/AfOAW91QUhwDk6eM1aNO07Fqy/jfrKGpt0H+fW617jz5k+zo8PY1aHsaAdRZeteQwy2vORIYuSBl34G/+2Fvveh0A/FIm7hHVz/5l8zKX7nzHus7JnGSbkGWbOKFQ9/KqOz1A+lEgBPnGhk5Jxajt61hFl3PsehI30kaQoETOH5BiNVeKEhIAYtjxZJonHYQXHlSgpPPUnfls307tyJa59EafFSCg824I52nbOaKZUZ4ktt3jxIU9iz5wOfzKDzyH9ofOoodQu+TFObIpohjwFSMw6TEot/I57ZCMUiFApYkoD35JZ8i9cOd5I/+PjTTP3sSHjrOIQA3p9/qmJpSrzllmx4hGyUIkL+uon86c0CzP4FC2cYW/caf2xIqF/zIVoa+piw1vPPZUr10pS+pm0XiZOq0jv+at5r3f1/GKirQ9JAxev7yh3tskOwjIGjPWxev58v3lvPtpeF1AwNcNC6kfQI/EvgpBBHr82QpymkKZYk5H4wnxe7juBmfvsF+3pdNZ1vdPPTR77ADRME/+iPuXLrduzm6YgI+QOdgHL6ttkcm7+cBavfobb+YzS/uJeT+5dRVTWJEMJFCC9dX7gvlUpMuQI2Pr+DfJJExo+9kp2b5lJYvZL3R4xi6VUP8TvK41MVzPjKrbt4pb2NMVu2caC+g83Tl9G8JzJx+9O42+8m19KGdXdDby8UCpknCVYsgvfYhesQ0OXfZcypE+QXLa7hvq9eR/KrFfx95vdobj9N5SjBDNz1E3EaMDOqP1nJou80s+T7M5iz5D4efuAeuu+fT9e9n2Hy5Kn0f24Go3yCWXbHL52IZkaMgSSpBE4hoty9YRX5M++e45k5D/KHmpl07vwLIZaIItw/r4bWfb1YjMx9u4ff7/kzqLC7pYNxk65ixRPrOLaikZF9z9JtmbL1ldWNC5QuAfqBYtlD+d3gf/8DcCnYzK68GQMAAAAASUVORK5CYII=) no-repeat
-}
-
-.flag.flag-fr {background-position: -16px 0}
-.flag.flag-gb {background-position: 0 -11px}
-.flag.flag-us {background-position: -16px -11px}
-    </style>
+    <link type="text/css" rel="stylesheet" href="?file=style.css&amp;version=<?php echo $version;?>" />
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
     <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
@@ -1574,7 +733,8 @@ dd {
               <fieldset>
                 <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
           <div class="text-center">
-<?php foreach(Intl::$langList as $lang => $info) { ?>
+     <?php echo Intl::msg('Click on flag to select your language.').'<br>';
+     foreach(Intl::$langList as $lang => $info) { ?>
 <a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
 <?php } ?>
           </div>
@@ -1601,11 +761,9 @@ dd {
             <?php FeedPage::statusTpl(); ?>
           </div>
         </div>
-        <script>
-          document.installform.setlogin.focus();
-        </script>
       </div>
     </div>
+    <script>document.installform.setlogin.focus();</script>
   </body>
 </html>
 
@@ -2517,7 +1675,7 @@ switch($template) {
             <fieldset>
               <legend><?php echo Intl::msg('Use bookmarklet to add a new feed'); ?></legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
+                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
               </div>
             </fieldset>
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
@@ -2830,13 +1988,13 @@ switch($template) {
         <div class="span4 offset4">
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data">
+          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data" name="importform">
             <fieldset>
               <legend><?php echo Intl::msg('Import opml file'); ?></legend>
               <div class="control-group">
                 <label class="control-label" for="filetoupload"><?php echo Intl::msg('Opml file:'); ?></label>
                 <div class="controls">
-                  <input class="btn" type="file" id="filetoupload" name="filetoupload">
+                  <input tabindex="1" class="btn" type="file" id="filetoupload" name="filetoupload">
                   <span class="help-block"><?php echo Intl::msg('Size max:'); ?> <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>
                     </span>
                 </div>
@@ -3137,7 +2295,7 @@ foreach(array_keys($paging) as $pagingOpt) {
 
   <li>
     <div class="btn-group">
-      <form class="form-inline" action="<?php echo $kfurl; ?>" method="GET">
+      <form class="form-inline" action="" method="GET">
         <div class="input-prepend input-append paging-by-page">
           <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=1'; ?>">1</a>
           <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=10'; ?>">10</a>
@@ -3206,2138 +2364,7 @@ foreach(array_keys($paging) as $pagingOpt) {
     <?php if (is_file('inc/script.js')) { ?>
     <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
     <?php } else { ?>
-    <script type="text/javascript">
-/*jshint sub:true, evil:true */
-
-(function () {
-  "use strict";
-  var view = '', // data-view
-      listFeeds = '', // data-list-feeds
-      filter = '', // data-filter
-      order = '', // data-order
-      autoreadItem = '', // data-autoread-item
-      autoreadPage = '', // data-autoread-page
-      autohide = '', // data-autohide
-      byPage = -1, // data-by-page
-      shaarli = '', // data-shaarli
-      redirector = '', // data-redirector
-      currentHash = '', // data-current-hash
-      currentPage = 1, // data-current-page
-      currentNbItems = 0, // data-nb-items
-      autoupdate = false, // data-autoupdate
-      autofocus = false, // data-autofocus
-      addFavicon = false, // data-add-favicon
-      preload = false, // data-preload
-      stars = false, // data-stars
-      isLogged = false, // data-is-logged
-      blank = false, // data-blank
-      status = '',
-      listUpdateFeeds = [],
-      listItemsHash = [],
-      currentItemHash = '',
-      currentUnread = 0,
-      title = '',
-      cache = {},
-      intlTop = 'top',
-      intlShare = 'share',
-      intlRead = 'read',
-      intlUnread = 'unread',
-      intlStar = 'star',
-      intlUnstar = 'unstar',
-      intlFrom = 'from';
-
-  if(!String.prototype.trim) {
-    String.prototype.trim = function () {
-      return this.replace(/^\s+|\s+$/g,'');
-    };
-  }
-  function stopBubbling(event) {
-    if(event.stopPropagation) {
-      event.stopPropagation();
-    }
-    else {
-      event.cancelBubble = true;
-    }
-  }
-
-  if (!window.JSON) {
-    window.JSON = {
-      parse: function (sJSON) { return eval("(" + sJSON + ")"); },
-      stringify: function (vContent) {
-        if (vContent instanceof Object) {
-          var sOutput = "";
-          if (vContent.constructor === Array) {
-            for (var nId = 0; nId < vContent.length; sOutput += this.stringify(vContent[nId]) + ",", nId++);
-            return "[" + sOutput.substr(0, sOutput.length - 1) + "]";
-          }
-          if (vContent.toString !== Object.prototype.toString) { return "\"" + vContent.toString().replace(/"/g, "\\$&") + "\""; }
-          for (var sProp in vContent) { sOutput += "\"" + sProp.replace(/"/g, "\\$&") + "\":" + this.stringify(vContent[sProp]) + ","; }
-          return "{" + sOutput.substr(0, sOutput.length - 1) + "}";
-        }
-        return typeof vContent === "string" ? "\"" + vContent.replace(/"/g, "\\$&") + "\"" : String(vContent);
-      }
-    };
-  }
-
-  function getXHR() {
-    var httpRequest = false;
-
-    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
-      httpRequest = new XMLHttpRequest();
-    } else if (window.ActiveXObject) { // IE
-      try {
-        httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
-      }
-      catch (e) {
-        try {
-          httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        catch (e2) {}
-      }
-    }
-
-    return httpRequest;
-  }
-
-  // Constructor for generic HTTP client
-  function HTTPClient() {}
-  HTTPClient.prototype = {
-    url: null,
-    xhr: null,
-    callinprogress: false,
-    userhandler: null,
-    init: function(url, obj) {
-      this.url = url;
-      this.obj = obj;
-      this.xhr = new getXHR();
-    },
-    asyncGET: function (handler) {
-      // Prevent multiple calls
-      if (this.callinprogress) {
-        throw "Call in progress";
-      }
-      this.callinprogress = true;
-      this.userhandler = handler;
-      // Open an async request - third argument makes it async
-      this.xhr.open('GET', this.url, true);
-      var self = this;
-      // Assign a closure to the onreadystatechange callback
-      this.xhr.onreadystatechange = function() {
-        self.stateChangeCallback(self);
-      };
-      this.xhr.send(null);
-    },
-    stateChangeCallback: function(client) {
-      switch (client.xhr.readyState) {
-        // Request not yet made
-        case 1:
-        try { client.userhandler.onInit(); }
-        catch (e) { /* Handler method not defined */ }
-        break;
-        // Contact established with server but nothing downloaded yet
-        case 2:
-        try {
-          // Check for HTTP status 200
-          if ( client.xhr.status != 200 ) {
-            client.userhandler.onError(
-              client.xhr.status,
-              client.xhr.statusText
-            );
-            // Abort the request
-            client.xhr.abort();
-            // Call no longer in progress
-            client.callinprogress = false;
-          }
-        }
-        catch (e) { /* Handler method not defined */ }
-        break;
-        // Called multiple while downloading in progress
-        case 3:
-        // Notify user handler of download progress
-        try {
-          // Get the total content length
-          // -useful to work out how much has been downloaded
-          var contentLength;
-          try {
-            contentLength = client.xhr.getResponseHeader("Content-Length");
-          }
-          catch (e) { contentLength = NaN; }
-          // Call the progress handler with what we've got
-          client.userhandler.onProgress(
-            client.xhr.responseText,
-            contentLength
-          );
-        }
-        catch (e) { /* Handler method not defined */ }
-        break;
-        // Download complete
-        case 4:
-        try {
-          client.userhandler.onSuccess(client.xhr.responseText, client.obj);
-        }
-        catch (e) { /* Handler method not defined */ }
-        finally { client.callinprogress = false; }
-        break;
-      }
-    }
-  };
-
-  var ajaxHandler = {
-    onInit: function() {},
-    onError: function(status, statusText) {},
-    onProgress: function(responseText, length) {},
-    onSuccess: function(responseText, noFocus) {
-      var result = JSON.parse(responseText);
-
-      if (result['logout'] && isLogged) {
-        alert('You have been disconnected');
-      }
-      if (result['item']) {
-        cache['item-' + result['item']['itemHash']] = result['item'];
-        loadDivItem(result['item']['itemHash'], noFocus);
-      }
-      if (result['page']) {
-        updateListItems(result['page']);
-        setCurrentItem();
-        if (preload) {
-          preloadItems();
-        }
-      }
-      if (result['read']) {
-        markAsRead(result['read']);
-      }
-      if (result['unread']) {
-        markAsUnread(result['unread']);
-      }
-      if (result['update']) {
-        updateNewItems(result['update']);
-      }
-    }
-  };
-
-  function getSelectionHtml() {
-    var html = '';
-    if (typeof window.getSelection != 'undefined') {
-      var sel = window.getSelection();
-      if (sel.rangeCount) {
-        var container = document.createElement('div');
-        for (var i = 0, len = sel.rangeCount; i < len; ++i) {
-          container.appendChild(sel.getRangeAt(i).cloneContents());
-        }
-        html = container.innerHTML;
-      }
-    } else if (typeof document.selection != 'undefined') {
-      if (document.selection.type == 'Text') {
-        html = document.selection.createRange().htmlText;
-      }
-    }
-    return html;
-  }
-
-  function removeChildren(elt) {
-    while (elt.hasChildNodes()) {
-      elt.removeChild(elt.firstChild);
-    }
-  }
-
-  function removeElement(elt) {
-    if (elt && elt.parentNode) {
-      elt.parentNode.removeChild(elt);
-    }
-  }
-
-  function addClass(elt, cls) {
-    if (elt) {
-      elt.className = (elt.className + ' ' + cls).trim();
-    }
-  }
-
-  function removeClass(elt, cls) {
-    if (elt) {
-      elt.className = (' ' + elt.className + ' ').replace(cls, ' ').trim();
-    }
-  }
-
-  function hasClass(elt, cls) {
-    if (elt && (' ' + elt.className + ' ').indexOf(' ' + cls + ' ') > -1) {
-      return true;
-    }
-    return false;
-  }
-
-  function anonymize(elt) {
-    if (redirector !== '') {
-      var domain, a_to_anon = elt.getElementsByTagName("a");
-      for (var i = 0; i < a_to_anon.length; i++) {
-        domain = a_to_anon[i].href.replace('http://','').replace('https://','').split(/[/?#]/)[0];
-        if (domain !== window.location.host) {
-          if (redirector !== 'noreferrer') {
-            a_to_anon[i].href = redirector+a_to_anon[i].href;
-          } else {
-            a_to_anon[i].setAttribute('rel', 'noreferrer');
-          }
-        }
-      }
-    }
-  }
-
-  function initAnonyme() {
-    if (redirector !== '') {
-      var i = 0, elements = document.getElementById('list-items');
-      elements = elements.getElementsByTagName('div');
-      for (i = 0; i < elements.length; i += 1) {
-        if (hasClass(elements[i], 'item-content')) {
-          anonymize(elements[i]);
-        }
-      }
-    }
-  }
-
-  function collapseElement(element) {
-    if (element !== null) {
-      var targetElement = document.getElementById(
-        element.getAttribute('data-target').substring(1)
-      );
-
-      if (hasClass(targetElement, 'in')) {
-        removeClass(targetElement, 'in');
-        targetElement.style.height = 0;
-      } else {
-        addClass(targetElement, 'in');
-        targetElement.style.height = 'auto';
-      }
-    }
-  }
-
-  function collapseClick(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    collapseElement(this);
-  }
-
-  function initCollapse(list) {
-    var i = 0;
-
-    for (i = 0; i < list.length; i += 1) {
-      if (list[i].hasAttribute('data-toggle') && list[i].hasAttribute('data-target')) {
-        addEvent(list[i], 'click', collapseClick);
-      }
-    }
-  }
-
-  function htmlspecialchars_decode(string) {
-    return string
-           .replace(/&lt;/g, '<')
-           .replace(/&gt;/g, '>')
-           .replace(/&quot;/g, '"')
-           .replace(/&amp;/g, '&')
-           .replace(/&#0*39;/g, "'")
-           .replace(/&nbsp;/g, " ");
-  }
-
-  function shaarliItem(itemHash) {
-    var domainUrl, url, domainVia, via, title, sel, element;
-
-   element = document.getElementById('item-div-'+itemHash);
-    if (element.childNodes.length > 1) {
-      title = getTitleItem(itemHash);
-      url = getUrlItem(itemHash);
-      via = getViaItem(itemHash);
-      if (redirector != 'noreferrer') {
-        url = url.replace(redirector,'');
-        via = via.replace(redirector,'');
-      }
-      domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
-      domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
-      if (domainUrl !== domainVia) {
-        via = 'via ' + via;
-      } else {
-        via = '';
-      }
-      sel = getSelectionHtml();
-      if (sel !== '') {
-        sel = '«' + sel + '»';
-      }
-
-      if (shaarli !== '') {
-        window.open(
-          shaarli
-          .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
-          .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
-          .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
-          .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
-          '_blank',
-          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
-        );
-      } else {
-        alert('Please configure your share link first');
-      }
-    } else {
-      loadDivItem(itemHash);
-      alert('Sorry ! This item is not loaded, try again !');
-    }
-  }
-
-  function shaarliCurrentItem() {
-    shaarliItem(currentItemHash);
-  }
-
-  function shaarliClickItem(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    shaarliItem(getItemHash(this));
-
-    return false;
-  }
-
-  function getFolder(element) {
-    var folder = null;
-
-    while (folder === null && element !== null) {
-      if (element.tagName === 'LI' && element.id.indexOf('folder-') === 0) {
-        folder = element;
-      }
-      element = element.parentNode;
-    }
-
-    return folder;
-  }
-
-  function getLiParentByClassName(element, classname) {
-    var li = null;
-
-    while (li === null && element !== null) {
-      if (element.tagName === 'LI' && hasClass(element, classname)) {
-        li = element;
-      }
-      element = element.parentNode;
-    }
-
-    if (classname === 'folder' && li.id === 'all-subscriptions') {
-      li = null;
-    }
-
-    return li;
-  }
-
-  function getFolderHash(element) {
-    var folder = getFolder(element);
-
-    if (folder !== null) {
-      return folder.id.replace('folder-','');
-    }
-
-    return null;
-  }
-
-  function toggleFolder(folderHash) {
-    var i, listElements, url, client;
-
-    listElements = document.getElementById('folder-' + folderHash);
-    listElements = listElements.getElementsByTagName('h5');
-    if (listElements.length > 0) {
-      listElements = listElements[0].getElementsByTagName('span');
-
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'folder-toggle-open')) {
-          removeClass(listElements[i], 'folder-toggle-open');
-          addClass(listElements[i], 'folder-toggle-close');
-        } else if (hasClass(listElements[i], 'folder-toggle-close')) {
-          removeClass(listElements[i], 'folder-toggle-close');
-          addClass(listElements[i], 'folder-toggle-open');
-        }
-      }
-    }
-
-    url = '?toggleFolder=' + folderHash + '&ajax';
-    client = new HTTPClient();
-
-    client.init(url);
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function toggleClickFolder(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    toggleFolder(getFolderHash(this));
-
-    return false;
-  }
-
-  function initLinkFolders(listFolders) {
-    var i = 0;
-
-    for (i = 0; i < listFolders.length; i += 1) {
-      if (listFolders[i].hasAttribute('data-toggle') && listFolders[i].hasAttribute('data-target')) {
-        listFolders[i].onclick = toggleClickFolder;
-      }
-    }
-  }
-
-  function getListLinkFolders() {
-    var i = 0,
-        listFolders = [],
-        listElements = document.getElementById('list-feeds');
-
-    if (listElements) {
-      listElements = listElements.getElementsByTagName('a');
-
-      for (i = 0; i < listElements.length; i += 1) {
-        listFolders.push(listElements[i]);
-      }
-    }
-
-    return listFolders;
-  }
-
-  function toggleMarkAsLinkItem(itemHash) {
-    var i, item = getItem(itemHash), listLinks;
-
-    if (item !== null) {
-      listLinks = item.getElementsByTagName('a');
-
-      for (i = 0; i < listLinks.length; i += 1) {
-        if (hasClass(listLinks[i], 'item-mark-as')) {
-          if (listLinks[i].href.indexOf('unread=') > -1) {
-            listLinks[i].href = listLinks[i].href.replace('unread=','read=');
-            listLinks[i].firstChild.innerHTML = intlRead;
-          } else {
-            listLinks[i].href = listLinks[i].href.replace('read=','unread=');
-            listLinks[i].firstChild.innerHTML = intlUnread;
-          }
-        }
-      }
-    }
-  }
-
-  function getUnreadLabelItems(itemHash) {
-    var i, listLinks, regex = new RegExp('read=' + itemHash.substr(0,6)), items = [];
-    listLinks = getListLinkFolders();
-    for (i = 0; i < listLinks.length; i += 1) {
-      if (regex.test(listLinks[i].href)) {
-        items.push(listLinks[i].children[0]);
-      }
-    }
-    return items;
-  }
-
-  function addToUnreadLabel(unreadLabelItem, value) {
-      var unreadLabel = -1;
-      if (unreadLabelItem !== null) {
-        unreadLabel = parseInt(unreadLabelItem.innerHTML, 10) + value;
-        unreadLabelItem.innerHTML = unreadLabel;
-      }
-      return unreadLabel;
-  }
-
-  function getUnreadLabel(folder) {
-    var element = null;
-    if (folder !== null) {
-      element = folder.getElementsByClassName('label')[0];
-    }
-    return element;
-  }
-
-  function markAsItem(itemHash) {
-    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder, addRead = 1;
-
-    item = getItem(itemHash);
-
-    if (item !== null) {
-      unreadLabelItems = getUnreadLabelItems(itemHash);
-      if (!hasClass(item, 'read')) {
-        addRead = -1;
-      }
-      for (i = 0; i < unreadLabelItems.length; i += 1) {
-        nb = addToUnreadLabel(unreadLabelItems[i], addRead);
-        if (nb === 0) {
-          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
-          removeClass(feed, 'has-unread');
-          if (autohide) {
-            addClass(feed, 'autohide-feed');
-          }
-        }
-        folder = getLiParentByClassName(unreadLabelItems[i], 'folder');
-        nb = addToUnreadLabel(getUnreadLabel(folder), addRead);
-        if (nb === 0 && autohide) {
-          addClass(folder, 'autohide-folder');
-        }
-      }
-      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), addRead);
-
-      if (hasClass(item, 'read')) {
-        url = '?unread=' + itemHash;
-        removeClass(item, 'read');
-        toggleMarkAsLinkItem(itemHash);
-      } else {
-        url = '?read=' + itemHash;
-        addClass(item, 'read');
-        toggleMarkAsLinkItem(itemHash);
-        if (filter === 'unread') {
-          url += '&currentHash=' + currentHash +
-            '&page=' + currentPage +
-            '&last=' + listItemsHash[listItemsHash.length - 1];
-
-          removeElement(item);
-          indexItem = listItemsHash.indexOf(itemHash);
-          listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
-          if (listItemsHash.length <= byPage) {
-            appendItem(listItemsHash[listItemsHash.length - 1]);
-          }
-          setCurrentItem(listItemsHash[indexItem]);
-        }
-      }
-    } else {
-      url = '?currentHash=' + currentHash +
-        '&page=' + currentPage;
-    }
-
-    client = new HTTPClient();
-    client.init(url + '&ajax');
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function markAsCurrentItem() {
-    markAsItem(currentItemHash);
-  }
-
-  function markAsClickItem(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    markAsItem(getItemHash(this));
-
-    return false;
-  }
-
-  function toggleMarkAsStarredLinkItem(itemHash) {
-    var i, item = getItem(itemHash), listLinks, url = '';
-
-    if (item !== null) {
-      listLinks = item.getElementsByTagName('a');
-
-      for (i = 0; i < listLinks.length; i += 1) {
-        if (hasClass(listLinks[i], 'item-starred')) {
-          url = listLinks[i].href;
-          if (listLinks[i].href.indexOf('unstar=') > -1) {
-            listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
-            listLinks[i].firstChild.innerHTML = intlStar;
-          } else {
-            listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
-            listLinks[i].firstChild.innerHTML = intlUnstar;
-          }
-        }
-      }
-    }
-
-    return url;
-  }
-
-
-  function markAsStarredItem(itemHash) {
-    var url, client, indexItem;
-
-    url = toggleMarkAsStarredLinkItem(itemHash);
-    if (url.indexOf('unstar=') > -1 && stars) {
-      removeElement(getItem(itemHash));
-      indexItem = listItemsHash.indexOf(itemHash);
-      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
-      if (listItemsHash.length <= byPage) {
-        appendItem(listItemsHash[listItemsHash.length - 1]);
-      }
-      setCurrentItem(listItemsHash[indexItem]);
-
-      url += '&page=' + currentPage;
-    }
-    if (url !== '') {
-      client = new HTTPClient();
-      client.init(url + '&ajax');
-      try {
-        client.asyncGET(ajaxHandler);
-      } catch (e) {
-        alert(e);
-      }
-    }
-  }
-
-  function markAsStarredClickItem(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    markAsStarredItem(getItemHash(this));
-
-    return false;
-  }
-
-  function markAsRead(itemHash) {
-    setNbUnread(currentUnread - 1);
-  }
-
-  function markAsUnread(itemHash) {
-    setNbUnread(currentUnread + 1);
-  }
-
-  function loadDivItem(itemHash, noFocus) {
-    var element, url, client, cacheItem;
-    element = document.getElementById('item-div-'+itemHash);
-    if (element.childNodes.length <= 1) {
-      cacheItem = getCacheItem(itemHash);
-      if (cacheItem !== null) {
-        setDivItem(element, cacheItem);
-        if(!noFocus) {
-          setItemFocus(element);
-        }
-        removeCacheItem(itemHash);
-      } else {
-        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
-          '&current=' + itemHash +
-          '&ajax';
-        client = new HTTPClient();
-        client.init(url, noFocus);
-        try {
-          client.asyncGET(ajaxHandler);
-        } catch (e) {
-          alert(e);
-        }
-      }
-    }
-  }
-
-  function toggleItem(itemHash) {
-    var i, listElements, element, targetElement;
-
-    if (view === 'expanded') {
-      return;
-    }
-
-    if (currentItemHash != itemHash) {
-      closeCurrentItem();
-    }
-
-    // looking for ico + or -
-    listElements = document.getElementById('item-toggle-' + itemHash);
-    listElements = listElements.getElementsByTagName('span');
-    for (i = 0; i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-toggle-open')) {
-        removeClass(listElements[i], 'item-toggle-open');
-        addClass(listElements[i], 'item-toggle-close');
-      } else if (hasClass(listElements[i], 'item-toggle-close')) {
-        removeClass(listElements[i], 'item-toggle-close');
-        addClass(listElements[i], 'item-toggle-open');
-      }
-    }
-
-    element = document.getElementById('item-toggle-'+itemHash);
-    targetElement = document.getElementById(
-      element.getAttribute('data-target').substring(1)
-    );
-    if (element.href.indexOf('&open') > -1) {
-      element.href = element.href.replace('&open','');
-      addClass(targetElement, 'well');
-      setCurrentItem(itemHash);
-      loadDivItem(itemHash);
-    } else {
-      element.href = element.href + '&open';
-      removeClass(targetElement, 'well');
-    }
-  }
-
-  function toggleCurrentItem() {
-    toggleItem(currentItemHash);
-    collapseElement(document.getElementById('item-toggle-' + currentItemHash));
-  }
-
-  function toggleClickItem(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    toggleItem(getItemHash(this));
-
-    return false;
-  }
-
-  function getItem(itemHash) {
-    return document.getElementById('item-' + itemHash);
-  }
-
-  function getTitleItem(itemHash) {
-    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), title = '';
-
-    for (i = 0; title === '' && i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-link')) {
-        title = listElements[i].innerHTML;
-      }
-    }
-
-    return title;
-  }
-
-  function getUrlItem(itemHash) {
-    var i = 0, element = document.getElementById('item-'+itemHash), listElements = element.getElementsByTagName('a'), url = '';
-
-    for (i = 0; url === '' && i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-link')) {
-        url = listElements[i].href;
-      }
-    }
-
-    return url;
-  }
-
-  function getViaItem(itemHash) {
-    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), via = '';
-
-    for (i = 0; via === '' && i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-via')) {
-        via = listElements[i].href;
-      }
-    }
-
-    return via;
-  }
-
-  function getLiItem(element) {
-    var item = null;
-
-    while (item === null && element !== null) {
-      if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
-        item = element;
-      }
-      element = element.parentNode;
-    }
-
-    return item;
-  }
-
-  function getItemHash(element) {
-    var item = getLiItem(element);
-
-    if (item !== null) {
-      return item.id.replace('item-','');
-    }
-
-    return null;
-  }
-
-  function getCacheItem(itemHash) {
-    if (typeof cache['item-' + itemHash] !== 'undefined') {
-      return cache['item-' + itemHash];
-    }
-
-    return null;
-  }
-
-  function removeCacheItem(itemHash) {
-    if (typeof cache['item-' + itemHash] !== 'undefined') {
-      delete cache['item-' + itemHash];
-    }
-  }
-
-  function isCurrentUnread() {
-    var item = getItem(currentItemHash);
-
-    if (hasClass(item, 'read')) {
-      return false;
-    }
-
-    return true;
-  }
-
-  function setDivItem(div, item) {
-    var markAs = intlRead, starred = intlStar, target = ' target="_blank"';
-
-    if (item['read'] == 1) {
-      markAs = intlUnread;
-    }
-
-    if (item['starred'] == 1) {
-      starred = intlUnstar;
-    }
-
-    if (!blank) {
-      target = '';
-    }
-
-    div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">' + intlShare + '</span></a> ' +
-      (stars?'':
-      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
-      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
-      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
-      item['title'] +
-      '</a>' +
-      '</div>' +
-      '<div class="clear"></div>' +
-      '<div class="item-info-end item-info-time">' +
-      item['time']['expanded'] +
-      '</div>' +
-      '<div class="item-info-end item-info-authors">' +
-      intlFrom + ' <a class="item-via" href="' + item['via'] + '">' +
-      item['author'] +
-      '</a> ' +
-      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
-      '<span class="ico">' +
-      '<span class="ico-feed-dot"></span>' +
-      '<span class="ico-feed-circle-1"></span>' +
-      '<span class="ico-feed-circle-2"></span>'+
-      '</span>' +
-      '</a>' +
-      '</div>' +
-      '<div class="clear"></div>' +
-      '<div class="item-content"><article>' +
-      item['content'] +
-      '</article></div>' +
-      '<div class="clear"></div>' +
-      '<div class="item-info-end">' +
-      '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
-      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">' + intlShare + '</span></a> ' +
-      (stars?'':
-      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
-      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
-      (view=='list'?
-      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
-      '<span class="ico ico-toggle-item">' +
-      '<span class="ico-b-disc"></span>' +
-      '<span class="ico-w-line-h"></span>' +
-      '</span>' +
-      '</a>':'') +
-      '</div>' +
-      '<div class="clear"></div>';
-
-    initLinkItems(div.getElementsByTagName('a'));
-    initCollapse(div.getElementsByTagName('a'));
-    anonymize(div);
-  }
-
-  function setLiItem(li, item) {
-    var markAs = intlRead, target = ' target="_blank"';
-
-    if (item['read'] == 1) {
-      markAs = intlUnread;
-    }
-
-    if (!blank) {
-      target = '';
-    }
-
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
-      '<span class="ico ico-toggle-item">' +
-      '<span class="ico-b-disc"></span>' +
-      '<span class="ico-w-line-h"></span>' +
-      '<span class="ico-w-line-v item-toggle-close"></span>' +
-      '</span>' +
-      item['time']['list'] +
-      '</a>' +
-      '<dl class="dl-horizontal item">' +
-      '<dt class="item-feed">' +
-      (addFavicon?
-      '<span class="item-favicon">' +
-      '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
-      '</span>':'' ) +
-      '<span class="item-author">' +
-      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
-      item['author'] +
-      '</a>' +
-      '</span>' +
-      '</dt>' +
-      '<dd class="item-info">' +
-      '<span class="item-title">' +
-      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
-      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
-      item['title'] +
-      '</a> ' +
-      '</span>' +
-      '<span class="item-description">' +
-      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
-      item['description'] +
-      '</a> ' +
-      '</span>' +
-      '</dd>' +
-      '</dl>' +
-      '<div class="clear"></div>';
-
-    initCollapse(li.getElementsByTagName('a'));
-    initLinkItems(li.getElementsByTagName('a'));
-
-    anonymize(li);
-  }
-
-  function createLiItem(item) {
-    var li = document.createElement('li'),
-        div = document.createElement('div');
-
-    div.id = 'item-div-'+item['itemHash'];
-    div.className= 'item collapse'+(view === 'expanded' ? ' in well' : '');
-
-    li.id = 'item-'+item['itemHash'];
-    if (view === 'list') {
-      li.className = 'item-list';
-      setLiItem(li, item);
-    } else {
-      li.className = 'item-expanded';
-      setDivItem(div, item);
-    }
-    li.className += (item['read'] === 1)?' read':'';
-    li.appendChild(div);
-
-    return li;
-  }
-
-  function getListItems() {
-    return document.getElementById('list-items');
-  }
-
-  function updateListItems(itemsList) {
-    var i;
-
-    for (i = 0; i < itemsList.length; i++) {
-      if (listItemsHash.indexOf(itemsList[i]['itemHash']) === -1 && listItemsHash.length <= byPage) {
-        cache['item-' + itemsList[i]['itemHash']] = itemsList[i];
-        listItemsHash.push(itemsList[i]['itemHash']);
-        if (listItemsHash.length <= byPage) {
-          appendItem(itemsList[i]['itemHash']);
-        }
-      }
-    }
-  }
-
-  function appendItem(itemHash) {
-    var listItems = getListItems(),
-        item = getCacheItem(itemHash),
-        li;
-
-    if (item !== null) {
-      li = createLiItem(item);
-      listItems.appendChild(li);
-      removeCacheItem(itemHash);
-    }
-  }
-
-  function getListLinkItems() {
-    var i = 0,
-        listItems = [],
-        listElements = document.getElementById('list-items');
-
-    listElements = listElements.getElementsByTagName('a');
-
-    for (i = 0; i < listElements.length; i += 1) {
-      listItems.push(listElements[i]);
-    }
-
-    return listItems;
-  }
-
-  function initListItemsHash() {
-    var i,
-        listElements = document.getElementById('list-items');
-
-    listElements = listElements.getElementsByTagName('li');
-    for (i = 0; i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-list') || hasClass(listElements[i], 'item-expanded')) {
-        if (hasClass(listElements[i], 'current')) {
-          currentItemHash = getItemHash(listElements[i]);
-        }
-        listItemsHash.push(listElements[i].id.replace('item-',''));
-      }
-    }
-  }
-
-  function initLinkItems(listItems) {
-    var i = 0;
-
-    for (i = 0; i < listItems.length; i += 1) {
-      if (hasClass(listItems[i], 'item-toggle')) {
-        listItems[i].onclick = toggleClickItem;
-      }
-      if (hasClass(listItems[i], 'item-mark-as')) {
-        listItems[i].onclick = markAsClickItem;
-      }
-      if (hasClass(listItems[i], 'item-starred')) {
-        listItems[i].onclick = markAsStarredClickItem;
-      }
-      if (hasClass(listItems[i], 'item-shaarli')) {
-        listItems[i].onclick = shaarliClickItem;
-      }
-    }
-  }
-
-  function initListItems() {
-    var url, client;
-
-    url = '?currentHash=' + currentHash +
-      '&page=' + currentPage +
-      '&last=' + listItemsHash[listItemsHash.length -1] +
-      '&ajax' +
-      (stars?'&stars':'');
-
-    client = new HTTPClient();
-    client.init(url);
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function preloadItems()
-  {
-    // Pre-fetch items from top to bottom
-    for(var i = 0, len = listItemsHash.length; i < len; ++i)
-    {
-      loadDivItem(listItemsHash[i], true);
-    }
-  }
-
-  function setStatus(text) {
-    if (text === '') {
-      document.getElementById('status').innerHTML = status;
-    } else {
-      document.getElementById('status').innerHTML = text;
-    }
-  }
-
-  function getTimeMin() {
-    return Math.round((new Date().getTime()) / 1000 / 60);
-  }
-
-  function updateFeed(feedHashIndex) {
-    var i = 0, url, client, feedHash = '';
-
-    if (feedHashIndex !== '') {
-      setStatus('updating ' + listUpdateFeeds[feedHashIndex][1]);
-      feedHash = listUpdateFeeds[feedHashIndex][0];
-      listUpdateFeeds[feedHashIndex][2] = getTimeMin();
-    }
-
-    url = '?update'+(feedHash === ''?'':'='+feedHash)+'&ajax';
-
-    client = new HTTPClient();
-    client.init(url);
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function updateNextFeed() {
-    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '', minFeedToUpdateIndex = '';
-    if (listUpdateFeeds.length !== 0) {
-      currentMin = getTimeMin();
-      for (i = 0; feedToUpdateIndex === '' && i < listUpdateFeeds.length; i++) {
-        diff = currentMin - listUpdateFeeds[i][2];
-        if (diff >= listUpdateFeeds[i][3]) {
-          //need update
-          feedToUpdateIndex = i;
-        } else {
-          if (minDiff === -1 || diff < minDiff) {
-            minDiff = diff;
-            minFeedToUpdateIndex = i;
-          }
-        }
-      }
-      if (feedToUpdateIndex === '') {
-        feedToUpdateIndex = minFeedToUpdateIndex;
-      }
-      updateFeed(feedToUpdateIndex);
-    } else {
-      updateFeed('');
-    }
-  }
-
-  function updateTimeout() {
-    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '';
-
-    if (listUpdateFeeds.length !== 0) {
-      currentMin = getTimeMin();
-      for (i = 0; minDiff !== 0 && i < listUpdateFeeds.length; i++) {
-        diff = currentMin - listUpdateFeeds[i][2];
-        if (diff >= listUpdateFeeds[i][3]) {
-          //need update
-          minDiff = 0;
-        } else {
-          if (minDiff === -1 || (listUpdateFeeds[i][3] - diff) < minDiff) {
-            minDiff = listUpdateFeeds[i][3] - diff;
-          }
-        }
-      }
-      window.setTimeout(updateNextFeed, minDiff * 1000 * 60 + 200);
-    }
-  }
-
-  function updateNewItems(result) {
-    var i = 0, list, currentMin, folder, feed, unreadLabelItems, nbItems;
-    setStatus('');
-    if (result !== false) {
-      if (result['feeds']) {
-        // init list of feeds information for update
-        listUpdateFeeds = result['feeds'];
-        currentMin = getTimeMin();
-        for (i = 0; i < listUpdateFeeds.length; i++) {
-          listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
-        }
-      }
-      if (result.newItems && result.newItems.length > 0) {
-        nbItems = result.newItems.length;
-        currentNbItems += nbItems;
-        setNbUnread(currentUnread + nbItems);
-        addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), nbItems);
-        unreadLabelItems = getUnreadLabelItems(result.newItems[0].substr(0,6));
-        for (i = 0; i < unreadLabelItems.length; i += 1) {
-          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
-          folder = getLiParentByClassName(feed, 'folder');
-          addClass(feed, 'has-unread');
-          if (autohide) {
-            removeClass(feed, 'autohide-feed');
-            removeClass(folder, 'autohide-folder');
-          }
-          addToUnreadLabel(getUnreadLabel(feed), nbItems);
-          addToUnreadLabel(getUnreadLabel(folder), nbItems);
-        }
-      }
-      updateTimeout();
-    }
-  }
-
-  function initUpdate() {
-    window.setTimeout(updateNextFeed, 1000);
-  }
-
-  function setItemFocus(item) {
-    if(autofocus) {
-      // First, let the browser do some rendering
-      // Indeed, the div might not be visible yet, so there is no scroll
-      setTimeout(function()
-      {
-        // Dummy implementation
-        var container = document.getElementById('main-container'),
-          scrollPos = container.scrollTop,
-          itemPos = item.offsetTop,
-          temp = item;
-        while(temp.offsetParent != document.body) {
-          temp = temp.offsetParent;
-          itemPos += temp.offsetTop;
-        }
-        var current = itemPos - scrollPos;
-        // Scroll only if necessary
-        // current < 0: Happens when asking for previous item and displayed item is filling the screen
-        // Or check if item bottom is outside screen
-        if(current < 0 || current + item.offsetHeight > container.clientHeight) {
-          container.scrollTop = itemPos;
-        }
-      }, 0);
-    }
-  }
-
-  function previousClickPage(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    previousPage();
-
-    return false;
-  }
-
-  function nextClickPage(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    nextPage();
-
-    return false;
-  }
-
-  function nextPage() {
-    currentPage = currentPage + 1;
-    if (currentPage > Math.ceil(currentNbItems / byPage)) {
-      currentPage = Math.ceil(currentNbItems / byPage);
-    }
-    if (listItemsHash.length === 0) {
-      currentPage = 1;
-    }
-    listItemsHash = [];
-    initListItems();
-    removeChildren(getListItems());
-  }
-
-  function previousPage() {
-    currentPage = currentPage - 1;
-    if (currentPage < 1) {
-      currentPage = 1;
-    }
-    listItemsHash = [];
-    initListItems();
-    removeChildren(getListItems());
-  }
-
-  function previousClickItem(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    previousItem();
-
-    return false;
-  }
-
-  function nextClickItem(event) {
-    event = event || window.event;
-    stopBubbling(event);
-
-    nextItem();
-
-    return false;
-  }
-
-  function nextItem() {
-    var nextItemIndex = listItemsHash.indexOf(currentItemHash) + 1, nextCurrentItemHash;
-
-    closeCurrentItem();
-    if (autoreadItem && isCurrentUnread()) {
-      markAsCurrentItem();
-      if (filter == 'unread') {
-        nextItemIndex -= 1;
-      }
-    }
-
-    if (nextItemIndex < 0) { nextItemIndex = 0; }
-
-    if (nextItemIndex < listItemsHash.length) {
-      nextCurrentItemHash = listItemsHash[nextItemIndex];
-    }
-
-    if (nextItemIndex >= byPage) {
-      nextPage();
-    } else {
-      setCurrentItem(nextCurrentItemHash);
-    }
-  }
-
-  function previousItem() {
-    var previousItemIndex = listItemsHash.indexOf(currentItemHash) - 1, previousCurrentItemHash;
-
-    if (previousItemIndex < listItemsHash.length && previousItemIndex >= 0) {
-      previousCurrentItemHash = listItemsHash[previousItemIndex];
-    }
-
-    closeCurrentItem();
-    if (previousItemIndex < 0) {
-      previousPage();
-    } else {
-      setCurrentItem(previousCurrentItemHash);
-    }
-  }
-
-  function closeCurrentItem() {
-    var element = document.getElementById('item-toggle-' + currentItemHash);
-
-    if (element && view === 'list') {
-      var targetElement = document.getElementById(
-            element.getAttribute('data-target').substring(1)
-          );
-
-      if (element.href.indexOf('&open') < 0) {
-        element.href = element.href + '&open';
-        removeClass(targetElement, 'well');
-        collapseElement(element);
-      }
-
-      var i = 0,
-          listElements = element.getElementsByTagName('span');
-
-      // looking for ico + or -
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'item-toggle-open')) {
-          removeClass(listElements[i], 'item-toggle-open');
-          addClass(listElements[i], 'item-toggle-close');
-        }
-      }
-    }
-  }
-
-  function setCurrentItem(itemHash) {
-    var currentItemIndex;
-
-    if (itemHash !== currentItemHash) {
-      removeClass(document.getElementById('item-'+currentItemHash), 'current');
-      removeClass(document.getElementById('item-div-'+currentItemHash), 'current');
-      if (typeof itemHash !== 'undefined') {
-        currentItemHash = itemHash;
-      }
-      currentItemIndex = listItemsHash.indexOf(currentItemHash);
-      if (currentItemIndex === -1) {
-        if (listItemsHash.length > 0) {
-          currentItemHash = listItemsHash[0];
-        } else {
-          currentItemHash = '';
-        }
-      } else {
-        if (currentItemIndex >= byPage) {
-          currentItemHash = listItemsHash[byPage - 1];
-        }
-      }
-
-      if (currentItemHash !== '') {
-        var item = document.getElementById('item-'+currentItemHash),
-          itemDiv = document.getElementById('item-div-'+currentItemHash);
-        addClass(item, 'current');
-        addClass(itemDiv, 'current');
-        setItemFocus(itemDiv);
-        updateItemButton();
-      }
-    }
-    updatePageButton();
-  }
-
-  function openCurrentItem(blank) {
-    var url;
-
-    url = getUrlItem(currentItemHash);
-    if (blank) {
-      window.location.href = url;
-    } else {
-      window.open(url);
-    }
-  }
-
-  // http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
-  function checkMove(e) {
-    // More than this horizontal displacement, and we will suppress scrolling.
-    var scrollSupressionThreshold = 10,
-    // More time than this, and it isn't a swipe.
-        durationThreshold = 500,
-    // Swipe horizontal displacement must be more than this.
-        horizontalDistanceThreshold = 30,
-    // Swipe vertical displacement must be less than this.
-        verticalDistanceThreshold = 75;
-
-    if (e.targetTouches.length == 1) {
-      var touch = e.targetTouches[0],
-      start = { time: ( new Date() ).getTime(),
-                coords: [ touch.pageX, touch.pageY ] },
-      stop;
-      var moveHandler = function ( e ) {
-
-        if ( !start ) {
-          return;
-        }
-
-        if (e.targetTouches.length == 1) {
-          var touch = e.targetTouches[0];
-          stop = { time: ( new Date() ).getTime(),
-                   coords: [ touch.pageX, touch.pageY ] };
-        }
-      };
-
-      addEvent(window, 'touchmove', moveHandler);
-      addEvent(window, 'touchend', function (e) {
-        removeEvent(window, 'touchmove', moveHandler);
-        if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold &&
-            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
-            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
-             ) {
-            if ( start.coords[0] > stop.coords[ 0 ] ) {
-              nextItem();
-            }
-            else {
-              previousItem();
-            }
-          }
-          start = stop = undefined;
-        }
-      });
-    }
-  }
-
-  function checkKey(e) {
-    var code;
-    if (!e) e = window.event;
-    if (e.keyCode) code = e.keyCode;
-    else if (e.which) code = e.which;
-
-    if (!e.ctrlKey && !e.altKey) {
-      switch(code) {
-        case 32: // 'space'
-        toggleCurrentItem();
-        break;
-        case 65: // 'A'
-        if (window.confirm('Mark all current as read ?')) {
-          window.location.href = '?read=' + currentHash;
-        }
-		break;
-        case 67: // 'C'
-        window.location.href = '?config';
-        break;
-        case 69: // 'E'
-        window.location.href = (currentHash===''?'?edit':'?edit='+currentHash);
-        break;
-        case 70: // 'F'
-        if (listFeeds =='show') {
-          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
-        } else {
-          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
-        }
-        break;
-        case 72: // 'H'
-        window.location.href = document.getElementById('nav-home').href;
-        break;
-        case 74: // 'J'
-        nextItem();
-        toggleCurrentItem();
-        break;
-        case 75: // 'K'
-        previousItem();
-        toggleCurrentItem();
-        break;
-        case 77: // 'M'
-        if (e.shiftKey) {
-          markAsCurrentItem();
-          toggleCurrentItem();
-        } else {
-          markAsCurrentItem();
-        }
-        break;
-        case 39: // right arrow
-        case 78: // 'N'
-        if (e.shiftKey) {
-          nextPage();
-        } else {
-          nextItem();
-        }
-        break;
-        case 79: // 'O'
-        if (e.shiftKey) {
-          openCurrentItem(true);
-        } else {
-          openCurrentItem(false);
-        }
-        break;
-        case 37: // left arrow
-        case 80 : // 'P'
-        if (e.shiftKey) {
-          previousPage();
-        } else {
-          previousItem();
-        }
-        break;
-        case 82: // 'R'
-        window.location.reload(true);
-        break;
-        case 83: // 'S'
-        shaarliCurrentItem();
-        break;
-        case 84: // 'T'
-        toggleCurrentItem();
-        break;
-        case 85: // 'U'
-        window.location.href = (currentHash===''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
-        break;
-        case 86: // 'V'
-        if (view == 'list') {
-          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
-        } else {
-          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=list';
-        }
-        break;
-        case 90: // 'z'
-		if (filter == 'unread') {
-			while(listItemsHash.indexOf(currentItemHash) != -1) {
-				window.open(getUrlItem(currentItemHash),'_blank');
-				markAsCurrentItem();
-			}
-        } else if (filter == 'all') {
-			for (var i=0;i<listItemsHash.length;i++){
-				if (!hasClass(getItem(listItemsHash[i]), 'read')){
-					window.open(getUrlItem(currentItemHash),'_blank');
-					markAsCurrentItem();
-				}
-				nextItem();
-			}
-		}
-        break;
-        case 112: // 'F1'
-        case 188: // '?'
-        case 191: // '?'
-        window.location.href = '?help';
-        break;
-        default:
-        break;
-      }
-    }
-    // e.ctrlKey e.altKey e.shiftKey
-  }
-
-  function initPageButton() {
-    var i = 0, paging, listElements;
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].onclick = previousClickPage;
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].onclick = nextClickPage;
-        }
-      }
-    }
-
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].onclick = previousClickPage;
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].onclick = nextClickPage;
-        }
-      }
-    }
-  }
-
-  function updatePageButton() {
-    var i = 0, paging, listElements, maxPage;
-
-    if (filter == 'unread') {
-      currentNbItems = currentUnread;
-    }
-
-    if (currentNbItems < byPage) {
-      maxPage = 1;
-    } else {
-      maxPage = Math.ceil(currentNbItems / byPage);
-    }
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
-          if (currentPage === 1) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
-          if (currentPage === maxPage) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-      }
-      listElements = paging.getElementsByTagName('button');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'current-max-page')) {
-          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
-        }
-      }
-    }
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
-          if (currentPage === 1) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
-          if (currentPage === maxPage) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-      }
-      listElements = paging.getElementsByTagName('button');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'current-max-page')) {
-          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
-        }
-      }
-    }
-  }
-
-  function initItemButton() {
-    var i = 0, paging, listElements;
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].onclick = previousClickItem;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].onclick = nextClickItem;
-        }
-      }
-    }
-
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].onclick = previousClickItem;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].onclick = nextClickItem;
-        }
-      }
-    }
-  }
-
-  function updateItemButton() {
-    var i = 0, paging, listElements;
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
-
-        }
-      }
-    }
-
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
-        }
-      }
-    }
-  }
-
-  function initUnread() {
-    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
-
-    currentUnread = parseInt(element.innerHTML, 10);
-
-    title = document.title;
-    setNbUnread(currentUnread);
-  }
-
-  function setNbUnread(nb) {
-    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
-
-    if (nb < 0) {
-      nb = 0;
-    }
-
-    currentUnread = nb;
-    element.innerHTML = currentUnread;
-    document.title = title + ' (' + currentUnread + ')';
-  }
-
-  function initOptions() {
-    var elementIndex = document.getElementById('index');
-
-    if (elementIndex.hasAttribute('data-view')) {
-      view = elementIndex.getAttribute('data-view');
-    }
-    if (elementIndex.hasAttribute('data-list-feeds')) {
-      listFeeds = elementIndex.getAttribute('data-list-feeds');
-    }
-    if (elementIndex.hasAttribute('data-filter')) {
-      filter = elementIndex.getAttribute('data-filter');
-    }
-    if (elementIndex.hasAttribute('data-order')) {
-      order = elementIndex.getAttribute('data-order');
-    }
-    if (elementIndex.hasAttribute('data-autoread-item')) {
-      autoreadItem = parseInt(elementIndex.getAttribute('data-autoread-item'), 10);
-      autoreadItem = (autoreadItem === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autoread-page')) {
-      autoreadPage = parseInt(elementIndex.getAttribute('data-autoread-page'), 10);
-      autoreadPage = (autoreadPage === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autohide')) {
-      autohide = parseInt(elementIndex.getAttribute('data-autohide'), 10);
-      autohide = (autohide === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autofocus')) {
-      autofocus = parseInt(elementIndex.getAttribute('data-autofocus'), 10);
-      autofocus = (autofocus === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autoupdate')) {
-      autoupdate = parseInt(elementIndex.getAttribute('data-autoupdate'), 10);
-      autoupdate = (autoupdate === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-by-page')) {
-      byPage = parseInt(elementIndex.getAttribute('data-by-page'), 10);
-    }
-    if (elementIndex.hasAttribute('data-shaarli')) {
-      shaarli = elementIndex.getAttribute('data-shaarli');
-    }
-    if (elementIndex.hasAttribute('data-redirector')) {
-      redirector = elementIndex.getAttribute('data-redirector');
-    }
-    if (elementIndex.hasAttribute('data-current-hash')) {
-      currentHash = elementIndex.getAttribute('data-current-hash');
-    }
-    if (elementIndex.hasAttribute('data-current-page')) {
-      currentPage = parseInt(elementIndex.getAttribute('data-current-page'), 10);
-    }
-    if (elementIndex.hasAttribute('data-nb-items')) {
-      currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
-    }
-    if (elementIndex.hasAttribute('data-add-favicon')) {
-      addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
-      addFavicon = (addFavicon === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-preload')) {
-      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
-      preload = (preload === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-stars')) {
-      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
-      stars = (stars === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-blank')) {
-      blank = parseInt(elementIndex.getAttribute('data-blank'), 10);
-      blank = (blank === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-is-logged')) {
-      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
-      isLogged = (isLogged === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-intl-top')) {
-      intlTop = elementIndex.getAttribute('data-intl-top');
-    }
-    if (elementIndex.hasAttribute('data-intl-share')) {
-      intlShare = elementIndex.getAttribute('data-intl-share');
-    }
-    if (elementIndex.hasAttribute('data-intl-read')) {
-      intlRead = elementIndex.getAttribute('data-intl-read');
-    }
-    if (elementIndex.hasAttribute('data-intl-unread')) {
-      intlUnread = elementIndex.getAttribute('data-intl-unread');
-    }
-    if (elementIndex.hasAttribute('data-intl-star')) {
-      intlStar = elementIndex.getAttribute('data-intl-star');
-    }
-    if (elementIndex.hasAttribute('data-intl-unstar')) {
-      intlUnstar = elementIndex.getAttribute('data-intl-unstar');
-    }
-    if (elementIndex.hasAttribute('data-intl-from')) {
-      intlFrom = elementIndex.getAttribute('data-intl-from');
-    }
-
-    status = document.getElementById('status').innerHTML;
-  }
-
-  function initKF() {
-    var listItems,
-        listLinkFolders = [],
-        listLinkItems = [];
-
-    initOptions();
-
-    listLinkFolders = getListLinkFolders();
-    listLinkItems = getListLinkItems();
-    if (!window.jQuery || (window.jQuery && !window.jQuery().collapse)) {
-      document.getElementById('menu-toggle'). onclick = collapseClick;
-      initCollapse(listLinkFolders);
-      initCollapse(listLinkItems);
-    }
-    initLinkFolders(listLinkFolders);
-    initLinkItems(listLinkItems);
-
-    initListItemsHash();
-    initListItems();
-
-    initUnread();
-
-    initItemButton();
-    initPageButton();
-
-    initAnonyme();
-
-    addEvent(window, 'keydown', checkKey);
-    addEvent(window, 'touchstart', checkMove);
-
-    if (autoupdate && !stars) {
-      initUpdate();
-    }
-
-    listItems = getListItems();
-    listItems.focus();
-  }
-
-  //http://scottandrew.com/weblog/articles/cbs-events
-  function addEvent(obj, evType, fn, useCapture) {
-    if (obj.addEventListener) {
-      obj.addEventListener(evType, fn, useCapture);
-    } else {
-      if (obj.attachEvent) {
-        obj.attachEvent('on' + evType, fn);
-      } else {
-        window.alert('Handler could not be attached');
-      }
-    }
-  }
-
-  function removeEvent(obj, evType, fn, useCapture) {
-    if (obj.removeEventListener) {
-      obj.removeEventListener(evType, fn, useCapture);
-    } else if (obj.detachEvent) {
-      obj.detachEvent("on"+evType, fn);
-    } else {
-      alert("Handler could not be removed");
-    }
-  }
-
-  // when document is loaded init KrISS feed
-  if (document.getElementById && document.createTextNode) {
-    addEvent(window, 'load', initKF);
-  }
-
-  window.checkKey = checkKey;
-  window.removeEvent = removeEvent;
-  window.addEvent = addEvent;
-})();
-
-// unread count for favicon part
-if(typeof GM_getValue == 'undefined') {
-	GM_getValue = function(name, fallback) {
-		return fallback;
-	};
-}
-
-// Register GM Commands and Methods
-if(typeof GM_registerMenuCommand !== 'undefined') {
-  var setOriginalFavicon = function(val) { GM_setValue('originalFavicon', val); };
-	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false); } );
-	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true); } );
-}
-
-(function FaviconAlerts() {
-	var self = this;
-
-	this.construct = function() {
-		this.head = document.getElementsByTagName('head')[0];
-		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1]]}};
-
-		this.timer = setInterval(this.poll, 500);
-		this.poll();
-
-		return true;
-	};
-
-	this.drawUnreadCount = function(unread, callback) {
-		if(!self.textedCanvas) {
-			self.textedCanvas = [];
-		}
-
-		if(!self.textedCanvas[unread]) {
-			self.getUnreadCanvas(function(iconCanvas) {
-				var textedCanvas = document.createElement('canvas');
-				textedCanvas.height = textedCanvas.width = iconCanvas.width;
-				var ctx = textedCanvas.getContext('2d');
-				ctx.drawImage(iconCanvas, 0, 0);
-
-				ctx.fillStyle = '#b7bfc9';
-				ctx.strokeStyle = '#7792ba';
-				ctx.strokeWidth = 1;
-
-				var count = unread.length;
-
-				if(count > 4) {
-					unread = '1k+';
-					count = unread.length;
-				}
-
-				var bgHeight = self.pixelMaps.numbers[0].length;
-				var bgWidth = 0;
-				var padding = count < 4 ? 1 : 0;
-				var topMargin = 0;
-
-				for(var index = 0; index < count; index++) {
-					bgWidth += self.pixelMaps.numbers[unread[index]][0].length;
-					if(index < count-1) {
-						bgWidth += padding;
-					}
-				}
-				bgWidth = bgWidth > textedCanvas.width-4 ? textedCanvas.width-4 : bgWidth;
-
-				ctx.fillRect(textedCanvas.width-bgWidth-4,topMargin,bgWidth+4,bgHeight+4);
-
-				var digit;
-				var digitsWidth = bgWidth;
-				for(index = 0; index < count; index++) {
-					digit = unread[index];
-
-					if (self.pixelMaps.numbers[digit]) {
-						var map = self.pixelMaps.numbers[digit];
-						var height = map.length;
-						var width = map[0].length;
-
-						ctx.fillStyle = '#2c3323';
-
-						for (var y = 0; y < height; y++) {
-							for (var x = 0; x < width; x++) {
-								if(map[y][x]) {
-									ctx.fillRect(14- digitsWidth + x, y+topMargin+2, 1, 1);
-								}
-							}
-						}
-
-						digitsWidth -= width + padding;
-					}
-				}
-
-				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+0.5,bgWidth+3,bgHeight+3);
-
-				self.textedCanvas[unread] = textedCanvas;
-
-				callback(self.textedCanvas[unread]);
-			});
-      callback(self.textedCanvas[unread]);
-		}
-	};
-	this.getIcon = function(callback) {
-		self.getUnreadCanvas(function(canvas) {
-			callback(canvas.toDataURL('image/png'));
-		});
-	};
-  this.getIconSrc = function() {
-    var links = document.getElementsByTagName('link');
-    for (var i = 0; i < links.length; i++) {
-      if (links[i].rel === 'icon') {
-        return links[i].href;
-      }
-    }
-    return false;
-  };
-	this.getUnreadCanvas = function(callback) {
-		if(!self.unreadCanvas) {
-			self.unreadCanvas = document.createElement('canvas');
-			self.unreadCanvas.height = self.unreadCanvas.width = 16;
-
-			var ctx = self.unreadCanvas.getContext('2d');
-			var img = new Image();
-
-			img.addEventListener('load', function() {
-				ctx.drawImage(img, 0, 0);
-				callback(self.unreadCanvas);
-			}, true);
-
-		//	if(GM_getValue('originalFavicon', false)) {
-		//		img.src = self.icons.original;
-		//	} else {
-		//		img.src = self.icons.current;
-		//	}
-		// img.src = 'inc/favicon.ico';
-                  img.src = self.getIconSrc();
-		} else {
-			callback(self.unreadCanvas);
-		}
-	};
-	this.getUnreadCount = function() {
-		matches = self.getSearchText().match(/\((.*)\)/);
-		return matches ? matches[1] : false;
-	};
-	this.getUnreadCountIcon = function(callback) {
-		var unread = self.getUnreadCount();
-    self.drawUnreadCount(unread, function(icon) {
-      if(icon) {
-        callback(icon.toDataURL('image/png'));
-      }
-    });
-	};
-	this.getSearchText = function() {
-		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
-		return Nbunread;
-	};
-	this.poll = function() {
-		if(self.getUnreadCount() != "0") {
-			self.getUnreadCountIcon(function(icon) {
-				self.setIcon(icon);
-			});
-		} else {
-			self.getIcon(function(icon) {
-				self.setIcon(icon);
-			});
-		}
-	};
-
-	this.setIcon = function(icon) {
-		var links = self.head.getElementsByTagName('link');
-		for (var i = 0; i < links.length; i++)
-			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
-        links[i].href != icon)
-				self.head.removeChild(links[i]);
-			else if(links[i].href == icon)
-				return;
-
-		var newIcon = document.createElement('link');
-		newIcon.type = 'image/png';
-		newIcon.rel = 'shortcut icon';
-		newIcon.href = icon;
-		self.head.appendChild(newIcon);
-
-		// Chrome hack for updating the favicon
-		var shim = document.createElement('iframe');
-		shim.width = shim.height = 0;
-		document.body.appendChild(shim);
-		shim.src = 'icon';
-		document.body.removeChild(shim);
-	};
-
-	this.toString = function() { return '[object FaviconAlerts]'; };
-
-	return this.construct();
-}());
-    </script>
+    <script type="text/javascript" src="?file=script.js&amp;version=<?php echo $version;?>"></script>
     <?php } ?>
   </body>
 </html>
@@ -8086,7 +5113,7 @@ if (!class_exists('Intl_fr_FR')) {
     class Intl_fr_FR {
         public static function init(&$messages) {
             $messages['fr_FR'] = unserialize(gzinflate(base64_decode("
-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")));
+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")));
         }
     }
     Intl::addLang('fr_FR', 'Français (France)', 'flag-fr');
@@ -8167,6 +5194,11 @@ if (!empty($currentHash) and $currentHash !== 'all') {
     $query .= 'currentHash='.$currentHash.'&';
 }
 
+$base = BASE_URL;
+if (empty($bases)) {
+    $base = MyTool::getUrl();
+}
+
 $pb->assign('view', $view);
 $pb->assign('listFeeds', $listFeeds);
 $pb->assign('filter', $filter);
@@ -8185,7 +5217,7 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
-$pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('base', $base);
 $pb->assign('isLogged', $kfc->isLogged());
 $pb->assign('pagetitle', strip_tags($kfc->title));
 
@@ -8874,8 +5906,3069 @@ AAA=
         echo base64_decode($favicon);
         exit();
     } else if ($_GET['file'] == 'style.css') {
+        header('Content-type: text/css');
+?>
+article,
+footer,
+header,
+nav,
+section {
+  display: block;
+}
+
+html, button {
+  font-size: 100%;
+}
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+html, body, .full-height {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  border: 0;
+}
+
+a {
+  color: #666;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+small {
+  font-size: 85%;
+}
+
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
+cite {
+  font-style: normal;
+}
+
+ol,
+ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+code {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: #333333;
+  border-radius: 3px;
+  padding: 2px 4px;
+  color: #d14;
+  background-color: #f7f7f9;
+  border: 1px solid #e1e1e8;
+}
+
+.muted {
+  color: #999999;
+}
+
+.text-warning {
+  color: #c09853;
+}
+
+.text-error {
+  color: #b94a48;
+}
+
+.text-info {
+  color: #3a87ad;
+}
+
+.text-success {
+  color: #468847;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.collapse {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+}
+
+.collapse.in {
+  height: auto;
+}
+
+.row-fluid .span12 {
+  width: 99%;
+}
+
+.row-fluid .span9 {
+  width: 75%;
+}
+
+.row-fluid .span6 {
+  width: 49%;
+}
+
+.row-fluid .span4 {
+  width: 33%;
+}
+
+.row-fluid .span3 {
+  width: 24%;
+}
+
+.row-fluid .offset4 {
+  margin-left: 33%;
+}
+
+.row-fluid .offset3 {
+  margin-left: 24%;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
+}
+
+.well {
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/**
+ * Form
+ */
+.form-horizontal .control-label {
+  display: block;
+  float: left;
+  width: 20%;
+  padding-top: 5px;
+  text-align: right;
+}
+
+.form-horizontal .controls {
+  margin-left: 22%;
+  width: 78%;
+}
+
+label {
+  display: block;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 90%;
+  position: relative;
+  display: inline-block;
+  line-height: 20px;
+  height: 20px;
+  padding: 5px;
+  margin-left: -1px;
+  border: 1px solid #444;
+  vertical-align: middle;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+input[readonly="readonly"]{
+  opacity: 0.4;
+}
+
+
+.input-mini {
+  width: 24px !important;
+}
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+.control-group {
+  clear: both;
+  margin-bottom: 10px;
+}
+
+.help-block {
+  color: #666;
+  display: block;
+  font-size: 90%;
+  margin-bottom: 10px;
+}
+
+/**
+ * Menu
+ */
+.navbar {
+  background-color: #fafafa;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.nav-collapse.collapse {
+  height: auto;
+  overflow: visible;
+  float: left;
+}
+
+.navbar .brand {
+  padding: 5px;
+  font-size: 18px;
+  display: block;
+  float: left;
+}
+
+.navbar .btn-navbar {
+  padding: 5px !important;
+  margin: 5px !important;
+  font-size: 18px;
+  display: none;
+  float: right;
+}
+
+.navbar .nav {
+  display: block;
+  float: left;
+}
+
+.navbar .nav > li {
+  float: left;
+}
+
+.navbar .nav > li > a {
+  display: block;
+  padding: 10px 15px;
+}
+
+.menu-ico {
+  display: none;
+}
+
+/**
+ * Paging
+ */
+#paging-up,
+#paging-down {
+  margin: 10px;
+}
+
+.input-append,
+.input-prepend,
+.btn-group {
+  position: relative;
+  display: inline-block;
+  font-size: 0;
+  white-space: nowrap;
+}
+
+.btn, button {
+  display: inline-block;
+  line-height: 20px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #444;
+  background-color: #ddd;
+  vertical-align: middle;
+  padding: 5px;
+  margin: 0;
+  margin-left: -1px;
+  min-width: 20px;
+  border-radius: 0;
+}
+
+.btn-break {
+  display: none;
+}
+
+ul.inline > li,
+ol.inline > li {
+  float: left;
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+/**
+ * List of feeds
+ */
+li.feed {
+  margin-left: 4px;
+}
+
+li.feed:hover {
+  background-color: #eee;
+}
+
+li.feed.has-unread {
+  font-weight: bold;
+}
+
+.item-favicon {
+  float: left;
+  margin-right: 2px;
+}
+
+li.folder > h4 {
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px;
+  margin: 0;
+}
+
+li.folder > h5 {
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px;
+  margin: 2px 0;
+}
+
+li.folder > h4:hover,
+li.folder > h5:hover {
+  background-color: #eee;
+}
+
+.mark-as {
+  float: right;
+}
+
+/**
+ * List of items
+ */
+li.item-list {
+  border-bottom: 1px solid #ddd;
+}
+
+.current, .current-feed, .current-folder > h5, .current-folder > h4 {
+  background-color: #eee;
+}
+
+.current .item-title {
+  font-weight: bold;
+}
+
+dl {
+  margin: 0 !important;
+}
+
+dt,
+dd {
+  line-height: 20px;
+}
+
+.dl-horizontal dt {
+  float: left;
+  width: 18%;
+  overflow: hidden;
+  clear: left;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-horizontal dd {
+  margin-left: 20%;
+}
+
+.item-info {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-link {
+  color: #000;
+}
+
+.read {
+  opacity: 0.4;
+}
+
+.autohide-feed,.autohide-folder {
+  display: none;
+}
+
+#main-container {
+  float: right;
+}
+
+#minor-container {
+  margin-left: 0;
+}
+
+.clear {
+  clear: both;
+}
+
+#menu-toggle {
+  color: #000 !important;
+}
+
+#status {
+  font-size: 85%;
+}
+
+.item-toggle-plus {
+  float: right;
+}
+
+.item-content {
+  margin: 10px 0;
+}
+
+.item-info-end {
+  float: right;
+}
+
+.folder-toggle:focus, .folder-toggle:hover, .folder-toggle:active, .item-toggle:focus, .item-toggle:hover, .item-toggle:active, .mark-as:hover, .mark-as:active {
+  text-decoration: none;
+}
+
+.folder-toggle-open, .item-toggle-open, .item-close {
+  display: none;
+}
+
+.folder-toggle-close, .item-toggle-close, .item-open {
+  display: block;
+}
+
+.label,
+.badge {
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #999999;
+  border-radius: 3px;
+}
+
+.label-expanded {
+  padding: 6px;
+}
+
+/* Large desktop */
+@media (min-width: 1200px) {
+
+}
+
+/* Portrait tablet to landscape and desktop */
+@media (min-width: 768px) and (max-width: 979px) {
+
+  .hidden-desktop {
+    display: inherit !important;
+  }
+  .visible-desktop {
+    display: none !important ;
+  }
+  .visible-tablet {
+    display: inherit !important;
+  }
+  .hidden-tablet {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .nav-collapse.collapse {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+/* Landscape phone to portrait tablet */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="password"] {
+    padding: 10px 0 !important;
+  }
+
+  .btn {
+    padding: 10px !important;
+  }
+
+  .label {
+    padding: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-starred > .label,
+  .item-mark-as > .label {
+    display: block;
+    float: left;
+    margin: 5px;
+  }
+
+  .item-link {
+    clear: both;
+  }
+
+  li.feed, li.folder > h4,  li.folder > h5{
+    padding: 10px 0;
+  }
+  .row-fluid .span12,
+  .row-fluid .span9,
+  .row-fluid .span6,
+  .row-fluid .span4,
+  .row-fluid .span3 {
+    width: 99%;
+  }
+  .row-fluid .offset4,
+  .row-fluid .offset3 {
+    margin-left: 0;
+  }
+
+  #main-container {
+    float: none;
+    margin: auto;
+  }
+
+  #minor-container {
+    margin: auto;
+  }
+
+  .hidden-desktop {
+    display: inherit !important;
+  }
+  .visible-desktop {
+    display: none !important;
+  }
+  .visible-phone {
+    display: inherit !important;
+  }
+  .hidden-phone {
+    display: none !important;
+  }
+  html, body, .full-height {
+    height: auto;
+  }
+
+  .navbar .container {
+    width: auto;
+  }
+
+  .nav-collapse.collapse {
+    float: none;
+    clear: both;
+  }
+
+  .nav-collapse .nav,
+  .nav-collapse .nav > li {
+    float: none;
+  }
+
+  .nav-collapse .nav > li > a {
+    display: block;
+    padding: 10px;
+  }
+  .nav-collapse .btn {
+    font-weight: normal;
+  }
+  .nav-collapse .nav > li > a:hover,
+  .nav-collapse .nav > li > a:focus {
+    background-color: #f2f2f2;
+  }
+
+  .nav-collapse.collapse {
+    height: 0;
+    overflow: hidden;
+  }
+  .navbar .btn-navbar {
+    display: block;
+  }
+
+  .dl-horizontal dt {
+    float: none;
+    width: auto;
+    clear: none;
+    text-align: left;
+    padding: 10px;
+  }
+
+  .dl-horizontal dd {
+    clear: both;
+    padding: 10px;
+    margin-left: 0;
+  }
+}
+
+/* Landscape phones and down */
+@media (max-width: 480px) {
+  ul.inline {
+    width: 100%;
+  }
+
+  ul.inline > li {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .btn-group {
+    width: 100%;
+    margin: 5px auto;
+  }
+
+  .btn-group .btn {
+    width: 100%;
+    padding: 10px 0 !important;
+    margin: auto;
+  }
+
+  .btn-break {
+    display: block;
+  }
+
+  .btn2 {
+    width: 50% !important;
+  }
+
+  .btn3 {
+    width: 33.333% !important;
+  }
+
+  .paging-by-page {
+    width: 100%;
+  }
+
+  .paging-by-page > input {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .item-toggle-plus {
+    padding: 10px;
+  }
+
+  .item-info {
+    white-space: normal;
+  }
+
+  .item-description {
+    display: none;
+  }
+}
+
+/* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
+/* https://github.com/lucianmarin/peculiar */
+.ico {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  margin-right: 4px;
+  margin-left: 4px;
+}
+.ico-feed-dot {
+  background-color: #000;
+  width: 4px;
+  height: 4px;
+  border-radius: 3px;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+}
+.ico-feed-circle-1 {
+  border: #000 2px solid;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  width: 6px;
+  height: 6px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+.ico-feed-circle-2 {
+  border: #000 2px solid;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  width: 9px;
+  height: 9px;
+  border-radius: 4px 7px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+.ico-b-disc {
+  background-color: #000;
+  border-radius:8px;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top:0;
+  left:0;
+}
+.ico-w-line-h {
+  background-color: #fff;
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  position: absolute;
+  top:7px;
+  left: 4px;
+}
+.ico-w-line-v {
+  background-color: #fff;
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+  position: absolute;
+  top: 4px;
+  left: 7px;
+}
+.ico-w-circle {
+  border: #fff 2px solid;
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+}
+
+.ico-toggle-item {
+  float: right;
+}
+
+.menu-ico {
+  text-decoration: none !important;
+}
+
+.menu-ico:before {
+  content: "";
+  speak: none;
+  display: none;
+  text-decoration: none !important;
+}
+
+.ico-star:before {
+  content: "\2605";
+}
+
+.ico-unstar:before {
+  content: "\2606";
+}
+
+.ico-update:before {
+  content: "\21BA";
+}
+
+.ico-add-feed:before {
+  content: "\271A";
+}
+
+.ico-home:before {
+  content: "\23CF";
+}
+
+.ico-help:before {
+  content: "\2048";
+}
+
+.ico-edit:before {
+  content: "\2318";
+}
+
+.ico-config:before {
+  content: "\273F";
+}
+
+.ico-order-older:before {
+  content: "\25BC";
+}
+
+.ico-order-newer:before {
+  content: "\25B2";
+}
+
+.ico-login:before {
+  content: "\2611";
+}
+
+.ico-logout:before {
+  content: "\2612";
+}
+
+.ico-list-feeds-hide:before {
+  content: "\25FB";
+}
+
+.ico-list-feeds-show:before {
+  content: "\25E7";
+}
+
+.ico-list:before {
+  content: "\2630 ";
+}
+
+.ico-expanded:before {
+  content: "\2B12";
+}
+
+.ico-mark-as-read:before {
+  content: "\25C9";
+}
+
+.ico-mark-as-unread:before {
+  content: "\25CE";
+}
+
+.ico-filter-all:before {
+  content: "\26C3";
+}
+
+.ico-filter-unread:before {
+  content: "\26C0";
+}
+
+/**
+ * flags
+ * http://flag-sprites.com/en_US/
+ * http://famfamfam.com/lab/icons/flags/
+ */
+#flags-sel + #flags {
+  display: none;
+}
+
+#flags-sel:target + #flags {
+  display: block;
+}
+
+#flags-sel:target #hide-flags, #flags-sel #show-flags {
+  display: inline-block;
+}
+
+#flags-sel:target #show-flags, #flags-sel #hide-flags {
+  display: none;
+}
+.flag {
+  display: inline-block;
+  width: 16px;
+  height: 11px;
+  background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAWCAYAAAChWZ5EAAAFVElEQVRIia2Vf2yW1RXHP/ftqxmDwSxM6FghGMt0Thbn2M9SFCmo+2miIAjbZE5jRubCmJUtGwQM2zCiYcSGH6EsA3GhyUTXJlNWu7oEdabggAmEho0h0Flmbd++7/Pce885++N5W374x/6gJzl57n2eJ/ec7/ec+z3OzLgcW/7MoYsO0Kj88BujERHSNEVEiDHinOOa2TehBYgpRECB/GVFL9tddR8HwNRQNaqqPsIgMDNDVTEzrnh8PRYD6j0WAuceWz08CWDQXwyIZMEGBgYws6HgzjlEhNGnT6E+xXwKY8cRgdxlB9cMuYghqkQxcrkcZoZzbmitqqhP0DRFQ4p5PzwliFERVUQUESOqYFZOQhVVGyqHphl69QHnPX44EvA+omqIKEEViUZFRUWGGMjnQNXhnMsSCB71Hhfj8DDgY0Z7ECWKEqMO1X/QRTJWzKeI95gP5IaLgcTHrPZRsySCZOjLnS9yfp8FT9EQIIbhYSBJYhY8KjEKIepQwA94mmbXMARcFOJwJFD0nhiVD4+oQCLEmBvq/kFzLuuBivFVaIw4iZgMEwPFYmTt9oMkiaeYRAqJZ+KIKrz3hCTBi+C9J0kSpv2mCeW8CgK4DZvabGrtNF7tOEZ3D4AgKjy26EYOrd2IiXDjzx/hR+tfx0KOgWJCdc0IZh1o5cTX5nH2jUukXBU0Ah4wwLN58l6sOEDPu2fx5eCDieQrx4xi7vE25jx0D13/HmDf/jOIOWqmVDL1ppHgU2xKJXd8vpoQhdobxjK9YxM0r2NDy9ucpcCWxi+xo8NYMFN59pUcC2cYv+1wLK6NNLXnkVtvxww+anqBRCutrbvJtx0vMaF+Nrfteo5rP3E1135zFr9s/AfOAW91QUhwDk6eM1aNO07Fqy/jfrKGpt0H+fW617jz5k+zo8PY1aHsaAdRZeteQwy2vORIYuSBl34G/+2Fvveh0A/FIm7hHVz/5l8zKX7nzHus7JnGSbkGWbOKFQ9/KqOz1A+lEgBPnGhk5Jxajt61hFl3PsehI30kaQoETOH5BiNVeKEhIAYtjxZJonHYQXHlSgpPPUnfls307tyJa59EafFSCg824I52nbOaKZUZ4ktt3jxIU9iz5wOfzKDzyH9ofOoodQu+TFObIpohjwFSMw6TEot/I57ZCMUiFApYkoD35JZ8i9cOd5I/+PjTTP3sSHjrOIQA3p9/qmJpSrzllmx4hGyUIkL+uon86c0CzP4FC2cYW/caf2xIqF/zIVoa+piw1vPPZUr10pS+pm0XiZOq0jv+at5r3f1/GKirQ9JAxev7yh3tskOwjIGjPWxev58v3lvPtpeF1AwNcNC6kfQI/EvgpBBHr82QpymkKZYk5H4wnxe7juBmfvsF+3pdNZ1vdPPTR77ADRME/+iPuXLrduzm6YgI+QOdgHL6ttkcm7+cBavfobb+YzS/uJeT+5dRVTWJEMJFCC9dX7gvlUpMuQI2Pr+DfJJExo+9kp2b5lJYvZL3R4xi6VUP8TvK41MVzPjKrbt4pb2NMVu2caC+g83Tl9G8JzJx+9O42+8m19KGdXdDby8UCpknCVYsgvfYhesQ0OXfZcypE+QXLa7hvq9eR/KrFfx95vdobj9N5SjBDNz1E3EaMDOqP1nJou80s+T7M5iz5D4efuAeuu+fT9e9n2Hy5Kn0f24Go3yCWXbHL52IZkaMgSSpBE4hoty9YRX5M++e45k5D/KHmpl07vwLIZaIItw/r4bWfb1YjMx9u4ff7/kzqLC7pYNxk65ixRPrOLaikZF9z9JtmbL1ldWNC5QuAfqBYtlD+d3gf/8DcCnYzK68GQMAAAAASUVORK5CYII=) no-repeat
+}
+
+.flag.flag-fr {background-position: -16px 0}
+.flag.flag-gb {background-position: 0 -11px}
+.flag.flag-us {background-position: -16px -11px}
+<?php
         exit();
     } else if ($_GET['file'] == 'script.js') {
+        header('Content-type: text/javascript');
+?>
+/*jshint sub:true, evil:true */
+
+(function () {
+  "use strict";
+  var view = '', // data-view
+      listFeeds = '', // data-list-feeds
+      filter = '', // data-filter
+      order = '', // data-order
+      autoreadItem = '', // data-autoread-item
+      autoreadPage = '', // data-autoread-page
+      autohide = '', // data-autohide
+      byPage = -1, // data-by-page
+      shaarli = '', // data-shaarli
+      redirector = '', // data-redirector
+      currentHash = '', // data-current-hash
+      currentPage = 1, // data-current-page
+      currentNbItems = 0, // data-nb-items
+      autoupdate = false, // data-autoupdate
+      autofocus = false, // data-autofocus
+      addFavicon = false, // data-add-favicon
+      preload = false, // data-preload
+      stars = false, // data-stars
+      isLogged = false, // data-is-logged
+      blank = false, // data-blank
+      status = '',
+      listUpdateFeeds = [],
+      listItemsHash = [],
+      currentItemHash = '',
+      currentUnread = 0,
+      title = '',
+      cache = {},
+      intlTop = 'top',
+      intlShare = 'share',
+      intlRead = 'read',
+      intlUnread = 'unread',
+      intlStar = 'star',
+      intlUnstar = 'unstar',
+      intlFrom = 'from';
+
+  /**
+   * trim function
+   * https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/String/Trim
+   */
+  if(!String.prototype.trim) {
+    String.prototype.trim = function () {
+      return this.replace(/^\s+|\s+$/g,'');
+    };
+  }
+  /**
+   * http://javascript.info/tutorial/bubbling-and-capturing
+   */
+  function stopBubbling(event) {
+    if(event.stopPropagation) {
+      event.stopPropagation();
+    }
+    else {
+      event.cancelBubble = true;
+    }
+  }
+
+  /**
+   * JSON Object
+   * https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/JSON
+   */
+  if (!window.JSON) {
+    window.JSON = {
+      parse: function (sJSON) { return eval("(" + sJSON + ")"); },
+      stringify: function (vContent) {
+        if (vContent instanceof Object) {
+          var sOutput = "";
+          if (vContent.constructor === Array) {
+            for (var nId = 0; nId < vContent.length; sOutput += this.stringify(vContent[nId]) + ",", nId++);
+            return "[" + sOutput.substr(0, sOutput.length - 1) + "]";
+          }
+          if (vContent.toString !== Object.prototype.toString) { return "\"" + vContent.toString().replace(/"/g, "\\$&") + "\""; }
+          for (var sProp in vContent) { sOutput += "\"" + sProp.replace(/"/g, "\\$&") + "\":" + this.stringify(vContent[sProp]) + ","; }
+          return "{" + sOutput.substr(0, sOutput.length - 1) + "}";
+        }
+        return typeof vContent === "string" ? "\"" + vContent.replace(/"/g, "\\$&") + "\"" : String(vContent);
+      }
+    };
+  }
+
+  /**
+   * https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started
+   */
+  function getXHR() {
+    var httpRequest = false;
+
+    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+      httpRequest = new XMLHttpRequest();
+    } else if (window.ActiveXObject) { // IE
+      try {
+        httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+      }
+      catch (e) {
+        try {
+          httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        catch (e2) {}
+      }
+    }
+
+    return httpRequest;
+  }
+
+  /**
+   * http://www.sitepoint.com/xhrrequest-and-javascript-closures/
+   */
+  // Constructor for generic HTTP client
+  function HTTPClient() {}
+  HTTPClient.prototype = {
+    url: null,
+    xhr: null,
+    callinprogress: false,
+    userhandler: null,
+    init: function(url, obj) {
+      this.url = url;
+      this.obj = obj;
+      this.xhr = new getXHR();
+    },
+    asyncGET: function (handler) {
+      // Prevent multiple calls
+      if (this.callinprogress) {
+        throw "Call in progress";
+      }
+      this.callinprogress = true;
+      this.userhandler = handler;
+      // Open an async request - third argument makes it async
+      this.xhr.open('GET', this.url, true);
+      var self = this;
+      // Assign a closure to the onreadystatechange callback
+      this.xhr.onreadystatechange = function() {
+        self.stateChangeCallback(self);
+      };
+      this.xhr.send(null);
+    },
+    stateChangeCallback: function(client) {
+      switch (client.xhr.readyState) {
+        // Request not yet made
+        case 1:
+        try { client.userhandler.onInit(); }
+        catch (e) { /* Handler method not defined */ }
+        break;
+        // Contact established with server but nothing downloaded yet
+        case 2:
+        try {
+          // Check for HTTP status 200
+          if ( client.xhr.status != 200 ) {
+            client.userhandler.onError(
+              client.xhr.status,
+              client.xhr.statusText
+            );
+            // Abort the request
+            client.xhr.abort();
+            // Call no longer in progress
+            client.callinprogress = false;
+          }
+        }
+        catch (e) { /* Handler method not defined */ }
+        break;
+        // Called multiple while downloading in progress
+        case 3:
+        // Notify user handler of download progress
+        try {
+          // Get the total content length
+          // -useful to work out how much has been downloaded
+          var contentLength;
+          try {
+            contentLength = client.xhr.getResponseHeader("Content-Length");
+          }
+          catch (e) { contentLength = NaN; }
+          // Call the progress handler with what we've got
+          client.userhandler.onProgress(
+            client.xhr.responseText,
+            contentLength
+          );
+        }
+        catch (e) { /* Handler method not defined */ }
+        break;
+        // Download complete
+        case 4:
+        try {
+          client.userhandler.onSuccess(client.xhr.responseText, client.obj);
+        }
+        catch (e) { /* Handler method not defined */ }
+        finally { client.callinprogress = false; }
+        break;
+      }
+    }
+  };
+
+  /**
+   * Handler
+   */
+  var ajaxHandler = {
+    onInit: function() {},
+    onError: function(status, statusText) {},
+    onProgress: function(responseText, length) {},
+    onSuccess: function(responseText, noFocus) {
+      var result = JSON.parse(responseText);
+
+      if (result['logout'] && isLogged) {
+        alert('You have been disconnected');
+      }
+      if (result['item']) {
+        cache['item-' + result['item']['itemHash']] = result['item'];
+        loadDivItem(result['item']['itemHash'], noFocus);
+      }
+      if (result['page']) {
+        updateListItems(result['page']);
+        setCurrentItem();
+        if (preload) {
+          preloadItems();
+        }
+      }
+      if (result['read']) {
+        markAsRead(result['read']);
+      }
+      if (result['unread']) {
+        markAsUnread(result['unread']);
+      }
+      if (result['update']) {
+        updateNewItems(result['update']);
+      }
+    }
+  };
+
+  /**
+   * http://stackoverflow.com/questions/4652734/return-html-from-a-user-selection/4652824#4652824
+   */
+  function getSelectionHtml() {
+    var html = '';
+    if (typeof window.getSelection != 'undefined') {
+      var sel = window.getSelection();
+      if (sel.rangeCount) {
+        var container = document.createElement('div');
+        for (var i = 0, len = sel.rangeCount; i < len; ++i) {
+          container.appendChild(sel.getRangeAt(i).cloneContents());
+        }
+        html = container.innerHTML;
+      }
+    } else if (typeof document.selection != 'undefined') {
+      if (document.selection.type == 'Text') {
+        html = document.selection.createRange().htmlText;
+      }
+    }
+    return html;
+  }
+
+  /**
+   * Some javascript snippets
+   */
+  function removeChildren(elt) {
+    while (elt.hasChildNodes()) {
+      elt.removeChild(elt.firstChild);
+    }
+  }
+
+  function removeElement(elt) {
+    if (elt && elt.parentNode) {
+      elt.parentNode.removeChild(elt);
+    }
+  }
+
+  function addClass(elt, cls) {
+    if (elt) {
+      elt.className = (elt.className + ' ' + cls).trim();
+    }
+  }
+
+  function removeClass(elt, cls) {
+    if (elt) {
+      elt.className = (' ' + elt.className + ' ').replace(cls, ' ').trim();
+    }
+  }
+
+  function hasClass(elt, cls) {
+    if (elt && (' ' + elt.className + ' ').indexOf(' ' + cls + ' ') > -1) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Add redirector to link
+   */
+  function anonymize(elt) {
+    if (redirector !== '') {
+      var domain, a_to_anon = elt.getElementsByTagName("a");
+      for (var i = 0; i < a_to_anon.length; i++) {
+        domain = a_to_anon[i].href.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+        if (domain !== window.location.host) {
+          if (redirector !== 'noreferrer') {
+            a_to_anon[i].href = redirector+a_to_anon[i].href;
+          } else {
+            a_to_anon[i].setAttribute('rel', 'noreferrer');
+          }
+        }
+      }
+    }
+  }
+
+  function initAnonyme() {
+    if (redirector !== '') {
+      var i = 0, elements = document.getElementById('list-items');
+      elements = elements.getElementsByTagName('div');
+      for (i = 0; i < elements.length; i += 1) {
+        if (hasClass(elements[i], 'item-content')) {
+          anonymize(elements[i]);
+        }
+      }
+    }
+  }
+
+  /**
+   * Replace collapse bootstrap function
+   */
+  function collapseElement(element) {
+    if (element !== null) {
+      var targetElement = document.getElementById(
+        element.getAttribute('data-target').substring(1)
+      );
+
+      if (hasClass(targetElement, 'in')) {
+        removeClass(targetElement, 'in');
+        targetElement.style.height = 0;
+      } else {
+        addClass(targetElement, 'in');
+        targetElement.style.height = 'auto';
+      }
+    }
+  }
+
+  function collapseClick(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    collapseElement(this);
+  }
+
+  function initCollapse(list) {
+    var i = 0;
+
+    for (i = 0; i < list.length; i += 1) {
+      if (list[i].hasAttribute('data-toggle') && list[i].hasAttribute('data-target')) {
+        addEvent(list[i], 'click', collapseClick);
+      }
+    }
+  }
+
+  /**
+   * Shaarli functions
+   */
+  function htmlspecialchars_decode(string) {
+    return string
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&quot;/g, '"')
+           .replace(/&amp;/g, '&')
+           .replace(/&#0*39;/g, "'")
+           .replace(/&nbsp;/g, " ");
+  }
+
+  function shaarliItem(itemHash) {
+    var domainUrl, url, domainVia, via, title, sel, element;
+
+   element = document.getElementById('item-div-'+itemHash);
+    if (element.childNodes.length > 1) {
+      title = getTitleItem(itemHash);
+      url = getUrlItem(itemHash);
+      via = getViaItem(itemHash);
+      if (redirector != 'noreferrer') {
+        url = url.replace(redirector,'');
+        via = via.replace(redirector,'');
+      }
+      domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+      domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+      if (domainUrl !== domainVia) {
+        via = 'via ' + via;
+      } else {
+        via = '';
+      }
+      sel = getSelectionHtml();
+      if (sel !== '') {
+        sel = '«' + sel + '»';
+      }
+
+      if (shaarli !== '') {
+        window.open(
+          shaarli
+          .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
+          .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
+          .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
+          .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
+          '_blank',
+          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
+        );
+      } else {
+        alert('Please configure your share link first');
+      }
+    } else {
+      loadDivItem(itemHash);
+      alert('Sorry ! This item is not loaded, try again !');
+    }
+  }
+
+  function shaarliCurrentItem() {
+    shaarliItem(currentItemHash);
+  }
+
+  function shaarliClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    shaarliItem(getItemHash(this));
+
+    return false;
+  }
+
+  /**
+   * Folder functions
+   */
+  function getFolder(element) {
+    var folder = null;
+
+    while (folder === null && element !== null) {
+      if (element.tagName === 'LI' && element.id.indexOf('folder-') === 0) {
+        folder = element;
+      }
+      element = element.parentNode;
+    }
+
+    return folder;
+  }
+
+  function getLiParentByClassName(element, classname) {
+    var li = null;
+
+    while (li === null && element !== null) {
+      if (element.tagName === 'LI' && hasClass(element, classname)) {
+        li = element;
+      }
+      element = element.parentNode;
+    }
+
+    if (classname === 'folder' && li.id === 'all-subscriptions') {
+      li = null;
+    }
+
+    return li;
+  }
+
+  function getFolderHash(element) {
+    var folder = getFolder(element);
+
+    if (folder !== null) {
+      return folder.id.replace('folder-','');
+    }
+
+    return null;
+  }
+
+  function toggleFolder(folderHash) {
+    var i, listElements, url, client;
+
+    listElements = document.getElementById('folder-' + folderHash);
+    listElements = listElements.getElementsByTagName('h5');
+    if (listElements.length > 0) {
+      listElements = listElements[0].getElementsByTagName('span');
+
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'folder-toggle-open')) {
+          removeClass(listElements[i], 'folder-toggle-open');
+          addClass(listElements[i], 'folder-toggle-close');
+        } else if (hasClass(listElements[i], 'folder-toggle-close')) {
+          removeClass(listElements[i], 'folder-toggle-close');
+          addClass(listElements[i], 'folder-toggle-open');
+        }
+      }
+    }
+
+    url = '?toggleFolder=' + folderHash + '&ajax';
+    client = new HTTPClient();
+
+    client.init(url);
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function toggleClickFolder(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    toggleFolder(getFolderHash(this));
+
+    return false;
+  }
+
+  function initLinkFolders(listFolders) {
+    var i = 0;
+
+    for (i = 0; i < listFolders.length; i += 1) {
+      if (listFolders[i].hasAttribute('data-toggle') && listFolders[i].hasAttribute('data-target')) {
+        listFolders[i].onclick = toggleClickFolder;
+      }
+    }
+  }
+
+  function getListLinkFolders() {
+    var i = 0,
+        listFolders = [],
+        listElements = document.getElementById('list-feeds');
+
+    if (listElements) {
+      listElements = listElements.getElementsByTagName('a');
+
+      for (i = 0; i < listElements.length; i += 1) {
+        listFolders.push(listElements[i]);
+      }
+    }
+
+    return listFolders;
+  }
+
+  /**
+   * MarkAs functions
+   */
+  function toggleMarkAsLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks;
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-mark-as')) {
+          if (listLinks[i].href.indexOf('unread=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unread=','read=');
+            listLinks[i].firstChild.innerHTML = intlRead;
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('read=','unread=');
+            listLinks[i].firstChild.innerHTML = intlUnread;
+          }
+        }
+      }
+    }
+  }
+
+  function getUnreadLabelItems(itemHash) {
+    var i, listLinks, regex = new RegExp('read=' + itemHash.substr(0,6)), items = [];
+    listLinks = getListLinkFolders();
+    for (i = 0; i < listLinks.length; i += 1) {
+      if (regex.test(listLinks[i].href)) {
+        items.push(listLinks[i].children[0]);
+      }
+    }
+    return items;
+  }
+
+  function addToUnreadLabel(unreadLabelItem, value) {
+      var unreadLabel = -1;
+      if (unreadLabelItem !== null) {
+        unreadLabel = parseInt(unreadLabelItem.innerHTML, 10) + value;
+        unreadLabelItem.innerHTML = unreadLabel;
+      }
+      return unreadLabel;
+  }
+
+  function getUnreadLabel(folder) {
+    var element = null;
+    if (folder !== null) {
+      element = folder.getElementsByClassName('label')[0];
+    }
+    return element;
+  }
+
+  function markAsItem(itemHash) {
+    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder, addRead = 1;
+
+    item = getItem(itemHash);
+
+    if (item !== null) {
+      unreadLabelItems = getUnreadLabelItems(itemHash);
+      if (!hasClass(item, 'read')) {
+        addRead = -1;
+      }
+      for (i = 0; i < unreadLabelItems.length; i += 1) {
+        nb = addToUnreadLabel(unreadLabelItems[i], addRead);
+        if (nb === 0) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          removeClass(feed, 'has-unread');
+          if (autohide) {
+            addClass(feed, 'autohide-feed');
+          }
+        }
+        folder = getLiParentByClassName(unreadLabelItems[i], 'folder');
+        nb = addToUnreadLabel(getUnreadLabel(folder), addRead);
+        if (nb === 0 && autohide) {
+          addClass(folder, 'autohide-folder');
+        }
+      }
+      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), addRead);
+
+      if (hasClass(item, 'read')) {
+        url = '?unread=' + itemHash;
+        removeClass(item, 'read');
+        toggleMarkAsLinkItem(itemHash);
+      } else {
+        url = '?read=' + itemHash;
+        addClass(item, 'read');
+        toggleMarkAsLinkItem(itemHash);
+        if (filter === 'unread') {
+          url += '&currentHash=' + currentHash +
+            '&page=' + currentPage +
+            '&last=' + listItemsHash[listItemsHash.length - 1];
+
+          removeElement(item);
+          indexItem = listItemsHash.indexOf(itemHash);
+          listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+          if (listItemsHash.length <= byPage) {
+            appendItem(listItemsHash[listItemsHash.length - 1]);
+          }
+          setCurrentItem(listItemsHash[indexItem]);
+        }
+      }
+    } else {
+      url = '?currentHash=' + currentHash +
+        '&page=' + currentPage;
+    }
+
+    client = new HTTPClient();
+    client.init(url + '&ajax');
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function markAsCurrentItem() {
+    markAsItem(currentItemHash);
+  }
+
+  function markAsClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsItem(getItemHash(this));
+
+    return false;
+  }
+
+  function toggleMarkAsStarredLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks, url = '';
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-starred')) {
+          url = listLinks[i].href;
+          if (listLinks[i].href.indexOf('unstar=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
+            listLinks[i].firstChild.innerHTML = intlStar;
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
+            listLinks[i].firstChild.innerHTML = intlUnstar;
+          }
+        }
+      }
+    }
+
+    return url;
+  }
+
+
+  function markAsStarredItem(itemHash) {
+    var url, client, indexItem;
+
+    url = toggleMarkAsStarredLinkItem(itemHash);
+    if (url.indexOf('unstar=') > -1 && stars) {
+      removeElement(getItem(itemHash));
+      indexItem = listItemsHash.indexOf(itemHash);
+      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+      if (listItemsHash.length <= byPage) {
+        appendItem(listItemsHash[listItemsHash.length - 1]);
+      }
+      setCurrentItem(listItemsHash[indexItem]);
+
+      url += '&page=' + currentPage;
+    }
+    if (url !== '') {
+      client = new HTTPClient();
+      client.init(url + '&ajax');
+      try {
+        client.asyncGET(ajaxHandler);
+      } catch (e) {
+        alert(e);
+      }
+    }
+  }
+
+  function markAsStarredClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsStarredItem(getItemHash(this));
+
+    return false;
+  }
+
+  function markAsRead(itemHash) {
+    setNbUnread(currentUnread - 1);
+  }
+
+  function markAsUnread(itemHash) {
+    setNbUnread(currentUnread + 1);
+  }
+
+  /**
+   * Div item functions
+   */
+  function loadDivItem(itemHash, noFocus) {
+    var element, url, client, cacheItem;
+    element = document.getElementById('item-div-'+itemHash);
+    if (element.childNodes.length <= 1) {
+      cacheItem = getCacheItem(itemHash);
+      if (cacheItem !== null) {
+        setDivItem(element, cacheItem);
+        if(!noFocus) {
+          setItemFocus(element);
+        }
+        removeCacheItem(itemHash);
+      } else {
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
+          '&current=' + itemHash +
+          '&ajax';
+        client = new HTTPClient();
+        client.init(url, noFocus);
+        try {
+          client.asyncGET(ajaxHandler);
+        } catch (e) {
+          alert(e);
+        }
+      }
+    }
+  }
+
+  function toggleItem(itemHash) {
+    var i, listElements, element, targetElement;
+
+    if (view === 'expanded') {
+      return;
+    }
+
+    if (currentItemHash != itemHash) {
+      closeCurrentItem();
+    }
+
+    // looking for ico + or -
+    listElements = document.getElementById('item-toggle-' + itemHash);
+    listElements = listElements.getElementsByTagName('span');
+    for (i = 0; i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-toggle-open')) {
+        removeClass(listElements[i], 'item-toggle-open');
+        addClass(listElements[i], 'item-toggle-close');
+      } else if (hasClass(listElements[i], 'item-toggle-close')) {
+        removeClass(listElements[i], 'item-toggle-close');
+        addClass(listElements[i], 'item-toggle-open');
+      }
+    }
+
+    element = document.getElementById('item-toggle-'+itemHash);
+    targetElement = document.getElementById(
+      element.getAttribute('data-target').substring(1)
+    );
+    if (element.href.indexOf('&open') > -1) {
+      element.href = element.href.replace('&open','');
+      addClass(targetElement, 'well');
+      setCurrentItem(itemHash);
+      loadDivItem(itemHash);
+    } else {
+      element.href = element.href + '&open';
+      removeClass(targetElement, 'well');
+    }
+  }
+
+  function toggleCurrentItem() {
+    toggleItem(currentItemHash);
+    collapseElement(document.getElementById('item-toggle-' + currentItemHash));
+  }
+
+  function toggleClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    toggleItem(getItemHash(this));
+
+    return false;
+  }
+
+  /**
+   * Item management functions
+   */
+  function getItem(itemHash) {
+    return document.getElementById('item-' + itemHash);
+  }
+
+  function getTitleItem(itemHash) {
+    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), title = '';
+
+    for (i = 0; title === '' && i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-link')) {
+        title = listElements[i].innerHTML;
+      }
+    }
+
+    return title;
+  }
+
+  function getUrlItem(itemHash) {
+    var i = 0, element = document.getElementById('item-'+itemHash), listElements = element.getElementsByTagName('a'), url = '';
+
+    for (i = 0; url === '' && i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-link')) {
+        url = listElements[i].href;
+      }
+    }
+
+    return url;
+  }
+
+  function getViaItem(itemHash) {
+    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), via = '';
+
+    for (i = 0; via === '' && i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-via')) {
+        via = listElements[i].href;
+      }
+    }
+
+    return via;
+  }
+
+  function getLiItem(element) {
+    var item = null;
+
+    while (item === null && element !== null) {
+      if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
+        item = element;
+      }
+      element = element.parentNode;
+    }
+
+    return item;
+  }
+
+  function getItemHash(element) {
+    var item = getLiItem(element);
+
+    if (item !== null) {
+      return item.id.replace('item-','');
+    }
+
+    return null;
+  }
+
+  function getCacheItem(itemHash) {
+    if (typeof cache['item-' + itemHash] !== 'undefined') {
+      return cache['item-' + itemHash];
+    }
+
+    return null;
+  }
+
+  function removeCacheItem(itemHash) {
+    if (typeof cache['item-' + itemHash] !== 'undefined') {
+      delete cache['item-' + itemHash];
+    }
+  }
+
+  function isCurrentUnread() {
+    var item = getItem(currentItemHash);
+
+    if (hasClass(item, 'read')) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function setDivItem(div, item) {
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"';
+
+    if (item['read'] == 1) {
+      markAs = intlUnread;
+    }
+
+    if (item['starred'] == 1) {
+      starred = intlUnstar;
+    }
+
+    if (!blank) {
+      target = '';
+    }
+
+    div.innerHTML = '<div class="item-title">' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">' + intlShare + '</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
+      item['title'] +
+      '</a>' +
+      '</div>' +
+      '<div class="clear"></div>' +
+      '<div class="item-info-end item-info-time">' +
+      item['time']['expanded'] +
+      '</div>' +
+      '<div class="item-info-end item-info-authors">' +
+      intlFrom + ' <a class="item-via" href="' + item['via'] + '">' +
+      item['author'] +
+      '</a> ' +
+      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
+      '<span class="ico">' +
+      '<span class="ico-feed-dot"></span>' +
+      '<span class="ico-feed-circle-1"></span>' +
+      '<span class="ico-feed-circle-2"></span>'+
+      '</span>' +
+      '</a>' +
+      '</div>' +
+      '<div class="clear"></div>' +
+      '<div class="item-content"><article>' +
+      item['content'] +
+      '</article></div>' +
+      '<div class="clear"></div>' +
+      '<div class="item-info-end">' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">' + intlShare + '</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + starred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
+      (view=='list'?
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '</span>' +
+      '</a>':'') +
+      '</div>' +
+      '<div class="clear"></div>';
+
+    initLinkItems(div.getElementsByTagName('a'));
+    initCollapse(div.getElementsByTagName('a'));
+    anonymize(div);
+  }
+
+  function setLiItem(li, item) {
+    var markAs = intlRead, target = ' target="_blank"';
+
+    if (item['read'] == 1) {
+      markAs = intlUnread;
+    }
+
+    if (!blank) {
+      target = '';
+    }
+
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '<span class="ico-w-line-v item-toggle-close"></span>' +
+      '</span>' +
+      item['time']['list'] +
+      '</a>' +
+      '<dl class="dl-horizontal item">' +
+      '<dt class="item-feed">' +
+      (addFavicon?
+      '<span class="item-favicon">' +
+      '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
+      '</span>':'' ) +
+      '<span class="item-author">' +
+      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
+      item['author'] +
+      '</a>' +
+      '</span>' +
+      '</dt>' +
+      '<dd class="item-info">' +
+      '<span class="item-title">' +
+      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
+      item['title'] +
+      '</a> ' +
+      '</span>' +
+      '<span class="item-description">' +
+      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
+      item['description'] +
+      '</a> ' +
+      '</span>' +
+      '</dd>' +
+      '</dl>' +
+      '<div class="clear"></div>';
+
+    initCollapse(li.getElementsByTagName('a'));
+    initLinkItems(li.getElementsByTagName('a'));
+
+    anonymize(li);
+  }
+
+  function createLiItem(item) {
+    var li = document.createElement('li'),
+        div = document.createElement('div');
+
+    div.id = 'item-div-'+item['itemHash'];
+    div.className= 'item collapse'+(view === 'expanded' ? ' in well' : '');
+
+    li.id = 'item-'+item['itemHash'];
+    if (view === 'list') {
+      li.className = 'item-list';
+      setLiItem(li, item);
+    } else {
+      li.className = 'item-expanded';
+      setDivItem(div, item);
+    }
+    li.className += (item['read'] === 1)?' read':'';
+    li.appendChild(div);
+
+    return li;
+  }
+
+  /**
+   * List items management functions
+   */
+  function getListItems() {
+    return document.getElementById('list-items');
+  }
+
+  function updateListItems(itemsList) {
+    var i;
+
+    for (i = 0; i < itemsList.length; i++) {
+      if (listItemsHash.indexOf(itemsList[i]['itemHash']) === -1 && listItemsHash.length <= byPage) {
+        cache['item-' + itemsList[i]['itemHash']] = itemsList[i];
+        listItemsHash.push(itemsList[i]['itemHash']);
+        if (listItemsHash.length <= byPage) {
+          appendItem(itemsList[i]['itemHash']);
+        }
+      }
+    }
+  }
+
+  function appendItem(itemHash) {
+    var listItems = getListItems(),
+        item = getCacheItem(itemHash),
+        li;
+
+    if (item !== null) {
+      li = createLiItem(item);
+      listItems.appendChild(li);
+      removeCacheItem(itemHash);
+    }
+  }
+
+  function getListLinkItems() {
+    var i = 0,
+        listItems = [],
+        listElements = document.getElementById('list-items');
+
+    listElements = listElements.getElementsByTagName('a');
+
+    for (i = 0; i < listElements.length; i += 1) {
+      listItems.push(listElements[i]);
+    }
+
+    return listItems;
+  }
+
+  function initListItemsHash() {
+    var i,
+        listElements = document.getElementById('list-items');
+
+    listElements = listElements.getElementsByTagName('li');
+    for (i = 0; i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-list') || hasClass(listElements[i], 'item-expanded')) {
+        if (hasClass(listElements[i], 'current')) {
+          currentItemHash = getItemHash(listElements[i]);
+        }
+        listItemsHash.push(listElements[i].id.replace('item-',''));
+      }
+    }
+  }
+
+  function initLinkItems(listItems) {
+    var i = 0;
+
+    for (i = 0; i < listItems.length; i += 1) {
+      if (hasClass(listItems[i], 'item-toggle')) {
+        listItems[i].onclick = toggleClickItem;
+      }
+      if (hasClass(listItems[i], 'item-mark-as')) {
+        listItems[i].onclick = markAsClickItem;
+      }
+      if (hasClass(listItems[i], 'item-starred')) {
+        listItems[i].onclick = markAsStarredClickItem;
+      }
+      if (hasClass(listItems[i], 'item-shaarli')) {
+        listItems[i].onclick = shaarliClickItem;
+      }
+    }
+  }
+
+  function initListItems() {
+    var url, client;
+
+    url = '?currentHash=' + currentHash +
+      '&page=' + currentPage +
+      '&last=' + listItemsHash[listItemsHash.length -1] +
+      '&ajax' +
+      (stars?'&stars':'');
+
+    client = new HTTPClient();
+    client.init(url);
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function preloadItems()
+  {
+    // Pre-fetch items from top to bottom
+    for(var i = 0, len = listItemsHash.length; i < len; ++i)
+    {
+      loadDivItem(listItemsHash[i], true);
+    }
+  }
+
+  /**
+   * Update
+   */
+  function setStatus(text) {
+    if (text === '') {
+      document.getElementById('status').innerHTML = status;
+    } else {
+      document.getElementById('status').innerHTML = text;
+    }
+  }
+
+  function getTimeMin() {
+    return Math.round((new Date().getTime()) / 1000 / 60);
+  }
+
+  function updateFeed(feedHashIndex) {
+    var i = 0, url, client, feedHash = '';
+
+    if (feedHashIndex !== '') {
+      setStatus('updating ' + listUpdateFeeds[feedHashIndex][1]);
+      feedHash = listUpdateFeeds[feedHashIndex][0];
+      listUpdateFeeds[feedHashIndex][2] = getTimeMin();
+    }
+
+    url = '?update'+(feedHash === ''?'':'='+feedHash)+'&ajax';
+
+    client = new HTTPClient();
+    client.init(url);
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function updateNextFeed() {
+    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '', minFeedToUpdateIndex = '';
+    if (listUpdateFeeds.length !== 0) {
+      currentMin = getTimeMin();
+      for (i = 0; feedToUpdateIndex === '' && i < listUpdateFeeds.length; i++) {
+        diff = currentMin - listUpdateFeeds[i][2];
+        if (diff >= listUpdateFeeds[i][3]) {
+          //need update
+          feedToUpdateIndex = i;
+        } else {
+          if (minDiff === -1 || diff < minDiff) {
+            minDiff = diff;
+            minFeedToUpdateIndex = i;
+          }
+        }
+      }
+      if (feedToUpdateIndex === '') {
+        feedToUpdateIndex = minFeedToUpdateIndex;
+      }
+      updateFeed(feedToUpdateIndex);
+    } else {
+      updateFeed('');
+    }
+  }
+
+  function updateTimeout() {
+    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '';
+
+    if (listUpdateFeeds.length !== 0) {
+      currentMin = getTimeMin();
+      for (i = 0; minDiff !== 0 && i < listUpdateFeeds.length; i++) {
+        diff = currentMin - listUpdateFeeds[i][2];
+        if (diff >= listUpdateFeeds[i][3]) {
+          //need update
+          minDiff = 0;
+        } else {
+          if (minDiff === -1 || (listUpdateFeeds[i][3] - diff) < minDiff) {
+            minDiff = listUpdateFeeds[i][3] - diff;
+          }
+        }
+      }
+      window.setTimeout(updateNextFeed, minDiff * 1000 * 60 + 200);
+    }
+  }
+
+  function updateNewItems(result) {
+    var i = 0, list, currentMin, folder, feed, unreadLabelItems, nbItems;
+    setStatus('');
+    if (result !== false) {
+      if (result['feeds']) {
+        // init list of feeds information for update
+        listUpdateFeeds = result['feeds'];
+        currentMin = getTimeMin();
+        for (i = 0; i < listUpdateFeeds.length; i++) {
+          listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
+        }
+      }
+      if (result.newItems && result.newItems.length > 0) {
+        nbItems = result.newItems.length;
+        currentNbItems += nbItems;
+        setNbUnread(currentUnread + nbItems);
+        addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), nbItems);
+        unreadLabelItems = getUnreadLabelItems(result.newItems[0].substr(0,6));
+        for (i = 0; i < unreadLabelItems.length; i += 1) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          folder = getLiParentByClassName(feed, 'folder');
+          addClass(feed, 'has-unread');
+          if (autohide) {
+            removeClass(feed, 'autohide-feed');
+            removeClass(folder, 'autohide-folder');
+          }
+          addToUnreadLabel(getUnreadLabel(feed), nbItems);
+          addToUnreadLabel(getUnreadLabel(folder), nbItems);
+        }
+      }
+      updateTimeout();
+    }
+  }
+
+  function initUpdate() {
+    window.setTimeout(updateNextFeed, 1000);
+  }
+
+  /**
+   * Navigation
+   */
+  function setItemFocus(item) {
+    if(autofocus) {
+      // First, let the browser do some rendering
+      // Indeed, the div might not be visible yet, so there is no scroll
+      setTimeout(function()
+      {
+        // Dummy implementation
+        var container = document.getElementById('main-container'),
+          scrollPos = container.scrollTop,
+          itemPos = item.offsetTop,
+          temp = item;
+        while(temp.offsetParent != document.body) {
+          temp = temp.offsetParent;
+          itemPos += temp.offsetTop;
+        }
+        var current = itemPos - scrollPos;
+        // Scroll only if necessary
+        // current < 0: Happens when asking for previous item and displayed item is filling the screen
+        // Or check if item bottom is outside screen
+        if(current < 0 || current + item.offsetHeight > container.clientHeight) {
+          container.scrollTop = itemPos;
+        }
+      }, 0);
+    }
+  }
+
+  function previousClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    previousPage();
+
+    return false;
+  }
+
+  function nextClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    nextPage();
+
+    return false;
+  }
+
+  function nextPage() {
+    currentPage = currentPage + 1;
+    if (currentPage > Math.ceil(currentNbItems / byPage)) {
+      currentPage = Math.ceil(currentNbItems / byPage);
+    }
+    if (listItemsHash.length === 0) {
+      currentPage = 1;
+    }
+    listItemsHash = [];
+    initListItems();
+    removeChildren(getListItems());
+  }
+
+  function previousPage() {
+    currentPage = currentPage - 1;
+    if (currentPage < 1) {
+      currentPage = 1;
+    }
+    listItemsHash = [];
+    initListItems();
+    removeChildren(getListItems());
+  }
+
+  function previousClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    previousItem();
+
+    return false;
+  }
+
+  function nextClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    nextItem();
+
+    return false;
+  }
+
+  function nextItem() {
+    var nextItemIndex = listItemsHash.indexOf(currentItemHash) + 1, nextCurrentItemHash;
+
+    closeCurrentItem();
+    if (autoreadItem && isCurrentUnread()) {
+      markAsCurrentItem();
+      if (filter == 'unread') {
+        nextItemIndex -= 1;
+      }
+    }
+
+    if (nextItemIndex < 0) { nextItemIndex = 0; }
+
+    if (nextItemIndex < listItemsHash.length) {
+      nextCurrentItemHash = listItemsHash[nextItemIndex];
+    }
+
+    if (nextItemIndex >= byPage) {
+      nextPage();
+    } else {
+      setCurrentItem(nextCurrentItemHash);
+    }
+  }
+
+  function previousItem() {
+    var previousItemIndex = listItemsHash.indexOf(currentItemHash) - 1, previousCurrentItemHash;
+
+    if (previousItemIndex < listItemsHash.length && previousItemIndex >= 0) {
+      previousCurrentItemHash = listItemsHash[previousItemIndex];
+    }
+
+    closeCurrentItem();
+    if (previousItemIndex < 0) {
+      previousPage();
+    } else {
+      setCurrentItem(previousCurrentItemHash);
+    }
+  }
+
+  function closeCurrentItem() {
+    var element = document.getElementById('item-toggle-' + currentItemHash);
+
+    if (element && view === 'list') {
+      var targetElement = document.getElementById(
+            element.getAttribute('data-target').substring(1)
+          );
+
+      if (element.href.indexOf('&open') < 0) {
+        element.href = element.href + '&open';
+        removeClass(targetElement, 'well');
+        collapseElement(element);
+      }
+
+      var i = 0,
+          listElements = element.getElementsByTagName('span');
+
+      // looking for ico + or -
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'item-toggle-open')) {
+          removeClass(listElements[i], 'item-toggle-open');
+          addClass(listElements[i], 'item-toggle-close');
+        }
+      }
+    }
+  }
+
+  function setCurrentItem(itemHash) {
+    var currentItemIndex;
+
+    if (itemHash !== currentItemHash) {
+      removeClass(document.getElementById('item-'+currentItemHash), 'current');
+      removeClass(document.getElementById('item-div-'+currentItemHash), 'current');
+      if (typeof itemHash !== 'undefined') {
+        currentItemHash = itemHash;
+      }
+      currentItemIndex = listItemsHash.indexOf(currentItemHash);
+      if (currentItemIndex === -1) {
+        if (listItemsHash.length > 0) {
+          currentItemHash = listItemsHash[0];
+        } else {
+          currentItemHash = '';
+        }
+      } else {
+        if (currentItemIndex >= byPage) {
+          currentItemHash = listItemsHash[byPage - 1];
+        }
+      }
+
+      if (currentItemHash !== '') {
+        var item = document.getElementById('item-'+currentItemHash),
+          itemDiv = document.getElementById('item-div-'+currentItemHash);
+        addClass(item, 'current');
+        addClass(itemDiv, 'current');
+        setItemFocus(itemDiv);
+        updateItemButton();
+      }
+    }
+    updatePageButton();
+  }
+
+  function openCurrentItem(blank) {
+    var url;
+
+    url = getUrlItem(currentItemHash);
+    if (blank) {
+      window.location.href = url;
+    } else {
+      window.open(url);
+    }
+  }
+
+  // http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
+  function checkMove(e) {
+    // More than this horizontal displacement, and we will suppress scrolling.
+    var scrollSupressionThreshold = 10,
+    // More time than this, and it isn't a swipe.
+        durationThreshold = 500,
+    // Swipe horizontal displacement must be more than this.
+        horizontalDistanceThreshold = 30,
+    // Swipe vertical displacement must be less than this.
+        verticalDistanceThreshold = 75;
+
+    if (e.targetTouches.length == 1) {
+      var touch = e.targetTouches[0],
+      start = { time: ( new Date() ).getTime(),
+                coords: [ touch.pageX, touch.pageY ] },
+      stop;
+      var moveHandler = function ( e ) {
+
+        if ( !start ) {
+          return;
+        }
+
+        if (e.targetTouches.length == 1) {
+          var touch = e.targetTouches[0];
+          stop = { time: ( new Date() ).getTime(),
+                   coords: [ touch.pageX, touch.pageY ] };
+        }
+      };
+
+      addEvent(window, 'touchmove', moveHandler);
+      addEvent(window, 'touchend', function (e) {
+        removeEvent(window, 'touchmove', moveHandler);
+        if ( start && stop ) {
+          if ( stop.time - start.time < durationThreshold &&
+            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
+             ) {
+            if ( start.coords[0] > stop.coords[ 0 ] ) {
+              nextItem();
+            }
+            else {
+              previousItem();
+            }
+          }
+          start = stop = undefined;
+        }
+      });
+    }
+  }
+
+  function checkKey(e) {
+    var code;
+    if (!e) e = window.event;
+    if (e.keyCode) code = e.keyCode;
+    else if (e.which) code = e.which;
+
+    if (!e.ctrlKey && !e.altKey) {
+      switch(code) {
+        case 32: // 'space'
+        toggleCurrentItem();
+        break;
+        case 65: // 'A'
+        if (window.confirm('Mark all current as read ?')) {
+          window.location.href = '?read=' + currentHash;
+        }
+		break;
+        case 67: // 'C'
+        window.location.href = '?config';
+        break;
+        case 69: // 'E'
+        window.location.href = (currentHash===''?'?edit':'?edit='+currentHash);
+        break;
+        case 70: // 'F'
+        if (listFeeds =='show') {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+        } else {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+        }
+        break;
+        case 72: // 'H'
+        window.location.href = document.getElementById('nav-home').href;
+        break;
+        case 74: // 'J'
+        nextItem();
+        toggleCurrentItem();
+        break;
+        case 75: // 'K'
+        previousItem();
+        toggleCurrentItem();
+        break;
+        case 77: // 'M'
+        if (e.shiftKey) {
+          markAsCurrentItem();
+          toggleCurrentItem();
+        } else {
+          markAsCurrentItem();
+        }
+        break;
+        case 39: // right arrow
+        case 78: // 'N'
+        if (e.shiftKey) {
+          nextPage();
+        } else {
+          nextItem();
+        }
+        break;
+        case 79: // 'O'
+        if (e.shiftKey) {
+          openCurrentItem(true);
+        } else {
+          openCurrentItem(false);
+        }
+        break;
+        case 37: // left arrow
+        case 80 : // 'P'
+        if (e.shiftKey) {
+          previousPage();
+        } else {
+          previousItem();
+        }
+        break;
+        case 82: // 'R'
+        window.location.reload(true);
+        break;
+        case 83: // 'S'
+        shaarliCurrentItem();
+        break;
+        case 84: // 'T'
+        toggleCurrentItem();
+        break;
+        case 85: // 'U'
+        window.location.href = (currentHash===''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
+        break;
+        case 86: // 'V'
+        if (view == 'list') {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+        } else {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=list';
+        }
+        break;
+        case 90: // 'z'
+		if (filter == 'unread') {
+			while(listItemsHash.indexOf(currentItemHash) != -1) {
+				window.open(getUrlItem(currentItemHash),'_blank');
+				markAsCurrentItem();
+			}
+        } else if (filter == 'all') {
+			for (var i=0;i<listItemsHash.length;i++){
+				if (!hasClass(getItem(listItemsHash[i]), 'read')){
+					window.open(getUrlItem(currentItemHash),'_blank');
+					markAsCurrentItem();
+				}
+				nextItem();
+			}
+		}
+        break;
+        case 112: // 'F1'
+        case 188: // '?'
+        case 191: // '?'
+        window.location.href = '?help';
+        break;
+        default:
+        break;
+      }
+    }
+    // e.ctrlKey e.altKey e.shiftKey
+  }
+
+  function initPageButton() {
+    var i = 0, paging, listElements;
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].onclick = previousClickPage;
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].onclick = nextClickPage;
+        }
+      }
+    }
+
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].onclick = previousClickPage;
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].onclick = nextClickPage;
+        }
+      }
+    }
+  }
+
+  function updatePageButton() {
+    var i = 0, paging, listElements, maxPage;
+
+    if (filter == 'unread') {
+      currentNbItems = currentUnread;
+    }
+
+    if (currentNbItems < byPage) {
+      maxPage = 1;
+    } else {
+      maxPage = Math.ceil(currentNbItems / byPage);
+    }
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
+          if (currentPage === 1) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
+          if (currentPage === maxPage) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+      }
+      listElements = paging.getElementsByTagName('button');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'current-max-page')) {
+          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
+        }
+      }
+    }
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
+          if (currentPage === 1) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
+          if (currentPage === maxPage) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+      }
+      listElements = paging.getElementsByTagName('button');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'current-max-page')) {
+          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
+        }
+      }
+    }
+  }
+
+  function initItemButton() {
+    var i = 0, paging, listElements;
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].onclick = previousClickItem;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].onclick = nextClickItem;
+        }
+      }
+    }
+
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].onclick = previousClickItem;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].onclick = nextClickItem;
+        }
+      }
+    }
+  }
+
+  function updateItemButton() {
+    var i = 0, paging, listElements;
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
+
+        }
+      }
+    }
+
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
+        }
+      }
+    }
+  }
+
+  /**
+   * init KrISS feed javascript
+   */
+  function initUnread() {
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
+
+    currentUnread = parseInt(element.innerHTML, 10);
+
+    title = document.title;
+    setNbUnread(currentUnread);
+  }
+
+  function setNbUnread(nb) {
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
+
+    if (nb < 0) {
+      nb = 0;
+    }
+
+    currentUnread = nb;
+    element.innerHTML = currentUnread;
+    document.title = title + ' (' + currentUnread + ')';
+  }
+
+  function initOptions() {
+    var elementIndex = document.getElementById('index');
+
+    if (elementIndex.hasAttribute('data-view')) {
+      view = elementIndex.getAttribute('data-view');
+    }
+    if (elementIndex.hasAttribute('data-list-feeds')) {
+      listFeeds = elementIndex.getAttribute('data-list-feeds');
+    }
+    if (elementIndex.hasAttribute('data-filter')) {
+      filter = elementIndex.getAttribute('data-filter');
+    }
+    if (elementIndex.hasAttribute('data-order')) {
+      order = elementIndex.getAttribute('data-order');
+    }
+    if (elementIndex.hasAttribute('data-autoread-item')) {
+      autoreadItem = parseInt(elementIndex.getAttribute('data-autoread-item'), 10);
+      autoreadItem = (autoreadItem === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autoread-page')) {
+      autoreadPage = parseInt(elementIndex.getAttribute('data-autoread-page'), 10);
+      autoreadPage = (autoreadPage === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autohide')) {
+      autohide = parseInt(elementIndex.getAttribute('data-autohide'), 10);
+      autohide = (autohide === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autofocus')) {
+      autofocus = parseInt(elementIndex.getAttribute('data-autofocus'), 10);
+      autofocus = (autofocus === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autoupdate')) {
+      autoupdate = parseInt(elementIndex.getAttribute('data-autoupdate'), 10);
+      autoupdate = (autoupdate === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-by-page')) {
+      byPage = parseInt(elementIndex.getAttribute('data-by-page'), 10);
+    }
+    if (elementIndex.hasAttribute('data-shaarli')) {
+      shaarli = elementIndex.getAttribute('data-shaarli');
+    }
+    if (elementIndex.hasAttribute('data-redirector')) {
+      redirector = elementIndex.getAttribute('data-redirector');
+    }
+    if (elementIndex.hasAttribute('data-current-hash')) {
+      currentHash = elementIndex.getAttribute('data-current-hash');
+    }
+    if (elementIndex.hasAttribute('data-current-page')) {
+      currentPage = parseInt(elementIndex.getAttribute('data-current-page'), 10);
+    }
+    if (elementIndex.hasAttribute('data-nb-items')) {
+      currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
+    }
+    if (elementIndex.hasAttribute('data-add-favicon')) {
+      addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
+      addFavicon = (addFavicon === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-preload')) {
+      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
+      preload = (preload === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-stars')) {
+      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
+      stars = (stars === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-blank')) {
+      blank = parseInt(elementIndex.getAttribute('data-blank'), 10);
+      blank = (blank === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-is-logged')) {
+      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
+      isLogged = (isLogged === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-intl-top')) {
+      intlTop = elementIndex.getAttribute('data-intl-top');
+    }
+    if (elementIndex.hasAttribute('data-intl-share')) {
+      intlShare = elementIndex.getAttribute('data-intl-share');
+    }
+    if (elementIndex.hasAttribute('data-intl-read')) {
+      intlRead = elementIndex.getAttribute('data-intl-read');
+    }
+    if (elementIndex.hasAttribute('data-intl-unread')) {
+      intlUnread = elementIndex.getAttribute('data-intl-unread');
+    }
+    if (elementIndex.hasAttribute('data-intl-star')) {
+      intlStar = elementIndex.getAttribute('data-intl-star');
+    }
+    if (elementIndex.hasAttribute('data-intl-unstar')) {
+      intlUnstar = elementIndex.getAttribute('data-intl-unstar');
+    }
+    if (elementIndex.hasAttribute('data-intl-from')) {
+      intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
+
+    status = document.getElementById('status').innerHTML;
+  }
+
+  function initKF() {
+    var listItems,
+        listLinkFolders = [],
+        listLinkItems = [];
+
+    initOptions();
+
+    listLinkFolders = getListLinkFolders();
+    listLinkItems = getListLinkItems();
+    if (!window.jQuery || (window.jQuery && !window.jQuery().collapse)) {
+      document.getElementById('menu-toggle'). onclick = collapseClick;
+      initCollapse(listLinkFolders);
+      initCollapse(listLinkItems);
+    }
+    initLinkFolders(listLinkFolders);
+    initLinkItems(listLinkItems);
+
+    initListItemsHash();
+    initListItems();
+
+    initUnread();
+
+    initItemButton();
+    initPageButton();
+
+    initAnonyme();
+
+    addEvent(window, 'keydown', checkKey);
+    addEvent(window, 'touchstart', checkMove);
+
+    if (autoupdate && !stars) {
+      initUpdate();
+    }
+
+    listItems = getListItems();
+    listItems.focus();
+  }
+
+  //http://scottandrew.com/weblog/articles/cbs-events
+  function addEvent(obj, evType, fn, useCapture) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, useCapture);
+    } else {
+      if (obj.attachEvent) {
+        obj.attachEvent('on' + evType, fn);
+      } else {
+        window.alert('Handler could not be attached');
+      }
+    }
+  }
+
+  function removeEvent(obj, evType, fn, useCapture) {
+    if (obj.removeEventListener) {
+      obj.removeEventListener(evType, fn, useCapture);
+    } else if (obj.detachEvent) {
+      obj.detachEvent("on"+evType, fn);
+    } else {
+      alert("Handler could not be removed");
+    }
+  }
+
+  // when document is loaded init KrISS feed
+  if (document.getElementById && document.createTextNode) {
+    addEvent(window, 'load', initKF);
+  }
+
+  window.checkKey = checkKey;
+  window.removeEvent = removeEvent;
+  window.addEvent = addEvent;
+})();
+
+// unread count for favicon part
+if(typeof GM_getValue == 'undefined') {
+	GM_getValue = function(name, fallback) {
+		return fallback;
+	};
+}
+
+// Register GM Commands and Methods
+if(typeof GM_registerMenuCommand !== 'undefined') {
+  var setOriginalFavicon = function(val) { GM_setValue('originalFavicon', val); };
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false); } );
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true); } );
+}
+
+(function FaviconAlerts() {
+	var self = this;
+
+	this.construct = function() {
+		this.head = document.getElementsByTagName('head')[0];
+		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1]]}};
+
+		this.timer = setInterval(this.poll, 500);
+		this.poll();
+
+		return true;
+	};
+
+	this.drawUnreadCount = function(unread, callback) {
+		if(!self.textedCanvas) {
+			self.textedCanvas = [];
+		}
+
+		if(!self.textedCanvas[unread]) {
+			self.getUnreadCanvas(function(iconCanvas) {
+				var textedCanvas = document.createElement('canvas');
+				textedCanvas.height = textedCanvas.width = iconCanvas.width;
+				var ctx = textedCanvas.getContext('2d');
+				ctx.drawImage(iconCanvas, 0, 0);
+
+				ctx.fillStyle = '#b7bfc9';
+				ctx.strokeStyle = '#7792ba';
+				ctx.strokeWidth = 1;
+
+				var count = unread.length;
+
+				if(count > 4) {
+					unread = '1k+';
+					count = unread.length;
+				}
+
+				var bgHeight = self.pixelMaps.numbers[0].length;
+				var bgWidth = 0;
+				var padding = count < 4 ? 1 : 0;
+				var topMargin = 0;
+
+				for(var index = 0; index < count; index++) {
+					bgWidth += self.pixelMaps.numbers[unread[index]][0].length;
+					if(index < count-1) {
+						bgWidth += padding;
+					}
+				}
+				bgWidth = bgWidth > textedCanvas.width-4 ? textedCanvas.width-4 : bgWidth;
+
+				ctx.fillRect(textedCanvas.width-bgWidth-4,topMargin,bgWidth+4,bgHeight+4);
+
+				var digit;
+				var digitsWidth = bgWidth;
+				for(index = 0; index < count; index++) {
+					digit = unread[index];
+
+					if (self.pixelMaps.numbers[digit]) {
+						var map = self.pixelMaps.numbers[digit];
+						var height = map.length;
+						var width = map[0].length;
+
+						ctx.fillStyle = '#2c3323';
+
+						for (var y = 0; y < height; y++) {
+							for (var x = 0; x < width; x++) {
+								if(map[y][x]) {
+									ctx.fillRect(14- digitsWidth + x, y+topMargin+2, 1, 1);
+								}
+							}
+						}
+
+						digitsWidth -= width + padding;
+					}
+				}
+
+				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+0.5,bgWidth+3,bgHeight+3);
+
+				self.textedCanvas[unread] = textedCanvas;
+
+				callback(self.textedCanvas[unread]);
+			});
+      callback(self.textedCanvas[unread]);
+		}
+	};
+	this.getIcon = function(callback) {
+		self.getUnreadCanvas(function(canvas) {
+			callback(canvas.toDataURL('image/png'));
+		});
+	};
+  this.getIconSrc = function() {
+    var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].rel === 'icon') {
+        return links[i].href;
+      }
+    }
+    return false;
+  };
+	this.getUnreadCanvas = function(callback) {
+		if(!self.unreadCanvas) {
+			self.unreadCanvas = document.createElement('canvas');
+			self.unreadCanvas.height = self.unreadCanvas.width = 16;
+
+			var ctx = self.unreadCanvas.getContext('2d');
+			var img = new Image();
+
+			img.addEventListener('load', function() {
+				ctx.drawImage(img, 0, 0);
+				callback(self.unreadCanvas);
+			}, true);
+
+		//	if(GM_getValue('originalFavicon', false)) {
+		//		img.src = self.icons.original;
+		//	} else {
+		//		img.src = self.icons.current;
+		//	}
+		// img.src = 'inc/favicon.ico';
+                  img.src = self.getIconSrc();
+		} else {
+			callback(self.unreadCanvas);
+		}
+	};
+	this.getUnreadCount = function() {
+		matches = self.getSearchText().match(/\((.*)\)/);
+		return matches ? matches[1] : false;
+	};
+	this.getUnreadCountIcon = function(callback) {
+		var unread = self.getUnreadCount();
+    self.drawUnreadCount(unread, function(icon) {
+      if(icon) {
+        callback(icon.toDataURL('image/png'));
+      }
+    });
+	};
+	this.getSearchText = function() {
+		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
+		return Nbunread;
+	};
+	this.poll = function() {
+		if(self.getUnreadCount() != "0") {
+			self.getUnreadCountIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		} else {
+			self.getIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		}
+	};
+
+	this.setIcon = function(icon) {
+		var links = self.head.getElementsByTagName('link');
+		for (var i = 0; i < links.length; i++)
+			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
+        links[i].href != icon)
+				self.head.removeChild(links[i]);
+			else if(links[i].href == icon)
+				return;
+
+		var newIcon = document.createElement('link');
+		newIcon.type = 'image/png';
+		newIcon.rel = 'shortcut icon';
+		newIcon.href = icon;
+		self.head.appendChild(newIcon);
+
+		// Chrome hack for updating the favicon
+		var shim = document.createElement('iframe');
+		shim.width = shim.height = 0;
+		document.body.appendChild(shim);
+		shim.src = 'icon';
+		document.body.removeChild(shim);
+	};
+
+	this.toString = function() { return '[object FaviconAlerts]'; };
+
+	return this.construct();
+}());
+<?php
         exit();
     }
 } else {

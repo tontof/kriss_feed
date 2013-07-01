@@ -12,7 +12,8 @@
               <fieldset>
                 <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
           <div class="text-center">
-<?php foreach(Intl::$langList as $lang => $info) { ?>
+     <?php echo Intl::msg('Click on flag to select your language.').'<br>';
+     foreach(Intl::$langList as $lang => $info) { ?>
 <a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
 <?php } ?>
           </div>
@@ -39,11 +40,9 @@
             <?php FeedPage::statusTpl(); ?>
           </div>
         </div>
-        <script>
-          document.installform.setlogin.focus();
-        </script>
       </div>
     </div>
+    <script>document.installform.setlogin.focus();</script>
   </body>
 </html>
 

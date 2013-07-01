@@ -1,3 +1,4 @@
+    <base href="<?php echo $base;?>">
     <title><?php echo $pagetitle;?></title>
     <meta charset="utf-8">
 <?php if (is_file('inc/favicon.ico')) { ?>
@@ -8,9 +9,7 @@
 <?php if (is_file('inc/style.css')) { ?>
     <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
 <?php } else { ?>
-    <style>
-<?php include("inc/style.css"); ?>
-    </style>
+    <link type="text/css" rel="stylesheet" href="?file=style.css&amp;version=<?php echo $version;?>" />
 <?php } ?>
 <?php if (is_file('inc/user.css')) { ?>
     <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />

@@ -993,19 +993,3 @@ msgstr "Revenir en arrière"
 #: class/tpl/update.tpl.php:22
 msgid "Force update"
 msgstr "Forcer la mise à jour"
-
-#~ msgid "Input file not defined."
-#~ msgstr "Le fichier d'entré"
-
-#~ msgid "The file could not be readed."
-#~ msgstr "Le fichier ne peut pas être lu."
-
-#~ msgid ""
-#~ "example with shaarli : <code>http://your-shaarli/?post=${url}&title="
-#~ "${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>"
-#~ msgstr ""
-#~ "exemple avec shaarli : <code>http://your-shaarli/?post=${url}&title="
-#~ "${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>"
-
-#~ msgid "Read"
-#~ msgstr "Marquer comme lu"

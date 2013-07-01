@@ -1,82 +1,82 @@
-#: kriss_feed.php:76 class/FeedConf.php:201 class/FeedConf.php:207
+#: kriss_feed.php:77 class/FeedConf.php:201 class/FeedConf.php:207
 #, php-format
 msgid "Can not create %s directory, check permissions"
 msgstr ""
 
-#: kriss_feed.php:85
+#: kriss_feed.php:86
 #, php-format
 msgid "Can not protect %s directory with .htaccess, check permissions"
 msgstr ""
 
-#: kriss_feed.php:94
+#: kriss_feed.php:95
 msgid "Wrong token"
 msgstr ""
 
-#: kriss_feed.php:173
+#: kriss_feed.php:179
 msgid "Login failed!"
 msgstr ""
 
-#: kriss_feed.php:176 kriss_feed.php:916 class/tpl/login.tpl.php:34
+#: kriss_feed.php:182 kriss_feed.php:930 class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136 class/tpl/nav.tpl.php:157
 msgid "Sign in"
 msgstr ""
 
-#: kriss_feed.php:193 class/tpl/change_password.tpl.php:16
+#: kriss_feed.php:199 class/tpl/change_password.tpl.php:16
 msgid "Change your password"
 msgstr ""
 
-#: kriss_feed.php:302 class/tpl/config.tpl.php:294
+#: kriss_feed.php:308 class/tpl/config.tpl.php:294
 #: class/tpl/config.tpl.php:297 class/tpl/nav.tpl.php:114
 msgid "Help"
 msgstr ""
 
-#: kriss_feed.php:347 class/tpl/config.tpl.php:259
+#: kriss_feed.php:353 class/tpl/config.tpl.php:259
 msgid "Update"
 msgstr ""
 
-#: kriss_feed.php:351 class/tpl/nav.tpl.php:144
+#: kriss_feed.php:357 class/tpl/nav.tpl.php:144
 msgid "Plugins management"
 msgstr ""
 
-#: kriss_feed.php:370 class/tpl/nav.tpl.php:129 class/tpl/nav.tpl.php:150
+#: kriss_feed.php:376 class/tpl/nav.tpl.php:129 class/tpl/nav.tpl.php:150
 msgid "Configuration"
 msgstr ""
 
-#: kriss_feed.php:405
+#: kriss_feed.php:411
 #, php-format
 msgid ""
 "The file you are trying to upload is probably bigger than what this "
 "webserver can accept (%s). Please upload in smaller chunks."
 msgstr ""
 
-#: kriss_feed.php:418
+#: kriss_feed.php:424
 msgid "Import"
 msgstr ""
 
-#: kriss_feed.php:461 class/tpl/add_feed.tpl.php:14
+#: kriss_feed.php:467 class/tpl/add_feed.tpl.php:14
 #: class/tpl/config.tpl.php:287 class/tpl/config.tpl.php:290
 #: class/tpl/nav.tpl.php:110
 msgid "Add a new feed"
 msgstr ""
 
-#: kriss_feed.php:590 kriss_feed.php:593 kriss_feed.php:596 kriss_feed.php:599
+#: kriss_feed.php:596 kriss_feed.php:599 kriss_feed.php:602 kriss_feed.php:605
 msgid "starred items"
 msgstr ""
 
-#: kriss_feed.php:619 class/tpl/config.tpl.php:301
+#: kriss_feed.php:625 class/tpl/config.tpl.php:301
 #: class/tpl/config.tpl.php:304 class/tpl/nav.tpl.php:119
 msgid "Starred items"
 msgstr ""
 
-#: kriss_feed.php:625 class/tpl/config.tpl.php:280
+#: kriss_feed.php:631 class/tpl/config.tpl.php:280
 msgid "Edit"
 msgstr ""
 
-#: kriss_feed.php:794
+#: kriss_feed.php:800
 msgid "Please configure your share link first"
 msgstr ""
 
-#: kriss_feed.php:885 kriss_feed.php:888 kriss_feed.php:891 kriss_feed.php:894
+#: kriss_feed.php:899 kriss_feed.php:902 kriss_feed.php:905 kriss_feed.php:908
 msgid "unread items"
 msgstr ""
 
@@ -851,17 +851,21 @@ msgstr ""
 msgid "from"
 msgstr ""
 
-#: class/tpl/install.tpl.php:20 class/tpl/install.tpl.php:22
+#: class/tpl/install.tpl.php:15 class/tpl/message.tpl.php:12
+msgid "Click on flag to select your language."
+msgstr ""
+
+#: class/tpl/install.tpl.php:21 class/tpl/install.tpl.php:23
 #: class/tpl/login.tpl.php:15 class/tpl/login.tpl.php:17
 msgid "Login"
 msgstr ""
 
-#: class/tpl/install.tpl.php:26 class/tpl/install.tpl.php:28
+#: class/tpl/install.tpl.php:27 class/tpl/install.tpl.php:29
 #: class/tpl/login.tpl.php:21 class/tpl/login.tpl.php:23
 msgid "Password"
 msgstr ""
 
-#: class/tpl/install.tpl.php:33
+#: class/tpl/install.tpl.php:34
 msgid "Install KrISS feed"
 msgstr ""
 
@@ -871,10 +875,6 @@ msgstr ""
 
 #: class/tpl/login.tpl.php:28
 msgid "Stay signed in (do not check on public computers)"
-msgstr ""
-
-#: class/tpl/message.tpl.php:12
-msgid "Click on flag to select your language."
 msgstr ""
 
 #: class/tpl/message.tpl.php:20

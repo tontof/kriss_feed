@@ -33,7 +33,7 @@ foreach(array_keys($paging) as $pagingOpt) {
 
   <li>
     <div class="btn-group">
-      <form class="form-inline" action="<?php echo $kfurl; ?>" method="GET">
+      <form class="form-inline" action="" method="GET">
         <div class="input-prepend input-append paging-by-page">
           <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=1'; ?>">1</a>
           <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=10'; ?>">10</a>

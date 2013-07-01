@@ -9,13 +9,13 @@
         <div class="span4 offset4">
           <?php FeedPage::statusTpl(); ?>
           <?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data">
+          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data" name="importform">
             <fieldset>
               <legend><?php echo Intl::msg('Import opml file'); ?></legend>
               <div class="control-group">
                 <label class="control-label" for="filetoupload"><?php echo Intl::msg('Opml file:'); ?></label>
                 <div class="controls">
-                  <input class="btn" type="file" id="filetoupload" name="filetoupload">
+                  <input tabindex="1" class="btn" type="file" id="filetoupload" name="filetoupload">
                   <span class="help-block"><?php echo Intl::msg('Size max:'); ?> <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>
                     </span>
                 </div>
