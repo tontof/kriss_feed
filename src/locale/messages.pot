@@ -16,7 +16,7 @@ msgstr ""
 msgid "Login failed!"
 msgstr ""
 
-#: kriss_feed.php:189 kriss_feed.php:935 class/tpl/login.tpl.php:34
+#: kriss_feed.php:189 kriss_feed.php:950 class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136 class/tpl/nav.tpl.php:157
 msgid "Sign in"
 msgstr ""
@@ -76,7 +76,7 @@ msgstr ""
 msgid "Please configure your share link first"
 msgstr ""
 
-#: kriss_feed.php:904 kriss_feed.php:907 kriss_feed.php:910 kriss_feed.php:913
+#: kriss_feed.php:919 kriss_feed.php:922 kriss_feed.php:925 kriss_feed.php:928
 msgid "unread items"
 msgstr ""
 

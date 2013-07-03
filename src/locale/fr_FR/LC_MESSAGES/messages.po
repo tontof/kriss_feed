@@ -1010,9 +1010,3 @@ msgstr "Revenir en arrière"
 #: class/tpl/update.tpl.php:22
 msgid "Force update"
 msgstr "Forcer la mise à jour"
-
-#~ msgid "Feed is not a valid XML"
-#~ msgstr "Le flux XML n'est pas valide"
-
-#~ msgid "Problem with the last update"
-#~ msgstr "Problème avec la dernière mise à jour"

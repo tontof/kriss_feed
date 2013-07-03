@@ -806,26 +806,41 @@ if (isset($_GET['login'])) {
         $pb->renderPage('message');
     }
 } elseif (isset($_GET['file'])) {
+    $gmtTime = gmdate('D, d M Y H:i:s', filemtime(__FILE__)) . ' GMT';
+    $etag = '"'.md5($gmtTime).'"';
+
+    header_remove("Cache-Control");
+    header_remove("Pragma");
+
+    header("Last-Modified: $gmtTime");
+    header("ETag: $etag");
+
+    $if_modified_since = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? $_SERVER['HTTP_IF_MODIFIED_SINCE'] : false;
+    $if_none_match = isset($_SERVER['HTTP_IF_NONE_MATCH']) ? $_SERVER['HTTP_IF_NONE_MATCH'] : false;
+    if (($if_none_match && $if_none_match == $etag) ||
+        ($if_modified_since && $if_modified_since == $gmtTime)) {
+        header('HTTP/1.1 304 Not Modified');
+        exit();
+    }
+    
     if ($_GET['file'] == 'favicon.ico') {
+        header('Content-Type: image/vnd.microsoft.icon');
         $favicon = '
 <?php include("inc/favicon.ico"); ?>
 ';
-        header('Content-Type: image/vnd.microsoft.icon');
         echo base64_decode($favicon);
-        exit();
     } else if ($_GET['file'] == 'style.css') {
         header('Content-type: text/css');
 ?>
 <?php include("inc/style.css"); ?>
-<?php
-        exit();
+<?php        
     } else if ($_GET['file'] == 'script.js') {
         header('Content-type: text/javascript');
 ?>
 <?php include("inc/script.js"); ?>
 <?php
-        exit();
     }
+    exit();
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
