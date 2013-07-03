@@ -1035,7 +1035,7 @@ class Feed
      *
      * @return array feed information, error, lastUpdate and newItems
      */
-    public function updateChannel($feedHash, $force)
+    public function updateChannel($feedHash, $force = false)
     {
         $error = '';
         $newItems = array();

@@ -3181,7 +3181,7 @@ class Feed
         return false;
     }
 
-    public function updateChannel($feedHash, $force)
+    public function updateChannel($feedHash, $force = false)
     {
         $error = '';
         $newItems = array();
