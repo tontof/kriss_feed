@@ -5938,8 +5938,8 @@ if (isset($_GET['login'])) {
     $gmtTime = gmdate('D, d M Y H:i:s', filemtime(__FILE__)) . ' GMT';
     $etag = '"'.md5($gmtTime).'"';
 
-    header_remove("Cache-Control");
-    header_remove("Pragma");
+    header("Cache-Control:");
+    header("Pragma:");
 
     header("Last-Modified: $gmtTime");
     header("ETag: $etag");
