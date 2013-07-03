@@ -11,72 +11,72 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: kriss_feed.php:76
+#: kriss_feed.php:84
 #: class/FeedConf.php:201
 #: class/FeedConf.php:207
 #, php-format
 msgid "Can not create %s directory, check permissions"
 msgstr "Impossible de créer le dossier %s, vérifiez les droits"
 
-#: kriss_feed.php:85
+#: kriss_feed.php:93
 #, php-format
 msgid "Can not protect %s directory with .htaccess, check permissions"
 msgstr "Impossible de protéger le dossier %s avec un fichier .htaccess, vérifiez les droits"
 
-#: kriss_feed.php:94
+#: kriss_feed.php:102
 msgid "Wrong token"
 msgstr "Jeton de sécurité invalide"
 
-#: kriss_feed.php:173
+#: kriss_feed.php:186
 msgid "Login failed!"
 msgstr "Échec de la connexion !"
 
-#: kriss_feed.php:176
-#: kriss_feed.php:916
+#: kriss_feed.php:189
+#: kriss_feed.php:935
 #: class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136
 #: class/tpl/nav.tpl.php:157
 msgid "Sign in"
 msgstr "Connexion"
 
-#: kriss_feed.php:193
+#: kriss_feed.php:206
 #: class/tpl/change_password.tpl.php:16
 msgid "Change your password"
 msgstr "Changer votre mot de passe"
 
-#: kriss_feed.php:302
+#: kriss_feed.php:313
 #: class/tpl/config.tpl.php:294
 #: class/tpl/config.tpl.php:297
 #: class/tpl/nav.tpl.php:114
 msgid "Help"
 msgstr "Aide"
 
-#: kriss_feed.php:347
+#: kriss_feed.php:358
 #: class/tpl/config.tpl.php:259
 msgid "Update"
 msgstr "Mise à jour"
 
-#: kriss_feed.php:351
+#: kriss_feed.php:362
 #: class/tpl/nav.tpl.php:144
 msgid "Plugins management"
 msgstr "Gestion des plugins"
 
-#: kriss_feed.php:370
+#: kriss_feed.php:381
 #: class/tpl/nav.tpl.php:129
 #: class/tpl/nav.tpl.php:150
 msgid "Configuration"
 msgstr "Configuration"
 
-#: kriss_feed.php:405
+#: kriss_feed.php:416
 #, php-format
 msgid "The file you are trying to upload is probably bigger than what this webserver can accept (%s). Please upload in smaller chunks."
 msgstr "Le fichier que vous essayer d'envoyer est trop volumineux par rapport à ce que le serveur peut accepter (%s). Essayez de réduire la taille de ce dernier."
 
-#: kriss_feed.php:418
+#: kriss_feed.php:429
 msgid "Import"
 msgstr "Importation"
 
-#: kriss_feed.php:461
+#: kriss_feed.php:472
 #: class/tpl/add_feed.tpl.php:14
 #: class/tpl/config.tpl.php:287
 #: class/tpl/config.tpl.php:290
@@ -84,33 +84,33 @@ msgstr "Importation"
 msgid "Add a new feed"
 msgstr "Ajouter un nouveau flux"
 
-#: kriss_feed.php:590
-#: kriss_feed.php:593
-#: kriss_feed.php:596
-#: kriss_feed.php:599
+#: kriss_feed.php:601
+#: kriss_feed.php:604
+#: kriss_feed.php:607
+#: kriss_feed.php:610
 msgid "starred items"
 msgstr "articles conservés"
 
-#: kriss_feed.php:619
+#: kriss_feed.php:630
 #: class/tpl/config.tpl.php:301
 #: class/tpl/config.tpl.php:304
 #: class/tpl/nav.tpl.php:119
 msgid "Starred items"
 msgstr "Articles conservés"
 
-#: kriss_feed.php:625
+#: kriss_feed.php:636
 #: class/tpl/config.tpl.php:280
 msgid "Edit"
 msgstr "Édition"
 
-#: kriss_feed.php:794
+#: kriss_feed.php:805
 msgid "Please configure your share link first"
 msgstr "Veuillez configurer votre lien de partage"
 
-#: kriss_feed.php:885
-#: kriss_feed.php:888
-#: kriss_feed.php:891
-#: kriss_feed.php:894
+#: kriss_feed.php:904
+#: kriss_feed.php:907
+#: kriss_feed.php:910
+#: kriss_feed.php:913
 msgid "unread items"
 msgstr "articles non lus"
 
@@ -127,29 +127,41 @@ msgstr "Continuer"
 msgid "KrISS feed installation"
 msgstr "Installation de KrISS feed"
 
-#: class/Feed.php:183
+#: class/Feed.php:178
 msgid "All feeds"
 msgstr "Tous les flux"
 
-#: class/Feed.php:1340
+#: class/Feed.php:916
+msgid "Empty output data"
+msgstr "Données vides"
+
+#: class/Feed.php:984
 msgid "Duplicated feed"
 msgstr "Flux déjà présent"
 
-#: class/Feed.php:1854
-msgid "Feed is not a valid XML"
-msgstr "Le flux XML n'est pas valide"
+#: class/Feed.php:1045
+msgid "Unknown feedhash"
+msgstr "Flux inconnu"
 
-#: class/Feed.php:1857
+#: class/Feed.php:1106
 msgid "Items may have been missed since last update"
 msgstr "Des articles peuvent être manquants depuis la dernière mise à jour"
 
-#: class/Feed.php:1860
-msgid "Problem with the last update"
-msgstr "Problème avec la dernière mise à jour"
+#: class/MyTool.php:140
+msgid "Http code not valid"
+msgstr "Code http non valide"
 
-#: class/Feed.php:1863
-msgid "Unknown problem"
-msgstr "Problème inconnu"
+#: class/MyTool.php:143
+msgid "Location not found"
+msgstr "Redirection non trouvée"
+
+#: class/MyTool.php:146
+msgid "Too many redirects"
+msgstr "Trop de redirections"
+
+#: class/MyTool.php:149
+msgid "Error when loading without curl"
+msgstr "Erreur pendant le chargement sans curl"
 
 #: class/Opml.php:100
 #, php-format
@@ -160,6 +172,10 @@ msgstr "Le fichier %s (%s) a été correctement traité : %d liens ont été imp
 #, php-format
 msgid "File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported."
 msgstr "Le fichier %s (%s) ne correspond pas à un format de fichier correct. Vérifiez l'encodage des caractères, supprimez les accents et réessayer. Rien a été importé."
+
+#: class/Rss.php:308
+msgid "Unknown XML error"
+msgstr "Problème XML inconnu"
 
 #: class/tpl/add_feed.tpl.php:16
 msgid "Feed URL"
@@ -900,21 +916,26 @@ msgstr "oublier"
 msgid "from"
 msgstr "de"
 
-#: class/tpl/install.tpl.php:20
-#: class/tpl/install.tpl.php:22
+#: class/tpl/install.tpl.php:15
+#: class/tpl/message.tpl.php:12
+msgid "Click on flag to select your language."
+msgstr "Cliquez sur le drapeau pour choisir votre langue."
+
+#: class/tpl/install.tpl.php:21
+#: class/tpl/install.tpl.php:23
 #: class/tpl/login.tpl.php:15
 #: class/tpl/login.tpl.php:17
 msgid "Login"
 msgstr "Nom d'utilisateur"
 
-#: class/tpl/install.tpl.php:26
-#: class/tpl/install.tpl.php:28
+#: class/tpl/install.tpl.php:27
+#: class/tpl/install.tpl.php:29
 #: class/tpl/login.tpl.php:21
 #: class/tpl/login.tpl.php:23
 msgid "Password"
 msgstr "Mot de passe"
 
-#: class/tpl/install.tpl.php:33
+#: class/tpl/install.tpl.php:34
 msgid "Install KrISS feed"
 msgstr "Installer KrISS feed"
 
@@ -925,10 +946,6 @@ msgstr "Bienvenue sur KrISS feed"
 #: class/tpl/login.tpl.php:28
 msgid "Stay signed in (do not check on public computers)"
 msgstr "Rester connecté (ne pas cocher sur un ordinateur public)"
-
-#: class/tpl/message.tpl.php:12
-msgid "Click on flag to select your language."
-msgstr "Cliquez sur le drapeau pour choisir votre langue."
 
 #: class/tpl/message.tpl.php:20
 msgid "Try again"
@@ -993,3 +1010,9 @@ msgstr "Revenir en arrière"
 #: class/tpl/update.tpl.php:22
 msgid "Force update"
 msgstr "Forcer la mise à jour"
+
+#~ msgid "Feed is not a valid XML"
+#~ msgstr "Le flux XML n'est pas valide"
+
+#~ msgid "Problem with the last update"
+#~ msgstr "Problème avec la dernière mise à jour"

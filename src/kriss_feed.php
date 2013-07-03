@@ -61,6 +61,13 @@ Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
 Intl::addLang('en_US', 'English (America)', 'flag-us');
 Intl::init();
 
+MyTool::$opts = array(
+    'http' => array(
+        'timeout' => 4,
+        'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
+        )
+    );
+
 $ref = MyTool::getUrl();
 $referer = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
 if (substr($referer, 0, strlen($ref)) !== $ref) {
@@ -287,8 +294,6 @@ if (isset($_GET['login'])) {
                 $info = $kf->updateChannel($_GET['update']);
                 if (empty($info['error'])) {
                     $info['error'] = $feed['description'];
-                } else {
-                    $info['error'] = $kf->getError($info['error']);
                 }
                 $info['newItems'] = array_keys($info['newItems']);
                 $result['update'] = $info;
