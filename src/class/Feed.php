@@ -1220,29 +1220,43 @@ class Feed
 
         ob_end_flush();
         if (ob_get_level() == 0) ob_start();
+
+        if ($format === 'html') {
+            echo '<table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>'.Intl::msg('Feed').'</th>
+                  <th>'.Intl::msg('New items').'</th>
+                  <th>'.Intl::msg('Time').'</th>
+                  <th>'.Intl::msg('Status').'</th>
+                </tr>
+              </thead>
+              <tbody>';
+        }
         $start = microtime(true);
         foreach ($feedsHash as $feedHash) {
             $i++;
             $feed = $this->getFeed($feedHash);
-            $strBegin = "\n".'<li>'.str_pad($i.'/'.count($feedsHash), 7, ' ', STR_PAD_LEFT).':'.str_pad(number_format(microtime(true)-$start, 1), 6, ' ', STR_PAD_LEFT).'s : <a href="?currentHash='.$feedHash.'">'.substr(str_pad($feed['title'], 50), 0, 50).'</a> : </li>';
+            $strBegin = "\n".'<tr><td>'.str_pad($i.'/'.count($feedsHash), 7, ' ', STR_PAD_LEFT).'</td><td> <a href="?currentHash='.$feedHash.'">'.substr(str_pad($feed['title'], 50), 0, 50).'</a> </td><td>';
             if ($format === 'html') {
                 echo str_pad($strBegin, 4096);
                 ob_flush();
                 flush();
             }
 
+            $strEnd = '';
             if ($force or $this->needUpdate($feed)) {
                 $info = $this->updateChannel($feedHash, $force);
-                $strEnd = "\n".'<li><span class="text-success">'.str_pad(count($info['newItems']), 3, ' ', STR_PAD_LEFT).' '.Intl::msg('new item(s)').'</span> : ';
+                $strEnd .= '<span class="text-success">'.str_pad(count($info['newItems']), 3, ' ', STR_PAD_LEFT).'</span> </td><td>'.str_pad(number_format(microtime(true)-$start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>';
                 if (empty($info['error'])) {
-                    $strEnd .= Intl::msg('Successfully updated').'</li>';
+                    $strEnd .= Intl::msg('Successfully updated').'</td></tr>';
                 } else {
-                    $strEnd .= '<span class="text-error">'.$info['error'].'</span></li>';
+                    $strEnd .= '<span class="text-error">'.$info['error'].'</span></td></tr>';
                 }
             } else {
-                $strEnd = '<li><span class="text-warning">'.Intl::msg('Already up-to-date').'</span></li>';
+                $strEnd .= str_pad('0', 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format(microtime(true)-$start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td><span class="text-warning">'.Intl::msg('Already up-to-date').'</span></td></tr>';
             }
-            $strEnd .= "\n";
             if ($format==='html') {
                 echo str_pad($strEnd,4096);
                 ob_flush();
@@ -1250,6 +1264,9 @@ class Feed
             } else {
                 echo strip_tags($strBegin.$strEnd);
             }
+        }
+        if ($format === 'html') {
+            echo '</tbody></table>';
         }
     }
 

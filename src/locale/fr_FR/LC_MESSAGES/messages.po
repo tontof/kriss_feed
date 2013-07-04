@@ -32,7 +32,7 @@ msgid "Login failed!"
 msgstr "Échec de la connexion !"
 
 #: kriss_feed.php:189
-#: kriss_feed.php:935
+#: kriss_feed.php:950
 #: class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136
 #: class/tpl/nav.tpl.php:157
@@ -107,10 +107,10 @@ msgstr "Édition"
 msgid "Please configure your share link first"
 msgstr "Veuillez configurer votre lien de partage"
 
-#: kriss_feed.php:904
-#: kriss_feed.php:907
-#: kriss_feed.php:910
-#: kriss_feed.php:913
+#: kriss_feed.php:919
+#: kriss_feed.php:922
+#: kriss_feed.php:925
+#: kriss_feed.php:928
 msgid "unread items"
 msgstr "articles non lus"
 
@@ -146,6 +146,30 @@ msgstr "Flux inconnu"
 #: class/Feed.php:1106
 msgid "Items may have been missed since last update"
 msgstr "Des articles peuvent être manquants depuis la dernière mise à jour"
+
+#: class/Feed.php:1229
+msgid "Feed"
+msgstr "Flux"
+
+#: class/Feed.php:1230
+msgid "New items"
+msgstr "Nouveaux articles"
+
+#: class/Feed.php:1231
+msgid "Time"
+msgstr "Durée"
+
+#: class/Feed.php:1232
+msgid "Status"
+msgstr "État"
+
+#: class/Feed.php:1253
+msgid "Successfully updated"
+msgstr "Mise à jour réussie"
+
+#: class/Feed.php:1258
+msgid "Already up-to-date"
+msgstr "Déjà à jour"
 
 #: class/MyTool.php:140
 msgid "Http code not valid"
@@ -875,44 +899,36 @@ msgid "Overwrite existing feeds"
 msgstr "Écraser les flux existants"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:93
+#: class/tpl/list_items.tpl.php:7
 msgid "top"
 msgstr "haut"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:56
-#: class/tpl/list_items.tpl.php:94
+#: class/tpl/list_items.tpl.php:4
 msgid "share"
 msgstr "partager"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:36
-#: class/tpl/list_items.tpl.php:61
-#: class/tpl/list_items.tpl.php:99
+#: class/tpl/list_items.tpl.php:3
 msgid "read"
 msgstr "lire"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:34
-#: class/tpl/list_items.tpl.php:59
-#: class/tpl/list_items.tpl.php:97
+#: class/tpl/list_items.tpl.php:2
 msgid "unread"
 msgstr "à lire"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:67
-#: class/tpl/list_items.tpl.php:105
+#: class/tpl/list_items.tpl.php:5
 msgid "star"
 msgstr "conserver"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:65
-#: class/tpl/list_items.tpl.php:103
+#: class/tpl/list_items.tpl.php:6
 msgid "unstar"
 msgstr "oublier"
 
 #: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:76
 msgid "from"
 msgstr "de"
 
@@ -1010,3 +1026,4 @@ msgstr "Revenir en arrière"
 #: class/tpl/update.tpl.php:22
 msgid "Force update"
 msgstr "Forcer la mise à jour"
+

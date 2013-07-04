@@ -112,6 +112,30 @@ msgstr ""
 msgid "Items may have been missed since last update"
 msgstr ""
 
+#: class/Feed.php:1229
+msgid "Feed"
+msgstr ""
+
+#: class/Feed.php:1230
+msgid "New items"
+msgstr ""
+
+#: class/Feed.php:1231
+msgid "Time"
+msgstr ""
+
+#: class/Feed.php:1232
+msgid "Status"
+msgstr ""
+
+#: class/Feed.php:1253
+msgid "Successfully updated"
+msgstr ""
+
+#: class/Feed.php:1258
+msgid "Already up-to-date"
+msgstr ""
+
 #: class/MyTool.php:140
 msgid "Http code not valid"
 msgstr ""
@@ -834,36 +858,31 @@ msgstr ""
 msgid "Overwrite existing feeds"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:93
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:7
 msgid "top"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:56
-#: class/tpl/list_items.tpl.php:94
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:4
 msgid "share"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:36
-#: class/tpl/list_items.tpl.php:61 class/tpl/list_items.tpl.php:99
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:3
 msgid "read"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:34
-#: class/tpl/list_items.tpl.php:59 class/tpl/list_items.tpl.php:97
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:2
 msgid "unread"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:67
-#: class/tpl/list_items.tpl.php:105
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:5
 msgid "star"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:65
-#: class/tpl/list_items.tpl.php:103
+#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:6
 msgid "unstar"
 msgstr ""
 
-#: class/tpl/index.tpl.php:7 class/tpl/list_items.tpl.php:76
+#: class/tpl/index.tpl.php:7
 msgid "from"
 msgstr ""
 
