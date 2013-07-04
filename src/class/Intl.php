@@ -95,8 +95,7 @@ class Intl
         // https://www.gnu.org/savannah-checkouts/gnu/gettext/manual/html_node/Plural-forms.html
         $count = $count > 1 ? 1 : 0;
 
-        if (isset(self::$messages[self::$lang][$string])
-            && !empty(self::$messages[self::$lang][$string][$count])) {
+        if (isset(self::$messages[self::$lang][$string][$count])) {
             return self::$messages[self::$lang][$string][$count];
         }
 
