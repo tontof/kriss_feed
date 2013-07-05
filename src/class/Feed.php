@@ -958,13 +958,13 @@ class Feed
                 $items = $output['items'];
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
-                        $items[$itemHash]['via'] = $channel['htmlUrl'];
+                        $items[$itemHash]['via'] = $output['feed']['htmlUrl'];
                     }
                     if (empty($items[$itemHash]['author'])) {
-                        $items[$itemHash]['author'] = $channel['title'];
+                        $items[$itemHash]['author'] = $output['feed']['title'];
                     } else {
                         $items[$itemHash]['author']
-                            = $channel['title'] . ' ('
+                            = $output['feed']['title'] . ' ('
                             . $items[$itemHash]['author'] . ')';
                     }
                     $items[$itemHash]['xmlUrl'] = $xmlUrl;

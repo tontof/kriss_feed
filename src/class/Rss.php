@@ -55,27 +55,23 @@ class Rss
     {
         $newItems = array();
 
-        foreach ($items as $item) {
+        for ($k = 0; $k < $items->length; $k++) {
+            $item = $items->item($k);
             $tmpItem = array();
             foreach ($formats as $format => $list) {
                 $tmpItem[$format] = '';
                 $len = count($list);
                 for ($i = 0; $i < $len; $i++) {
-                    if (is_array($list[$i])) {
-                        $tag = $item->getElementsByTagNameNS(
-                            $list[$i][0],
-                            $list[$i][1]
-                        );
+                    $name = explode(':', $list[$i]);
+                    if (count($name) > 1) {
+                        $tag = $item->getElementsByTagNameNS('*', $name[1]);
                     } else {
                         $tag = $item->getElementsByTagName($list[$i]);
-                        // wrong detection : e.g. media:content for content
-                        if ($tag->length != 0) {
-                            for ($j = $tag->length; --$j >= 0;) {
-                                $elt = $tag->item($j);
-                                if ($tag->item($j)->tagName != $list[$i]) {
-                                    $elt->parentNode->removeChild($elt);
-                                }
-                            }
+                    }
+                    for ($j = $tag->length; --$j >= 0;) {
+                        $elt = $tag->item($j);
+                        if ($tag->item($j)->tagName != $list[$i]) {
+                            $elt->parentNode->removeChild($elt);
                         }
                     }
                     if ($tag->length != 0) {
@@ -163,34 +159,6 @@ class Rss
     }
 
     /**
-     * Add a namespaceURI when format corresponds to a rdf tag.
-     *
-     * @param array   $formats Array of formats
-     * @param DOMNode $feed    DOMNode corresponding to the channel root
-     *
-     * @return array Array of new formated format with namespaceURI
-     */
-    public static function formatRDF($formats, $feed)
-    {
-        foreach ($formats as $format => $list) {
-            for ($i = 0, $len = count($list); $i < $len; $i++) {
-                $name = explode(':', $list[$i]);
-                if (count($name)>1) {
-                    $res = $feed->getAttribute('xmlns:'.$name[0]);
-                    if (!empty($res)) {
-                        $ns = $res;
-                    } else {
-                        $ns = self::getAttributeNS($feed, $list[$i]);
-                    }
-                    $formats[$format][$i] = array($ns, $name[1]);
-                }
-            }
-        }
-
-        return $formats;
-    }
-
-    /**
      * Search a namespaceURI into tags
      * (used when namespaceURI are not defined in the root tag)
      *
@@ -229,34 +197,16 @@ class Rss
      */
     public static function getItemsFromXml ($xml)
     {
-        $items = array();
+        $items = new DOMNodelist;
 
         // find feed type RSS, Atom
         $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $feed = $xml->getElementsByTagName('item');
-            $len = $feed->length;
-            for ($i = 0; $i < $len; $i++) {
-                $items[$i] = $feed->item($i);
-            }
-            $feed = $xml->getElementsByTagName('rss');
-            if (!$feed->item(0)) {
-                $feed = $xml->getElementsByTagNameNS(
-                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-                    'RDF'
-                );
-            }
+        if ($feed->item(0)) { // RSS/rdf:RDF feed
+            $items = $xml->getElementsByTagName('item');
         } else {
             $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $feed = $xml->getElementsByTagName('entry');
-                $len = $feed->length;
-                for ($i = 0; $i < $len; $i++) {
-                    $items[$i] = $feed->item($i);
-                }
-                $feed = $xml->getElementsByTagName('feed');
+            if ($feed->item(0)) { // Atom feed
+                $items = $xml->getElementsByTagName('entry');
             }
         }
 
@@ -274,10 +224,6 @@ class Rss
                                    'published', 'dc:date', 'date', 'created',
                                    'modified'),
             'title'       => array('title'));
-
-        if ($feed->item(0)) {
-            $formats = self::formatRDF($formats, $feed->item(0));
-        }
 
         return self::formatItems($items, $formats);
     }

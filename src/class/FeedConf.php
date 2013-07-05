@@ -269,6 +269,7 @@ class FeedConf
 
             FeedPage::init(
                 array(
+                    'base' => '',
                     'class' => 'text-success',
                     'message' => Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'),
                     'referer' => MyTool::getUrl().'?import',
@@ -281,6 +282,7 @@ class FeedConf
         } else {
             FeedPage::init(
                 array(
+                    'base' => '',
                     'version' => $this->version,
                     'pagetitle' => Intl::msg('KrISS feed installation')
                 )

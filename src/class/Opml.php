@@ -97,9 +97,11 @@ class Opml
 
             FeedPage::init(
                 array(
-                    'message' => Intl::msg('File %s (%s) was successfully processed: %d links imported'),
+                    'base' => '',
+                    'message' => sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount),
+                    'button' => Intl::msg('Continue'),
                     'referer' => MyTool::getUrl(),
-                    'version' => $this->version,
+                    'version' => FEED_VERSION,
                     'pagetitle' => 'KrISS feed installation'
                 )
             );
@@ -113,10 +115,11 @@ class Opml
 
             FeedPage::init(
                 array(
+                    'base' => '',
                     'class' => 'text-success',
-                    'message' => Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),
+                    'message' => sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)),
                     'referer' => MyTool::getUrl().'?import',
-                    'version' => $this->version,
+                    'version' => FEED_VERSION,
                     'pagetitle' => 'KrISS feed installation'
                 )
             );

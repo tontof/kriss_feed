@@ -74,7 +74,47 @@ if (substr($referer, 0, strlen($ref)) !== $ref) {
     $referer = $ref;
 }
 
+if (isset($_GET['file'])) {
+    $gmtTime = gmdate('D, d M Y H:i:s', filemtime(__FILE__)) . ' GMT';
+    $etag = '"'.md5($gmtTime).'"';
+
+    header("Cache-Control:");
+    header("Pragma:");
+
+    header("Last-Modified: $gmtTime");
+    header("ETag: $etag");
+
+    $if_modified_since = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? $_SERVER['HTTP_IF_MODIFIED_SINCE'] : false;
+    $if_none_match = isset($_SERVER['HTTP_IF_NONE_MATCH']) ? $_SERVER['HTTP_IF_NONE_MATCH'] : false;
+    if (($if_none_match && $if_none_match == $etag) ||
+        ($if_modified_since && $if_modified_since == $gmtTime)) {
+        header('HTTP/1.1 304 Not Modified');
+        exit();
+    }
+    
+    if ($_GET['file'] == 'favicon.ico') {
+        header('Content-Type: image/vnd.microsoft.icon');
+        $favicon = '
+<?php include("inc/favicon.ico"); ?>
+';
+        echo base64_decode($favicon);
+    } else if ($_GET['file'] == 'style.css') {
+        header('Content-type: text/css');
+?>
+<?php include("inc/style.css"); ?>
+<?php        
+    } else if ($_GET['file'] == 'script.js') {
+        header('Content-type: text/javascript');
+?>
+<?php include("inc/script.js"); ?>
+<?php
+    }
+    exit();
+}
+
 $pb = new PageBuilder('FeedPage');
+$base = BASE_URL;
+$pb->assign('base', $base);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');
 $pb->assign('referer', $referer);
@@ -132,11 +172,6 @@ if (!empty($currentHash) and $currentHash !== 'all') {
     $query .= 'currentHash='.$currentHash.'&';
 }
 
-$base = BASE_URL;
-if (empty($bases)) {
-    $base = MyTool::getUrl();
-}
-
 $pb->assign('view', $view);
 $pb->assign('listFeeds', $listFeeds);
 $pb->assign('filter', $filter);
@@ -155,7 +190,6 @@ $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
 $pb->assign('kf', $kf);
-$pb->assign('base', $base);
 $pb->assign('isLogged', $kfc->isLogged());
 $pb->assign('pagetitle', strip_tags($kfc->title));
 
@@ -805,42 +839,6 @@ if (isset($_GET['login'])) {
         $pb->assign('message', Intl::msg('Please configure your share link first'));
         $pb->renderPage('message');
     }
-} elseif (isset($_GET['file'])) {
-    $gmtTime = gmdate('D, d M Y H:i:s', filemtime(__FILE__)) . ' GMT';
-    $etag = '"'.md5($gmtTime).'"';
-
-    header("Cache-Control:");
-    header("Pragma:");
-
-    header("Last-Modified: $gmtTime");
-    header("ETag: $etag");
-
-    $if_modified_since = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? $_SERVER['HTTP_IF_MODIFIED_SINCE'] : false;
-    $if_none_match = isset($_SERVER['HTTP_IF_NONE_MATCH']) ? $_SERVER['HTTP_IF_NONE_MATCH'] : false;
-    if (($if_none_match && $if_none_match == $etag) ||
-        ($if_modified_since && $if_modified_since == $gmtTime)) {
-        header('HTTP/1.1 304 Not Modified');
-        exit();
-    }
-    
-    if ($_GET['file'] == 'favicon.ico') {
-        header('Content-Type: image/vnd.microsoft.icon');
-        $favicon = '
-<?php include("inc/favicon.ico"); ?>
-';
-        echo base64_decode($favicon);
-    } else if ($_GET['file'] == 'style.css') {
-        header('Content-type: text/css');
-?>
-<?php include("inc/style.css"); ?>
-<?php        
-    } else if ($_GET['file'] == 'script.js') {
-        header('Content-type: text/javascript');
-?>
-<?php include("inc/script.js"); ?>
-<?php
-    }
-    exit();
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
