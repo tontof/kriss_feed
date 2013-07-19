@@ -104,11 +104,11 @@ class MyTool
             if ($stream = fopen($url, 'r', false, $context)) {
                 $data = stream_get_contents($stream);
                 $status = $http_response_header[0];
-                if (strpos($status,'200') !== false) {
-                    $code = 200;
-                } else if (strpos($status,'304') !== false) {
-                    $code = 304;
+                $code = explode(' ', $status);
+                if (count($code)>1) {
+                    $code = $code[1];
                 } else {
+                    $code = '';
                     $error = self::ERROR_UNKNOWN_CODE;
                 }
                 $header = implode("\r\n", $http_response_header);
@@ -167,6 +167,7 @@ class MyTool
         }
 
         error_reporting(E_ALL);
+        ini_set(display_errors,1);
 
         function stripslashesDeep($value) {
             return is_array($value)
@@ -507,6 +508,6 @@ class MyTool
      */
     public static function silenceErrors($num, $str)
     {
-	// No-op                                                       
+        // No-op                                                       
     }
 }

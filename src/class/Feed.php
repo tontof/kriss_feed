@@ -861,7 +861,7 @@ class Feed
     public function updateFeedFromDom($feed, $dom) {
         if (empty($feed)) {
             // addFeed
-            $feed = Rss::getChannelFromXml($dom);
+            $feed = Rss::getFeed($dom);
 
             if (!MyTool::isUrl($feed['htmlUrl'])) {
                 $feed['htmlUrl'] = ' ';
@@ -874,7 +874,7 @@ class Feed
         } else if (empty($feed['description']) || empty($feed['htmlUrl'])) {
             // if feed description/htmlUrl is empty try to update
             // (after opml import, description/htmlUrl are often empty)
-            $rssFeed = Rss::getChannelFromXml($dom);
+            $rssFeed = Rss::getFeed($dom);
             if (empty($feed['description'])) {
                 if (empty($rssFeed['description'])) {
                     $rssFeed['description'] = ' ';
@@ -890,6 +890,38 @@ class Feed
         }
 
         return $feed;
+    }
+
+    public function updateItemsFromDom($dom) {
+        $items = Rss::getItems($dom);
+
+        $newItems = array();
+        foreach($items as $item) {
+            if (!empty($item['link'])) {
+                $hashUrl = MyTool::smallHash($item['link']);
+                $newItems[$hashUrl] = array();
+                $newItems[$hashUrl]['title'] = $item['title'];
+                $newItems[$hashUrl]['time']  = strtotime($item['time'])
+                    ? strtotime($item['time'])
+                    : time();
+                if (MyTool::isUrl($item['via']) &&
+                    parse_url($item['via'], PHP_URL_HOST)
+                    != parse_url($item['link'], PHP_URL_HOST)) {
+                    $newItems[$hashUrl]['via'] = $item['via'];
+                } else {
+                    $newItems[$hashUrl]['via'] = '';
+                }
+                $newItems[$hashUrl]['link'] = $item['link'];
+                $newItems[$hashUrl]['author'] = $item['author'];
+                mb_internal_encoding("UTF-8");
+                $newItems[$hashUrl]['description'] = mb_substr(
+                    strip_tags($item['description']), 0, 500
+                    );
+                $newItems[$hashUrl]['content'] = $item['content'];
+            }
+        }
+
+        return $newItems;
     }
 
     /**
@@ -923,7 +955,7 @@ class Feed
                 unset($feed['error']);
                 $feed = $this->updateFeedFromDom($feed, $outputDom['dom']);
                 $feed = $this->updateFeedCache($feed, $outputUrl);
-                $items = Rss::getItemsFromXml($outputDom['dom']);
+                $items = $this->updateItemsFromDom($outputDom['dom']);
             }
         }
         $feed['lastUpdate'] = time();

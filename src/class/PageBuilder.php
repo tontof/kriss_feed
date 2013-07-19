@@ -28,7 +28,7 @@ class PageBuilder
     /**
      * initialize
      */
-    private function initialize()
+    private function init()
     {
         $this->tpl = true;
     }
@@ -44,7 +44,7 @@ class PageBuilder
     public function assign($variable, $value = null)
     {
         if ($this->tpl === false) {
-            $this->initialize(); // Lazy initialization
+            $this->init(); // Lazy initialization
         }
         if (is_array($variable)) {
             $this->var += $variable;
@@ -64,7 +64,7 @@ class PageBuilder
     public function renderPage($page, $exit = true)
     {
         if ($this->tpl===false) {
-            $this->initialize(); // Lazy initialization
+            $this->init(); // Lazy initialization
         }
         $method = $page.'Tpl';
         if (method_exists($this->pageClass, $method)) {

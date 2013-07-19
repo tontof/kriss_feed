@@ -1677,7 +1677,7 @@ switch($template) {
             <fieldset>
               <legend><?php echo Intl::msg('Use bookmarklet to add a new feed'); ?></legend>
               <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
+                <a onclick="alert('<?php echo Intl::msg('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'); ?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $base; ?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
               </div>
             </fieldset>
             <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
@@ -3057,7 +3057,7 @@ class Feed
     public function updateFeedFromDom($feed, $dom) {
         if (empty($feed)) {
             // addFeed
-            $feed = Rss::getChannelFromXml($dom);
+            $feed = Rss::getFeedFromDom($dom);
 
             if (!MyTool::isUrl($feed['htmlUrl'])) {
                 $feed['htmlUrl'] = ' ';
@@ -3070,7 +3070,7 @@ class Feed
         } else if (empty($feed['description']) || empty($feed['htmlUrl'])) {
             // if feed description/htmlUrl is empty try to update
             // (after opml import, description/htmlUrl are often empty)
-            $rssFeed = Rss::getChannelFromXml($dom);
+            $rssFeed = Rss::getFeedFromDom($dom);
             if (empty($feed['description'])) {
                 if (empty($rssFeed['description'])) {
                     $rssFeed['description'] = ' ';
@@ -3086,6 +3086,38 @@ class Feed
         }
 
         return $feed;
+    }
+
+    public function updateItemsFromDom($dom) {
+        $items = Rss::getItemsFromDom($dom);
+
+        $newItems = array();
+        foreach($items as $item) {
+            if (!empty($item['link'])) {
+                $hashUrl = MyTool::smallHash($item['link']);
+                $newItems[$hashUrl] = array();
+                $newItems[$hashUrl]['title'] = $item['title'];
+                $newItems[$hashUrl]['time']  = strtotime($item['time'])
+                    ? strtotime($item['time'])
+                    : time();
+                if (MyTool::isUrl($item['via']) &&
+                    parse_url($item['via'], PHP_URL_HOST)
+                    != parse_url($item['link'], PHP_URL_HOST)) {
+                    $newItems[$hashUrl]['via'] = $item['via'];
+                } else {
+                    $newItems[$hashUrl]['via'] = '';
+                }
+                $newItems[$hashUrl]['link'] = $item['link'];
+                $newItems[$hashUrl]['author'] = $item['author'];
+                mb_internal_encoding("UTF-8");
+                $newItems[$hashUrl]['description'] = mb_substr(
+                    strip_tags($item['description']), 0, 500
+                    );
+                $newItems[$hashUrl]['content'] = $item['content'];
+            }
+        }
+
+        return $newItems;
     }
 
     public function loadRss($xmlUrl, $feed = array(), $force = false)
@@ -3109,7 +3141,7 @@ class Feed
                 unset($feed['error']);
                 $feed = $this->updateFeedFromDom($feed, $outputDom['dom']);
                 $feed = $this->updateFeedCache($feed, $outputUrl);
-                $items = Rss::getItemsFromXml($outputDom['dom']);
+                $items = $this->updateItemsFromDom($outputDom['dom']);
             }
         }
         $feed['lastUpdate'] = time();
@@ -3826,7 +3858,7 @@ class Intl
         return $entries;
     }
 
-    public function clean($x)
+    public static function clean($x)
     {
         if(is_array($x)) {
             foreach($x as $k => $v) {
@@ -3930,11 +3962,11 @@ class MyTool
             if ($stream = fopen($url, 'r', false, $context)) {
                 $data = stream_get_contents($stream);
                 $status = $http_response_header[0];
-                if (strpos($status,'200') !== false) {
-                    $code = 200;
-                } else if (strpos($status,'304') !== false) {
-                    $code = 304;
+                $code = explode(' ', $status);
+                if (count($code)>1) {
+                    $code = $code[1];
                 } else {
+                    $code = '';
                     $error = self::ERROR_UNKNOWN_CODE;
                 }
                 $header = implode("\r\n", $http_response_header);
@@ -3982,6 +4014,7 @@ class MyTool
         }
 
         error_reporting(E_ALL);
+        ini_set(display_errors,1);
 
         function stripslashesDeep($value) {
             return is_array($value)
@@ -4223,7 +4256,7 @@ class MyTool
 
     public static function silenceErrors($num, $str)
     {
-	// No-op                                                       
+        // No-op                                                       
     }
 }
 
@@ -4568,7 +4601,7 @@ class PageBuilder
         $this->pageClass = $pageClass;
     }
 
-    private function initialize()
+    private function init()
     {
         $this->tpl = true;
     }
@@ -4577,7 +4610,7 @@ class PageBuilder
     public function assign($variable, $value = null)
     {
         if ($this->tpl === false) {
-            $this->initialize(); // Lazy initialization
+            $this->init(); // Lazy initialization
         }
         if (is_array($variable)) {
             $this->var += $variable;
@@ -4589,7 +4622,7 @@ class PageBuilder
     public function renderPage($page, $exit = true)
     {
         if ($this->tpl===false) {
-            $this->initialize(); // Lazy initialization
+            $this->init(); // Lazy initialization
         }
         $method = $page.'Tpl';
         if (method_exists($this->pageClass, $method)) {
@@ -4649,190 +4682,122 @@ class Plugin
 
 class Rss
 {
-    public static function formatChannel($channel)
+    static $feedFormat = array(
+        'title' => array('title'),
+        'description' => array('description', 'subtitle'),
+        'htmlUrl' => array('link', 'id', 'guid')
+    );
+
+    static $itemFormat = array(
+        'author' => array('author', 'creator', 'dc:author', 'dc:creator'),
+        'content' => array('content:encoded', 'content', 'description', 'summary', 'subtitle'),
+        'description' => array('description', 'summary', 'subtitle', 'content', 'content:encoded'),
+        'via' => array('guid', 'id'),
+        'link' => array('feedburner:origLink', array('link', 'href', array('rel=alternate')), array('link', 'href'), 'link', 'guid', 'id'),
+        'time' => array('pubDate', 'updated', 'lastBuildDate', 'published', 'dc:date', 'date', 'created', 'modified'),
+        'title' => array('title')
+    );
+
+    public static function formatElement($element, $formats)
     {
-        $newChannel = array();
-
-        // list of format for each info in order of importance
-        $formats = array('title' => array('title'),
-                         'description' => array('description', 'subtitle'),
-                         'htmlUrl' => array('link', 'id', 'guid'));
-
+        $newElement = array();
         foreach ($formats as $format => $list) {
-            $newChannel[$format] = '';
+            $newElement[$format] = '';
             $len = count($list);
-            for ($i = 0; $i < $len; $i++) {
-                if ($channel->hasChildNodes()) {
-                    $child = $channel->childNodes;
-                    for ($j = 0, $lenChannel = $child->length;
-                         $j<$lenChannel;
-                         $j++) {
-                        if (isset($child->item($j)->tagName)
-                            && $child->item($j)->tagName == $list[$i]
-                        ) {
-                            $newChannel[$format]
-                                = $child->item($j)->textContent;
-                        }
+            for ($i = 0; $i < $len && empty($newElement[$format]); $i++) {
+                $selector = $list[$i];
+                if (is_array($list[$i])) {
+                    $selector = $list[$i][0];
+                    if (count($list[$i]) === 2) {
+                        $list[$i][] = array();
                     }
-                }
-            }
-        }
-
-        return $newChannel;
-    }
-
-    public static function formatItems($items, $formats)
-    {
-        $newItems = array();
-
-        for ($k = 0; $k < $items->length; $k++) {
-            $item = $items->item($k);
-            $tmpItem = array();
-            foreach ($formats as $format => $list) {
-                $tmpItem[$format] = '';
-                $len = count($list);
-                for ($i = 0; $i < $len; $i++) {
-                    $name = explode(':', $list[$i]);
-                    if (count($name) > 1) {
-                        $tag = $item->getElementsByTagNameNS('*', $name[1]);
-                    } else {
-                        $tag = $item->getElementsByTagName($list[$i]);
-                    }
-                    for ($j = $tag->length; --$j >= 0;) {
-                        $elt = $tag->item($j);
-                        if ($tag->item($j)->tagName != $list[$i]) {
-                            $elt->parentNode->removeChild($elt);
-                        }
-                    }
-                    if ($tag->length != 0) {
-                        // we find a correspondence for the current format
-                        // select first item (item(0)), (may not work)
-                        // stop to search for another one
-                        if ($format == 'link') {
-                            $tmpItem[$format] = '';
-                            for ($j = 0; $j < $tag->length; $j++) {
-                                if ($tag->item($j)->hasAttribute('rel') && $tag->item($j)->getAttribute('rel') == 'alternate') {
-                                    $tmpItem[$format]
-                                        = $tag->item($j)->getAttribute('href');
-                                    $j = $tag->length;
-                                }
-                            }
-                            if ($tmpItem[$format] == '') {
-                                $tmpItem[$format]
-                                    = $tag->item(0)->getAttribute('href');
-                            }
-                        }
-                        if (empty($tmpItem[$format])) {
-                            $tmpItem[$format] = $tag->item(0)->textContent;
-                        }
-                        $i = $len;
-                    }
-                }
-            }
-            if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['link']);
-                $newItems[$hashUrl] = array();
-                $newItems[$hashUrl]['title'] = $tmpItem['title'];
-                $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
-                    ? strtotime($tmpItem['time'])
-                    : time();
-                if (MyTool::isUrl($tmpItem['via'])
-                    && $tmpItem['via'] != $tmpItem['link']) {
-                    $newItems[$hashUrl]['via'] = $tmpItem['via'];
                 } else {
-                    $newItems[$hashUrl]['via'] = '';
+                    $list[$i] = array($list[$i], '', array());
                 }
-                $newItems[$hashUrl]['link'] = $tmpItem['link'];
-                $newItems[$hashUrl]['author'] = $tmpItem['author'];
-                mb_internal_encoding("UTF-8");
-                $newItems[$hashUrl]['description'] = mb_substr(
-                    strip_tags($tmpItem['description']), 0, 500
-                );
-                $newItems[$hashUrl]['content'] = $tmpItem['content'];
+
+                $name = explode(':', $selector);
+
+                if (count($name) > 1) {
+                    $elements = $element->getElementsByTagNameNS('*', $name[1]);
+                } else {
+                    $elements = $element->getElementsByTagName($name[0]);
+                }
+
+                for ($j = 0; $j < $elements->length; $j++) {
+                    $elt = $elements->item($j);
+                    $isCorrect = true;
+                    if ($elements->item($j)->tagName != $selector) {
+                        $isCorrect = false;
+                    } else {
+                        foreach($list[$i][2] as $attr) {
+                            $attrs = explode('=', $attr);
+                            if (count($attrs) !== 2 || 
+                                !$elements->item($j)->hasAttribute($attrs[0]) ||
+                                $elements->item($j)->getAttribute($attrs[0]) !== $attrs[1]) {
+                                $isCorrect = false;
+                            }
+                        }
+                    }
+
+                    if ($isCorrect) {
+                        if (empty($list[$i][1])) {
+                            $newElement[$format] = $elt->textContent;
+                        } else {
+                            if ($elements->item($j)->hasAttribute($list[$i][1])) {
+                                $newElement[$format] = $elt->getAttribute($list[$i][1]);
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        return $newItems;
+        return $newElement;
     }
 
-    public static function getChannelFromXml($xml)
+    public static function getFeedFromDom($dom)
     {
-        $channel = array();
+        $feed = new DOMNodelist;
 
         // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $channel = $feed->item(0);
+        $feed = $dom->getElementsByTagName('channel');
+        if ($feed->item(0)) { // RSS/rdf:RDF feed
+            $feed = $feed->item(0);
         } else {
-            $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $channel = $feed->item(0);
-            } else {
-                // unknown feed
+            $feed = $dom->getElementsByTagName('feed');
+            if ($feed->item(0)) { // Atom feed
+                $feed = $feed->item(0);
             }
         }
 
-        if (!empty($channel)) {
-            $channel = self::formatChannel($channel);
-        }
-
-        return $channel;
+        return self::formatElement($feed, self::$feedFormat);
     }
 
-    public static function getAttributeNS ($feed, $name)
-    {
-        $res = '';
-        if ($feed->nodeName === $name) {
-            $ns = explode(':', $name);
-            $res = $feed->getAttribute('xmlns:'.$ns[0]);
-        } else {
-            if ($feed->hasChildNodes()) {
-                foreach ($feed->childNodes as $childNode) {
-                    if ($res === '') {
-                        $res = self::getAttributeNS($childNode, $name);
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $res;
-    }
-
-    public static function getItemsFromXml ($xml)
+    public static function getItemsFromDom($dom)
     {
         $items = new DOMNodelist;
 
         // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
+        $feed = $dom->getElementsByTagName('channel');
         if ($feed->item(0)) { // RSS/rdf:RDF feed
-            $items = $xml->getElementsByTagName('item');
+            $items = $dom->getElementsByTagName('item');
         } else {
-            $feed = $xml->getElementsByTagName('feed');
+            $feed = $dom->getElementsByTagName('feed');
             if ($feed->item(0)) { // Atom feed
-                $items = $xml->getElementsByTagName('entry');
+                $items = $dom->getElementsByTagName('entry');
             }
         }
 
-        // list of format for each info in order of importance
-        $formats = array(
-            'author'      => array('author', 'creator', 'dc:author',
-                                   'dc:creator'),
-            'content'     => array('content:encoded', 'content', 'description',
-                               'summary', 'subtitle'),
-            'description' => array('description', 'summary', 'subtitle',
-                                   'content', 'content:encoded'),
-            'via'        => array('guid', 'id'),
-            'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
-            'time'        => array('pubDate', 'updated', 'lastBuildDate',
-                                   'published', 'dc:date', 'date', 'created',
-                                   'modified'),
-            'title'       => array('title'));
+        $newItems = array();
+        for ($i = 0; $i < $items->length; $i++) {
+            $item = $items->item($i);
+            $item = self::formatElement($item, self::$itemFormat);
+            if (!empty($item)) {
+                $newItems[] = $item;
+            }
+        }
 
-        return self::formatItems($items, $formats);
+        return $newItems;
     }
 
     public static function loadDom($data)
@@ -6131,7 +6096,7 @@ dd {
   display: inline-block;
   width: 16px;
   height: 11px;
-  background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAWCAYAAAChWZ5EAAAFVElEQVRIia2Vf2yW1RXHP/ftqxmDwSxM6FghGMt0Thbn2M9SFCmo+2miIAjbZE5jRubCmJUtGwQM2zCiYcSGH6EsA3GhyUTXJlNWu7oEdabggAmEho0h0Flmbd++7/Pce885++N5W374x/6gJzl57n2eJ/ec7/ec+z3OzLgcW/7MoYsO0Kj88BujERHSNEVEiDHinOOa2TehBYgpRECB/GVFL9tddR8HwNRQNaqqPsIgMDNDVTEzrnh8PRYD6j0WAuceWz08CWDQXwyIZMEGBgYws6HgzjlEhNGnT6E+xXwKY8cRgdxlB9cMuYghqkQxcrkcZoZzbmitqqhP0DRFQ4p5PzwliFERVUQUESOqYFZOQhVVGyqHphl69QHnPX44EvA+omqIKEEViUZFRUWGGMjnQNXhnMsSCB71Hhfj8DDgY0Z7ECWKEqMO1X/QRTJWzKeI95gP5IaLgcTHrPZRsySCZOjLnS9yfp8FT9EQIIbhYSBJYhY8KjEKIepQwA94mmbXMARcFOJwJFD0nhiVD4+oQCLEmBvq/kFzLuuBivFVaIw4iZgMEwPFYmTt9oMkiaeYRAqJZ+KIKrz3hCTBi+C9J0kSpv2mCeW8CgK4DZvabGrtNF7tOEZ3D4AgKjy26EYOrd2IiXDjzx/hR+tfx0KOgWJCdc0IZh1o5cTX5nH2jUukXBU0Ah4wwLN58l6sOEDPu2fx5eCDieQrx4xi7vE25jx0D13/HmDf/jOIOWqmVDL1ppHgU2xKJXd8vpoQhdobxjK9YxM0r2NDy9ucpcCWxi+xo8NYMFN59pUcC2cYv+1wLK6NNLXnkVtvxww+anqBRCutrbvJtx0vMaF+Nrfteo5rP3E1135zFr9s/AfOAW91QUhwDk6eM1aNO07Fqy/jfrKGpt0H+fW617jz5k+zo8PY1aHsaAdRZeteQwy2vORIYuSBl34G/+2Fvveh0A/FIm7hHVz/5l8zKX7nzHus7JnGSbkGWbOKFQ9/KqOz1A+lEgBPnGhk5Jxajt61hFl3PsehI30kaQoETOH5BiNVeKEhIAYtjxZJonHYQXHlSgpPPUnfls307tyJa59EafFSCg824I52nbOaKZUZ4ktt3jxIU9iz5wOfzKDzyH9ofOoodQu+TFObIpohjwFSMw6TEot/I57ZCMUiFApYkoD35JZ8i9cOd5I/+PjTTP3sSHjrOIQA3p9/qmJpSrzllmx4hGyUIkL+uon86c0CzP4FC2cYW/caf2xIqF/zIVoa+piw1vPPZUr10pS+pm0XiZOq0jv+at5r3f1/GKirQ9JAxev7yh3tskOwjIGjPWxev58v3lvPtpeF1AwNcNC6kfQI/EvgpBBHr82QpymkKZYk5H4wnxe7juBmfvsF+3pdNZ1vdPPTR77ADRME/+iPuXLrduzm6YgI+QOdgHL6ttkcm7+cBavfobb+YzS/uJeT+5dRVTWJEMJFCC9dX7gvlUpMuQI2Pr+DfJJExo+9kp2b5lJYvZL3R4xi6VUP8TvK41MVzPjKrbt4pb2NMVu2caC+g83Tl9G8JzJx+9O42+8m19KGdXdDby8UCpknCVYsgvfYhesQ0OXfZcypE+QXLa7hvq9eR/KrFfx95vdobj9N5SjBDNz1E3EaMDOqP1nJou80s+T7M5iz5D4efuAeuu+fT9e9n2Hy5Kn0f24Go3yCWXbHL52IZkaMgSSpBE4hoty9YRX5M++e45k5D/KHmpl07vwLIZaIItw/r4bWfb1YjMx9u4ff7/kzqLC7pYNxk65ixRPrOLaikZF9z9JtmbL1ldWNC5QuAfqBYtlD+d3gf/8DcCnYzK68GQMAAAAASUVORK5CYII=) no-repeat
+  background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAWCAYAAAChWZ5EAAAFVElEQVRIia2Vf2yW1RXHP/ftqxmDwSxM6FghGMt0Thbn2M9SFCmo+2miIAjbZE5jRubCmJUtGwQM2zCiYcSGH6EsA3GhyUTXJlNWu7oEdabggAmEho0h0Flmbd++7/Pce885++N5W374x/6gJzl57n2eJ/ec7/ec+z3OzLgcW/7MoYsO0Kj88BujERHSNEVEiDHinOOa2TehBYgpRECB/GVFL9tddR8HwNRQNaqqPsIgMDNDVTEzrnh8PRYD6j0WAuceWz08CWDQXwyIZMEGBgYws6HgzjlEhNGnT6E+xXwKY8cRgdxlB9cMuYghqkQxcrkcZoZzbmitqqhP0DRFQ4p5PzwliFERVUQUESOqYFZOQhVVGyqHphl69QHnPX44EvA+omqIKEEViUZFRUWGGMjnQNXhnMsSCB71Hhfj8DDgY0Z7ECWKEqMO1X/QRTJWzKeI95gP5IaLgcTHrPZRsySCZOjLnS9yfp8FT9EQIIbhYSBJYhY8KjEKIepQwA94mmbXMARcFOJwJFD0nhiVD4+oQCLEmBvq/kFzLuuBivFVaIw4iZgMEwPFYmTt9oMkiaeYRAqJZ+KIKrz3hCTBi+C9J0kSpv2mCeW8CgK4DZvabGrtNF7tOEZ3D4AgKjy26EYOrd2IiXDjzx/hR+tfx0KOgWJCdc0IZh1o5cTX5nH2jUukXBU0Ah4wwLN58l6sOEDPu2fx5eCDieQrx4xi7vE25jx0D13/HmDf/jOIOWqmVDL1ppHgU2xKJXd8vpoQhdobxjK9YxM0r2NDy9ucpcCWxi+xo8NYMFN59pUcC2cYv+1wLK6NNLXnkVtvxww+anqBRCutrbvJtx0vMaF+Nrfteo5rP3E1135zFr9s/AfOAW91QUhwDk6eM1aNO07Fqy/jfrKGpt0H+fW617jz5k+zo8PY1aHsaAdRZeteQwy2vORIYuSBl34G/+2Fvveh0A/FIm7hHVz/5l8zKX7nzHus7JnGSbkGWbOKFQ9/KqOz1A+lEgBPnGhk5Jxajt61hFl3PsehI30kaQoETOH5BiNVeKEhIAYtjxZJonHYQXHlSgpPPUnfls307tyJa59EafFSCg824I52nbOaKZUZ4ktt3jxIU9iz5wOfzKDzyH9ofOoodQu+TFObIpohjwFSMw6TEot/I57ZCMUiFApYkoD35JZ8i9cOd5I/+PjTTP3sSHjrOIQA3p9/qmJpSrzllmx4hGyUIkL+uon86c0CzP4FC2cYW/caf2xIqF/zIVoa+piw1vPPZUr10pS+pm0XiZOq0jv+at5r3f1/GKirQ9JAxev7yh3tskOwjIGjPWxev58v3lvPtpeF1AwNcNC6kfQI/EvgpBBHr82QpymkKZYk5H4wnxe7juBmfvsF+3pdNZ1vdPPTR77ADRME/+iPuXLrduzm6YgI+QOdgHL6ttkcm7+cBavfobb+YzS/uJeT+5dRVTWJEMJFCC9dX7gvlUpMuQI2Pr+DfJJExo+9kp2b5lJYvZL3R4xi6VUP8TvK41MVzPjKrbt4pb2NMVu2caC+g83Tl9G8JzJx+9O42+8m19KGdXdDby8UCpknCVYsgvfYhesQ0OXfZcypE+QXLa7hvq9eR/KrFfx95vdobj9N5SjBDNz1E3EaMDOqP1nJou80s+T7M5iz5D4efuAeuu+fT9e9n2Hy5Kn0f24Go3yCWXbHL52IZkaMgSSpBE4hoty9YRX5M++e45k5D/KHmpl07vwLIZaIItw/r4bWfb1YjMx9u4ff7/kzqLC7pYNxk65ixRPrOLaikZF9z9JtmbL1ldWNC5QuAfqBYtlD+d3gf/8DcCnYzK68GQMAAAAASUVORK5CYII=') no-repeat
 }
 
 .flag.flag-fr {background-position: -16px 0}
@@ -8337,6 +8302,9 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 
 $pb = new PageBuilder('FeedPage');
 $base = BASE_URL;
+if (empty($base)) {
+    $base = MyTool::getUrl();
+}
 $pb->assign('base', $base);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');

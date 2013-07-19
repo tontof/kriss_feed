@@ -114,6 +114,9 @@ if (isset($_GET['file'])) {
 
 $pb = new PageBuilder('FeedPage');
 $base = BASE_URL;
+if (empty($base)) {
+    $base = MyTool::getUrl();
+}
 $pb->assign('base', $base);
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');

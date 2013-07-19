@@ -4,228 +4,139 @@
  */
 class Rss
 {
+    static $feedFormat = array(
+        'title' => array('title'),
+        'description' => array('description', 'subtitle'),
+        'htmlUrl' => array('link', 'id', 'guid')
+    );
+
+    static $itemFormat = array(
+        'author' => array('author', 'creator', 'dc:author', 'dc:creator'),
+        'content' => array('content:encoded', 'content', 'description', 'summary', 'subtitle'),
+        'description' => array('description', 'summary', 'subtitle', 'content', 'content:encoded'),
+        'via' => array('guid', 'id'),
+        'link' => array('feedburner:origLink', array('link', 'href', array('rel=alternate')), array('link', 'href'), 'link', 'guid', 'id'),
+        'time' => array('pubDate', 'updated', 'lastBuildDate', 'published', 'dc:date', 'date', 'created', 'modified'),
+        'title' => array('title')
+    );
+
     /**
-     * Format xml channel into array
      *
-     * @param DOMDocument $channel DOMDocument of the channel feed
-     *
-     * @return array Array with extracted information channel
      */
-    public static function formatChannel($channel)
+    public static function formatElement($element, $formats)
     {
-        $newChannel = array();
-
-        // list of format for each info in order of importance
-        $formats = array('title' => array('title'),
-                         'description' => array('description', 'subtitle'),
-                         'htmlUrl' => array('link', 'id', 'guid'));
-
+        $newElement = array();
         foreach ($formats as $format => $list) {
-            $newChannel[$format] = '';
+            $newElement[$format] = '';
             $len = count($list);
-            for ($i = 0; $i < $len; $i++) {
-                if ($channel->hasChildNodes()) {
-                    $child = $channel->childNodes;
-                    for ($j = 0, $lenChannel = $child->length;
-                         $j<$lenChannel;
-                         $j++) {
-                        if (isset($child->item($j)->tagName)
-                            && $child->item($j)->tagName == $list[$i]
-                        ) {
-                            $newChannel[$format]
-                                = $child->item($j)->textContent;
-                        }
+            for ($i = 0; $i < $len && empty($newElement[$format]); $i++) {
+                $selector = $list[$i];
+                if (is_array($list[$i])) {
+                    $selector = $list[$i][0];
+                    if (count($list[$i]) === 2) {
+                        $list[$i][] = array();
                     }
-                }
-            }
-        }
-
-        return $newChannel;
-    }
-
-    /**
-     * format items into array
-     *
-     * @param DOMNodeList $items   DOMNodeList of items in a feed
-     * @param array       $formats List of information to extract
-     *
-     * @return array List of items with information
-     */
-    public static function formatItems($items, $formats)
-    {
-        $newItems = array();
-
-        for ($k = 0; $k < $items->length; $k++) {
-            $item = $items->item($k);
-            $tmpItem = array();
-            foreach ($formats as $format => $list) {
-                $tmpItem[$format] = '';
-                $len = count($list);
-                for ($i = 0; $i < $len; $i++) {
-                    $name = explode(':', $list[$i]);
-                    if (count($name) > 1) {
-                        $tag = $item->getElementsByTagNameNS('*', $name[1]);
-                    } else {
-                        $tag = $item->getElementsByTagName($list[$i]);
-                    }
-                    for ($j = $tag->length; --$j >= 0;) {
-                        $elt = $tag->item($j);
-                        if ($tag->item($j)->tagName != $list[$i]) {
-                            $elt->parentNode->removeChild($elt);
-                        }
-                    }
-                    if ($tag->length != 0) {
-                        // we find a correspondence for the current format
-                        // select first item (item(0)), (may not work)
-                        // stop to search for another one
-                        if ($format == 'link') {
-                            $tmpItem[$format] = '';
-                            for ($j = 0; $j < $tag->length; $j++) {
-                                if ($tag->item($j)->hasAttribute('rel') && $tag->item($j)->getAttribute('rel') == 'alternate') {
-                                    $tmpItem[$format]
-                                        = $tag->item($j)->getAttribute('href');
-                                    $j = $tag->length;
-                                }
-                            }
-                            if ($tmpItem[$format] == '') {
-                                $tmpItem[$format]
-                                    = $tag->item(0)->getAttribute('href');
-                            }
-                        }
-                        if (empty($tmpItem[$format])) {
-                            $tmpItem[$format] = $tag->item(0)->textContent;
-                        }
-                        $i = $len;
-                    }
-                }
-            }
-            if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['link']);
-                $newItems[$hashUrl] = array();
-                $newItems[$hashUrl]['title'] = $tmpItem['title'];
-                $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
-                    ? strtotime($tmpItem['time'])
-                    : time();
-                if (MyTool::isUrl($tmpItem['via'])
-                    && $tmpItem['via'] != $tmpItem['link']) {
-                    $newItems[$hashUrl]['via'] = $tmpItem['via'];
                 } else {
-                    $newItems[$hashUrl]['via'] = '';
+                    $list[$i] = array($list[$i], '', array());
                 }
-                $newItems[$hashUrl]['link'] = $tmpItem['link'];
-                $newItems[$hashUrl]['author'] = $tmpItem['author'];
-                mb_internal_encoding("UTF-8");
-                $newItems[$hashUrl]['description'] = mb_substr(
-                    strip_tags($tmpItem['description']), 0, 500
-                );
-                $newItems[$hashUrl]['content'] = $tmpItem['content'];
+
+                $name = explode(':', $selector);
+
+                if (count($name) > 1) {
+                    $elements = $element->getElementsByTagNameNS('*', $name[1]);
+                } else {
+                    $elements = $element->getElementsByTagName($name[0]);
+                }
+
+                for ($j = 0; $j < $elements->length; $j++) {
+                    $elt = $elements->item($j);
+                    $isCorrect = true;
+                    if ($elements->item($j)->tagName != $selector) {
+                        $isCorrect = false;
+                    } else {
+                        foreach($list[$i][2] as $attr) {
+                            $attrs = explode('=', $attr);
+                            if (count($attrs) !== 2 || 
+                                !$elements->item($j)->hasAttribute($attrs[0]) ||
+                                $elements->item($j)->getAttribute($attrs[0]) !== $attrs[1]) {
+                                $isCorrect = false;
+                            }
+                        }
+                    }
+
+                    if ($isCorrect) {
+                        if (empty($list[$i][1])) {
+                            $newElement[$format] = $elt->textContent;
+                        } else {
+                            if ($elements->item($j)->hasAttribute($list[$i][1])) {
+                                $newElement[$format] = $elt->getAttribute($list[$i][1]);
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        return $newItems;
+        return $newElement;
     }
 
     /**
-     * return channel from xmlUrl
+     * return feed from dom
      *
-     * @param DOMDocument $xml DOMDocument of the feed
+     * @param DOMDocument $dom DOMDocument of the feed
      *
      * @return array Array with extracted information channel
      */
-    public static function getChannelFromXml($xml)
+    public static function getFeed($dom)
     {
-        $channel = array();
+        $feed = new DOMNodelist;
 
         // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $channel = $feed->item(0);
+        $feed = $dom->getElementsByTagName('channel');
+        if ($feed->item(0)) { // RSS/rdf:RDF feed
+            $feed = $feed->item(0);
         } else {
-            $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $channel = $feed->item(0);
-            } else {
-                // unknown feed
+            $feed = $dom->getElementsByTagName('feed');
+            if ($feed->item(0)) { // Atom feed
+                $feed = $feed->item(0);
             }
         }
 
-        if (!empty($channel)) {
-            $channel = self::formatChannel($channel);
-        }
-
-        return $channel;
+        return self::formatElement($feed, self::$feedFormat);
     }
 
     /**
-     * Search a namespaceURI into tags
-     * (used when namespaceURI are not defined in the root tag)
+     * Return array of items from dom
      *
-     * @param DOMNode $feed DOMNode to look into
-     * @param string  $name String of the namespace to look for
-     *
-     * @return string The namespaceURI or empty string if not found
-     */
-    public static function getAttributeNS ($feed, $name)
-    {
-        $res = '';
-        if ($feed->nodeName === $name) {
-            $ns = explode(':', $name);
-            $res = $feed->getAttribute('xmlns:'.$ns[0]);
-        } else {
-            if ($feed->hasChildNodes()) {
-                foreach ($feed->childNodes as $childNode) {
-                    if ($res === '') {
-                        $res = self::getAttributeNS($childNode, $name);
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $res;
-    }
-
-    /**
-     * Return array of items from xml
-     *
-     * @param DOMDocument $xml DOMDocument where to extract items
+     * @param DOMDocument $dom DOMDocument where to extract items
      *
      * @return array Array of items extracted from the DOMDocument
      */
-    public static function getItemsFromXml ($xml)
+    public static function getItems($dom)
     {
         $items = new DOMNodelist;
 
         // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
+        $feed = $dom->getElementsByTagName('channel');
         if ($feed->item(0)) { // RSS/rdf:RDF feed
-            $items = $xml->getElementsByTagName('item');
+            $items = $dom->getElementsByTagName('item');
         } else {
-            $feed = $xml->getElementsByTagName('feed');
+            $feed = $dom->getElementsByTagName('feed');
             if ($feed->item(0)) { // Atom feed
-                $items = $xml->getElementsByTagName('entry');
+                $items = $dom->getElementsByTagName('entry');
             }
         }
 
-        // list of format for each info in order of importance
-        $formats = array(
-            'author'      => array('author', 'creator', 'dc:author',
-                                   'dc:creator'),
-            'content'     => array('content:encoded', 'content', 'description',
-                               'summary', 'subtitle'),
-            'description' => array('description', 'summary', 'subtitle',
-                                   'content', 'content:encoded'),
-            'via'        => array('guid', 'id'),
-            'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
-            'time'        => array('pubDate', 'updated', 'lastBuildDate',
-                                   'published', 'dc:date', 'date', 'created',
-                                   'modified'),
-            'title'       => array('title'));
+        $newItems = array();
+        for ($i = 0; $i < $items->length; $i++) {
+            $item = $items->item($i);
+            $item = self::formatElement($item, self::$itemFormat);
+            if (!empty($item)) {
+                $newItems[] = $item;
+            }
+        }
 
-        return self::formatItems($items, $formats);
+        return $newItems;
     }
 
     public static function loadDom($data)

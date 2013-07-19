@@ -292,7 +292,7 @@ class Intl
         return $entries;
     }
 
-    public function clean($x)
+    public static function clean($x)
     {
         if(is_array($x)) {
             foreach($x as $k => $v) {
