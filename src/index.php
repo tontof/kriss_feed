@@ -6784,6 +6784,9 @@ dd {
     return url;
   }
 
+  function markAsStarredCurrentItem() {
+    markAsStarredItem(currentItemHash);
+  }
 
   function markAsStarredItem(itemHash) {
     var url, client, indexItem;
@@ -7721,6 +7724,9 @@ dd {
 			}
 		}
         break;
+        case 170: // '*'
+          markAsStarredCurrentItem();
+          break;
         case 112: // 'F1'
         case 188: // '?'
         case 191: // '?'
