@@ -3057,7 +3057,7 @@ class Feed
     public function updateFeedFromDom($feed, $dom) {
         if (empty($feed)) {
             // addFeed
-            $feed = Rss::getFeedFromDom($dom);
+            $feed = Rss::getFeed($dom);
 
             if (!MyTool::isUrl($feed['htmlUrl'])) {
                 $feed['htmlUrl'] = ' ';
@@ -3070,7 +3070,7 @@ class Feed
         } else if (empty($feed['description']) || empty($feed['htmlUrl'])) {
             // if feed description/htmlUrl is empty try to update
             // (after opml import, description/htmlUrl are often empty)
-            $rssFeed = Rss::getFeedFromDom($dom);
+            $rssFeed = Rss::getFeed($dom);
             if (empty($feed['description'])) {
                 if (empty($rssFeed['description'])) {
                     $rssFeed['description'] = ' ';
@@ -3089,7 +3089,7 @@ class Feed
     }
 
     public function updateItemsFromDom($dom) {
-        $items = Rss::getItemsFromDom($dom);
+        $items = Rss::getItems($dom);
 
         $newItems = array();
         foreach($items as $item) {
@@ -4755,7 +4755,7 @@ class Rss
         return $newElement;
     }
 
-    public static function getFeedFromDom($dom)
+    public static function getFeed($dom)
     {
         $feed = new DOMNodelist;
 
@@ -4773,7 +4773,7 @@ class Rss
         return self::formatElement($feed, self::$feedFormat);
     }
 
-    public static function getItemsFromDom($dom)
+    public static function getItems($dom)
     {
         $items = new DOMNodelist;
 
