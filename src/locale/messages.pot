@@ -164,7 +164,7 @@ msgid ""
 "accents and try again. Nothing was imported."
 msgstr ""
 
-#: class/Rss.php:165
+#: class/Rss.php:169
 msgid "Unknown XML error"
 msgstr ""
 

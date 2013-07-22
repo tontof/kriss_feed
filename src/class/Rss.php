@@ -48,7 +48,7 @@ class Rss
                     $elements = $element->getElementsByTagName($name[0]);
                 }
 
-                for ($j = 0; $j < $elements->length; $j++) {
+                for ($j = 0; $j < $elements->length && empty($newElement[$format]); $j++) {
                     $elt = $elements->item($j);
                     $isCorrect = true;
                     if ($elements->item($j)->tagName != $selector) {
@@ -62,6 +62,10 @@ class Rss
                                 $isCorrect = false;
                             }
                         }
+                    }
+
+                    if (!$elt->parentNode->isSameNode($element)) {
+                        $isCorrect = false;
                     }
 
                     if ($isCorrect) {
