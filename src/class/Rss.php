@@ -4,6 +4,10 @@
  */
 class Rss
 {
+    const UNKNOWN = 0;
+    const RSS = 1;
+    const ATOM = 2;
+
     static $feedFormat = array(
         'title' => array('title'),
         'description' => array('description', 'subtitle'),
@@ -85,56 +89,49 @@ class Rss
     }
 
     /**
-     * return feed from dom
+     * Return array of feed from a DOMDocument
      *
-     * @param DOMDocument $dom DOMDocument of the feed
+     * @param DOMDocument $dom
      *
-     * @return array Array with extracted information channel
+     * @return array of feed info extracted from $dom
      */
     public static function getFeed($dom)
     {
         $feed = new DOMNodelist;
 
-        // find feed type RSS, Atom
-        $feed = $dom->getElementsByTagName('channel');
-        if ($feed->item(0)) { // RSS/rdf:RDF feed
-            $feed = $feed->item(0);
-        } else {
-            $feed = $dom->getElementsByTagName('feed');
-            if ($feed->item(0)) { // Atom feed
-                $feed = $feed->item(0);
-            }
+        $type = self::getType($dom);
+        if ($type === self::RSS) {
+            $feed = $dom->getElementsByTagName('channel')->item(0);
+        } elseif ($type === self::ATOM) {
+            $feed = $dom->getElementsByTagName('feed')->item(0);
         }
 
         return self::formatElement($feed, self::$feedFormat);
     }
 
     /**
-     * Return array of items from dom
+     * Return array of items from a DOMDocument
      *
-     * @param DOMDocument $dom DOMDocument where to extract items
+     * @param DOMDocument $dom
+     * @param integer     $nb of items to select
      *
-     * @return array Array of items extracted from the DOMDocument
+     * @return array of items extracted from the $dom
      */
-    public static function getItems($dom)
+    public static function getItems($dom, $nb = -1)
     {
         $items = new DOMNodelist;
 
-        // find feed type RSS, Atom
-        $feed = $dom->getElementsByTagName('channel');
-        if ($feed->item(0)) { // RSS/rdf:RDF feed
+        $type = self::getType($dom);
+        if ($type === self::RSS) {
             $items = $dom->getElementsByTagName('item');
-        } else {
-            $feed = $dom->getElementsByTagName('feed');
-            if ($feed->item(0)) { // Atom feed
-                $items = $dom->getElementsByTagName('entry');
-            }
+        } elseif ($type === self::ATOM) {
+            $items = $dom->getElementsByTagName('entry');
         }
-
+        
         $newItems = array();
-        for ($i = 0; $i < $items->length; $i++) {
-            $item = $items->item($i);
-            $item = self::formatElement($item, self::$itemFormat);
+        $max = $nb === -1 ? $items->length : max($nb, $item->length);
+        for ($i = 0; $i < $max; $i++) {
+            $item = self::formatElement($items->item($i), self::$itemFormat);
             if (!empty($item)) {
                 $newItems[] = $item;
             }
@@ -143,45 +140,84 @@ class Rss
         return $newItems;
     }
 
+    /**
+     * Return type of a DOMDocument
+     *
+     * @param DOMDocument $dom
+     *
+     * @return const corresponding to the type of $dom
+     */
+    public static function getType($dom) {
+        $type = self::UNKNOWN;
+
+        $feed = $dom->getElementsByTagName('channel');
+        if ($feed->item(0)) { // RSS/rdf:RDF feed
+            $type = self::RSS;
+        } else {
+            $feed = $dom->getElementsByTagName('feed');
+            if ($feed->item(0)) { // Atom feed
+                $type = self::ATOM;
+            }
+        }
+
+        return $type;
+    }
+
+    /**
+     * Load a XML string into DOMDocument
+     *
+     * @param string $data
+     *
+     * @return array with a DOMDocument and a string error
+     */
     public static function loadDom($data)
     {
         $error = '';
-        set_error_handler(array('MyTool', 'silenceErrors'));
+        set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
         $isValid = $dom->loadXML($data);
         restore_error_handler();
-        
-        if (!$isValid) {
-            $error = self::getError(libxml_get_last_error());
-        }
 
         return array(
             'dom' => $dom,
-            'error' => $error
+            'error' => self::getError(libxml_get_last_error())
         );
     }
 
+    /**
+     * Explicit libxml2 error
+     *
+     * @param LibXMLError $error
+     *
+     * @return string of the error
+     */
     public static function getError($error)
     {
         $return = '';
-        
-        if ($error === false) {
-            $return = Intl::msg('Unknown XML error');
-        } else {
+
+        if ($error !== false) {
             switch ($error->level) {
             case LIBXML_ERR_WARNING:
-                $return .= "Warning XML $error->code: ";
+                $return = "Warning XML $error->code: ";
                 break;
             case LIBXML_ERR_ERROR:
-                $return .= "Error XML $error->code: ";
+                $return = "Error XML $error->code: ";
                 break;
             case LIBXML_ERR_FATAL:
-                $return .= "Fatal Error XML $error->code: ";
+                $return = "Fatal Error XML $error->code: ";
                 break;
             }
-            $return .= trim($error->message);
+            $return .= $return.trim($error->message);
         }
 
         return $return;
+    }
+
+    /**
+     * From Simplie Pie
+     */
+    public static function silenceErrors($num, $str)
+    {
+        // No-op                                                       
     }
 }

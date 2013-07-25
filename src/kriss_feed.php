@@ -26,11 +26,6 @@ define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
 
 define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
 
-define('ERROR_NO_ERROR', 0);
-define('ERROR_NO_XML', 1);
-define('ERROR_ITEMS_MISSED', 2);
-define('ERROR_LAST_UPDATE', 3);
-define('ERROR_UNKNOWN', 4);
 
 // fix some warning
 date_default_timezone_set('Europe/Paris');

@@ -1,82 +1,82 @@
-#: kriss_feed.php:127 class/FeedConf.php:201 class/FeedConf.php:207
+#: kriss_feed.php:122 class/FeedConf.php:201 class/FeedConf.php:207
 #, php-format
 msgid "Can not create %s directory, check permissions"
 msgstr ""
 
-#: kriss_feed.php:136
+#: kriss_feed.php:131
 #, php-format
 msgid "Can not protect %s directory with .htaccess, check permissions"
 msgstr ""
 
-#: kriss_feed.php:145
+#: kriss_feed.php:140
 msgid "Wrong token"
 msgstr ""
 
-#: kriss_feed.php:223
+#: kriss_feed.php:218
 msgid "Login failed!"
 msgstr ""
 
-#: kriss_feed.php:226 kriss_feed.php:951 class/tpl/login.tpl.php:34
+#: kriss_feed.php:221 kriss_feed.php:946 class/tpl/login.tpl.php:34
 #: class/tpl/nav.tpl.php:136 class/tpl/nav.tpl.php:157
 msgid "Sign in"
 msgstr ""
 
-#: kriss_feed.php:243 class/tpl/change_password.tpl.php:16
+#: kriss_feed.php:238 class/tpl/change_password.tpl.php:16
 msgid "Change your password"
 msgstr ""
 
-#: kriss_feed.php:350 class/tpl/config.tpl.php:294
+#: kriss_feed.php:345 class/tpl/config.tpl.php:294
 #: class/tpl/config.tpl.php:297 class/tpl/nav.tpl.php:114
 msgid "Help"
 msgstr ""
 
-#: kriss_feed.php:395 class/tpl/config.tpl.php:259
+#: kriss_feed.php:390 class/tpl/config.tpl.php:259
 msgid "Update"
 msgstr ""
 
-#: kriss_feed.php:399 class/tpl/nav.tpl.php:144
+#: kriss_feed.php:394 class/tpl/nav.tpl.php:144
 msgid "Plugins management"
 msgstr ""
 
-#: kriss_feed.php:418 class/tpl/nav.tpl.php:129 class/tpl/nav.tpl.php:150
+#: kriss_feed.php:413 class/tpl/nav.tpl.php:129 class/tpl/nav.tpl.php:150
 msgid "Configuration"
 msgstr ""
 
-#: kriss_feed.php:453
+#: kriss_feed.php:448
 #, php-format
 msgid ""
 "The file you are trying to upload is probably bigger than what this "
 "webserver can accept (%s). Please upload in smaller chunks."
 msgstr ""
 
-#: kriss_feed.php:466
+#: kriss_feed.php:461
 msgid "Import"
 msgstr ""
 
-#: kriss_feed.php:509 class/tpl/add_feed.tpl.php:14
+#: kriss_feed.php:504 class/tpl/add_feed.tpl.php:14
 #: class/tpl/config.tpl.php:287 class/tpl/config.tpl.php:290
 #: class/tpl/nav.tpl.php:110
 msgid "Add a new feed"
 msgstr ""
 
-#: kriss_feed.php:638 kriss_feed.php:641 kriss_feed.php:644 kriss_feed.php:647
+#: kriss_feed.php:633 kriss_feed.php:636 kriss_feed.php:639 kriss_feed.php:642
 msgid "starred items"
 msgstr ""
 
-#: kriss_feed.php:667 class/tpl/config.tpl.php:301
+#: kriss_feed.php:662 class/tpl/config.tpl.php:301
 #: class/tpl/config.tpl.php:304 class/tpl/nav.tpl.php:119
 msgid "Starred items"
 msgstr ""
 
-#: kriss_feed.php:673 class/tpl/config.tpl.php:280
+#: kriss_feed.php:668 class/tpl/config.tpl.php:280
 msgid "Edit"
 msgstr ""
 
-#: kriss_feed.php:842
+#: kriss_feed.php:837
 msgid "Please configure your share link first"
 msgstr ""
 
-#: kriss_feed.php:920 kriss_feed.php:923 kriss_feed.php:926 kriss_feed.php:929
+#: kriss_feed.php:915 kriss_feed.php:918 kriss_feed.php:921 kriss_feed.php:924
 msgid "unread items"
 msgstr ""
 
@@ -162,10 +162,6 @@ msgstr ""
 msgid ""
 "File %s (%s) has an unknown file format. Check encoding, try to remove "
 "accents and try again. Nothing was imported."
-msgstr ""
-
-#: class/Rss.php:169
-msgid "Unknown XML error"
 msgstr ""
 
 #: class/tpl/add_feed.tpl.php:16

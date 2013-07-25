@@ -26,11 +26,6 @@ define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
 
 define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
 
-define('ERROR_NO_ERROR', 0);
-define('ERROR_NO_XML', 1);
-define('ERROR_ITEMS_MISSED', 2);
-define('ERROR_LAST_UPDATE', 3);
-define('ERROR_UNKNOWN', 4);
 
 // fix some warning
 date_default_timezone_set('Europe/Paris');
@@ -4014,7 +4009,7 @@ class MyTool
         }
 
         error_reporting(E_ALL);
-        ini_set(display_errors,1);
+        ini_set('display_errors', 1);
 
         function stripslashesDeep($value) {
             return is_array($value)
@@ -4252,11 +4247,6 @@ class MyTool
         }
         header('Location: '.$rurl);
         exit();
-    }
-
-    public static function silenceErrors($num, $str)
-    {
-        // No-op                                                       
     }
 }
 
@@ -4682,6 +4672,10 @@ class Plugin
 
 class Rss
 {
+    const UNKNOWN = 0;
+    const RSS = 1;
+    const ATOM = 2;
+
     static $feedFormat = array(
         'title' => array('title'),
         'description' => array('description', 'subtitle'),
@@ -4763,39 +4757,31 @@ class Rss
     {
         $feed = new DOMNodelist;
 
-        // find feed type RSS, Atom
-        $feed = $dom->getElementsByTagName('channel');
-        if ($feed->item(0)) { // RSS/rdf:RDF feed
-            $feed = $feed->item(0);
-        } else {
-            $feed = $dom->getElementsByTagName('feed');
-            if ($feed->item(0)) { // Atom feed
-                $feed = $feed->item(0);
-            }
+        $type = self::getType($dom);
+        if ($type === self::RSS) {
+            $feed = $dom->getElementsByTagName('channel')->item(0);
+        } elseif ($type === self::ATOM) {
+            $feed = $dom->getElementsByTagName('feed')->item(0);
         }
 
         return self::formatElement($feed, self::$feedFormat);
     }
 
-    public static function getItems($dom)
+    public static function getItems($dom, $nb = -1)
     {
         $items = new DOMNodelist;
 
-        // find feed type RSS, Atom
-        $feed = $dom->getElementsByTagName('channel');
-        if ($feed->item(0)) { // RSS/rdf:RDF feed
+        $type = self::getType($dom);
+        if ($type === self::RSS) {
             $items = $dom->getElementsByTagName('item');
-        } else {
-            $feed = $dom->getElementsByTagName('feed');
-            if ($feed->item(0)) { // Atom feed
-                $items = $dom->getElementsByTagName('entry');
-            }
+        } elseif ($type === self::ATOM) {
+            $items = $dom->getElementsByTagName('entry');
         }
-
+        
         $newItems = array();
-        for ($i = 0; $i < $items->length; $i++) {
-            $item = $items->item($i);
-            $item = self::formatElement($item, self::$itemFormat);
+        $max = $nb === -1 ? $items->length : max($nb, $item->length);
+        for ($i = 0; $i < $max; $i++) {
+            $item = self::formatElement($items->item($i), self::$itemFormat);
             if (!empty($item)) {
                 $newItems[] = $item;
             }
@@ -4804,46 +4790,61 @@ class Rss
         return $newItems;
     }
 
+    public static function getType($dom) {
+        $type = self::UNKNOWN;
+
+        $feed = $dom->getElementsByTagName('channel');
+        if ($feed->item(0)) { // RSS/rdf:RDF feed
+            $type = self::RSS;
+        } else {
+            $feed = $dom->getElementsByTagName('feed');
+            if ($feed->item(0)) { // Atom feed
+                $type = self::ATOM;
+            }
+        }
+
+        return $type;
+    }
+
     public static function loadDom($data)
     {
         $error = '';
-        set_error_handler(array('MyTool', 'silenceErrors'));
+        set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
         $isValid = $dom->loadXML($data);
         restore_error_handler();
-        
-        if (!$isValid) {
-            $error = self::getError(libxml_get_last_error());
-        }
 
         return array(
             'dom' => $dom,
-            'error' => $error
+            'error' => self::getError(libxml_get_last_error())
         );
     }
 
     public static function getError($error)
     {
         $return = '';
-        
-        if ($error === false) {
-            $return = Intl::msg('Unknown XML error');
-        } else {
+
+        if ($error !== false) {
             switch ($error->level) {
             case LIBXML_ERR_WARNING:
-                $return .= "Warning XML $error->code: ";
+                $return = "Warning XML $error->code: ";
                 break;
             case LIBXML_ERR_ERROR:
-                $return .= "Error XML $error->code: ";
+                $return = "Error XML $error->code: ";
                 break;
             case LIBXML_ERR_FATAL:
-                $return .= "Fatal Error XML $error->code: ";
+                $return = "Fatal Error XML $error->code: ";
                 break;
             }
-            $return .= trim($error->message);
+            $return .= $return.trim($error->message);
         }
 
         return $return;
+    }
+
+    public static function silenceErrors($num, $str)
+    {
+        // No-op                                                       
     }
 }
 
@@ -5124,6 +5125,17 @@ class Star extends Feed
         parent::writeData();
         $this->writeStarredItems();
     }
+}
+
+include('Rss.php');
+
+$res = Rss::loadDom(file_get_contents($argv[1]));
+
+if (empty($res['error'])) {
+    var_dump(Rss::getFeed($res['dom']));
+    var_dump(Rss::getItems($res['dom'],1));
+} else {
+    echo $res['error'];
 }
 
 Plugin::init();

@@ -167,7 +167,7 @@ class MyTool
         }
 
         error_reporting(E_ALL);
-        ini_set(display_errors,1);
+        ini_set('display_errors', 1);
 
         function stripslashesDeep($value) {
             return is_array($value)
@@ -501,13 +501,5 @@ class MyTool
         }
         header('Location: '.$rurl);
         exit();
-    }
-
-    /**
-     * From Simplie Pie
-     */
-    public static function silenceErrors($num, $str)
-    {
-        // No-op                                                       
     }
 }
