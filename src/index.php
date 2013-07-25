@@ -5127,17 +5127,6 @@ class Star extends Feed
     }
 }
 
-include('Rss.php');
-
-$res = Rss::loadDom(file_get_contents($argv[1]));
-
-if (empty($res['error'])) {
-    var_dump(Rss::getFeed($res['dom']));
-    var_dump(Rss::getItems($res['dom'],1));
-} else {
-    echo $res['error'];
-}
-
 Plugin::init();
 
 
