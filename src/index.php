@@ -4810,6 +4810,7 @@ class Rss
     {
         $error = '';
         set_error_handler(array('Rss', 'silenceErrors'));
+        libxml_clear_errors();
         $dom = new DOMDocument();
         $isValid = $dom->loadXML($data);
         restore_error_handler();
