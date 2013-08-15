@@ -1247,8 +1247,13 @@ class Feed
     public function updateFeedsHash($feedsHash, $force, $format = '')
     {
         $i = 0;
+        $errorCount = 0;
+        $noUpdateCount = 0;
+        $successCount = 0;
+        $nbItemsAdded = 0;
 
         $feedsHash = $this->orderFeedsForUpdate($feedsHash);
+        $nbFeeds = count($feedsHash);
 
         ob_end_flush();
         if (ob_get_level() == 0) ob_start();
@@ -1267,10 +1272,11 @@ class Feed
               <tbody>';
         }
         $start = microtime(true);
+        $lastTime = $start;
         foreach ($feedsHash as $feedHash) {
             $i++;
             $feed = $this->getFeed($feedHash);
-            $strBegin = "\n".'<tr><td>'.str_pad($i.'/'.count($feedsHash), 7, ' ', STR_PAD_LEFT).'</td><td> <a href="?currentHash='.$feedHash.'">'.substr(str_pad($feed['title'], 50), 0, 50).'</a> </td><td>';
+            $strBegin = "\n".'<tr><td>'.str_pad($i.'/'.$nbFeeds, 7, ' ', STR_PAD_LEFT).'</td><td> <a href="?currentHash='.$feedHash.'">'.substr(str_pad($feed['title'], 50), 0, 50).'</a> </td><td>';
             if ($format === 'html') {
                 echo str_pad($strBegin, 4096);
                 ob_flush();
@@ -1278,16 +1284,23 @@ class Feed
             }
 
             $strEnd = '';
+            $time = microtime(true) - $lastTime;
+            $lastTime += $time;
             if ($force or $this->needUpdate($feed)) {
                 $info = $this->updateChannel($feedHash, $force);
-                $strEnd .= '<span class="text-success">'.str_pad(count($info['newItems']), 3, ' ', STR_PAD_LEFT).'</span> </td><td>'.str_pad(number_format(microtime(true)-$start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>';
+                $countItems = count($info['newItems']);
+                $strEnd .= '<span class="text-success">'.str_pad($countItems, 3, ' ', STR_PAD_LEFT).'</span> </td><td>'.str_pad(number_format($time, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>';
                 if (empty($info['error'])) {
                     $strEnd .= Intl::msg('Successfully updated').'</td></tr>';
+                    $successCount++;
+                    $nbItemsAdded += $countItems;
                 } else {
                     $strEnd .= '<span class="text-error">'.$info['error'].'</span></td></tr>';
+                    $errorCount++;
                 }
             } else {
-                $strEnd .= str_pad('0', 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format(microtime(true)-$start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td><span class="text-warning">'.Intl::msg('Already up-to-date').'</span></td></tr>';
+                $strEnd .= str_pad('0', 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format($time, 1), 6, ' ', STR_PAD_LEFT).'s </td><td><span class="text-warning">'.Intl::msg('Already up-to-date').'</span></td></tr>';
+                $noUpdateCount++;
             }
             if ($format==='html') {
                 echo str_pad($strEnd,4096);
@@ -1297,6 +1310,27 @@ class Feed
                 echo strip_tags($strBegin.$strEnd);
             }
         }
+
+        // summary
+        $strBegin = "\n".'<tr><td></td><td> '.Intl::msg('Total:').' '.$nbFeeds.' '.Intl::msg('items').'</td><td>';
+        if ($format === 'html') {
+            echo str_pad($strBegin, 4096);
+            ob_flush();
+            flush();
+        }
+
+        $strEnd = str_pad($nbItemsAdded, 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format(microtime(true) - $start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>'
+            .'<span class="text-success">'.$successCount.' '.($successCount > 1 ? Intl::msg('Successes') : Intl::msg('Success')).'</span><br />'
+            .'<span class="text-warning">'.$noUpdateCount.' '.Intl::msg('Up-to-date').'</span><br />'
+            .'<span class="text-error">'.$errorCount.' '.($errorCount > 1 ? Intl::msg('Errors') : Intl::msg('Error')).'</span></td></tr>';
+        if ($format === 'html') {
+            echo str_pad($strEnd, 4096);
+            ob_flush();
+            flush();
+        } else {
+            echo strip_tags($strBegin.$strEnd);
+        }
+
         if ($format === 'html') {
             echo '</tbody></table>';
         }

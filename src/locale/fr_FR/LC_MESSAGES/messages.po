@@ -171,6 +171,34 @@ msgstr "Mise à jour réussie"
 msgid "Already up-to-date"
 msgstr "Déjà à jour"
 
+#: class/Feed.php:1315
+msgid "Total:"
+msgstr "Total :"
+
+#: class/Feed.php:1315
+msgid "items"
+msgstr "éléments"
+
+#: class/Feed.php:1323
+msgid "Successes"
+msgstr "Succès"
+
+#: class/Feed.php:1323
+msgid "Success"
+msgstr "Succès"
+
+#: class/Feed.php:1324
+msgid "Up-to-date"
+msgstr "À jour"
+
+#: class/Feed.php:1325
+msgid "Errors"
+msgstr "Erreurs"
+
+#: class/Feed.php:1325
+msgid "Error"
+msgstr "Erreur"
+
 #: class/MyTool.php:140
 msgid "Http code not valid"
 msgstr "Code http non valide"

@@ -112,28 +112,56 @@ msgstr ""
 msgid "Items may have been missed since last update"
 msgstr ""
 
-#: class/Feed.php:1261
+#: class/Feed.php:1266
 msgid "Feed"
 msgstr ""
 
-#: class/Feed.php:1262
+#: class/Feed.php:1267
 msgid "New items"
 msgstr ""
 
-#: class/Feed.php:1263
+#: class/Feed.php:1268
 msgid "Time"
 msgstr ""
 
-#: class/Feed.php:1264
+#: class/Feed.php:1269
 msgid "Status"
 msgstr ""
 
-#: class/Feed.php:1285
+#: class/Feed.php:1294
 msgid "Successfully updated"
 msgstr ""
 
-#: class/Feed.php:1290
+#: class/Feed.php:1302
 msgid "Already up-to-date"
+msgstr ""
+
+#: class/Feed.php:1315
+msgid "Total:"
+msgstr ""
+
+#: class/Feed.php:1315
+msgid "items"
+msgstr ""
+
+#: class/Feed.php:1323
+msgid "Successes"
+msgstr ""
+
+#: class/Feed.php:1323
+msgid "Success"
+msgstr ""
+
+#: class/Feed.php:1324
+msgid "Up-to-date"
+msgstr ""
+
+#: class/Feed.php:1325
+msgid "Errors"
+msgstr ""
+
+#: class/Feed.php:1325
+msgid "Error"
 msgstr ""
 
 #: class/MyTool.php:140
