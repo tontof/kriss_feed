@@ -4870,7 +4870,13 @@ class Session
         if(dirname($_SERVER['SCRIPT_NAME'])!='/') {
             $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
         }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir);
+        $ssl = false;
+
+        if(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $ssl = true;
+        }
+                
+        session_set_cookie_params($cookie['lifetime'], $cookiedir, $cookie['domain'], $ssl);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
