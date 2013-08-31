@@ -108,6 +108,9 @@ msgstr ""
 msgid "items"
 msgstr ""
 
+msgid "item"
+msgstr ""
+
 msgid "Successes"
 msgstr ""
 

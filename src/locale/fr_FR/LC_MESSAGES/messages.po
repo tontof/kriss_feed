@@ -119,6 +119,9 @@ msgstr "Total :"
 msgid "items"
 msgstr "éléments"
 
+msgid "item"
+msgstr "élément"
+
 msgid "Successes"
 msgstr "Succès"
 
@@ -721,3 +724,4 @@ msgstr "Revenir en arrière"
 
 msgid "Force update"
 msgstr "Forcer la mise à jour"
+
