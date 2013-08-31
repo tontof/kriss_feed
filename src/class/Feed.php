@@ -1312,7 +1312,7 @@ class Feed
         }
 
         // summary
-        $strBegin = "\n".'<tr><td></td><td> '.Intl::msg('Total:').' '.$nbFeeds.' '.Intl::msg('items').'</td><td>';
+        $strBegin = "\n".'<tr><td></td><td> '.Intl::msg('Total:').' '.$nbFeeds.' '.($nbFeeds > 1 ? Intl::msg('items') : Intl::msg('item')).'</td><td>';
         if ($format === 'html') {
             echo str_pad($strBegin, 4096);
             ob_flush();
