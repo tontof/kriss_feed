@@ -182,7 +182,6 @@ class MyTool
         }
 
         ob_start();
-        register_shutdown_function('ob_end_flush');
     }
 
     /**

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: KrISS feed\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: \n"
+"Last-Translator: Tontof <tontof@free.fr>\n"
 "Language-Team: \n"
 "Language: Français (France)\n"
 "MIME-Version: 1.0\n"
@@ -11,1019 +11,713 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: kriss_feed.php:84
-#: class/FeedConf.php:201
-#: class/FeedConf.php:207
 #, php-format
 msgid "Can not create %s directory, check permissions"
 msgstr "Impossible de créer le dossier %s, vérifiez les droits"
 
-#: kriss_feed.php:93
 #, php-format
 msgid "Can not protect %s directory with .htaccess, check permissions"
 msgstr "Impossible de protéger le dossier %s avec un fichier .htaccess, vérifiez les droits"
 
-#: kriss_feed.php:102
 msgid "Wrong token"
 msgstr "Jeton de sécurité invalide"
 
-#: kriss_feed.php:186
 msgid "Login failed!"
 msgstr "Échec de la connexion !"
 
-#: kriss_feed.php:189
-#: kriss_feed.php:950
-#: class/tpl/login.tpl.php:34
-#: class/tpl/nav.tpl.php:136
-#: class/tpl/nav.tpl.php:157
+msgid "I said: NO. You are banned for the moment. Go away."
+msgstr "Vous avez été banni. Revenez plus tard."
+
 msgid "Sign in"
 msgstr "Connexion"
 
-#: kriss_feed.php:206
-#: class/tpl/change_password.tpl.php:16
 msgid "Change your password"
 msgstr "Changer votre mot de passe"
 
-#: kriss_feed.php:313
-#: class/tpl/config.tpl.php:294
-#: class/tpl/config.tpl.php:297
-#: class/tpl/nav.tpl.php:114
 msgid "Help"
 msgstr "Aide"
 
-#: kriss_feed.php:358
-#: class/tpl/config.tpl.php:259
 msgid "Update"
 msgstr "Mise à jour"
 
-#: kriss_feed.php:362
-#: class/tpl/nav.tpl.php:144
 msgid "Plugins management"
 msgstr "Gestion des plugins"
 
-#: kriss_feed.php:381
-#: class/tpl/nav.tpl.php:129
-#: class/tpl/nav.tpl.php:150
 msgid "Configuration"
 msgstr "Configuration"
 
-#: kriss_feed.php:416
 #, php-format
 msgid "The file you are trying to upload is probably bigger than what this webserver can accept (%s). Please upload in smaller chunks."
 msgstr "Le fichier que vous essayer d'envoyer est trop volumineux par rapport à ce que le serveur peut accepter (%s). Essayez de réduire la taille de ce dernier."
 
-#: kriss_feed.php:429
 msgid "Import"
 msgstr "Importation"
 
-#: kriss_feed.php:472
-#: class/tpl/add_feed.tpl.php:14
-#: class/tpl/config.tpl.php:287
-#: class/tpl/config.tpl.php:290
-#: class/tpl/nav.tpl.php:110
 msgid "Add a new feed"
 msgstr "Ajouter un nouveau flux"
 
-#: kriss_feed.php:601
-#: kriss_feed.php:604
-#: kriss_feed.php:607
-#: kriss_feed.php:610
 msgid "starred items"
 msgstr "articles conservés"
 
-#: kriss_feed.php:630
-#: class/tpl/config.tpl.php:301
-#: class/tpl/config.tpl.php:304
-#: class/tpl/nav.tpl.php:119
 msgid "Starred items"
 msgstr "Articles conservés"
 
-#: kriss_feed.php:636
-#: class/tpl/config.tpl.php:280
 msgid "Edit"
 msgstr "Édition"
 
-#: kriss_feed.php:805
 msgid "Please configure your share link first"
 msgstr "Veuillez configurer votre lien de partage"
 
-#: kriss_feed.php:919
-#: kriss_feed.php:922
-#: kriss_feed.php:925
-#: kriss_feed.php:928
 msgid "unread items"
 msgstr "articles non lus"
 
-#: class/FeedConf.php:273
 msgid "Your simple and smart (or stupid) feed reader is now configured."
 msgstr "Votre simple et superbe (ou stupide) lecteur de flux est bien configuré."
 
-#: class/FeedConf.php:275
 msgid "Continue"
 msgstr "Continuer"
 
-#: class/FeedConf.php:285
-#: class/tpl/install.tpl.php:13
 msgid "KrISS feed installation"
 msgstr "Installation de KrISS feed"
 
-#: class/Feed.php:178
 msgid "All feeds"
 msgstr "Tous les flux"
 
-#: class/Feed.php:916
 msgid "Empty output data"
 msgstr "Données vides"
 
-#: class/Feed.php:984
 msgid "Duplicated feed"
 msgstr "Flux déjà présent"
 
-#: class/Feed.php:1045
 msgid "Unknown feedhash"
 msgstr "Flux inconnu"
 
-#: class/Feed.php:1106
 msgid "Items may have been missed since last update"
 msgstr "Des articles peuvent être manquants depuis la dernière mise à jour"
 
-#: class/Feed.php:1229
 msgid "Feed"
 msgstr "Flux"
 
-#: class/Feed.php:1230
 msgid "New items"
 msgstr "Nouveaux articles"
 
-#: class/Feed.php:1231
 msgid "Time"
 msgstr "Durée"
 
-#: class/Feed.php:1232
 msgid "Status"
 msgstr "État"
 
-#: class/Feed.php:1253
 msgid "Successfully updated"
 msgstr "Mise à jour réussie"
 
-#: class/Feed.php:1258
 msgid "Already up-to-date"
 msgstr "Déjà à jour"
 
-#: class/MyTool.php:140
+msgid "Total:"
+msgstr "Total :"
+
+msgid "items"
+msgstr "éléments"
+
+msgid "Successes"
+msgstr "Succès"
+
+msgid "Success"
+msgstr "Succès"
+
+msgid "Up-to-date"
+msgstr "À jour"
+
+msgid "Errors"
+msgstr "Erreurs"
+
+msgid "Error"
+msgstr "Erreur"
+
 msgid "Http code not valid"
 msgstr "Code http non valide"
 
-#: class/MyTool.php:143
 msgid "Location not found"
 msgstr "Redirection non trouvée"
 
-#: class/MyTool.php:146
 msgid "Too many redirects"
 msgstr "Trop de redirections"
 
-#: class/MyTool.php:149
 msgid "Error when loading without curl"
 msgstr "Erreur pendant le chargement sans curl"
 
-#: class/Opml.php:100
 #, php-format
 msgid "File %s (%s) was successfully processed: %d links imported"
 msgstr "Le fichier %s (%s) a été correctement traité : %d liens ont été importés"
 
-#: class/Opml.php:117
 #, php-format
 msgid "File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported."
 msgstr "Le fichier %s (%s) ne correspond pas à un format de fichier correct. Vérifiez l'encodage des caractères, supprimez les accents et réessayer. Rien a été importé."
 
-#: class/Rss.php:308
-msgid "Unknown XML error"
-msgstr "Problème XML inconnu"
-
-#: class/tpl/add_feed.tpl.php:16
 msgid "Feed URL"
 msgstr "URL du flux"
 
-#: class/tpl/add_feed.tpl.php:23
 msgid "Add selected folders to feed"
 msgstr "Ajouter les dossiers sélectionner au flux"
 
-#: class/tpl/add_feed.tpl.php:28
-#: class/tpl/config.tpl.php:283
-#: class/tpl/edit_all.tpl.php:76
-#: class/tpl/nav.tpl.php:100
 msgid "Edit feed"
 msgstr "Éditer le flux"
 
-#: class/tpl/add_feed.tpl.php:34
 msgid "Add a new folder"
 msgstr "Ajouter un nouveau dossier"
 
-#: class/tpl/add_feed.tpl.php:41
 msgid "Add new feed"
 msgstr "Ajouter un nouveau flux"
 
-#: class/tpl/add_feed.tpl.php:46
 msgid "Use bookmarklet to add a new feed"
 msgstr "Utiliser le bookmarklet pour ajouter un nouveau flux"
 
-#: class/tpl/add_feed.tpl.php:48
 msgid "Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link..."
 msgstr "Glisser ce lien dans votre barre personnelle ou faîtes un clic droit puis marque page sur ce lien"
 
-#: class/tpl/change_password.tpl.php:19
 msgid "Old password"
 msgstr "Ancien mot de passe"
 
-#: class/tpl/change_password.tpl.php:26
 msgid "New password"
 msgstr "Nouveau mot de passe"
 
-#: class/tpl/change_password.tpl.php:34
-#: class/tpl/config.tpl.php:84
-#: class/tpl/config.tpl.php:222
-#: class/tpl/config.tpl.php:309
-#: class/tpl/config.tpl.php:346
-#: class/tpl/config.tpl.php:373
-#: class/tpl/edit_all.tpl.php:27
-#: class/tpl/edit_all.tpl.php:46
-#: class/tpl/edit_all.tpl.php:62
-#: class/tpl/edit_all.tpl.php:85
-#: class/tpl/edit_feed.tpl.php:84
-#: class/tpl/edit_folder.tpl.php:23
-#: class/tpl/import.tpl.php:36
 msgid "Cancel"
 msgstr "Annuler"
 
-#: class/tpl/change_password.tpl.php:35
 msgid "Save new password"
 msgstr "Sauvegarde le nouveau mot de passe"
 
-#: class/tpl/config.tpl.php:16
 msgid "KrISS feed main information"
 msgstr "Informations principales de KrISS feed"
 
-#: class/tpl/config.tpl.php:19
 msgid "KrISS feed title"
 msgstr "Titre de KrISS feed"
 
-#: class/tpl/config.tpl.php:26
 msgid "KrISS feed visibility"
 msgstr "Visibilité de KrISS feed"
 
-#: class/tpl/config.tpl.php:30
 msgid "Public KrISS feed"
 msgstr "KrISS feed publique"
 
-#: class/tpl/config.tpl.php:33
 msgid "No restriction. Anyone can modify configuration, mark as read items, update feeds..."
 msgstr "Aucune restriction. N'importe qui peut modifier la configuration, marquer comme lus les articles, mettre à jour les flux..."
 
-#: class/tpl/config.tpl.php:37
 msgid "Protected KrISS feed"
 msgstr "KrISS feed protégé"
 
-#: class/tpl/config.tpl.php:40
 msgid "Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds..."
 msgstr "N'importe qui peut accéder aux flux et articles mais seulement vous pouvez modifier la configuration, marquer les articles comme lus, mettre à jour les flux..."
 
-#: class/tpl/config.tpl.php:44
 msgid "Private KrISS feed"
 msgstr "KrISS feed privé"
 
-#: class/tpl/config.tpl.php:47
 msgid "Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds..."
 msgstr "Seulement vous pouvez accéder aux flux et articles et seulement vous pouvez modifier la configuration, marquer les articles comme lus, mettre à jour les flux..."
 
-#: class/tpl/config.tpl.php:53
 msgid "Shaarli URL"
 msgstr "URL de shaarli"
 
-#: class/tpl/config.tpl.php:56
 msgid "Options:"
 msgstr "Options :"
 
-#: class/tpl/config.tpl.php:57
 msgid "${url}: item link"
 msgstr "${url} : lien de l'article"
 
-#: class/tpl/config.tpl.php:58
 msgid "${title}: item title"
 msgstr "${title}: titre de l'article"
 
-#: class/tpl/config.tpl.php:59
 msgid "${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code>"
 msgstr "${via}: si le nom de domaine de &lt;link&gt; et &lt;guid&gt; sont différents ${via} vaut : <code>via &lt;guid&gt;</code>"
 
-#: class/tpl/config.tpl.php:60
 msgid "${sel}: <strong>Only available</strong> with javascript: <code>selected text</code>"
 msgstr "${sel}: <strong>Seulement valable</strong> avec javascript: <code>texte sélectionné</code>"
 
-#: class/tpl/config.tpl.php:61
 msgid "example with shaarli:"
 msgstr "exemple avec shaarli :"
 
-#: class/tpl/config.tpl.php:67
 msgid "KrISS feed redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)"
 msgstr "Redirecteur (seulement pour les liens, les média ne sont pas considérés, <strong>le contenu des articles est anonymisé seulement avec javascript</strong>)"
 
-#: class/tpl/config.tpl.php:70
 msgid "<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property"
 msgstr "<strong>http://anonym.to/?</strong> masquera le HTTP_REFERER, vous pouvez également mettre <strong>noreferrer</strong> pour utiliser la propriété HTML5"
 
-#: class/tpl/config.tpl.php:77
 msgid "Disable session cookie hijacking protection"
 msgstr "Désactiver la protection contre le vol de session des cookies"
 
-#: class/tpl/config.tpl.php:78
 msgid "Check this if you get disconnected often or if your IP address changes often."
 msgstr "Cocher la case si vous êtes souvent déconnectés ou si votre adresse IP change souvent."
 
-#: class/tpl/config.tpl.php:85
-#: class/tpl/config.tpl.php:223
-#: class/tpl/config.tpl.php:310
-#: class/tpl/config.tpl.php:347
-#: class/tpl/config.tpl.php:374
-#: class/tpl/edit_all.tpl.php:28
-#: class/tpl/edit_all.tpl.php:47
-#: class/tpl/edit_all.tpl.php:63
-#: class/tpl/edit_all.tpl.php:87
-#: class/tpl/edit_feed.tpl.php:82
-#: class/tpl/edit_folder.tpl.php:24
 msgid "Save modifications"
 msgstr "Enregistrer les modifications"
 
-#: class/tpl/config.tpl.php:90
 msgid "KrISS feed preferences"
 msgstr "Préférences de KrISS feed"
 
-#: class/tpl/config.tpl.php:93
 msgid "Maximum number of items by feed"
 msgstr "Nombre maximum d'articles par flux"
 
-#: class/tpl/config.tpl.php:96
 msgid "Need update to be taken into consideration"
 msgstr "Nécessite une mise à jour pour être pris en compte"
 
-#: class/tpl/config.tpl.php:101
 msgid "Maximum delay between feed update (in minutes)"
 msgstr "Délai maximum entre la mise à jour des flux (en minutes)"
 
-#: class/tpl/config.tpl.php:108
 msgid "Auto read next item option"
 msgstr "Option de lecture automatique quand on passe à l'article suivant"
 
-#: class/tpl/config.tpl.php:112
 msgid "Do not mark as read when next item"
 msgstr "Ne marque pas comme lu l'article courant quand on passe à l'article suivant"
 
-#: class/tpl/config.tpl.php:116
 msgid "Auto mark current as read when next item"
 msgstr "Marque automatiquement l'article courant comme lu quand on passe à l'article suivant"
 
-#: class/tpl/config.tpl.php:122
 msgid "Auto read next page option"
 msgstr "Option de lecture automatique quand on passe à la page suivante"
 
-#: class/tpl/config.tpl.php:126
 msgid "Do not mark as read when next page"
 msgstr "Ne marque pas comme lu les articles de la page courante quand on passe à la page suivante"
 
-#: class/tpl/config.tpl.php:130
 msgid "Auto mark current as read when next page"
 msgstr "Marque automatiquement comme lus les articles de la page courante quand on passe à la page suivante"
 
-#: class/tpl/config.tpl.php:132
 msgid "Not implemented yet"
 msgstr "Pas encore implémenté"
 
-#: class/tpl/config.tpl.php:137
 msgid "Auto hide option"
 msgstr "Option de cache automatique"
 
-#: class/tpl/config.tpl.php:141
 msgid "Always show feed in feeds list"
 msgstr "Montre toujours les flux dans la liste des flux"
 
-#: class/tpl/config.tpl.php:145
 msgid "Automatically hide feed when 0 unread item"
 msgstr "Cache automatiquement les flux qui ont 0 article non lu"
 
-#: class/tpl/config.tpl.php:151
 msgid "Auto focus option"
 msgstr "Option de focus automatique"
 
-#: class/tpl/config.tpl.php:155
 msgid "Do not automatically jump to current item when it changes"
 msgstr "Ne se déplace pas automatiquement à l'article courant quand ce dernier change"
 
-#: class/tpl/config.tpl.php:159
 msgid "Automatically jump to the current item position"
 msgstr "Se déplace automatiquement à l'article courant"
 
-#: class/tpl/config.tpl.php:165
 msgid "Add favicon option"
 msgstr "Option de l'ajout des favicons"
 
-#: class/tpl/config.tpl.php:169
 msgid "Do not add favicon next to feed on list of feeds/items"
 msgstr "N'ajoute pas les favicons à côté des flux dans la liste des flux/articles"
 
-#: class/tpl/config.tpl.php:173
 msgid "Add favicon next to feed on list of feeds/items"
 msgstr "Ajoute les favicons à côté des flux dans la liste des flux/articles"
 
-#: class/tpl/config.tpl.php:173
 msgid "Warning: It depends on http://getfavicon.appspot.com/"
 msgstr "Attention : utilise le service http://getfavicon.appspot.com/"
 
-#: class/tpl/config.tpl.php:173
 msgid "but it will cache favicon on your server"
 msgstr "mais les favicons seront stockés sur votre serveur"
 
-#: class/tpl/config.tpl.php:179
 msgid "Preload option"
 msgstr "Option de préchargement"
 
-#: class/tpl/config.tpl.php:183
 msgid "Do not preload items."
 msgstr "Ne précharge pas les articles"
 
-#: class/tpl/config.tpl.php:187
 msgid "Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you do not read all the page items."
 msgstr "Précharge les articles de la page courante. Cela permet d'améliorer la rapidité de chargement à l'ouverture d'un nouvel article. Note : cela va utiliser beaucoup plus de bande passante si vous ne lisez pas tous les articles de la page."
 
-#: class/tpl/config.tpl.php:197
 msgid "Do not open link in new tab"
 msgstr "N'ouvre pas les liens dans un nouvel onglet"
 
-#: class/tpl/config.tpl.php:201
 msgid "Automatically open link in new tab"
 msgstr "Ouvre automatiquement les liens dans un nouvel onglet"
 
-#: class/tpl/config.tpl.php:207
-#: class/tpl/config.tpl.php:215
 msgid "Auto update with javascript"
 msgstr "Met à jour automatiquement avec javascript"
 
-#: class/tpl/config.tpl.php:211
 msgid "Do not auto update with javascript"
 msgstr "Ne met pas à jour automatiquement avec javascript"
 
-#: class/tpl/config.tpl.php:228
 msgid "KrISS feed menu preferences"
 msgstr "Préférences du menu de KrISS feed"
 
-#: class/tpl/config.tpl.php:229
 msgid "You can order or remove elements in the menu. Set a position or leave empty if you do not want the element to appear in the menu."
 msgstr "Vous pouvez ordonner ou supprimer les éléments dans le menu. Indiquer la position désirée ou laisser vide pour que l'élément n'apparaisse pas dans le menu."
 
-#: class/tpl/config.tpl.php:231
 msgid "View"
 msgstr "Vue"
 
-#: class/tpl/config.tpl.php:234
-#: class/tpl/nav.tpl.php:19
 msgid "View as list"
 msgstr "Voir les titres"
 
-#: class/tpl/config.tpl.php:234
-#: class/tpl/nav.tpl.php:21
 msgid "View as expanded"
 msgstr "Voir les contenus"
 
-#: class/tpl/config.tpl.php:238
 msgid "Feeds"
 msgstr "Flux"
 
-#: class/tpl/config.tpl.php:241
-#: class/tpl/nav.tpl.php:25
 msgid "Hide feeds list"
 msgstr "Cacher la liste des flux"
 
-#: class/tpl/config.tpl.php:241
-#: class/tpl/nav.tpl.php:27
 msgid "Show feeds list"
 msgstr "Montrer la liste des flux"
 
-#: class/tpl/config.tpl.php:245
 msgid "Filter"
 msgstr "Filtre"
 
-#: class/tpl/config.tpl.php:248
-#: class/tpl/nav.tpl.php:31
 msgid "Show all items"
 msgstr "Montrer tous les articles"
 
-#: class/tpl/config.tpl.php:248
-#: class/tpl/nav.tpl.php:33
 msgid "Show unread items"
 msgstr "Montrer les articles non lus"
 
-#: class/tpl/config.tpl.php:252
 msgid "Order"
 msgstr "Ordre"
 
-#: class/tpl/config.tpl.php:255
-#: class/tpl/nav.tpl.php:37
 msgid "Show older first"
 msgstr "Montrer les anciens flux en premier"
 
-#: class/tpl/config.tpl.php:255
-#: class/tpl/nav.tpl.php:39
 msgid "Show newer first"
 msgstr "Montrer les nouveaux flux en premier"
 
-#: class/tpl/config.tpl.php:262
-#: class/tpl/nav.tpl.php:43
 msgid "Update all"
 msgstr "Tout mettre à jour"
 
-#: class/tpl/config.tpl.php:262
-#: class/tpl/nav.tpl.php:46
 msgid "Update folder"
 msgstr "Mettre à jour le dossier"
 
-#: class/tpl/config.tpl.php:262
-#: class/tpl/nav.tpl.php:49
 msgid "Update feed"
 msgstr "Mettre à jour le flux"
 
-#: class/tpl/config.tpl.php:266
-#: class/tpl/config.tpl.php:338
-#: class/tpl/paging.tpl.php:18
 msgid "Mark as read"
 msgstr "Marquer comme lu"
 
-#: class/tpl/config.tpl.php:269
-#: class/tpl/nav.tpl.php:60
 msgid "Mark all as read"
 msgstr "Tout marquer comme lu"
 
-#: class/tpl/config.tpl.php:269
-#: class/tpl/nav.tpl.php:63
 msgid "Mark folder as read"
 msgstr "Marquer le dossier comme lu"
 
-#: class/tpl/config.tpl.php:269
-#: class/tpl/nav.tpl.php:66
 msgid "Mark feed as read"
 msgstr "Marquer le flux comme lu"
 
-#: class/tpl/config.tpl.php:273
 msgid "Mark as unread"
 msgstr "Marquer comme non lu"
 
-#: class/tpl/config.tpl.php:276
-#: class/tpl/nav.tpl.php:77
 msgid "Mark all as unread"
 msgstr "Tout marquer comme non lu"
 
-#: class/tpl/config.tpl.php:276
-#: class/tpl/nav.tpl.php:80
 msgid "Mark folder as unread"
 msgstr "Marquer le dossier comme non lu"
 
-#: class/tpl/config.tpl.php:276
-#: class/tpl/nav.tpl.php:83
 msgid "Mark feed as unread"
 msgstr "Marquer le flux comme non lu"
 
-#: class/tpl/config.tpl.php:283
-#: class/tpl/nav.tpl.php:94
 msgid "Edit all"
 msgstr "Tout éditer"
 
-#: class/tpl/config.tpl.php:283
-#: class/tpl/edit_all.tpl.php:19
-#: class/tpl/edit_all.tpl.php:36
-#: class/tpl/edit_all.tpl.php:55
-#: class/tpl/nav.tpl.php:97
 msgid "Edit folder"
 msgstr "Éditer le dossier"
 
-#: class/tpl/config.tpl.php:315
 msgid "KrISS feed paging menu preferences"
 msgstr "Préférence du menu de pagination de KrISS feed"
 
-#: class/tpl/config.tpl.php:317
 msgid "Item"
 msgstr "Article"
 
-#: class/tpl/config.tpl.php:320
 msgid "If you want to go previous and next item"
 msgstr "Si vous souhaitez accéder aux articles précédents et suivants"
 
-#: class/tpl/config.tpl.php:324
 msgid "Page"
 msgstr "Page"
 
-#: class/tpl/config.tpl.php:327
 msgid "If you want to go previous and next page"
 msgstr "Si vous souhaitez accéder aux pages précédentes et suivantes"
 
-#: class/tpl/config.tpl.php:331
 msgid "Items by page"
 msgstr "Articles par page"
 
-#: class/tpl/config.tpl.php:334
 msgid "If you want to modify number of items by page"
 msgstr "Si vous souhaitez modifier le nombre d'articles par page"
 
-#: class/tpl/config.tpl.php:341
 msgid "If you want to add a mark as read button into paging"
 msgstr "Si vous souhaitez un bouton pour marquer comme lu"
 
-#: class/tpl/config.tpl.php:352
 msgid "Cron configuration"
 msgstr "Configuration du cron"
 
-#: class/tpl/config.tpl.php:354
 msgid "You can use <code>&force</code> to force update."
 msgstr "Vous pouvez utiliser <code>&force</code> pour forcer la mise à jour."
 
-#: class/tpl/config.tpl.php:355
 msgid "To update every hour:"
 msgstr "Pour mettre à jour toutes les heures :"
 
-#: class/tpl/config.tpl.php:357
 msgid "If you can not use wget, you may try php command line:"
 msgstr "Si vous ne pouvez pas utiliser wget, essayer avec la ligne de commande php suivante :"
 
-#: class/tpl/config.tpl.php:359
 msgid "If previous solutions do not work, try to create an update.php file into data directory containing:"
 msgstr "Si les solutions précédentes ne fonctionnent pas, essayer de créer un fichier update.php dans le dossier data contenant :"
 
-#: class/tpl/config.tpl.php:368
 msgid "Then set up your cron with:"
 msgstr "Ensuite configurer le cron avec :"
 
-#: class/tpl/config.tpl.php:370
 msgid "Do not forget to check permissions"
 msgstr "Vérifiez les droits !"
 
-#: class/tpl/edit_all.tpl.php:14
 msgid "Reorder folders"
 msgstr "Trier les dossiers"
 
-#: class/tpl/edit_all.tpl.php:31
 msgid "Add selected folders to selected feeds"
 msgstr "Ajouter les dossiers sélectionnés aux flux sélectionnés"
 
-#: class/tpl/edit_all.tpl.php:50
 msgid "Remove selected folders to selected feeds"
 msgstr "Enlever les dossiers sélectionnés aux flux sélectionnés"
 
-#: class/tpl/edit_all.tpl.php:66
 msgid "List of feeds"
 msgstr "Liste des flux"
 
-#: class/tpl/edit_all.tpl.php:68
 msgid "Select all"
 msgstr "Tout sélectionner"
 
-#: class/tpl/edit_all.tpl.php:69
 msgid "Unselect all"
 msgstr "Tout désélectionner"
 
-#: class/tpl/edit_all.tpl.php:86
 msgid "Delete selected feeds"
 msgstr "Supprimer les flux sélectionnés"
 
-#: class/tpl/edit_all.tpl.php:86
 msgid "Do you really want to delete all selected feeds?"
 msgstr "Voulez-vous vraiment supprimer l'ensemble des flux sélectionnés ?"
 
-#: class/tpl/edit_feed.tpl.php:14
 msgid "Feed main information"
 msgstr "Information principale du flux"
 
-#: class/tpl/edit_feed.tpl.php:16
 msgid "Feed title"
 msgstr "Titre du flux"
 
-#: class/tpl/edit_feed.tpl.php:22
 msgid "Feed XML URL"
 msgstr "URL du flux"
 
-#: class/tpl/edit_feed.tpl.php:28
 msgid "Feed main URL"
 msgstr "URL du site du flux"
 
-#: class/tpl/edit_feed.tpl.php:34
 msgid "Feed description"
 msgstr "Description du flux"
 
-#: class/tpl/edit_feed.tpl.php:41
 msgid "Feed folders"
 msgstr "Dossiers du flux"
 
-#: class/tpl/edit_feed.tpl.php:58
-#: class/tpl/edit_feed.tpl.php:60
 msgid "New folder"
 msgstr "Nouveau dossier"
 
-#: class/tpl/edit_feed.tpl.php:65
 msgid "Feed preferences"
 msgstr "Préférences du flux"
 
-#: class/tpl/edit_feed.tpl.php:67
 msgid "Time update"
 msgstr "Temps entre les mises à jour"
 
-#: class/tpl/edit_feed.tpl.php:70
 msgid "\"auto\", \"max\" or a number of minutes less than \"max\" define in <a href=\"?config\">configuration</a>"
 msgstr "\"auto\", \"max\" ou un nombre de minutes inférieur à \"max\" défin dans <a href=\"?config\">la configuration</a>"
 
-#: class/tpl/edit_feed.tpl.php:74
 msgid "Last update"
 msgstr "Dernière mise à jour"
 
-#: class/tpl/edit_feed.tpl.php:83
 msgid "Delete feed"
 msgstr "Supprimer le flux"
 
-#: class/tpl/edit_folder.tpl.php:14
 msgid "Folder title"
 msgstr "Titre du dossier"
 
-#: class/tpl/edit_folder.tpl.php:17
 msgid "Leave empty to delete"
 msgstr "Laisser vide pour supprimer"
 
-#: class/tpl/help.tpl.php:12
 msgid "Keyboard shortcuts"
 msgstr "Raccourcis clavier"
 
-#: class/tpl/help.tpl.php:14
 msgid "Key legend"
 msgstr "Légende des touches"
 
-#: class/tpl/help.tpl.php:17
 msgid "Space key"
 msgstr "Touche espace"
 
-#: class/tpl/help.tpl.php:19
 msgid "Shift key"
 msgstr "Touche majuscule"
 
-#: class/tpl/help.tpl.php:21
 msgid "Right arrow key"
 msgstr "Touche flèche de droite"
 
-#: class/tpl/help.tpl.php:23
 msgid "Left arrow key"
 msgstr "Touche flèche de gauche"
 
-#: class/tpl/help.tpl.php:27
 msgid "Items navigation"
 msgstr "Navigation dans les articles"
 
-#: class/tpl/help.tpl.php:30
 msgid "Toggle current item (open, close item in list view)"
 msgstr "Alterner l'article courant (ouvrir, fermer l'article avec la vue des titres"
 
-#: class/tpl/help.tpl.php:34
 msgid "Mark current item as read if unread or unread if read"
 msgstr "Marque l'article courant comme lu si non lu ou non lu si lu"
 
-#: class/tpl/help.tpl.php:38
 msgid "Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)"
 msgstr "Marque l'article courant comme lu si non lu ou non lu si lu et ouvre l'article courant (utile avec le filtre non lu et l'affichage des titres)"
 
-#: class/tpl/help.tpl.php:42
 msgid "Go to next item"
 msgstr "Aller à l'article suivant"
 
-#: class/tpl/help.tpl.php:46
 msgid "Go to previous item"
 msgstr "Aller à l'article précédent"
 
-#: class/tpl/help.tpl.php:50
 msgid "Go to next page"
 msgstr "Aller à la page suivante"
 
-#: class/tpl/help.tpl.php:54
 msgid "Go to previous page"
 msgstr "Aller à la page précédente"
 
-#: class/tpl/help.tpl.php:58
 msgid "Go to next item and open it (in list view)"
 msgstr "Aller à l'article suivant puis l'ouvrir (avec la vue des titres)"
 
-#: class/tpl/help.tpl.php:62
 msgid "Go to previous item and open it (in list view)"
 msgstr "Aller à l'article précédent puis l'ouvrir (avec la vue des titres)"
 
-#: class/tpl/help.tpl.php:66
 msgid "Open current item in new tab"
 msgstr "Ouvrir l'article courant dans un nouvel onglet"
 
-#: class/tpl/help.tpl.php:70
 msgid "Open current item in current window"
 msgstr "Ouvrir l'article courant dans la fenêtre active"
 
-#: class/tpl/help.tpl.php:74
 msgid "Share current item"
 msgstr "Partager l'article courant"
 
-#: class/tpl/help.tpl.php:78
 msgid "Mark all items, all items from current feed or all items from current folder as read"
 msgstr "Marque tous les articles, tous les articles du flux courant ou tous les articles du dossier courant comme lu"
 
-#: class/tpl/help.tpl.php:82
 msgid "Menu navigation"
 msgstr "Navigation du menu"
 
-#: class/tpl/help.tpl.php:85
 msgid "Go to Home page"
 msgstr "Aller à la page d'accueil"
 
-#: class/tpl/help.tpl.php:89
 msgid "Change view as list or expanded"
 msgstr "Voir les titres ou le contenu des articles"
 
-#: class/tpl/help.tpl.php:93
 msgid "Show or hide list of feeds/folders"
 msgstr "Montrer ou cacher la liste des flux/dossiers"
 
-#: class/tpl/help.tpl.php:97
 msgid "Edit current selection (all, folder or feed)"
 msgstr "Éditer la sélection courante (tout, dosser ou flux)"
 
-#: class/tpl/help.tpl.php:101
 msgid "Update current selection (all, folder or feed)"
 msgstr "Mettre à jour la sélection courante (tout, dossier ou flux)"
 
-#: class/tpl/help.tpl.php:105
 msgid "Reload the page as the F5 key in most of browsers"
 msgstr "Recharger la page comme la touche F5 dans la plupart des navigateurs"
 
-#: class/tpl/help.tpl.php:109
 msgid "Go to Help page (this page)"
 msgstr "Aller à la page d'aide (cette page)"
 
-#: class/tpl/help.tpl.php:112
 msgid "Configuration check"
 msgstr "Vérification de la configuration"
 
-#: class/tpl/help.tpl.php:114
 msgid "PHP configuration"
 msgstr "Configuration PHP"
 
-#: class/tpl/help.tpl.php:119
 msgid "You should be able to load https:// rss links."
 msgstr "Vous devriez pouvoir charger des flux https://"
 
-#: class/tpl/help.tpl.php:121
 msgid "You may have problems using https:// rss links."
 msgstr "Vous risquez d'avoir des problèmes en utilisant des flux https://"
 
-#: class/tpl/import.tpl.php:14
-#: class/tpl/import.tpl.php:35
-#: class/tpl/nav.tpl.php:142
 msgid "Import opml file"
 msgstr "Importer un fichier opml"
 
-#: class/tpl/import.tpl.php:16
 msgid "Opml file:"
 msgstr "Fichier opml :"
 
-#: class/tpl/import.tpl.php:19
 msgid "Size max:"
 msgstr "Taille maximale :"
 
-#: class/tpl/import.tpl.php:28
 msgid "Overwrite existing feeds"
 msgstr "Écraser les flux existants"
 
-#: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:7
 msgid "top"
 msgstr "haut"
 
-#: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:4
 msgid "share"
 msgstr "partager"
 
-#: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:3
 msgid "read"
 msgstr "lire"
 
-#: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:2
 msgid "unread"
 msgstr "à lire"
 
-#: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:5
 msgid "star"
 msgstr "conserver"
 
-#: class/tpl/index.tpl.php:7
-#: class/tpl/list_items.tpl.php:6
 msgid "unstar"
 msgstr "oublier"
 
-#: class/tpl/index.tpl.php:7
 msgid "from"
 msgstr "de"
 
-#: class/tpl/install.tpl.php:15
-#: class/tpl/message.tpl.php:12
 msgid "Click on flag to select your language."
 msgstr "Cliquez sur le drapeau pour choisir votre langue."
 
-#: class/tpl/install.tpl.php:21
-#: class/tpl/install.tpl.php:23
-#: class/tpl/login.tpl.php:15
-#: class/tpl/login.tpl.php:17
 msgid "Login"
 msgstr "Nom d'utilisateur"
 
-#: class/tpl/install.tpl.php:27
-#: class/tpl/install.tpl.php:29
-#: class/tpl/login.tpl.php:21
-#: class/tpl/login.tpl.php:23
 msgid "Password"
 msgstr "Mot de passe"
 
-#: class/tpl/install.tpl.php:34
 msgid "Install KrISS feed"
 msgstr "Installer KrISS feed"
 
-#: class/tpl/login.tpl.php:13
 msgid "Welcome to KrISS feed"
 msgstr "Bienvenue sur KrISS feed"
 
-#: class/tpl/login.tpl.php:28
 msgid "Stay signed in (do not check on public computers)"
 msgstr "Rester connecté (ne pas cocher sur un ordinateur public)"
 
-#: class/tpl/message.tpl.php:20
 msgid "Try again"
 msgstr "Réessayer"
 
-#: class/tpl/nav.tpl.php:5
 msgid "Menu"
 msgstr "Menu"
 
-#: class/tpl/nav.tpl.php:6
-#: class/tpl/update.tpl.php:18
 msgid "Home"
 msgstr "Accueil"
 
-#: class/tpl/nav.tpl.php:133
-#: class/tpl/nav.tpl.php:145
-#: class/tpl/nav.tpl.php:154
 msgid "Sign out"
 msgstr "Déconnexion"
 
-#: class/tpl/nav.tpl.php:141
 msgid "Change password"
 msgstr "Changer le mot de passe"
 
-#: class/tpl/nav.tpl.php:143
 msgid "Export opml file"
 msgstr "Exporter en fichier opml"
 
-#: class/tpl/paging.tpl.php:9
 msgid "Previous item"
 msgstr "Article précédent"
 
-#: class/tpl/paging.tpl.php:10
 msgid "Next item"
 msgstr "Article suivant"
 
-#: class/tpl/paging.tpl.php:26
 msgid "Previous page"
 msgstr "Page précédente"
 
-#: class/tpl/paging.tpl.php:28
 msgid "Next page"
 msgstr "Page suivante"
 
-#: class/tpl/paging.tpl.php:44
 msgid "Items per page"
 msgstr "Articles par page"
 
-#: class/tpl/status.tpl.php:3
 msgid "A simple and smart (or stupid) feed reader"
 msgstr "Un simple et superbe (ou stupide) lecteur de flux"
 
 #. KrISS: By Tontof
-#: class/tpl/status.tpl.php:3
 msgid "By"
 msgstr "Par"
 
-#: class/tpl/update.tpl.php:20
 msgid "Go back"
 msgstr "Revenir en arrière"
 
-#: class/tpl/update.tpl.php:22
 msgid "Force update"
 msgstr "Forcer la mise à jour"
-

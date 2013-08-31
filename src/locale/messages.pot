@@ -102,6 +102,27 @@ msgstr ""
 msgid "Already up-to-date"
 msgstr ""
 
+msgid "Total:"
+msgstr ""
+
+msgid "items"
+msgstr ""
+
+msgid "Successes"
+msgstr ""
+
+msgid "Success"
+msgstr ""
+
+msgid "Up-to-date"
+msgstr ""
+
+msgid "Errors"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
 msgid "Http code not valid"
 msgstr ""
 
