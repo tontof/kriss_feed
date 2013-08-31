@@ -97,7 +97,7 @@ class Opml
 
             FeedPage::init(
                 array(
-                    'base' => '',
+                    'base' => MyTool::getUrl(),
                     'message' => sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount),
                     'button' => Intl::msg('Continue'),
                     'referer' => MyTool::getUrl(),
@@ -115,7 +115,7 @@ class Opml
 
             FeedPage::init(
                 array(
-                    'base' => '',
+                    'base' => MyTool::getUrl(),
                     'class' => 'text-success',
                     'message' => sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)),
                     'referer' => MyTool::getUrl().'?import',

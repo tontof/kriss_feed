@@ -2,68 +2,64 @@
 /**
  * Session management class
  *
- * PHP version 5
- *
  * http://www.developpez.net/forums/d51943/php/langage/sessions/
  * http://sebsauvage.net/wiki/doku.php?id=php:session
  * http://sebsauvage.net/wiki/doku.php?id=php:shaarli
- *
+ * 
  * Features:
  * - Everything is stored on server-side (we do not trust client-side data,
  *   such as cookie expiration)
- * - IP addresses + user agent are checked on each access to prevent session
- *   cookie hijacking (such as Firesheep)
+ * - IP addresses are checked on each access to prevent session cookie hijacking
+ *   (such as Firesheep)
  * - Session expires on user inactivity (Session expiration date is
  *   automatically updated everytime the user accesses a page.)
  * - A unique secret key is generated on server-side for this session
- *   (and never sent over the wire) which can be used
- *   to sign forms (HMAC) (See $_SESSION['uid'] )
- * - Token management to prevent XSRF attacks.
+ *   (and never sent over the wire) which can be used to sign forms (HMAC)
+ *   (See $_SESSION['uid'])
+ * - Token management to prevent XSRF attacks
+ * - Brute force protection with ban management
  *
- * HOWTOUSE:
- * - Just call Session::init(); to initialize session and
- *   check if connected with Session::isLogged()
+ * TODOs
+ * - Replace globals with variables in Session class
+ *
+ * How to use:
+ * - http://tontof.net/kriss/php5/session
  */
 class Session
 {
-    /**
-     * If the user does not access any page within this time,
-     * his/her session is considered expired (3600 sec. = 1 hour).
-     */
+    // Personnalize PHP session name
+    public static $sessionName = '';
+    // If the user does not access any page within this time,
+    // his/her session is considered expired (3600 sec. = 1 hour)
     public static $inactivityTimeout = 3600;
-
-    /**
-     * If you get disconnected often or if your IP address changes often.
-     * Let you disable session cookie hijacking protection
-     */
+    // If you get disconnected often or if your IP address changes often.
+    // Let you disable session cookie hijacking protection
     public static $disableSessionProtection = false;
-
-    /**
-     * Ban management
-     * $banFile:     File storage for failures and bans.
-     * $banAfter:    Ban IP after this many failures.
-     * $banDuration: Ban duration for IP address after login failures
-     *               (in seconds) (1800 sec. = 30 minutes)
-     */
+    // Ban IP after this many failures.
     public static $banAfter = 4;
+    // Ban duration for IP address after login failures (in seconds).
+    // (1800 sec. = 30 minutes)
     public static $banDuration = 1800;
-    public static $banFile;
+    // File storage for failures and bans. If empty, no ban management.
+    public static $banFile = '';
 
     /**
-     * initialize private instance of session class
+     * Initialize session
      */
-    public static function init($sessionName = '', $banFile = '')
+    public static function init()
     {
-        self::$banFile = $banFile;
-
         // Force cookie path (but do not change lifetime)
         $cookie = session_get_cookie_params();
         // Default cookie expiration and path.
         $cookiedir = '';
-        if(dirname($_SERVER['SCRIPT_NAME'])!='/') {
+        if (dirname($_SERVER['SCRIPT_NAME'])!='/') {
             $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
         }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir);
+        $ssl = false;
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $ssl = true;
+        }
+        session_set_cookie_params($cookie['lifetime'], $cookiedir, $cookie['domain'], $ssl);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -71,8 +67,8 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
-            if (!empty($sessionName)) {
-                session_name($sessionName);
+            if (!empty(self::$sessionName)) {
+                session_name(self::$sessionName);
             }
             session_start();
         }
@@ -82,7 +78,7 @@ class Session
      * Returns the IP address
      * (Used to prevent session cookie hijacking.)
      *
-     * @return string IP address
+     * @return string IP addresses
      */
     private static function _allIPs()
     {
@@ -113,26 +109,24 @@ class Session
         $pValues = array())
     {
         self::banInit();
-        if (!self::banCanLogin()) {
-            die('I said: NO. You are banned for the moment. Go away.');
-        }
-        if ($login == $loginTest && $password==$passwordTest) {
-            self::banLoginOk();
-            // Generate unique random number to sign forms (HMAC)
-            $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
-            $_SESSION['ip'] = Session::_allIPs();
-            $_SESSION['username'] = $login;
-            // Set session expiration.
-            $_SESSION['expires_on'] = time() + Session::$inactivityTimeout;
+        if (self::banCanLogin()) {
+            if ($login === $loginTest && $password === $passwordTest) {
+                self::banLoginOk();
+                // Generate unique random number to sign forms (HMAC)
+                $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
+                $_SESSION['ip'] = self::_allIPs();
+                $_SESSION['username'] = $login;
+                // Set session expiration.
+                $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
 
-            foreach ($pValues as $key => $value) {
-                $_SESSION[$key] = $value;
+                foreach ($pValues as $key => $value) {
+                    $_SESSION[$key] = $value;
+                }
+
+                return true;
             }
-
-            return true;
+            self::banLoginFailed();
         }
-        self::banLoginFailed();
-        Session::logout();
 
         return false;
     }
@@ -153,23 +147,23 @@ class Session
     public static function isLogged()
     {
         if (!isset ($_SESSION['uid'])
-            || (Session::$disableSessionProtection == false
-                && $_SESSION['ip']!=Session::_allIPs())
-            || time()>=$_SESSION['expires_on']) {
-            Session::logout();
+            || (self::$disableSessionProtection === false
+                && $_SESSION['ip'] !== self::_allIPs())
+            || time() >= $_SESSION['expires_on']) {
+            self::logout();
 
             return false;
         }
         // User accessed a page : Update his/her session expiration date.
-        if (time()+Session::$inactivityTimeout > $_SESSION['expires_on']) {
-            $_SESSION['expires_on'] = time()+Session::$inactivityTimeout;
-        }
+        $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
 
         return true;
     }
 
     /**
      * Create a token, store it in SESSION and return it
+     *
+     * @param string $salt to prevent birthday attack
      *
      * @return string Token created
      */
@@ -208,19 +202,21 @@ class Session
      */
     public static function banLoginFailed()
     {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
 
-        if (!isset($gb['FAILURES'][$ip])) {
-            $gb['FAILURES'][$ip] = 0;
-        }
-        $gb['FAILURES'][$ip]++;
-        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
-            $gb['BANS'][$ip]= time() + self::$banDuration;
-        }
+            if (!isset($gb['FAILURES'][$ip])) {
+                $gb['FAILURES'][$ip] = 0;
+            }
+            $gb['FAILURES'][$ip]++;
+            if ($gb['FAILURES'][$ip] > (self::$banAfter - 1)) {
+                $gb['BANS'][$ip]= time() + self::$banDuration;
+            }
 
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+            $GLOBALS['IPBANS'] = $gb;
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+        }
     }
 
     /**
@@ -228,42 +224,53 @@ class Session
      */
     public static function banLoginOk()
     {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+            unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
+            $GLOBALS['IPBANS'] = $gb;
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+        }
     }
 
+    /**
+     * Ban init
+     */
     public static function banInit()
     {
-        if (!is_file(self::$banFile) && self::$banFile !== '') {
-            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
-        }
         if (self::$banFile !== '') {
+            if (!is_file(self::$banFile)) {
+                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(), 'BANS'=>array()), true).";\n?>");
+            }
             include self::$banFile;
         }
     }
 
     /**
      * Checks if the user CAN login. If 'true', the user can try to login.
+     *
+     * @return boolean true if user is banned, false otherwise
      */
     public static function banCanLogin()
     {
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+            if (isset($gb['BANS'][$ip])) {
+                // User is banned. Check if the ban has expired:
+                if ($gb['BANS'][$ip] <= time()) {
+                    // Ban expired, user can try to login again.
+                    unset($gb['FAILURES'][$ip]);
+                    unset($gb['BANS'][$ip]);
+                    file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
 
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        if (isset($gb['BANS'][$ip])) {
-            // User is banned. Check if the ban has expired:
-            if ($gb['BANS'][$ip] <= time()) {
-                // Ban expired, user can try to login again.
-                unset($gb['FAILURES'][$ip]);
-                unset($gb['BANS'][$ip]);
-                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-                return true; // Ban has expired, user can login.
+                    return true; // Ban has expired, user can login.
+                }
+
+                return false; // User is banned.
             }
-            return false; // User is banned.
         }
+
         return true; // User is not banned.
     }
 }

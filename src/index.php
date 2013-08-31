@@ -195,7 +195,7 @@ class FeedConf
 
             FeedPage::init(
                 array(
-                    'base' => '',
+                    'base' => MyTool::getUrl(),
                     'class' => 'text-success',
                     'message' => Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'),
                     'referer' => MyTool::getUrl().'?import',
@@ -208,7 +208,7 @@ class FeedConf
         } else {
             FeedPage::init(
                 array(
-                    'base' => '',
+                    'base' => MyTool::getUrl(),
                     'version' => $this->version,
                     'pagetitle' => Intl::msg('KrISS feed installation')
                 )
@@ -1058,8 +1058,8 @@ switch($template) {
   <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version; ?></a>
   <span class="hidden-phone"> - <?php echo Intl::msg('A simple and smart (or stupid) feed reader'); ?></span>. <?php /* KrISS: By Tontof */echo Intl::msg('By'); ?> <a href="http://tontof.net">Tontof</a>
 <span id="flags-sel">
-  <a id="hide-flags" href="#flags" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
-  <a id="show-flags" href="#flags-sel" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
+  <a id="hide-flags" href="<?php echo empty($_SERVER['QUERY_STRING'])?'':'?'.$_SERVER['QUERY_STRING']; ?>#flags" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
+  <a id="show-flags" href="<?php echo empty($_SERVER['QUERY_STRING'])?'':'?'.$_SERVER['QUERY_STRING']; ?>#flags-sel" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
 </span>
 <div id="flags">
 <?php foreach(Intl::$langList as $lang => $info) { ?>
@@ -4120,6 +4120,11 @@ class MyTool
 
     public static function getUrl()
     {
+        $base = BASE_URL;
+        if (!empty($base)) {
+            return $base;
+        }
+
         $https = (!empty($_SERVER['HTTPS'])
                   && (strtolower($_SERVER['HTTPS']) == 'on'))
             || (isset($_SERVER["SERVER_PORT"])
@@ -4341,7 +4346,7 @@ class Opml
 
             FeedPage::init(
                 array(
-                    'base' => '',
+                    'base' => MyTool::getUrl(),
                     'message' => sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount),
                     'button' => Intl::msg('Continue'),
                     'referer' => MyTool::getUrl(),
@@ -4359,7 +4364,7 @@ class Opml
 
             FeedPage::init(
                 array(
-                    'base' => '',
+                    'base' => MyTool::getUrl(),
                     'class' => 'text-success',
                     'message' => sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)),
                     'referer' => MyTool::getUrl().'?import',
@@ -4676,74 +4681,131 @@ class Rss
     const RSS = 1;
     const ATOM = 2;
 
-    static $feedFormat = array(
-        'title' => array('title'),
-        'description' => array('description', 'subtitle'),
-        'htmlUrl' => array('link', 'id', 'guid')
+    public static $feedFormat = array(
+       'title' => array('>title'),
+       'description' => array('>description', '>subtitle'),
+       'htmlUrl' => array('>link', '>link[rel=self][href]', '>link[href]', '>id')
     );
 
-    static $itemFormat = array(
-        'author' => array('author', 'creator', 'dc:author', 'dc:creator'),
-        'content' => array('content:encoded', 'content', 'description', 'summary', 'subtitle'),
-        'description' => array('description', 'summary', 'subtitle', 'content', 'content:encoded'),
-        'via' => array('guid', 'id'),
-        'link' => array('feedburner:origLink', array('link', 'href', array('rel=alternate')), array('link', 'href'), 'link', 'guid', 'id'),
-        'time' => array('pubDate', 'updated', 'lastBuildDate', 'published', 'dc:date', 'date', 'created', 'modified'),
-        'title' => array('title')
+    public static $itemFormat = array(
+        'author' => array('>author>name', '>author', '>dc:creator', 'feed>author>name', '>dc:author', '>creator'),
+        'content' => array('>content:encoded', '>content', '>description', '>summary', '>subtitle'),
+        'description' => array('>description', '>summary', '>subtitle', '>content', '>content:encoded'),
+        'via' => array('>guid', '>id'),
+        'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
+        'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
+        'title' => array('>title')
     );
 
-    public static function formatElement($element, $formats)
+    public static function isValidNodeAttrs($node, $attrs)
+    {
+        foreach ($attrs as $attr) {
+            if (strpos($attr, '=') !== false) {
+                list($attr, $val) = explode('=', $attr);
+            }
+            if (!$node->hasAttribute($attr)
+                || (!empty($val) && $node->getAttribute($attr) !== $val)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function filterNodeListByName($nodes, $name)
+    {
+        $res = array();
+
+        for ($i = 0; $i < $nodes->length; $i++) {
+            if ($nodes->item($i)->tagName === $name) {
+                $res[] = $nodes->item($i);
+            }
+        }
+
+        return $res;
+    }
+
+    public static function getNodesName($node, $name)
+    {
+        if (strpos($name, ':') !== false) {
+            list(, $localname) = explode(':', $name);
+            $nodes = $node->getElementsByTagNameNS('*', $localname);
+        } else {
+            $nodes = $node->getElementsByTagName($name);
+        }
+
+        return self::filterNodeListByName($nodes, $name);
+    }
+
+    public static function getElement($node, $selectors)
+    {
+        $res = '';
+        $selector = array_shift($selectors);
+        $attributes = explode('[', trim($selector, ']'));
+        $name = array_shift($attributes);
+        if (substr($name, -1) == "*") {
+            $name = substr($name, 0, -1);
+            $res = array();
+        }
+
+        $nodes = self::getNodesName($node, $name);
+        foreach ($nodes as $currentNode) {
+            if ($currentNode->parentNode->isSameNode($node)
+                && self::isValidNodeAttrs($currentNode, $attributes)) {
+                if (empty($selectors)) {
+                    $attr = end($attributes);
+                    if (empty($attr) || strpos($attr, '=') !== false) {
+                        if (is_array($res)) {
+                            $res[] = $currentNode->textContent;
+                        } else {
+                            $res = $currentNode->textContent;
+                        }
+                    } else {
+                        if (is_array($res)) {
+                            $res[] = $currentNode->getAttribute($attr);
+                        } else {
+                            $res = $currentNode->getAttribute($attr);
+                        }
+                    }
+                } else {
+                    return self::getElement($currentNode, $selectors);
+                }
+            }
+            if (!is_array($res) && !empty($res)) {
+                break;
+            }
+        }
+
+        return $res;
+    }
+
+    public static function formatElement($dom, $element, $formats)
     {
         $newElement = array();
         foreach ($formats as $format => $list) {
             $newElement[$format] = '';
-            $len = count($list);
-            for ($i = 0; $i < $len && empty($newElement[$format]); $i++) {
-                $selector = $list[$i];
-                if (is_array($list[$i])) {
-                    $selector = $list[$i][0];
-                    if (count($list[$i]) === 2) {
-                        $list[$i][] = array();
+            for ($i = 0, $len = count($list);
+                 $i < $len && empty($newElement[$format]);
+                 $i++) {
+                $selectors = explode('>', $list[$i]);
+                $selector = array_shift($selectors);
+                if (empty($selector)) {
+                    $newElement[$format] = self::getElement($element, $selectors);
+                } else if (strpos($selector, '[') === 0) {
+                    $attributes = explode('[', trim($selector, ']'));
+                    if (self::isValidNodeAttrs($element, $attributes)) {
+                        $newElement[$format] = self::getElement($element, $selectors);
                     }
                 } else {
-                    $list[$i] = array($list[$i], '', array());
-                }
-
-                $name = explode(':', $selector);
-
-                if (count($name) > 1) {
-                    $elements = $element->getElementsByTagNameNS('*', $name[1]);
-                } else {
-                    $elements = $element->getElementsByTagName($name[0]);
-                }
-
-                for ($j = 0; $j < $elements->length && empty($newElement[$format]); $j++) {
-                    $elt = $elements->item($j);
-                    $isCorrect = true;
-                    if ($elements->item($j)->tagName != $selector) {
-                        $isCorrect = false;
-                    } else {
-                        foreach($list[$i][2] as $attr) {
-                            $attrs = explode('=', $attr);
-                            if (count($attrs) !== 2 || 
-                                !$elements->item($j)->hasAttribute($attrs[0]) ||
-                                $elements->item($j)->getAttribute($attrs[0]) !== $attrs[1]) {
-                                $isCorrect = false;
-                            }
+                    $attributes = explode('[', trim($selector, ']'));
+                    $name = array_shift($attributes);
+                    $nodes = self::getNodesName($dom, $name);
+                    foreach ($nodes as $node) {
+                        if (self::isValidNodeAttrs($node, $attributes)) {
+                            $newElement[$format] = self::getElement($node, $selectors);
                         }
-                    }
-
-                    if (!$elt->parentNode->isSameNode($element)) {
-                        $isCorrect = false;
-                    }
-
-                    if ($isCorrect) {
-                        if (empty($list[$i][1])) {
-                            $newElement[$format] = $elt->textContent;
-                        } else {
-                            if ($elements->item($j)->hasAttribute($list[$i][1])) {
-                                $newElement[$format] = $elt->getAttribute($list[$i][1]);
-                            }
+                        if (!empty($newElement[$format])) {
+                            break;
                         }
                     }
                 }
@@ -4764,7 +4826,7 @@ class Rss
             $feed = $dom->getElementsByTagName('feed')->item(0);
         }
 
-        return self::formatElement($feed, self::$feedFormat);
+        return self::formatElement($dom, $feed, self::$feedFormat);
     }
 
     public static function getItems($dom, $nb = -1)
@@ -4777,28 +4839,26 @@ class Rss
         } elseif ($type === self::ATOM) {
             $items = $dom->getElementsByTagName('entry');
         }
-        
+
         $newItems = array();
         $max = $nb === -1 ? $items->length : max($nb, $item->length);
         for ($i = 0; $i < $max; $i++) {
-            $item = self::formatElement($items->item($i), self::$itemFormat);
-            if (!empty($item)) {
-                $newItems[] = $item;
-            }
+            $newItems[] = self::formatElement($dom, $items->item($i), self::$itemFormat);
         }
 
         return $newItems;
     }
 
-    public static function getType($dom) {
+    public static function getType($dom)
+    {
         $type = self::UNKNOWN;
 
         $feed = $dom->getElementsByTagName('channel');
-        if ($feed->item(0)) { // RSS/rdf:RDF feed
+        if ($feed->item(0)) {
             $type = self::RSS;
         } else {
             $feed = $dom->getElementsByTagName('feed');
-            if ($feed->item(0)) { // Atom feed
+            if ($feed->item(0)) {
                 $type = self::ATOM;
             }
         }
@@ -4808,11 +4868,10 @@ class Rss
 
     public static function loadDom($data)
     {
-        $error = '';
-        set_error_handler(array('Rss', 'silenceErrors'));
         libxml_clear_errors();
+        set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
-        $isValid = $dom->loadXML($data);
+        $dom->loadXML($data);
         restore_error_handler();
 
         return array(
@@ -4851,26 +4910,36 @@ class Rss
 
 class Session
 {
+    // Personnalize PHP session name
+    public static $sessionName = '';
+    // If the user does not access any page within this time,
+    // his/her session is considered expired (3600 sec. = 1 hour)
     public static $inactivityTimeout = 3600;
-
+    // If you get disconnected often or if your IP address changes often.
+    // Let you disable session cookie hijacking protection
     public static $disableSessionProtection = false;
-
+    // Ban IP after this many failures.
     public static $banAfter = 4;
+    // Ban duration for IP address after login failures (in seconds).
+    // (1800 sec. = 30 minutes)
     public static $banDuration = 1800;
-    public static $banFile;
+    // File storage for failures and bans. If empty, no ban management.
+    public static $banFile = '';
 
-    public static function init($sessionName = '', $banFile = '')
+    public static function init()
     {
-        self::$banFile = $banFile;
-
         // Force cookie path (but do not change lifetime)
         $cookie = session_get_cookie_params();
         // Default cookie expiration and path.
         $cookiedir = '';
-        if(dirname($_SERVER['SCRIPT_NAME'])!='/') {
+        if (dirname($_SERVER['SCRIPT_NAME'])!='/') {
             $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
         }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir);
+        $ssl = false;
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $ssl = true;
+        }
+        session_set_cookie_params($cookie['lifetime'], $cookiedir, $cookie['domain'], $ssl);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -4878,8 +4947,8 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
-            if (!empty($sessionName)) {
-                session_name($sessionName);
+            if (!empty(self::$sessionName)) {
+                session_name(self::$sessionName);
             }
             session_start();
         }
@@ -4902,26 +4971,24 @@ class Session
         $pValues = array())
     {
         self::banInit();
-        if (!self::banCanLogin()) {
-            die('I said: NO. You are banned for the moment. Go away.');
-        }
-        if ($login == $loginTest && $password==$passwordTest) {
-            self::banLoginOk();
-            // Generate unique random number to sign forms (HMAC)
-            $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
-            $_SESSION['ip'] = Session::_allIPs();
-            $_SESSION['username'] = $login;
-            // Set session expiration.
-            $_SESSION['expires_on'] = time() + Session::$inactivityTimeout;
+        if (self::banCanLogin()) {
+            if ($login === $loginTest && $password === $passwordTest) {
+                self::banLoginOk();
+                // Generate unique random number to sign forms (HMAC)
+                $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
+                $_SESSION['ip'] = self::_allIPs();
+                $_SESSION['username'] = $login;
+                // Set session expiration.
+                $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
 
-            foreach ($pValues as $key => $value) {
-                $_SESSION[$key] = $value;
+                foreach ($pValues as $key => $value) {
+                    $_SESSION[$key] = $value;
+                }
+
+                return true;
             }
-
-            return true;
+            self::banLoginFailed();
         }
-        self::banLoginFailed();
-        Session::logout();
 
         return false;
     }
@@ -4934,17 +5001,15 @@ class Session
     public static function isLogged()
     {
         if (!isset ($_SESSION['uid'])
-            || (Session::$disableSessionProtection == false
-                && $_SESSION['ip']!=Session::_allIPs())
-            || time()>=$_SESSION['expires_on']) {
-            Session::logout();
+            || (self::$disableSessionProtection === false
+                && $_SESSION['ip'] !== self::_allIPs())
+            || time() >= $_SESSION['expires_on']) {
+            self::logout();
 
             return false;
         }
         // User accessed a page : Update his/her session expiration date.
-        if (time()+Session::$inactivityTimeout > $_SESSION['expires_on']) {
-            $_SESSION['expires_on'] = time()+Session::$inactivityTimeout;
-        }
+        $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
 
         return true;
     }
@@ -4974,56 +5039,64 @@ class Session
 
     public static function banLoginFailed()
     {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
 
-        if (!isset($gb['FAILURES'][$ip])) {
-            $gb['FAILURES'][$ip] = 0;
-        }
-        $gb['FAILURES'][$ip]++;
-        if ($gb['FAILURES'][$ip] > (self::$banAfter-1)) {
-            $gb['BANS'][$ip]= time() + self::$banDuration;
-        }
+            if (!isset($gb['FAILURES'][$ip])) {
+                $gb['FAILURES'][$ip] = 0;
+            }
+            $gb['FAILURES'][$ip]++;
+            if ($gb['FAILURES'][$ip] > (self::$banAfter - 1)) {
+                $gb['BANS'][$ip]= time() + self::$banDuration;
+            }
 
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+            $GLOBALS['IPBANS'] = $gb;
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+        }
     }
 
     public static function banLoginOk()
     {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
-        $GLOBALS['IPBANS'] = $gb;
-        file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+            unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
+            $GLOBALS['IPBANS'] = $gb;
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+        }
     }
 
     public static function banInit()
     {
-        if (!is_file(self::$banFile) && self::$banFile !== '') {
-            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(),'BANS'=>array()),true).";\n?>");
-        }
         if (self::$banFile !== '') {
+            if (!is_file(self::$banFile)) {
+                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(), 'BANS'=>array()), true).";\n?>");
+            }
             include self::$banFile;
         }
     }
 
     public static function banCanLogin()
     {
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+            if (isset($gb['BANS'][$ip])) {
+                // User is banned. Check if the ban has expired:
+                if ($gb['BANS'][$ip] <= time()) {
+                    // Ban expired, user can try to login again.
+                    unset($gb['FAILURES'][$ip]);
+                    unset($gb['BANS'][$ip]);
+                    file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
 
-        $ip = $_SERVER["REMOTE_ADDR"];
-        $gb = $GLOBALS['IPBANS'];
-        if (isset($gb['BANS'][$ip])) {
-            // User is banned. Check if the ban has expired:
-            if ($gb['BANS'][$ip] <= time()) {
-                // Ban expired, user can try to login again.
-                unset($gb['FAILURES'][$ip]);
-                unset($gb['BANS'][$ip]);
-                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb,true).";\n?>");
-                return true; // Ban has expired, user can login.
+                    return true; // Ban has expired, user can login.
+                }
+
+                return false; // User is banned.
             }
-            return false; // User is banned.
         }
+
         return true; // User is not banned.
     }
 }
@@ -5145,7 +5218,9 @@ vVzbctxGkn3fr6hh2CYVwVuTbF5ash0aXSzNiDJDpOT100Y1urobIhqAC0CTlMMfMH+xb2vNwz7tH/DH
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init('kriss', BAN_FILE);
+Session::$sessionName = 'kriss';
+Session::$banFile = BAN_FILE;
+Session::init();
 
 // Initialize internationalization
 Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
@@ -8313,11 +8388,7 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 }
 
 $pb = new PageBuilder('FeedPage');
-$base = BASE_URL;
-if (empty($base)) {
-    $base = MyTool::getUrl();
-}
-$pb->assign('base', $base);
+$pb->assign('base', MyTool::getUrl());
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');
 $pb->assign('referer', $referer);
@@ -8420,7 +8491,11 @@ if (isset($_GET['login'])) {
 
             MyTool::redirect();
         }
-        $pb->assign('message', Intl::msg('Login failed!'));
+        if (Session::banCanLogin()) {
+            $pb->assign('message', Intl::msg('Login failed!'));
+        } else {
+            $pb->assign('message', Intl::msg('I said: NO. You are banned for the moment. Go away.'));
+        }
         $pb->renderPage('message');
     } else {
         $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));

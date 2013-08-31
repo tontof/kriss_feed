@@ -49,7 +49,9 @@ Plugin::init();
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
-Session::init('kriss', BAN_FILE);
+Session::$sessionName = 'kriss';
+Session::$banFile = BAN_FILE;
+Session::init();
 
 // Initialize internationalization
 Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
@@ -108,11 +110,7 @@ if (isset($_GET['file'])) {
 }
 
 $pb = new PageBuilder('FeedPage');
-$base = BASE_URL;
-if (empty($base)) {
-    $base = MyTool::getUrl();
-}
-$pb->assign('base', $base);
+$pb->assign('base', MyTool::getUrl());
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');
 $pb->assign('referer', $referer);
@@ -215,7 +213,11 @@ if (isset($_GET['login'])) {
 
             MyTool::redirect();
         }
-        $pb->assign('message', Intl::msg('Login failed!'));
+        if (Session::banCanLogin()) {
+            $pb->assign('message', Intl::msg('Login failed!'));
+        } else {
+            $pb->assign('message', Intl::msg('I said: NO. You are banned for the moment. Go away.'));
+        }
         $pb->renderPage('message');
     } else {
         $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));

@@ -316,6 +316,11 @@ class MyTool
      */
     public static function getUrl()
     {
+        $base = BASE_URL;
+        if (!empty($base)) {
+            return $base;
+        }
+
         $https = (!empty($_SERVER['HTTPS'])
                   && (strtolower($_SERVER['HTTPS']) == 'on'))
             || (isset($_SERVER["SERVER_PORT"])
