@@ -1,6 +1,6 @@
 file="kriss_feed.php"
 
-xgettext --from-code=UTF-8 --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c  --omit-header $file class/*.php class/tpl/*.php -o locale/messages.pot
+xgettext --from-code=UTF-8 --no-location --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c  --omit-header $file class/*.php class/tpl/*.php -o locale/messages.pot
 
 function echoerr() {
   echo "$@" 1>&2;
