@@ -2182,11 +2182,11 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 		self.head.appendChild(newIcon);
 
 		// Chrome hack for updating the favicon
-		var shim = document.createElement('iframe');
-		shim.width = shim.height = 0;
-		document.body.appendChild(shim);
-		shim.src = 'icon';
-		document.body.removeChild(shim);
+		//var shim = document.createElement('iframe');
+		//shim.width = shim.height = 0;
+		//document.body.appendChild(shim);
+		//shim.src = 'icon';
+		//document.body.removeChild(shim);
 	};
 
 	this.toString = function() { return '[object FaviconAlerts]'; };
