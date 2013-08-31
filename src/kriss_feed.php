@@ -2,7 +2,6 @@
 // kriss_feed simple and smart (or stupid) feed reader
 // 2012 - Copyleft - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('BASE_URL', '');
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');

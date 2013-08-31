@@ -315,7 +315,7 @@ class MyTool
      */
     public static function getUrl()
     {
-        $base = BASE_URL;
+        $base =  isset($GLOBALS['BASE_URL'])?$GLOBALS['BASE_URL']:'';
         if (!empty($base)) {
             return $base;
         }

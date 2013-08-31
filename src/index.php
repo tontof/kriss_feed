@@ -2,7 +2,6 @@
 // kriss_feed simple and smart (or stupid) feed reader
 // 2012 - Copyleft - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('BASE_URL', '');
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
@@ -2335,7 +2334,7 @@ foreach(array_keys($paging) as $pagingOpt) {
 <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>" data-intl-top="<?php echo Intl::msg('top'); ?>" data-intl-share="<?php echo Intl::msg('share'); ?>" data-intl-read="<?php echo Intl::msg('read'); ?>" data-intl-unread="<?php echo Intl::msg('unread'); ?>" data-intl-star="<?php echo Intl::msg('star'); ?>" data-intl-unstar="<?php echo Intl::msg('unstar'); ?>" data-intl-from="<?php echo Intl::msg('from'); ?>" data-intl-unstar="<?php echo Intl::msg('unstar'); ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>" data-intl-top="<?php echo Intl::msg('top'); ?>" data-intl-share="<?php echo Intl::msg('share'); ?>" data-intl-read="<?php echo Intl::msg('read'); ?>" data-intl-unread="<?php echo Intl::msg('unread'); ?>" data-intl-star="<?php echo Intl::msg('star'); ?>" data-intl-unstar="<?php echo Intl::msg('unstar'); ?>" data-intl-from="<?php echo Intl::msg('from'); ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -4153,7 +4152,7 @@ class MyTool
 
     public static function getUrl()
     {
-        $base = BASE_URL;
+        $base =  isset($GLOBALS['BASE_URL'])?$GLOBALS['BASE_URL']:'';
         if (!empty($base)) {
             return $base;
         }
