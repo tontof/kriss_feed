@@ -7823,20 +7823,13 @@ dd {
         }
         break;
         case 90: // 'z'
-		if (filter == 'unread') {
-			while(listItemsHash.indexOf(currentItemHash) != -1) {
-				window.open(getUrlItem(currentItemHash),'_blank');
-				markAsCurrentItem();
-			}
-        } else if (filter == 'all') {
-			for (var i=0;i<listItemsHash.length;i++){
-				if (!hasClass(getItem(listItemsHash[i]), 'read')){
-					window.open(getUrlItem(currentItemHash),'_blank');
-					markAsCurrentItem();
-				}
-				nextItem();
-			}
-		}
+          for (var i=0;i<listItemsHash.length;i++){
+	      if (!hasClass(getItem(listItemsHash[i]), 'read')){
+		  window.open(getUrlItem(currentItemHash),'_blank');
+		  markAsCurrentItem();
+	      }
+	      nextItem();
+          }
         break;
         case 170: // '*'
           markAsStarredCurrentItem();
