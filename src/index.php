@@ -5233,6 +5233,13 @@ class Star extends Feed
     }
 }
 
+MyTool::$opts = array(
+    'http' => array(
+        'timeout' => 4,
+        'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
+    )
+);
+
 Plugin::init();
 
 
@@ -5247,6 +5254,10 @@ vVxLc9xGkr7vr6hh2EMqgq8m2Xy0ZHs1eliaESWGSMnr00Y1urobIhqAC0CTlMMRe51/sbe15rCn/Qf8
 }
 
 
+$GLOBALS['BASE_URL'] = '';
+
+MyTool::$opts['http']['timeout'] = '5';
+
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
@@ -5259,12 +5270,6 @@ Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
 Intl::addLang('en_US', 'English (America)', 'flag-us');
 Intl::init();
 
-MyTool::$opts = array(
-    'http' => array(
-        'timeout' => 4,
-        'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
-        )
-    );
 
 $ref = MyTool::getUrl();
 $referer = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
