@@ -11,6 +11,8 @@ define('DATA_FILE', DATA_DIR.'/data.php');
 define('STAR_FILE', DATA_DIR.'/star.php');
 define('ITEM_FILE', DATA_DIR.'/item.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
+define('OPML_FILE', DATA_DIR.'/feeds.opml');
+define('OPML_FILE_SAVE', DATA_DIR.'/feeds.bak.opml');
 define('STYLE_FILE', 'style.css');
 
 define('BAN_FILE', DATA_DIR.'/ipbans.php');
@@ -4409,7 +4411,7 @@ class Opml
         }
     }
 
-    public static function exportOpml($feeds, $folders)
+    public static function generateOpml($feeds, $folders)
     {
         $withoutFolder = array();
         $withFolder = array();
@@ -4425,12 +4427,6 @@ class Opml
             }
         }
 
-        // generate opml file
-        header('Content-Type: text/xml; charset=utf-8');
-        header(
-            'Content-disposition: attachment; filename=kriss_feed_'
-            . strval(date('Ymd_His')) . '.opml'
-        );
         $opmlData = new DOMDocument('1.0', 'UTF-8');
 
         // we want a nice output
@@ -4529,7 +4525,20 @@ class Opml
         $opml->appendChild($body);
         $opmlData->appendChild($opml);
 
-        echo $opmlData->saveXML();
+        return $opmlData->saveXML();
+    }
+
+    public static function exportOpml($feeds, $folders)
+    {
+
+        // generate opml file
+        header('Content-Type: text/xml; charset=utf-8');
+        header(
+            'Content-disposition: attachment; filename=kriss_feed_'
+            . strval(date('Ymd_His')) . '.opml'
+        );
+
+        echo self::generateOpml($feeds, $folders);
         exit();
     }
 
@@ -8450,6 +8459,20 @@ $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
 $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
 
 $kfp = new FeedPage(STYLE_FILE);
+
+// autosave opml
+if (Session::isLogged()) {
+    if (!is_file(OPML_FILE)) {
+        $kf->loadData();
+        file_put_contents(OPML_FILE, Opml::generateOpml($kf->getFeeds(), $kf->getFolders()));
+    } else {
+        if (filemtime(OPML_FILE) < time() - UPDATECHECK_INTERVAL) {
+            $kf->loadData();
+            rename(OPML_FILE, OPML_FILE_SAVE);
+            file_put_contents(OPML_FILE, Opml::generateOpml($kf->getFeeds(), $kf->getFolders()));
+        }
+    }   
+}
 
 // List or Expanded ?
 $view = $kfc->view;

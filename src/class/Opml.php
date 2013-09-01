@@ -129,9 +129,9 @@ class Opml
     }
 
     /**
-     * Export feeds to an opml file
+     * Generate opml
      */
-    public static function exportOpml($feeds, $folders)
+    public static function generateOpml($feeds, $folders)
     {
         $withoutFolder = array();
         $withFolder = array();
@@ -147,12 +147,6 @@ class Opml
             }
         }
 
-        // generate opml file
-        header('Content-Type: text/xml; charset=utf-8');
-        header(
-            'Content-disposition: attachment; filename=kriss_feed_'
-            . strval(date('Ymd_His')) . '.opml'
-        );
         $opmlData = new DOMDocument('1.0', 'UTF-8');
 
         // we want a nice output
@@ -251,7 +245,23 @@ class Opml
         $opml->appendChild($body);
         $opmlData->appendChild($opml);
 
-        echo $opmlData->saveXML();
+        return $opmlData->saveXML();
+    }
+
+    /**
+     * Export feeds to an opml file
+     */
+    public static function exportOpml($feeds, $folders)
+    {
+
+        // generate opml file
+        header('Content-Type: text/xml; charset=utf-8');
+        header(
+            'Content-disposition: attachment; filename=kriss_feed_'
+            . strval(date('Ymd_His')) . '.opml'
+        );
+
+        echo self::generateOpml($feeds, $folders);
         exit();
     }
 
