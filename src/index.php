@@ -5254,10 +5254,6 @@ vVxLc9xGkr7vr6hh2EMqgq8m2Xy0ZHs1eliaESWGSMnr00Y1urobIhqAC0CTlMMRe51/sbe15rCn/Qf8
 }
 
 
-$GLOBALS['BASE_URL'] = '';
-
-MyTool::$opts['http']['timeout'] = '5';
-
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
