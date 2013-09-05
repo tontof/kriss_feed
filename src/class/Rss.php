@@ -234,7 +234,7 @@ class Rss
         }
 
         $newItems = array();
-        $max = $nb === -1 ? $items->length : max($nb, $item->length);
+        $max = ($nb === -1 ? $items->length : min($nb, $items->length));
         for ($i = 0; $i < $max; $i++) {
             $newItems[] = self::formatElement($dom, $items->item($i), self::$itemFormat);
         }
