@@ -59,7 +59,7 @@ class Session
         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $ssl = true;
         }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir, $cookie['domain'], $ssl);
+        session_set_cookie_params($cookie['lifetime'], $cookiedir, $_SERVER['HTTP_HOST'], $ssl);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
