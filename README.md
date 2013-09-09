@@ -62,6 +62,10 @@ Features
   * order list of feeds
   * list of feeds are updated with javascript
 
+* version 8
+  * internationalization
+  * plugins
+
 Licence
 =======
 kriss_feed simple and smart (or stupid) feed reader
