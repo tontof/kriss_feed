@@ -4882,7 +4882,7 @@ class Rss
         }
 
         $newItems = array();
-        $max = $nb === -1 ? $items->length : max($nb, $item->length);
+        $max = ($nb === -1 ? $items->length : min($nb, $items->length));
         for ($i = 0; $i < $max; $i++) {
             $newItems[] = self::formatElement($dom, $items->item($i), self::$itemFormat);
         }
@@ -8527,14 +8527,24 @@ if (isset($_GET['login'])) {
             $_POST['login'],
             sha1($_POST['password'].$_POST['login'].$kfc->salt)
         )) {
+            $cookie = session_get_cookie_params();   
+            $cookiedir = '';
+            if (dirname($_SERVER['SCRIPT_NAME'])!='/') {
+                $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
+            }
+            $ssl = false;
+            if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+                $ssl = true;
+            }
+
             if (!empty($_POST['longlastingsession'])) {
                 // (31536000 seconds = 1 year)
                 $_SESSION['longlastingsession'] = 31536000;
                 $_SESSION['expires_on'] =
                     time() + $_SESSION['longlastingsession'];
-                session_set_cookie_params($_SESSION['longlastingsession']);
+                session_set_cookie_params($_SESSION['longlastingsession'], $cookiedir, $cookie['domain'], $ssl);
             } else {
-                session_set_cookie_params(0); // when browser closes
+                session_set_cookie_params(0, $cookiedir, $cookie['domain'], $ssl); // when browser closes
             }
             session_regenerate_id(true);
 
