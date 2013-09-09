@@ -20,7 +20,7 @@ define('UPDATECHECK_FILE', DATA_DIR.'/lastupdatecheck.txt');
 // Updates check frequency. 86400 seconds = 24 hours
 define('UPDATECHECK_INTERVAL', 86400);
 
-define('FEED_VERSION', 7);
+define('FEED_VERSION', 8);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
@@ -2336,7 +2336,7 @@ foreach(array_keys($paging) as $pagingOpt) {
 <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>" data-intl-top="<?php echo Intl::msg('top'); ?>" data-intl-share="<?php echo Intl::msg('share'); ?>" data-intl-read="<?php echo Intl::msg('read'); ?>" data-intl-unread="<?php echo Intl::msg('unread'); ?>" data-intl-star="<?php echo Intl::msg('star'); ?>" data-intl-unstar="<?php echo Intl::msg('unstar'); ?>" data-intl-from="<?php echo Intl::msg('from'); ?>"<?php if (isset($_GET['stars'])) { echo ' data-stars="1"'; } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>" data-add-favicon="<?php echo $addFavicon; ?>" data-preload="<?php echo $preload; ?>" data-is-logged="<?php echo $isLogged; ?>" data-blank="<?php echo $blank; ?>" data-intl-top="<?php echo Intl::msg('top'); ?>" data-intl-share="<?php echo Intl::msg('share'); ?>" data-intl-read="<?php echo Intl::msg('read'); ?>" data-intl-unread="<?php echo Intl::msg('unread'); ?>" data-intl-star="<?php echo Intl::msg('star'); ?>" data-intl-unstar="<?php echo Intl::msg('unstar'); ?>" data-intl-from="<?php echo Intl::msg('from'); ?>"<?php if (isset($_GET['stars']) && $kf->kfc->isLogged()) { echo ' data-stars="1"'; } ?>>
       <div class="row-fluid full-height">
         <?php if ($listFeeds == 'show') { ?>
         <div id="main-container" class="span9 full-height">
@@ -8375,8 +8375,13 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
     });
 	};
 	this.getSearchText = function() {
-		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
-		return Nbunread;
+                var elt = document.getElementById('nb-unread');
+                
+                if (!elt) {
+		  elt = document.getElementById('nb-starred');
+                }
+
+		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
 	};
 	this.poll = function() {
 		if(self.getUnreadCount() != "0") {
