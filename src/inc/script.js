@@ -2144,8 +2144,13 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
     });
 	};
 	this.getSearchText = function() {
-		var Nbunread = 'Kriss feed (' + parseInt(document.getElementById('nb-unread').innerHTML, 10) + ')' ;
-		return Nbunread;
+                var elt = document.getElementById('nb-unread');
+                
+                if (!elt) {
+		  elt = document.getElementById('nb-starred');
+                }
+
+		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
 	};
 	this.poll = function() {
 		if(self.getUnreadCount() != "0") {
