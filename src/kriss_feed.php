@@ -216,7 +216,6 @@ if (isset($_GET['login'])) {
             $_POST['login'],
             sha1($_POST['password'].$_POST['login'].$kfc->salt)
         )) {
-            $cookie = session_get_cookie_params();   
             $cookiedir = '';
             if (dirname($_SERVER['SCRIPT_NAME'])!='/') {
                 $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
@@ -231,9 +230,9 @@ if (isset($_GET['login'])) {
                 $_SESSION['longlastingsession'] = 31536000;
                 $_SESSION['expires_on'] =
                     time() + $_SESSION['longlastingsession'];
-                session_set_cookie_params($_SESSION['longlastingsession'], $cookiedir, $cookie['domain'], $ssl);
+                session_set_cookie_params($_SESSION['longlastingsession'], $cookiedir, $_SERVER['HTTP_HOST'], $ssl);
             } else {
-                session_set_cookie_params(0, $cookiedir, $cookie['domain'], $ssl); // when browser closes
+                session_set_cookie_params(0, $cookiedir, $_SERVER['HTTP_HOST'], $ssl); // when browser closes
             }
             session_regenerate_id(true);
 
