@@ -123,7 +123,8 @@ class Feed
                 $this->dataFile,
                 PHPPREFIX
                 . base64_encode(gzdeflate(serialize($this->_data)))
-                . PHPSUFFIX
+                . PHPSUFFIX,
+                LOCK_EX
                 );
             if (!$write) {
                 die("Can't write to " . $this->dataFile);
@@ -420,7 +421,8 @@ class Feed
                 $this->cacheDir.'/'.$feedHash.'.php',
                 PHPPREFIX
                 . base64_encode(gzdeflate(serialize($feed)))
-                . PHPSUFFIX
+                . PHPSUFFIX,
+                LOCK_EX
                 );
 
             if (!$write) {
