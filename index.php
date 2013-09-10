@@ -4741,6 +4741,7 @@ class Rss
     public static function isValidNodeAttrs($node, $attrs)
     {
         foreach ($attrs as $attr) {
+            $val = '';
             if (strpos($attr, '=') !== false) {
                 list($attr, $val) = explode('=', $attr);
             }
@@ -4782,7 +4783,7 @@ class Rss
     {
         $res = '';
         $selector = array_shift($selectors);
-        $attributes = explode('[', trim($selector, ']'));
+        $attributes = explode('[', str_replace(']','',$selector));
         $name = array_shift($attributes);
         if (substr($name, -1) == "*") {
             $name = substr($name, 0, -1);
@@ -4833,12 +4834,12 @@ class Rss
                 if (empty($selector)) {
                     $newElement[$format] = self::getElement($element, $selectors);
                 } else if (strpos($selector, '[') === 0) {
-                    $attributes = explode('[', trim($selector, ']'));
+                    $attributes = explode('[', str_replace(']','',$selector));
                     if (self::isValidNodeAttrs($element, $attributes)) {
                         $newElement[$format] = self::getElement($element, $selectors);
                     }
                 } else {
-                    $attributes = explode('[', trim($selector, ']'));
+                    $attributes = explode('[', str_replace(']','',$selector));
                     $name = array_shift($attributes);
                     $nodes = self::getNodesName($dom, $name);
                     foreach ($nodes as $node) {
