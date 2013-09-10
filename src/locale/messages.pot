@@ -613,6 +613,13 @@ msgid ""
 "as read"
 msgstr ""
 
+msgid "Star/Unstar current item"
+msgstr ""
+
+msgid ""
+"Open all unread items from current page in new tabs and mark items as read"
+msgstr ""
+
 msgid "Menu navigation"
 msgstr ""
 

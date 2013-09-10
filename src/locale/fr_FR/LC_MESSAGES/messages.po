@@ -592,6 +592,12 @@ msgstr "Partager l'article courant"
 msgid "Mark all items, all items from current feed or all items from current folder as read"
 msgstr "Marque tous les articles, tous les articles du flux courant ou tous les articles du dossier courant comme lu"
 
+msgid "Star/Unstar current item"
+msgstr "Conserver/oublier l'article courant"
+
+msgid "Open all unread items from current page in new tabs and mark items as read"
+msgstr "Ouvre tous les articles non lus de la page dans des onglets et les marque comme lus"
+
 msgid "Menu navigation"
 msgstr "Navigation du menu"
 

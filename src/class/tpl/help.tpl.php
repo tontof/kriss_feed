@@ -77,6 +77,14 @@
                   <dt>a</dt>
                   <dd><?php echo Intl::msg('Mark all items, all items from current feed or all items from current folder as read'); ?></dd>
                 </dl>
+                <dl class="dl-horizontal">
+                  <dt>*</dt>
+                  <dd><?php echo Intl::msg('Star/Unstar current item'); ?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>z</dt>
+                  <dd><?php echo Intl::msg('Open all unread items from current page in new tabs and mark items as read'); ?></dd>
+                </dl>
               </fieldset>
               <fieldset>
                 <legend><?php echo Intl::msg('Menu navigation'); ?></legend>
