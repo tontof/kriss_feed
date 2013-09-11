@@ -16,7 +16,7 @@
 	padding: 0;
 }
 
-.menu-ico {
+.menu-ico:before {
   display: inline-block;
 }
 
@@ -153,7 +153,4 @@ li.item-list {
 
 .item-content {
 	margin-bottom: 20px;
-}
-.menu-ico:before {
-  display: inline-block;
 }

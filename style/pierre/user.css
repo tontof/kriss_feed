@@ -31,7 +31,7 @@ a:hover{
 	padding: 0;
 }
 
-.menu-ico {
+.menu-ico:before {
 	  display: inline-block;
 }
 

@@ -8,7 +8,7 @@
  * http://orangina-rouge.org (CC-0)
  */
 
- .menu-ico {
+.menu-ico:before {
   display: inline-block;
 }
 
