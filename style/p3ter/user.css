@@ -154,3 +154,6 @@ li.item-list {
 .item-content {
 	margin-bottom: 20px;
 }
+.menu-ico:before {
+  display: inline-block;
+}
