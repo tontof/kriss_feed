@@ -156,6 +156,9 @@ class Session
         }
         // User accessed a page : Update his/her session expiration date.
         $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
+        if (!empty($_SESSION['longlastingsession'])) {
+                $_SESSION['expires_on'] += $_SESSION['longlastingsession'];
+        }
 
         return true;
     }
