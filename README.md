@@ -68,9 +68,10 @@ Features
 
 Licence
 =======
-kriss_feed simple and smart (or stupid) feed reader
+Copyleft (ɔ) - Tontof - http://tontof.net
 
-Copyleft (ɔ) 2012 Tontof - http://tontof.net
-
-use KrISS feed at your own risk
-
+[Free software means users have the four essential freedoms](http://www.gnu.org/philosophy/philosophy.html):
+* to run the program
+* to study and change the program in source code form
+* to redistribute exact copies, and
+* to distribute modified versions.
