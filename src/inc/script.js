@@ -394,7 +394,7 @@
           .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
           .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
           '_blank',
-          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
+          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no', dialog=1
         );
       } else {
         alert('Please configure your share link first');
