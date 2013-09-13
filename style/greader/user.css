@@ -456,7 +456,6 @@ input[type=text].form-error{
 }
 
 input[type=checkbox] {
-  -webkit-appearance: none;
   appearance: none;
   width: 13px;
   height: 13px;
