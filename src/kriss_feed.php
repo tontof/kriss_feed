@@ -1,6 +1,6 @@
 <?php
-// kriss_feed simple and smart (or stupid) feed reader
-// 2012 - Copyleft - Tontof - http://tontof.net
+// KrISS feed: a simple and smart (or stupid) feed reader
+// Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
