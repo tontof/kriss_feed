@@ -1088,7 +1088,11 @@ class Feed
         $this->_data['feeds'][$feedHash] = $output['feed'];
         if (empty($output['feed']['error'])) {
             $this->loadFeed($feedHash);
-            $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            $oldItems = array();
+            if (!empty($this->_data['feeds'][$feedHash]['items'])) {
+                $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            }
+
             $lastTime = 0;
             if (isset($this->_data['feeds'][$feedHash]['lastTime'])) {
                 $lastTime = $this->_data['feeds'][$feedHash]['lastTime'];

@@ -200,7 +200,7 @@ msgid "KrISS feed visibility"
 msgstr "Visibilité de KrISS feed"
 
 msgid "Public KrISS feed"
-msgstr "KrISS feed publique"
+msgstr "KrISS feed public"
 
 msgid "No restriction. Anyone can modify configuration, mark as read items, update feeds..."
 msgstr "Aucune restriction. N'importe qui peut modifier la configuration, marquer comme lus les articles, mettre à jour les flux..."
