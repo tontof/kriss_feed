@@ -113,6 +113,11 @@ class MyTool
                 }
                 $header = implode("\r\n", $http_response_header);
                 fclose($stream);
+
+                $decode_data = gzdecode($data);
+                if ( substr($decode_data,0,1) === '<') {
+                    $data = $decode_data;
+                } 
             } else {
                 $error = self::ERROR_NO_CURL;
             }
