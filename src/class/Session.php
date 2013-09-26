@@ -48,18 +48,7 @@ class Session
      */
     public static function init()
     {
-        // Force cookie path (but do not change lifetime)
-        $cookie = session_get_cookie_params();
-        // Default cookie expiration and path.
-        $cookiedir = '';
-        if (dirname($_SERVER['SCRIPT_NAME'])!='/') {
-            $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
-        }
-        $ssl = false;
-        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
-            $ssl = true;
-        }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir, $_SERVER['HTTP_HOST'], $ssl);
+        self::setCookie();
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -72,6 +61,36 @@ class Session
             }
             session_start();
         }
+    }
+
+    /**
+     * Session set cookie
+     *
+     * @param integer $lifetime of cookie
+     */
+    public static function setCookie($lifetime = null)
+    {
+        $cookie = session_get_cookie_params();
+        // Do not change lifetime
+        if ($lifetime === null) {
+            $lifetime = $cookie['lifetime'];
+        }
+        // Force cookie path
+        $path = '';
+        if (dirname($_SERVER['SCRIPT_NAME']) !== '/') {
+            $path = dirname($_SERVER["SCRIPT_NAME"]).'/';
+        }
+        // Use default domain
+        $domain = $cookie['domain'];
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $domain = $_SERVER['HTTP_HOST'];
+        }
+        // Check if secure
+        $secure = false;
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $secure = true;
+        }
+        session_set_cookie_params($lifetime, $path, $domain, $secure);
     }
 
     /**

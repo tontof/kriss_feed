@@ -216,26 +216,17 @@ if (isset($_GET['login'])) {
             $_POST['login'],
             sha1($_POST['password'].$_POST['login'].$kfc->salt)
         )) {
-            $cookiedir = '';
-            if (dirname($_SERVER['SCRIPT_NAME'])!='/') {
-                $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
-            }
-            $ssl = false;
-            if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
-                $ssl = true;
-            }
-
             if (!empty($_POST['longlastingsession'])) {
                 // (31536000 seconds = 1 year)
                 $_SESSION['longlastingsession'] = 31536000;
                 $_SESSION['expires_on'] =
                     time() + $_SESSION['longlastingsession'];
-                session_set_cookie_params($_SESSION['longlastingsession'], $cookiedir, $_SERVER['HTTP_HOST'], $ssl);
+                Session::setCookie($_SESSION['longlastingsession']);
             } else {
-                session_set_cookie_params(0, $cookiedir, $_SERVER['HTTP_HOST'], $ssl); // when browser closes
+                // when browser closes
+                Session::setCookie(0);
             }
             session_regenerate_id(true);
-
             MyTool::redirect();
         }
         if (Session::banCanLogin()) {
