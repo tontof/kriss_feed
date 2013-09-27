@@ -3655,7 +3655,6 @@ class Feed
     }
 }
 
-del>
 class Intl
 {
     public static $lazy = false;
