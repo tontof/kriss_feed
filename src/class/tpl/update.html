@@ -1,33 +1,35 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+    {include="includes"}
   </head>
   <body>
     <div class="container-fluid full-height">
       <div class="row-fluid full-height">
         <div class="span12 full-height">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
+          {include="status"}
+          {include="nav"}
           <div class="container-fluid">
             <div class="row-fluid">
               <div class="span6 offset3">
                 <ul class="unstyled">
-                  <?php $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')?>
+                  {$kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')}
                 </ul>
-                <a class="btn ico-home" href="<?php echo MyTool::getUrl(); ?>" title="<?php echo Intl::msg('Home'); ?>"></a>
-                <?php if (!empty($referer)) { ?>
-                <a class="btn" href="<?php echo $referer; ?>"><?php echo Intl::msg('Go back'); ?></a>
-                <?php } ?>
-                <a class="btn" href="<?php echo $query."update=".$currentHash."&force"; ?>"><?php echo Intl::msg('Force update'); ?></a>
+                <a class="btn ico-home" href="{$base}" title="{'Home'|Intl::msg}"></a>
+                {if="!empty($referer)"}
+                <a class="btn" href="{$referer}">{'Go back'|Intl::msg}</a>
+                {/if}
+                <a class="btn" href="{$query}update={$currentHash}&amp;force">{'Force update'|Intl::msg}</a>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <script type="text/javascript">
-      <?php /* include("inc/script.js"); */ ?>
-    </script>
+    {if="is_file('inc/script.js')"}
+    <script type="text/javascript" src="inc/script.js?version={$version}"></script>
+    {else}
+    <script type="text/javascript" src="?file=script.js&amp;version={$version}"></script>
+    {/if}
   </body>
 </html>

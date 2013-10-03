@@ -95,36 +95,21 @@ class Opml
                 }
             }
 
-            FeedPage::init(
-                array(
-                    'base' => MyTool::getUrl(),
-                    'message' => sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount),
-                    'button' => Intl::msg('Continue'),
-                    'referer' => MyTool::getUrl(),
-                    'version' => FEED_VERSION,
-                    'pagetitle' => 'KrISS feed installation'
-                )
-            );
-            FeedPage::messageTpl();
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount));
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl());
+
+            FeedPage::$pb->renderPage('message', false);
 
             $kfData['feeds'] = $feeds;
             $kfData['folders'] = $folders;
 
             return $kfData;
         } else {
+            FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)));
 
-            FeedPage::init(
-                array(
-                    'base' => MyTool::getUrl(),
-                    'class' => 'text-success',
-                    'message' => sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)),
-                    'referer' => MyTool::getUrl().'?import',
-                    'version' => FEED_VERSION,
-                    'pagetitle' => 'KrISS feed installation'
-                )
-            );
-            FeedPage::messageTpl();
-            exit;
+            FeedPage::$pb->renderPage('message');
         }
     }
 

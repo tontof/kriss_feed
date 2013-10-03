@@ -1251,7 +1251,7 @@ class Feed
      *
      * @param string $feedHash Hash corresponding to a feed
      *
-     * @return array feed information, error, lastUpdate and newItems
+     * @return empty string
      */
     public function updateFeedsHash($feedsHash, $force, $format = '')
     {
@@ -1343,6 +1343,8 @@ class Feed
         if ($format === 'html') {
             echo '</tbody></table>';
         }
+
+        return '';
     }
 
     /**

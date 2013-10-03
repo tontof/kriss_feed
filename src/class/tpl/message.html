@@ -1,23 +1,17 @@
 <!DOCTYPE html>
 <html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
+  <head>{include="includes"}</head>
   <body onload="document.getElementById('again').focus();">
     <div class="container-fluid full-height">
       <div class="row-fluid full-height">
         <div id="main-container" class="span12 full-height">
-          <?php FeedPage::statusTpl(); ?>
+          {include="status"}
           <div class="text-center">
-     <?php echo Intl::msg('Click on flag to select your language.').'<br>';
-     
- foreach(Intl::$langList as $lang => $info) { ?>
-<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
-<?php } ?>
+            {'Click on flag to select your language.'|Intl::msg}<br>{loop="$langs"}
+            <a href="?lang={$key}" title="{$value.name}" class="flag {$value.class}"></a>{/loop}
           </div>
-          <div class="<?php if (empty($class)) { echo 'text-error'; } else { echo $class; } ?> text-center">
-            <?php echo $message; ?><br>
-     <a id="again" tabindex="1" class="btn" href="<?php echo $referer; ?>"><?php if (empty($button)) { echo Intl::msg('Try again'); } else { echo $button; } ?></a>
+          <div class="{if="empty($class)"}text-error{else}{$class}{/if} text-center">{$message}<br>
+     <a id="again" tabindex="1" class="btn" href="{$referer}">{if="empty($button)"}{'Try again'|Intl::msg}{else}{$button}{/if}</a>
           </div>
         </div>
       </div>

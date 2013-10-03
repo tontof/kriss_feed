@@ -1,56 +1,44 @@
 
-<ul class="inline"><?php
-foreach(array_keys($paging) as $pagingOpt) {
-  switch($pagingOpt) {
-    case 'pagingItem': ?>
-
+<ul class="inline">
+{loop="$paging"}
+  {if="$value=='pagingItem'"}
   <li>
     <div class="btn-group">
-      <a class="btn btn2 btn-info previous-item" href="<?php echo $query.'previous='.$currentItemHash; ?>" title="<?php echo Intl::msg("Previous item"); ?>"><?php echo Intl::msg("Previous item"); ?></a>
-      <a class="btn btn2 btn-info next-item" href="<?php echo $query.'next='.$currentItemHash; ?>" title="<?php echo Intl::msg("Next item"); ?>"><?php echo Intl::msg("Next item"); ?></a>
+      <a class="btn btn2 btn-info previous-item" href="{$query}previous={$currentItemHash}" title="{'Previous item'|Intl::msg}">{'Previous item'|Intl::msg}</a>
+      <a class="btn btn2 btn-info next-item" href="{$query}next={$currentItemHash}" title="{'Next item'|Intl::msg}">{'Next item'|Intl::msg}</a>
     </div>
-  </li><?php
-      break;
-    case 'pagingMarkAs': ?>
-
+  </li>
+  {elseif="$value=='pagingMarkAs'"}
   <li>
     <div class="btn-group">
-      <a class="btn btn-info" href="<?php echo $query.'read='.$currentHash; ?>" title="<?php echo Intl::msg("Mark as read"); ?>"><?php echo Intl::msg("Mark as read"); ?></a>
+      <a class="btn btn-info" href="{$query}read={$currentHash}" title="{'Mark as read'|Intl::msg}">{'Mark as read'|Intl::msg}</a>
     </div>
-  </li><?php
-      break;
-    case 'pagingPage': ?>
-
+  </li>
+  {elseif="$value=='pagingPage'"}
   <li>
     <div class="btn-group">
-      <a class="btn btn3 btn-info previous-page<?php echo ($currentPage === 1)?' disabled':''; ?>" href="<?php echo $query.'previousPage='.$currentPage; ?>" title="<?php echo Intl::msg("Previous page"); ?>"><?php echo Intl::msg("Previous page"); ?></a>
-      <button class="btn btn3 disabled current-max-page"><?php echo $currentPage.' / '.$maxPage; ?></button>
-      <a class="btn btn3 btn-info next-page<?php echo ($currentPage === $maxPage)?' disabled':''; ?>" href="<?php echo $query.'nextPage='.$currentPage; ?>" title="<?php echo Intl::msg("Next page"); ?>"><?php echo Intl::msg("Next page"); ?></a>
+      <a class="btn btn3 btn-info previous-page{if="$currentPage===1"} disabled{/if}" href="{$query}previousPage={$currentPage}" title="{'Previous page'|Intl::msg}">{'Previous page'|Intl::msg}</a>
+      <button class="btn btn3 disabled current-max-page">{$currentPage} / {$maxPage}</button>
+      <a class="btn btn3 btn-info next-page{if="$currentPage===$maxPage"} disabled{/if}" href="{$query}nextPage={$currentPage}" title="{'Next page'|Intl::msg}">{'Next page'|Intl::msg}</a>
     </div>
-  </li><?php
-      break;
-    case 'pagingByPage': ?>
-
+  </li>
+  {elseif="$value=='pagingByPage'"}
   <li>
     <div class="btn-group">
       <form class="form-inline" action="" method="GET">
         <div class="input-prepend input-append paging-by-page">
-          <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=1'; ?>">1</a>
-          <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=10'; ?>">10</a>
-          <a class="btn btn3 btn-info" href="<?php echo $query.'byPage=50'; ?>">50</a>
+          <a class="btn btn3 btn-info" href="{$query}byPage=1">1</a>
+          <a class="btn btn3 btn-info" href="{$query}byPage=10">10</a>
+          <a class="btn btn3 btn-info" href="{$query}byPage=50">50</a>
           <div class="btn-break"></div>
           <input class="btn2 input-by-page input-mini" type="text" name="byPage">
-          <input type="hidden" name="currentHash" value="<?php echo $currentHash; ?>">
-          <button type="submit" class="btn btn2"><?php echo Intl::msg("Items per page"); ?></button>
+          <input type="hidden" name="currentHash" value="{$currentHash}">
+          <button type="submit" class="btn btn2">{'Items per page'|Intl::msg}</button>
         </div>
       </form>
     </div>
-  </li><?php
-      break;
-    default:
-      break;
-  }
-} ?>
-
+  </li>
+  {/if}
+{/loop}
 </ul>
 <div class="clear"></div>

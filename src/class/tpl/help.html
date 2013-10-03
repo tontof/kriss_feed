@@ -1,133 +1,133 @@
 <!DOCTYPE html>
 <html>
-  <head><?php FeedPage::includesTpl(); ?></head>
+  <head>{include="includes"}</head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span6 offset3">
           <div id="config">
-            <?php FeedPage::statusTpl(); ?>
-            <?php FeedPage::navTpl(); ?>
+            {include="status"}
+            {include="nav"}
             <div id="section">
-              <h2><?php echo Intl::msg('Keyboard shortcuts'); ?></h2>
+              <h2>{'Keyboard shortcuts'|Intl::msg}</h2>
               <fieldset>
-                <legend><?php echo Intl::msg('Key legend'); ?></legend>
+                <legend>{'Key legend'|Intl::msg}</legend>
                 <dl class="dl-horizontal">
                   <dt>&#x23b5;</dt>
-                  <dd><?php echo Intl::msg('Space key'); ?></dd>
+                  <dd>{'Space key'|Intl::msg}</dd>
                   <dt>&#x21e7;</dt>
-                  <dd><?php echo Intl::msg('Shift key'); ?></dd>
+                  <dd>{'Shift key'|Intl::msg}</dd>
                   <dt>&#x2192;</dt>
-                  <dd><?php echo Intl::msg('Right arrow key'); ?></dd>
+                  <dd>{'Right arrow key'|Intl::msg}</dd>
                   <dt>&#x2190;</dt>
-                  <dd><?php echo Intl::msg('Left arrow key'); ?></dd>
+                  <dd>{'Left arrow key'|Intl::msg}</dd>
                 </dl>
               </fieldset>
               <fieldset>
-                <legend><?php echo Intl::msg('Items navigation'); ?></legend>
+                <legend>{'Items navigation'|Intl::msg}</legend>
                 <dl class="dl-horizontal">
                   <dt>&#x23b5;, t</dt>
-                  <dd><?php echo Intl::msg('Toggle current item (open, close item in list view)'); ?></dd>
+                  <dd>{'Toggle current item (open, close item in list view)'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>m</dt>
-                  <dd><?php echo Intl::msg('Mark current item as read if unread or unread if read'); ?></dd>
+                  <dd>{'Mark current item as read if unread or unread if read'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>&#x21e7; + m</dt>
-                  <dd><?php echo Intl::msg('Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)'); ?></dd>
+                  <dd>{'Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>&#x2192;, n</dt>
-                  <dd><?php echo Intl::msg('Go to next item'); ?></dd>
+                  <dd>{'Go to next item'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>&#x2190;, p</dt>
-                  <dd><?php echo Intl::msg('Go to previous item'); ?></dd>
+                  <dd>{'Go to previous item'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>&#x21e7; + n</dt>
-                  <dd><?php echo Intl::msg('Go to next page'); ?></dd>
+                  <dd>{'Go to next page'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>&#x21e7; + p</dt>
-                  <dd><?php echo Intl::msg('Go to previous page'); ?></dd>
+                  <dd>{'Go to previous page'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>j</dt>
-                  <dd><?php echo Intl::msg('Go to next item and open it (in list view)'); ?></dd>
+                  <dd>{'Go to next item and open it (in list view)'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>k</dt>
-                  <dd><?php echo Intl::msg('Go to previous item and open it (in list view)'); ?></dd>
+                  <dd>{'Go to previous item and open it (in list view)'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>o</dt>
-                  <dd><?php echo Intl::msg('Open current item in new tab'); ?></dd>
+                  <dd>{'Open current item in new tab'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>&#x21e7; + o</dt>
-                  <dd><?php echo Intl::msg('Open current item in current window'); ?></dd>
+                  <dd>{'Open current item in current window'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>s</dt>
-                  <dd><?php echo Intl::msg('Share current item'); ?></dd>
+                  <dd>{'Share current item'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>a</dt>
-                  <dd><?php echo Intl::msg('Mark all items, all items from current feed or all items from current folder as read'); ?></dd>
+                  <dd>{'Mark all items, all items from current feed or all items from current folder as read'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>*</dt>
-                  <dd><?php echo Intl::msg('Star/Unstar current item'); ?></dd>
+                  <dd>{'Star/Unstar current item'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>z</dt>
-                  <dd><?php echo Intl::msg('Open all unread items from current page in new tabs and mark items as read'); ?></dd>
+                  <dd>{'Open all unread items from current page in new tabs and mark items as read'|Intl::msg}</dd>
                 </dl>
               </fieldset>
               <fieldset>
-                <legend><?php echo Intl::msg('Menu navigation'); ?></legend>
+                <legend>{'Menu navigation'|Intl::msg}</legend>
                 <dl class="dl-horizontal">
                   <dt>h</dt>
-                  <dd><?php echo Intl::msg('Go to Home page'); ?></dd>
+                  <dd>{'Go to Home page'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>v</dt>
-                  <dd><?php echo Intl::msg('Change view as list or expanded'); ?></dd>
+                  <dd>{'Change view as list or expanded'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>f</dt>
-                  <dd><?php echo Intl::msg('Show or hide list of feeds/folders'); ?></dd>
+                  <dd>{'Show or hide list of feeds/folders'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>e</dt>
-                  <dd><?php echo Intl::msg('Edit current selection (all, folder or feed)'); ?></dd>
+                  <dd>{'Edit current selection (all, folder or feed)'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>u</dt>
-                  <dd><?php echo Intl::msg('Update current selection (all, folder or feed)'); ?></dd>
+                  <dd>{'Update current selection (all, folder or feed)'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>r</dt>
-                  <dd><?php echo Intl::msg('Reload the page as the F5 key in most of browsers'); ?></dd>
+                  <dd>{'Reload the page as the F5 key in most of browsers'|Intl::msg}</dd>
                 </dl>
                 <dl class="dl-horizontal">
                   <dt>?, F1</dt>
-                  <dd><?php echo Intl::msg('Go to Help page (this page)'); ?></dd>
+                  <dd>{'Go to Help page (this page)'|Intl::msg}</dd>
                 </dl>
               </fieldset>
-              <h2><?php echo Intl::msg('Configuration check'); ?></h2>
+              <h2>{'Configuration check'|Intl::msg}</h2>
               <fieldset>
-                <legend><?php echo Intl::msg('PHP configuration'); ?></legend>
+                <legend>{'PHP configuration'|Intl::msg}</legend>
                 <dl class="dl-horizontal">
                   <dt>open_ssl</dt>
                   <dd>
-                    <?php if (extension_loaded('openssl')) { ?>
-                    <span class="text-success"><?php echo Intl::msg('You should be able to load https:// rss links.'); ?></span>
-                    <?php } else { ?>
-                    <span class="text-error"><?php echo Intl::msg('You may have problems using https:// rss links.'); ?></span>
-                    <?php } ?>
+                    {if="extension_loaded('openssl')"}
+                    <span class="text-success">{'You should be able to load https:// rss links.'|Intl::msg}</span>
+                    {else}
+                    <span class="text-error">{'You may have problems using https:// rss links.'|Intl::msg}</span>
+                    {/if}
                   </dd>
                 </dl>
               </fieldset>

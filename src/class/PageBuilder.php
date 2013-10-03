@@ -8,10 +8,7 @@
  */
 class PageBuilder
 {
-    private $tpl; // For lazy initialization
-
     private $pageClass;
-
     public $var = array();
 
     /**
@@ -21,19 +18,10 @@ class PageBuilder
      */
     public function __construct($pageClass)
     {
-        $this->tpl = false;
         $this->pageClass = $pageClass;
+        $pageClass::$pb = $this;
     }
 
-    /**
-     * initialize
-     */
-    private function init()
-    {
-        $this->tpl = true;
-    }
-
-    // 
     /**
      * The following assign() method is basically the same as RainTPL
      * (except that it's lazy)
@@ -43,9 +31,6 @@ class PageBuilder
      */
     public function assign($variable, $value = null)
     {
-        if ($this->tpl === false) {
-            $this->init(); // Lazy initialization
-        }
         if (is_array($variable)) {
             $this->var += $variable;
         } else {
@@ -63,24 +48,35 @@ class PageBuilder
      */
     public function renderPage($page, $exit = true)
     {
-        if ($this->tpl===false) {
-            $this->init(); // Lazy initialization
-        }
+        $this->assign('template', $page);
         $method = $page.'Tpl';
         if (method_exists($this->pageClass, $method)) {
-            $this->assign('template', $page);
             $classPage = new $this->pageClass;
             $classPage->init($this->var);
             ob_start();
             $classPage->$method();
             ob_end_flush();
         } else {
-            return false;
+            $this->draw($page);
         }
         if ($exit) {
             exit();
         }
 
         return true;
+    }
+
+    public function draw($file)
+    {
+        include "inc/lib/raintpl/rain.tpl.class.php";
+        raintpl::configure( 'tpl_dir', "class/tpl/");
+        if (!is_dir('tmp')) { mkdir('tmp',0705); chmod('tmp',0705); }
+        raintpl::configure( 'cache_dir', "tmp/");
+        raintpl::configure( 'path_replace', false );
+
+        $this->tpl = new RainTPL;
+        $this->tpl->assign($this->var);
+        $this->tpl->draw($file);
+        //include $file;
     }
 }

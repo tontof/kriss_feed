@@ -1,13 +1,11 @@
 <div id="status" class="text-center">
-  <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version; ?></a>
-  <span class="hidden-phone"> - <?php echo Intl::msg('A simple and smart (or stupid) feed reader'); ?></span>. <?php /* KrISS: By Tontof */echo Intl::msg('By'); ?> <a href="http://tontof.net">Tontof</a>
-<span id="flags-sel">
-  <a id="hide-flags" href="<?php echo empty($_SERVER['QUERY_STRING'])?'':'?'.$_SERVER['QUERY_STRING']; ?>#flags" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
-  <a id="show-flags" href="<?php echo empty($_SERVER['QUERY_STRING'])?'':'?'.$_SERVER['QUERY_STRING']; ?>#flags-sel" class="flag <?php echo Intl::$langList[Intl::$lang]['class']; ?>" title="<?php echo Intl::$langList[Intl::$lang]['name']; ?>"></a>
-</span>
-<div id="flags">
-<?php foreach(Intl::$langList as $lang => $info) { ?>
-<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
-<?php } ?>
-</div>
+  <a href="http://github.com/tontof/kriss_feed">KrISS feed {$version}</a>
+  <span class="hidden-phone"> - {'A simple and smart (or stupid) feed reader'|Intl::msg}</span>. {'By'|Intl::msg} <a href="http://tontof.net">Tontof</a>
+  <span id="flags-sel">
+    <a id="hide-flags" href="{if="!empty($query_string)"}?{$query_string}{/if}#flags" class="flag {$lang.class}" title="{$lang.name}"></a>
+    <a id="show-flags" href="{if="!empty($query_string)"}?{$query_string}{/if}#flags-sel" class="flag {$lang.class}" title="{$lang.name}"></a>
+  </span>
+  <div id="flags">{loop="$langs"}
+    <a href="?lang={$key}" title="{$value.name}" class="flag {$value.class}"></a>{/loop}
+  </div>
 </div>

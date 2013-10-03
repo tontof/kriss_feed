@@ -1,91 +1,73 @@
 <div id="list-feeds">
-  <?php
-     if ($listFeeds == 'show') {
-     ?>
-	 <input type="text" id="Nbunread" style="display:none;" value='<?php echo $feedsView['all']['nbUnread']; ?>'>
+{if="$listFeeds==='show'"}
+  <input type="text" id="Nbunread" style="display:none;" value="{$feedsView.all.nbUnread}">
   <ul class="unstyled">
-    <li id="all-subscriptions" class="folder<?php if ($currentHash == 'all') echo ' current-folder'; ?>">
-      <?php if (isset($_GET['stars'])) { ?>
-      <h4><a class="mark-as" href="?stars&currentHash=all"><span class="label"><?php echo $feedsView['all']['nbAll']; ?></span></a><a href="<?php echo '?stars&currentHash=all'; ?>"><?php echo $feedsView['all']['title']; ?></a></h4>
-      <?php } else { ?>
-      <h4><a class="mark-as" href="<?php echo ($feedsView['all']['nbUnread']==0?'?currentHash=all&unread':$query.'read').'=all'; ?>" title="Mark all as <?php echo ($feedsView['all']['nbUnread']==0?'unread':'read');?>"><span class="label"><?php echo $feedsView['all']['nbUnread']; ?></span></a><a href="<?php echo '?currentHash=all'; ?>"><?php echo $feedsView['all']['title']; ?></a></h4>
-      <?php } ?>
+    <li id="all-subscriptions" class="folder {if="$currentHash==='all'"} current-folder{/if}">
+      {if="isset($_GET['stars'])"}
+      <h4><a class="mark-as" href="?stars&currentHash=all"><span class="label">{$feedsView.all.nbAll}</span></a><a href="?stars&currentHash=all">{$feedsView.all.title}</a></h4>
+      {else}
+      <h4><a class="mark-as" href="{$feedsView.all.nbUnread==0?'?currentHash=all&unread':$query.'read'}=all" title="{$feedsView.all.nbUnread==0?Intl::msg('Mark all as unread'):Intl::msg('Mark all as read')}"><span class="label">{$feedsView.all.nbUnread}</span></a><a href="?currentHash=all">{$feedsView.all.title}</a></h4>
+      {/if}
 
       <ul class="unstyled">
-        <?php
-           foreach ($feedsView['all']['feeds'] as $feedHash => $feed) {
-        $atitle = trim(htmlspecialchars($feed['description']));
-        if (empty($atitle) || $atitle == ' ') {
-        $atitle = trim(htmlspecialchars($feed['title']));
-        }
-        if (isset($feed['error'])) {
-        $atitle = $feed['error'];
-        }
-        ?>
-        
-        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) echo ' autohide-feed'; ?>">
-          <?php if ($addFavicon) { ?>
-          <span class="feed-favicon">
-            <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16" width="16" title="favicon" alt="favicon"/>
-          </span>
-          <?php } ?>
-          <?php if (isset($_GET['stars'])) { ?>
-          <a class="mark-as" href="<?php echo $query.'currentHash='.$feedHash; ?>"><span class="label"><?php echo $feed['nbAll']; ?></span></a><a class="feed" href="<?php echo '?stars&currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
-          <?php } else { ?>
-          <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash.'#feed-'.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
-          <?php } ?>
-          
-        </li>
+        {loop="$feedsView.all.feeds"}
+          {$atitle=$value.description}
+          {if="empty($atitle)"}
+            {$atitle=$value.title}
+          {/if}
+          {if="isset($value.error)"}
+            {$atitle=$value.error}
+          {/if}
 
-        <?php
-           }
-           foreach ($feedsView['folders'] as $hashFolder => $folder) {
-        $isOpen = $folder['isOpen'];
-        ?>
-        
-        <li id="folder-<?php echo $hashFolder; ?>" class="folder<?php if ($currentHash == $hashFolder) echo ' current-folder'; ?><?php if ($autohide and $folder['nbUnread']== 0) { echo ' autohide-folder';} ?>">
+        <li id="feed-{$key}" class="feed{if="$value.nbUnread!==0"} has-unread{/if}{if="$currentHash==$key"} current-feed{/if}{if="$autohide&&$value.nbUnread==0"} autohide-feed{/if}">
+          {if="$addFavicon"}
+          <span class="feed-favicon">
+            <img src="{$kf->getFaviconFeed($key)}" height="16" width="16" title="favicon" alt="favicon"/>
+          </span>
+          {/if}
+          {if="isset($_GET['stars'])"}
+          <a class="mark-as" href="{$query}currentHash={$key}"><span class="label">{$value.nbAll}</span></a><a class="feed" href="?stars&currentHash={$key}" title="{$atitle|htmlspecialchars|trim}">{$value.title|htmlspecialchars}</a>
+          {else}
+          <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a><a class="feed{if="isset($value.error)"} text-error{/if}" href="?currentHash={$key}#feed-{$key}" title="{$atitle|htmlspecialchars|trim}">{$value.title|htmlspecialchars}</a>
+          {/if}
+        </li>
+        {/loop}
+        {loop="$feedsView.folders"}
+        <li id="folder-{$key}" class="folder{if="$currentHash==$key"} current-folder{/if}{if="$autohide&&$value.nbUnread==0"} autohide-folder{/if}">
           <h5>
-            <a class="mark-as" href="<?php echo $query.'read='.$hashFolder; ?>"><span class="label"><?php echo $folder['nbUnread']; ?></span></a>
-            <a class="folder-toggle" href="<?php echo $query.'toggleFolder='.$hashFolder; ?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $hashFolder; ?>">
+            <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a>
+            <a class="folder-toggle" href="{$query}toggleFolder={$key}" data-toggle="collapse" data-target="#folder-ul-{$key}">
               <span class="ico">
                 <span class="ico-b-disc"></span>
                 <span class="ico-w-line-h"></span>
-                <span class="ico-w-line-v<?php echo ($isOpen?' folder-toggle-open':' folder-toggle-close'); ?>"></span>
+                <span class="ico-w-line-v{$value.isOpen?' folder-toggle-open':' folder-toggle-close'}"></span>
               </span>
             </a>
-            <a href="<?php echo '?currentHash='.$hashFolder.'#folder-'.$hashFolder; ?>"><?php echo htmlspecialchars($folder['title']); ?></a>
+            <a href="?currentHash={$key}#folder-{$key}">{$value.title|htmlspecialchars}</a>
           </h5>
-          <ul id="folder-ul-<?php echo $hashFolder; ?>" class="collapse unstyled<?php echo $isOpen?' in':''; ?>">
-            <?php
-               foreach ($folder['feeds'] as $feedHash => $feed) {
-            $atitle = trim(htmlspecialchars($feed['description']));
-            if (empty($atitle) || $atitle == ' ') {
-            $atitle = trim(htmlspecialchars($feed['title']));
-            }
-            if (isset($feed['error'])) {
-            $atitle = $feed['error'];
-            }
-            ?>
-
-            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'; ?><?php if ($currentHash == $feedHash) echo ' current-feed'; ?><?php if ($autohide and $feed['nbUnread']== 0) { echo ' autohide-feed';} ?>">
+          <ul id="folder-ul-{$key}" class="collapse unstyled{$value.isOpen?' in':''}">
+            {loop="$value.feeds"}
+              {$atitle=$value.description}
+              {if="empty($atitle)"}
+                {$atitle=$value.title}
+              {/if}
+              {if="isset($value.error)"}
+                {$atitle=$value.error}
+              {/if}
+            <li id="folder-{$key1}-feed-{$key}" class="feed{if="$value.nbUnread!== 0"} has-unread{/if}{if="$currentHash == $key"} current-feed{/if}{if="$autohide&&$value.nbUnread== 0"} autohide-feed{/if}">
               
-              <?php if ($addFavicon) { ?>
+              {if="$addFavicon"}
               <span class="feed-favicon">
-                <img src="<?php echo $kf->getFaviconFeed($feedHash); ?>" height="16" width="16" title="favicon" alt="favicon"/>
+                <img src="{$kf->getFaviconFeed($key)}" height="16" width="16" title="favicon" alt="favicon"/>
               </span>
-              <?php } ?>
-              <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash.'#folder-'.$hashFolder.'-feed-'.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
+              {/if}
+              <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a><a class="feed{isset($value.error)?' text-error':''}" href="?currentHash={$key}#folder-{$key1}-feed-{$key}" title="{$atitle|htmlspecialchars|trim}">{$value.title|htmlspecialchars}</a>
             </li>
-            <?php } ?>
+            {/loop}
           </ul>
         </li>
-        <?php
-           }
-           ?>
+      {/loop}
       </ul>
   </ul>
-  <?php
-     }
-     ?>
-
+{/if}
 </div>

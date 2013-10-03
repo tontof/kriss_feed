@@ -1,17 +1,17 @@
-    <base href="<?php echo $base;?>">
-    <title><?php echo $pagetitle;?></title>
+    <base href="{$base;}">
+    <title>{$pagetitle}</title>
     <meta charset="utf-8">
-<?php if (is_file('inc/favicon.ico')) { ?>
+{if="is_file('inc/favicon.ico')"}
     <link href="inc/favicon.ico" rel="icon" type="image/x-icon">
-<?php } else { ?>
+{else}
     <link href="?file=favicon.ico" rel="icon" type="image/x-icon">
-<?php } ?>
-<?php if (is_file('inc/style.css')) { ?>
-    <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
-<?php } else { ?>
-    <link type="text/css" rel="stylesheet" href="?file=style.css&amp;version=<?php echo $version;?>" />
-<?php } ?>
-<?php if (is_file('inc/user.css')) { ?>
-    <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
-<?php } ?>
+{/if}
+{if="is_file('inc/style.css')"}
+    <link type="text/css" rel="stylesheet" href="inc/style.css?version={$version}" />
+{else}
+    <link type="text/css" rel="stylesheet" href="?file=style.css&amp;version={$version}" />
+{/if}
+{if="is_file('inc/user.css')"}
+    <link type="text/css" rel="stylesheet" href="inc/user.css?version={$version}" />
+{/if}
     <meta name="viewport" content="width=device-width">

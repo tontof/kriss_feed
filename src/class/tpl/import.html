@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-<?php FeedPage::includesTpl(); ?>
+{include="includes"}
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span4 offset4">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
+          {include="status"}
+          {include="nav"}
           <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data" name="importform">
             <fieldset>
-              <legend><?php echo Intl::msg('Import opml file'); ?></legend>
+              <legend>{'Import opml file'|Intl::msg}</legend>
               <div class="control-group">
-                <label class="control-label" for="filetoupload"><?php echo Intl::msg('Opml file:'); ?></label>
+                <label class="control-label" for="filetoupload">{'Opml file:'|Intl::msg}</label>
                 <div class="controls">
                   <input tabindex="1" class="btn" type="file" id="filetoupload" name="filetoupload">
-                  <span class="help-block"><?php echo Intl::msg('Size max:'); ?> <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>
-                    </span>
+                  <span class="help-block">{'Size max:'|Intl::msg} {$humanmaxsize}</span>
                 </div>
               </div>
 
@@ -25,21 +24,21 @@
                 <div class="controls">
                   <label for="overwrite">
                     <input type="checkbox" name="overwrite" id="overwrite">
-                    <?php echo Intl::msg('Overwrite existing feeds'); ?>
+                    {'Overwrite existing feeds'|Intl::msg}
                   </label>
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="import" value="<?php echo Intl::msg('Import opml file'); ?>">
-                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg('Cancel'); ?>">
+                  <input class="btn" type="submit" name="import" value="{'Import opml file'|Intl::msg}">
+                  <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}">
                 </div>
               </div>
 
-              <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MyTool::getMaxFileSize(); ?>">
-              <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
-              <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+              <input type="hidden" name="MAX_FILE_SIZE" value="${maxsize}">
+              <input type="hidden" name="returnurl" value="{$referer}">
+              <input type="hidden" name="token" value="{$token}">
             </fieldset>
           </form>
         </div>

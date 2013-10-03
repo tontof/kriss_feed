@@ -2,6 +2,8 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
+define('FEED_VERSION', 8);
+
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
@@ -13,20 +15,14 @@ define('ITEM_FILE', DATA_DIR.'/item.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
 define('OPML_FILE', DATA_DIR.'/feeds.opml');
 define('OPML_FILE_SAVE', DATA_DIR.'/feeds.bak.opml');
-define('STYLE_FILE', 'style.css');
-
 define('BAN_FILE', DATA_DIR.'/ipbans.php');
-define('UPDATECHECK_FILE', DATA_DIR.'/lastupdatecheck.txt');
-// Updates check frequency. 86400 seconds = 24 hours
-define('UPDATECHECK_INTERVAL', 86400);
-
-define('FEED_VERSION', 8);
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
 
 define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
-
+// Updates check frequency. 86400 seconds = 24 hours
+define('UPDATECHECK_INTERVAL', 86400);
 
 // fix some warning
 date_default_timezone_set('Europe/Paris');
@@ -116,6 +112,9 @@ $pb->assign('base', MyTool::getUrl());
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');
 $pb->assign('referer', $referer);
+$pb->assign('langs', Intl::$langList);
+$pb->assign('lang', Intl::$langList[Intl::$lang]);
+$pb->assign('query_string', $_SERVER['QUERY_STRING']);
 
 if (!is_dir(DATA_DIR)) {
     if (!@mkdir(DATA_DIR, 0755)) {
@@ -146,8 +145,6 @@ if (!empty($_POST)) {
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
 $ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
-
-$kfp = new FeedPage(STYLE_FILE);
 
 // autosave opml
 if (Session::isLogged()) {
@@ -237,6 +234,7 @@ if (isset($_GET['login'])) {
         $pb->renderPage('message');
     } else {
         $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
+        $pb->assign('token', Session::getToken());
         $pb->renderPage('login');
     }
 } elseif (isset($_GET['logout'])) {
@@ -254,7 +252,8 @@ if (isset($_GET['login'])) {
         MyTool::redirect();
     }
     $pb->assign('pagetitle', Intl::msg('Change your password').' - '.strip_tags($kfc->title));
-    $pb->renderPage('changePassword');
+    $pb->assign('token', Session::getToken());
+    $pb->renderPage('change_password');
 } elseif (isset($_GET['ajax'])) {
     if (isset($_GET['stars'])) {
         $filter = 'all';
@@ -410,6 +409,7 @@ if (isset($_GET['login'])) {
     }
 } elseif (isset($_GET['plugins']) && $kfc->isLogged()) {
     $pb->assign('pagetitle', Intl::msg('Plugins management').' - '.strip_tags($kfc->title));
+    $pb->assign('plugins', Plugin::listAll());
     $pb->renderPage('plugins');
 } elseif (isset($_GET['config']) && $kfc->isLogged()) {
     // Config
@@ -448,6 +448,8 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
+        $pb->assign('token', Session::getToken());
+        $pb->assign('scriptfilename', $_SERVER["SCRIPT_FILENAME"]);
 
         $pb->renderPage('config');
     }
@@ -477,6 +479,9 @@ if (isset($_GET['login'])) {
         MyTool::redirect();
     } else {
         $pb->assign('pagetitle', Intl::msg('Import').' - '.strip_tags($kfc->title));
+        $pb->assign('maxsize', MyTool::getMaxFileSize());
+        $pb->assign('humanmaxsize', MyTool::humanBytes(MyTool::getMaxFileSize()));
+        $pb->assign('token', Session::getToken());
         $pb->renderPage('import');
     }
 } elseif (isset($_GET['export']) && $kfc->isLogged()) {
@@ -522,8 +527,9 @@ if (isset($_GET['login'])) {
     $pb->assign('pagetitle', Intl::msg('Add a new feed').' - '.strip_tags($kfc->title));
     $pb->assign('newfeed', $newfeed);
     $pb->assign('folders', $kf->getFolders());
-
-    $pb->renderPage('addFeed');
+    $pb->assign('token', Session::getToken());
+    
+    $pb->renderPage('add_feed');
 } elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
     $kf->toggleFolder($_GET['toggleFolder']);
@@ -684,6 +690,7 @@ if (isset($_GET['login'])) {
     $kf->loadData();
     $pb->assign('page', 'edit');
     $pb->assign('pagetitle', Intl::msg('Edit').' - '.strip_tags($kfc->title));
+    $pb->assign('token', Session::getToken()); 
 
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
     // type : 'feed', 'folder', 'all', 'item'
@@ -732,7 +739,7 @@ if (isset($_GET['login'])) {
                 $pb->assign('feed', $feed);
                 $pb->assign('folders', $kf->getFolders());
                 $pb->assign('lastUpdate', $lastUpdate);
-                $pb->renderPage('editFeed');
+                $pb->renderPage('edit_feed');
             } else {
                 MyTool::redirect();
             }
@@ -757,7 +764,7 @@ if (isset($_GET['login'])) {
         } else {
             $folderTitle = $kf->getFolderTitle($hash);
             $pb->assign('foldertitle', htmlspecialchars($folderTitle));
-            $pb->renderPage('editFolder');
+            $pb->renderPage('edit_folder');
         }
         break;
     case 'all':
@@ -820,7 +827,7 @@ if (isset($_GET['login'])) {
             $listFeeds = $kf->getFeeds();
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);
-            $pb->renderPage('editAll');
+            $pb->renderPage('edit_all');
         }
         break;
     case 'item':
@@ -965,6 +972,7 @@ if (isset($_GET['login'])) {
         if (!empty($_SERVER['QUERY_STRING'])) {
             $pb->assign('referer', MyTool::getUrl().'?'.$_SERVER['QUERY_STRING']);
         }
+        $pb->assign('token', Session::getToken()); 
         $pb->renderPage('login');
     }
 }

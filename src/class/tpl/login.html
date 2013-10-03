@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <?php FeedPage::includesTpl(); ?>
-  </head>
+  <head>{include="includes"}</head>
   <body onload="document.loginform.login.focus();">
     <div class="container-fluid">
       <div class="row-fluid">
@@ -10,36 +8,36 @@
           <div id="login">
             <form class="form-horizontal" method="post" action="?login" name="loginform">
               <fieldset>
-     <legend><?php echo Intl::msg('Welcome to KrISS feed'); ?></legend>
+                <legend>{'Welcome to KrISS feed'|Intl::msg}</legend>
                 <div class="control-group">
-     <label class="control-label" for="login"><?php echo Intl::msg('Login'); ?></label>
+     <label class="control-label" for="login">{'Login'|Intl::msg}</label>
                   <div class="controls">
-                    <input type="text" id="login" name="login" placeholder="<?php echo Intl::msg('Login'); ?>" tabindex="1">
+                    <input type="text" id="login" name="login" placeholder="{'Login'|Intl::msg}" tabindex="1">
                   </div>
                 </div>
                 <div class="control-group">
-                  <label class="control-label" for="password"><?php echo Intl::msg('Password'); ?></label>
+                  <label class="control-label" for="password">{'Password'|Intl::msg}</label>
                   <div class="controls">
-                    <input type="password" id="password" name="password" placeholder="<?php echo Intl::msg('Password'); ?>" tabindex="2">
+                    <input type="password" id="password" name="password" placeholder="{'Password'|Intl::msg}" tabindex="2">
                   </div>
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;<?php echo Intl::msg('Stay signed in (do not check on public computers)'); ?></label>
+                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;{'Stay signed in (do not check on public computers)'|Intl::msg}</label>
                   </div>
                 </div>
                 
                 <div class="control-group">
                   <div class="controls">
-                    <button type="submit" class="btn" tabindex="4"><?php echo Intl::msg('Sign in'); ?></button>
+                    <button type="submit" class="btn" tabindex="4">{'Sign in'|Intl::msg}</button>
                   </div>
                 </div>
               </fieldset>
 
-              <input type="hidden" name="returnurl" value="<?php echo htmlspecialchars($referer);?>">
-              <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+              <input type="hidden" name="returnurl" value="{$referer|htmlspecialchars}">
+              <input type="hidden" name="token" value="{$token}">
             </form>
-            <?php FeedPage::statusTpl(); ?>
+            {include="status"}
           </div>
         </div>
       </div>

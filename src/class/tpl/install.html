@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+    {include="includes"}
   </head>
   <body>
     <div class="container-fluid">
@@ -10,34 +10,32 @@
           <div id="install">
             <form class="form-horizontal" method="post" action="" name="installform">
               <fieldset>
-                <legend><?php echo Intl::msg('KrISS feed installation'); ?></legend>
-          <div class="text-center">
-     <?php echo Intl::msg('Click on flag to select your language.').'<br>';
-     foreach(Intl::$langList as $lang => $info) { ?>
-<a href="?lang=<?php echo $lang; ?>" title="<?php echo $info['name']; ?>" class="flag <?php echo $info['class']; ?>"></a>
-<?php } ?>
-          </div>
+                <legend>{'KrISS feed installation'|Intl::msg}</legend>
+                <div class="text-center">
+                  {'Click on flag to select your language.'|Intl::msg}<br>{loop="$langs"}
+                  <a href="?lang={$key}" title="{$value.name}" class="flag {$value.class}"></a>{/loop}
+                </div>
                 <div class="control-group">
-                  <label class="control-label" for="setlogin"><?php echo Intl::msg('Login'); ?></label>
+                  <label class="control-label" for="setlogin">{'Login'|Intl::msg}</label>
                   <div class="controls">
-                    <input type="text" id="setlogin" name="setlogin" placeholder="<?php echo Intl::msg('Login'); ?>">
+                    <input type="text" id="setlogin" name="setlogin" placeholder="{'Login'|Intl::msg}">
                   </div>
                 </div>
                 <div class="control-group">
-                  <label class="control-label" for="setlogin"><?php echo Intl::msg('Password'); ?></label>
+                  <label class="control-label" for="setlogin">{'Password'|Intl::msg}</label>
                   <div class="controls">
-                    <input type="password" id="setpassword" name="setpassword" placeholder="<?php echo Intl::msg('Password'); ?>">
+                    <input type="password" id="setpassword" name="setpassword" placeholder="{'Password'|Intl::msg}">
                   </div>
                 </div>
                 <div class="control-group">
                   <div class="controls">
-                    <button type="submit" class="btn"><?php echo Intl::msg('Install KrISS feed'); ?></button>
+                    <button type="submit" class="btn">{'Install KrISS feed'|Intl::msg}</button>
                   </div>
                 </div>
-                <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+                <input type="hidden" name="token" value="{$token}">
               </fieldset>
             </form>
-            <?php FeedPage::statusTpl(); ?>
+            {include="status"}
           </div>
         </div>
       </div>

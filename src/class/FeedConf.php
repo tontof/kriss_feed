@@ -198,14 +198,14 @@ class FeedConf
             /* favicon dir */
             if (!is_dir(INC_DIR)) {
                 if (!@mkdir(INC_DIR, 0755)) {
-                    $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
-                    $pb->renderPage('message');
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
+                    FeedPage::$pb->renderPage('message');
                 }
             }
             if (!is_dir(FAVICON_DIR)) {
                 if (!@mkdir(FAVICON_DIR, 0755)) {
-                    $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
-                    $pb->renderPage('message');
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
+                    FeedPage::$pb->renderPage('message');
                 }
             }
         }
@@ -267,27 +267,16 @@ class FeedConf
 
             $this->write();
 
-            FeedPage::init(
-                array(
-                    'base' => MyTool::getUrl(),
-                    'class' => 'text-success',
-                    'message' => Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'),
-                    'referer' => MyTool::getUrl().'?import',
-                    'button' => Intl::msg('Continue'),
-                    'version' => $this->version,
-                    'pagetitle' => 'KrISS feed installation'
-                )
-            );
-            FeedPage::messageTpl();
+            FeedPage::$pb->assign('pagetitle', 'KrISS feed installation');
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl().'?import');
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->renderPage('message');
         } else {
-            FeedPage::init(
-                array(
-                    'base' => MyTool::getUrl(),
-                    'version' => $this->version,
-                    'pagetitle' => Intl::msg('KrISS feed installation')
-                )
-            );
-            FeedPage::installTpl();
+            FeedPage::$pb->assign('pagetitle', Intl::msg('KrISS feed installation'));
+            FeedPage::$pb->assign('token', Session::getToken());
+            FeedPage::$pb->renderPage('install');
         }
         exit();
     }
