@@ -6,7 +6,7 @@ class Intl
 {
     public static $lazy = false;
     public static $lang = "en_US";
-    public static $dir = "locale";
+    public static $dir = "po"; // po/messages/en_US.po
     public static $domain = "messages";
     public static $messages = array();
     public static $langList = array();
