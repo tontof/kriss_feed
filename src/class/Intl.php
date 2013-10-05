@@ -7,7 +7,6 @@ class Intl
     public static $lazy = false;
     public static $lang = "en_US";
     public static $dir = "locale";
-    public static $domain = "messages";
     public static $messages = array();
     public static $langList = array();
 
@@ -41,8 +40,8 @@ class Intl
     public static function load($lang) {
         self::$lazy = true;
 
-        if (file_exists(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po')) {
-            self::$messages[$lang] = self::compress(self::read(self::$dir.'/'.$lang.'/LC_MESSAGES/'.self::$domain.'.po'));
+        if (file_exists(self::$dir.'/'.$lang.'.po')) {
+            self::$messages[$lang] = self::compress(self::read(self::$dir.'/'.$lang.'.po'));
         } else if (class_exists('Intl_'.$lang)) {
             call_user_func_array(
                 array('Intl_'.$lang, 'init'),
