@@ -1,14 +1,17 @@
 file="kriss_feed.php"
 
-xgettext --from-code=UTF-8 --no-location --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c $file class/*.php class/tpl/*.php -o locale/messages.pot
-sed -i "s:CHARSET:UTF-8:g" locale/messages.pot
+INTL_DIR=po
+INTL_DOMAIN=messages
+
+xgettext --from-code=UTF-8 --no-location --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c $file class/*.php class/tpl/*.php -o $INTL_DIR/$INTL_DOMAIN/$INTL_DOMAIN.pot
+sed -i "s:CHARSET:UTF-8:g" $INTL_DIR/$INTL_DOMAIN/$INTL_DOMAIN.pot
 
 function echoerr() {
   echo "$@" 1>&2;
 }
 
 # generate Intl plugins
-for i in locale/messages/*
+for i in $INTL_DIR/$INTL_DOMAIN/*.po
 do
   lang=$(basename ${i/.po/})
   lang2letters=$(echo $lang | cut -d '_' -f 2 | tr '[A-Z]' '[a-z]')
