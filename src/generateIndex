@@ -8,11 +8,11 @@ function echoerr() {
 }
 
 # generate Intl plugins
-for i in locale/*.po
+for i in locale/messages/*
 do
   lang=$(basename ${i/.po/})
   lang2letters=$(echo $lang | cut -d '_' -f 2 | tr '[A-Z]' '[a-z]')
-  language=$(grep "Language:" locale/${lang}.po | cut -d " " -f 2- | sed -e 's:\\n"::')
+  language=$(grep "Language:" ${i} | cut -d " " -f 2- | sed -e 's:\\n"::')
   intlFile="plugins/Intl_${lang}.php"
   echo '<?php' > ${intlFile}
   echo "if (!class_exists('Intl_$lang')) {" >> ${intlFile}
