@@ -941,6 +941,9 @@ class Feed
         $items = array();
         $feed = $this->initFeedCache($feed, $force);
 
+        if( !ini_get('safe_mode') && isset(MyTool::$opts['http']['timeout'])){
+            set_time_limit(MyTool::$opts['http']['timeout']+1);
+        } 
         $outputUrl = MyTool::loadUrl($xmlUrl);
         
         if (!empty($outputUrl['error'])) {
