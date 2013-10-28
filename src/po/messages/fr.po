@@ -161,7 +161,7 @@ msgid "Feed URL"
 msgstr "URL du flux"
 
 msgid "Add selected folders to feed"
-msgstr "Ajouter les dossiers sélectionner au flux"
+msgstr "Associer un ou plusieurs dossiers au flux"
 
 msgid "Edit feed"
 msgstr "Éditer le flux"
@@ -470,10 +470,10 @@ msgid "Reorder folders"
 msgstr "Trier les dossiers"
 
 msgid "Add selected folders to selected feeds"
-msgstr "Ajouter les dossiers sélectionnés aux flux sélectionnés"
+msgstr "Associer les dossiers sélectionnés aux flux sélectionnés"
 
 msgid "Remove selected folders to selected feeds"
-msgstr "Enlever les dossiers sélectionnés aux flux sélectionnés"
+msgstr "Enlever les dossiers sélectionnés des flux sélectionnés"
 
 msgid "List of feeds"
 msgstr "Liste des flux"
