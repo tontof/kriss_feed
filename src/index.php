@@ -3363,39 +3363,39 @@ class FeedPage
           <li><a href="<?php echo $query.'order=newerFirst';?>" title="<?php echo Intl::msg( 'Show newer first' );?>" class="menu-ico ico-order-newer"><span class="menu-text menu-order"> <?php echo Intl::msg( 'Show newer first' );?></span></a></li>
      <?php } ?>
   <?php }elseif( $key1==='menuUpdate' ){ ?>
-     <?php if( $currentHashType=='all' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update all');?>
-     <?php }elseif( $currentHashType=='folder' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Update folder');?>
      <?php }elseif( $currentHashType=='feed' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Update feed');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update all');?>
      <?php } ?>
           <li><a href="<?php echo $query.'update='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-update"><span class="menu-text menu-update"> <?php echo $intl;?></span></a></li>
   <?php }elseif( $key1==='menuRead' ){ ?>
-     <?php if( $currentHashType=='all' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as read');?>
-     <?php }elseif( $currentHashType=='folder' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark folder as read');?>
      <?php }elseif( $currentHashType=='feed' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as read');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as read');?>
      <?php } ?>
           <li><a href="<?php echo $query.'read='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-read"><span class="menu-text menu-mark-as-read"> <?php echo $intl;?></span></a></li>
   <?php }elseif( $key1==='menuUnread' ){ ?>
-     <?php if( $currentHashType=='all' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as unread');?>
-     <?php }elseif( $currentHashType=='folder' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark folder as unread');?>
      <?php }elseif( $currentHashType=='feed' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as unread');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as unread');?>
      <?php } ?> 
           <li><a href="<?php echo $query.'unread='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-unread"><span class="menu-text menu-mark-as-unread"> <?php echo $intl;?></span></a></li>
   <?php }elseif( $key1==='menuEdit' ){ ?>
-     <?php if( $currentHashType=='all' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit all');?>
-     <?php }elseif( $currentHashType=='folder' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit folder');?>
      <?php }elseif( $currentHashType=='feed' ){ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit feed');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit all');?>
      <?php } ?> 
           <li><a href="<?php echo $query.'edit='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-edit"><span class="menu-text menu-edit"> <?php echo $intl;?></span></a></li>
   <?php }elseif( $key1==='menuAdd' ){ ?>
