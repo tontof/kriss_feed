@@ -1,4 +1,3 @@
-
 <div id="menu" class="navbar">
   <div class="navbar-inner">
     <div class="container">
@@ -35,7 +34,7 @@
           <li><a href="{$query.'order=newerFirst'}" title="{'Show newer first'|Intl::msg}" class="menu-ico ico-order-newer"><span class="menu-text menu-order"> {'Show newer first'|Intl::msg}</span></a></li>
      {/if}
   {elseif="$key==='menuUpdate'"}
-     {if="$currentHashType='all'"}
+     {if="$currentHashType=='all'"}
           {$intl=Intl::msg('Update all')}
      {elseif="$currentHashType=='folder'"}
           {$intl=Intl::msg('Update folder')}
@@ -44,7 +43,7 @@
      {/if}
           <li><a href="{$query.'update='.$currentHash}" title="{$intl}" class="menu-ico ico-update"><span class="menu-text menu-update"> {$intl}</span></a></li>
   {elseif="$key==='menuRead'"}
-     {if="$currentHashType='all'"}
+     {if="$currentHashType=='all'"}
           {$intl=Intl::msg('Mark all as read')}
      {elseif="$currentHashType=='folder'"}
           {$intl=Intl::msg('Mark folder as read')}
@@ -53,7 +52,7 @@
      {/if}
           <li><a href="{$query.'read='.$currentHash}" title="{$intl}" class="menu-ico ico-mark-as-read"><span class="menu-text menu-mark-as-read"> {$intl}</span></a></li>
   {elseif="$key==='menuUnread'"}
-     {if="$currentHashType='all'"}
+     {if="$currentHashType=='all'"}
           {$intl=Intl::msg('Mark all as unread')}
      {elseif="$currentHashType=='folder'"}
           {$intl=Intl::msg('Mark folder as unread')}
@@ -62,7 +61,7 @@
      {/if} 
           <li><a href="{$query.'unread='.$currentHash}" title="{$intl}" class="menu-ico ico-mark-as-unread"><span class="menu-text menu-mark-as-unread"> {$intl}</span></a></li>
   {elseif="$key==='menuEdit'"}
-     {if="$currentHashType='all'"}
+     {if="$currentHashType=='all'"}
           {$intl=Intl::msg('Edit all')}
      {elseif="$currentHashType=='folder'"}
           {$intl=Intl::msg('Edit folder')}
