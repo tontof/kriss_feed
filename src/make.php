@@ -24,7 +24,7 @@ class Make
 
         $return = file_get_contents($filename);
         if (in_array(pathinfo($filename, PATHINFO_EXTENSION), $base64)) {
-            $return = base64_encode($filename);
+            $return = base64_encode($return);
         }
 
         return $return;
