@@ -3,7 +3,7 @@ file="kriss_feed.php"
 INTL_DIR=po
 INTL_DOMAIN=messages
 
-xgettext --from-code=UTF-8 --no-location --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c $file class/*.php class/tpl/*.php -o $INTL_DIR/$INTL_DOMAIN/$INTL_DOMAIN.pot
+xgettext --from-code=UTF-8 --no-location --add-comments=KrISS --keyword=msg:1 --keyword=msg:1,2c --keyword=n_msg:1,2 --keyword=n_msg:1,2,4c $file class/*.php tmp/*.php -o $INTL_DIR/$INTL_DOMAIN/$INTL_DOMAIN.pot
 sed -i "s:CHARSET:UTF-8:g" $INTL_DIR/$INTL_DOMAIN/$INTL_DOMAIN.pot
 
 function echoerr() {

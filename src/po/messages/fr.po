@@ -32,7 +32,7 @@ msgid "Sign in"
 msgstr "Connexion"
 
 msgid "Change your password"
-msgstr "Changer votre mot de passe"
+msgstr "Changer le mot de passe"
 
 msgid "Help"
 msgstr "Aide"
@@ -51,7 +51,7 @@ msgid "The file you are trying to upload is probably bigger than what this webse
 msgstr "Le fichier que vous essayer d'envoyer est trop volumineux par rapport à ce que le serveur peut accepter (%s). Essayez de réduire la taille de ce dernier."
 
 msgid "Import"
-msgstr "Importation"
+msgstr "Importer"
 
 msgid "Add a new feed"
 msgstr "Ajouter un nouveau flux"
@@ -63,7 +63,7 @@ msgid "Starred items"
 msgstr "Articles conservés"
 
 msgid "Edit"
-msgstr "Édition"
+msgstr "Éditer"
 
 msgid "Please configure your share link first"
 msgstr "Veuillez configurer votre lien de partage"
@@ -75,7 +75,7 @@ msgid "Your simple and smart (or stupid) feed reader is now configured."
 msgstr "Votre simple et superbe (ou stupide) lecteur de flux est bien configuré."
 
 msgid "Continue"
-msgstr "Continuer"
+msgstr "Suivant"
 
 msgid "KrISS feed installation"
 msgstr "Installation de KrISS feed"
@@ -117,10 +117,10 @@ msgid "Total:"
 msgstr "Total :"
 
 msgid "items"
-msgstr "éléments"
+msgstr "articles"
 
 msgid "item"
-msgstr "élément"
+msgstr "article"
 
 msgid "Successes"
 msgstr "Succès"
@@ -138,7 +138,7 @@ msgid "Error"
 msgstr "Erreur"
 
 msgid "Http code not valid"
-msgstr "Code http non valide"
+msgstr "Code retour HTTP non valide"
 
 msgid "Location not found"
 msgstr "Redirection non trouvée"
@@ -188,7 +188,7 @@ msgid "Cancel"
 msgstr "Annuler"
 
 msgid "Save new password"
-msgstr "Sauvegarde le nouveau mot de passe"
+msgstr "Enregistrer le nouveau mot de passe"
 
 msgid "KrISS feed main information"
 msgstr "Informations principales de KrISS feed"
@@ -236,7 +236,7 @@ msgid "${sel}: <strong>Only available</strong> with javascript: <code>selected t
 msgstr "${sel}: <strong>Seulement valable</strong> avec javascript: <code>texte sélectionné</code>"
 
 msgid "example with shaarli:"
-msgstr "exemple avec shaarli :"
+msgstr "exemple avec Shaarli :"
 
 msgid "KrISS feed redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)"
 msgstr "Redirecteur (seulement pour les liens, les média ne sont pas considérés, <strong>le contenu des articles est anonymisé seulement avec javascript</strong>)"
@@ -245,7 +245,7 @@ msgid "<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can a
 msgstr "<strong>http://anonym.to/?</strong> masquera le HTTP_REFERER, vous pouvez également mettre <strong>noreferrer</strong> pour utiliser la propriété HTML5"
 
 msgid "Disable session cookie hijacking protection"
-msgstr "Désactiver la protection contre le vol de session des cookies"
+msgstr "Désactiver la protection contre le vol de cookie de session"
 
 msgid "Check this if you get disconnected often or if your IP address changes often."
 msgstr "Cocher la case si vous êtes souvent déconnectés ou si votre adresse IP change souvent."
@@ -293,7 +293,7 @@ msgid "Always show feed in feeds list"
 msgstr "Montre toujours les flux dans la liste des flux"
 
 msgid "Automatically hide feed when 0 unread item"
-msgstr "Cache automatiquement les flux qui ont 0 article non lu"
+msgstr "Masque automatiquement les flux ayant tous leurs articles lus."
 
 msgid "Auto focus option"
 msgstr "Option de focus automatique"
@@ -335,10 +335,10 @@ msgid "Automatically open link in new tab"
 msgstr "Ouvre automatiquement les liens dans un nouvel onglet"
 
 msgid "Auto update with javascript"
-msgstr "Met à jour automatiquement avec javascript"
+msgstr "Met à jour automatiquement avec JavaScript"
 
 msgid "Do not auto update with javascript"
-msgstr "Ne met pas à jour automatiquement avec javascript"
+msgstr "Ne met pas à jour automatiquement avec JavaScript"
 
 msgid "KrISS feed menu preferences"
 msgstr "Préférences du menu de KrISS feed"
@@ -350,7 +350,7 @@ msgid "View"
 msgstr "Vue"
 
 msgid "View as list"
-msgstr "Voir les titres"
+msgstr "Voir en tant que liste"
 
 msgid "View as expanded"
 msgstr "Voir les contenus"
@@ -416,10 +416,10 @@ msgid "Mark feed as unread"
 msgstr "Marquer le flux comme non lu"
 
 msgid "Edit all"
-msgstr "Tout éditer"
+msgstr "Tout modifier"
 
 msgid "Edit folder"
-msgstr "Éditer le dossier"
+msgstr "Modifier le dossier"
 
 msgid "KrISS feed paging menu preferences"
 msgstr "Préférence du menu de pagination de KrISS feed"
@@ -461,7 +461,7 @@ msgid "If previous solutions do not work, try to create an update.php file into 
 msgstr "Si les solutions précédentes ne fonctionnent pas, essayer de créer un fichier update.php dans le dossier data contenant :"
 
 msgid "Then set up your cron with:"
-msgstr "Ensuite configurer le cron avec :"
+msgstr "Ensuite configurez le cron avec :"
 
 msgid "Do not forget to check permissions"
 msgstr "Vérifiez les droits !"
@@ -557,7 +557,7 @@ msgid "Toggle current item (open, close item in list view)"
 msgstr "Alterner l'article courant (ouvrir, fermer l'article avec la vue des titres"
 
 msgid "Mark current item as read if unread or unread if read"
-msgstr "Marque l'article courant comme lu si non lu ou non lu si lu"
+msgstr "Inverser la marque lire/à lire pour l'article courant"
 
 msgid "Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)"
 msgstr "Marque l'article courant comme lu si non lu ou non lu si lu et ouvre l'article courant (utile avec le filtre non lu et l'affichage des titres)"
@@ -599,7 +599,7 @@ msgid "Open all unread items from current page in new tabs and mark items as rea
 msgstr "Ouvre tous les articles non lus de la page dans des onglets et les marque comme lus"
 
 msgid "Menu navigation"
-msgstr "Navigation du menu"
+msgstr "Navigation dans le menu"
 
 msgid "Go to Home page"
 msgstr "Aller à la page d'accueil"
@@ -611,7 +611,7 @@ msgid "Show or hide list of feeds/folders"
 msgstr "Montrer ou cacher la liste des flux/dossiers"
 
 msgid "Edit current selection (all, folder or feed)"
-msgstr "Éditer la sélection courante (tout, dosser ou flux)"
+msgstr "Éditer la sélection courante (tout, dossier ou flux)"
 
 msgid "Update current selection (all, folder or feed)"
 msgstr "Mettre à jour la sélection courante (tout, dossier ou flux)"
@@ -635,10 +635,10 @@ msgid "You may have problems using https:// rss links."
 msgstr "Vous risquez d'avoir des problèmes en utilisant des flux https://"
 
 msgid "Import opml file"
-msgstr "Importer un fichier opml"
+msgstr "Importer un fichier OPML"
 
 msgid "Opml file:"
-msgstr "Fichier opml :"
+msgstr "Fichier OPML :"
 
 msgid "Size max:"
 msgstr "Taille maximale :"
@@ -701,7 +701,7 @@ msgid "Change password"
 msgstr "Changer le mot de passe"
 
 msgid "Export opml file"
-msgstr "Exporter en fichier opml"
+msgstr "Exporter en fichier OPML"
 
 msgid "Previous item"
 msgstr "Article précédent"
