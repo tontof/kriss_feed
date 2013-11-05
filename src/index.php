@@ -3052,9 +3052,9 @@ class FeedPage
           </span>
           <?php } ?>
           <?php if( isset($_GET['stars']) ){ ?>
-          <a class="mark-as" href="<?php echo $query;?>currentHash=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbAll"];?></span></a><a class="feed" href="?stars&currentHash=<?php echo $key1;?>" title="<?php echo htmlspecialchars|trim( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
+          <a class="mark-as" href="<?php echo $query;?>currentHash=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbAll"];?></span></a><a class="feed" href="?stars&currentHash=<?php echo $key1;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
           <?php }else{ ?>
-          <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbUnread"];?></span></a><a class="feed<?php if( isset($value1["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key1;?>#feed-<?php echo $key1;?>" title="<?php echo htmlspecialchars|trim( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
+          <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbUnread"];?></span></a><a class="feed<?php if( isset($value1["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key1;?>#feed-<?php echo $key1;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
           <?php } ?>
         </li>
         <?php } ?>
@@ -3087,7 +3087,7 @@ class FeedPage
                 <img src="<?php echo $kf->getFaviconFeed($key2);?>" height="16" width="16" title="favicon" alt="favicon"/>
               </span>
               <?php } ?>
-              <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key2;?>"><span class="label"><?php echo $value2["nbUnread"];?></span></a><a class="feed{isset($value.error)?' text-error':''}" href="?currentHash=<?php echo $key2;?>#folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" title="<?php echo htmlspecialchars|trim( $atitle );?>"><?php echo htmlspecialchars( $value2["title"] );?></a>
+              <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key2;?>"><span class="label"><?php echo $value2["nbUnread"];?></span></a><a class="feed{isset($value.error)?' text-error':''}" href="?currentHash=<?php echo $key2;?>#folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value2["title"] );?></a>
             </li>
             <?php } ?>
           </ul>
