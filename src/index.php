@@ -2580,12 +2580,10 @@ class FeedPage
             <fieldset>
               <legend><?php echo Intl::msg( 'Feed folders' );?></legend>
               <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
-              <?php $checked=FeedPage::$var['checked']='';?>
-              <?php if( in_array($key1, $feed["foldersHash"]) ){ ?><?php echo $checked=' checked="checked"';?><?php } ?>
               <div class="control-group">
                 <div class="controls">
                   <label for="folder-<?php echo $key1;?>">
-                    <input type="checkbox" id="folder-<?php echo $key1;?>" name="folders[]" <?php echo $checked;?> value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?>
+                    <input type="checkbox" id="folder-<?php echo $key1;?>" name="folders[]" <?php if( in_array($key1, $feed["foldersHash"]) ){ ?> checked="checked"<?php } ?> value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?>
                   </label>
                 </div>
               </div>
@@ -3087,7 +3085,7 @@ class FeedPage
                 <img src="<?php echo $kf->getFaviconFeed($key2);?>" height="16" width="16" title="favicon" alt="favicon"/>
               </span>
               <?php } ?>
-              <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key2;?>"><span class="label"><?php echo $value2["nbUnread"];?></span></a><a class="feed{isset($value.error)?' text-error':''}" href="?currentHash=<?php echo $key2;?>#folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value2["title"] );?></a>
+              <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key2;?>"><span class="label"><?php echo $value2["nbUnread"];?></span></a><a class="feed<?php if( isset($value2["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key2;?>#folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value2["title"] );?></a>
             </li>
             <?php } ?>
           </ul>
@@ -3187,7 +3185,7 @@ class FeedPage
       </div>
       <div class="item-info-end item-info-author">
         <a class="item-via"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["via"];?>"><?php echo $item["author"];?></a>
-        <a class="item-xml"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?>{$item.xmlUrl">
+        <a class="item-xml"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["xmlUrl"];?>">
           <span class="ico">
             <span class="ico-feed-dot"></span>
             <span class="ico-feed-circle-1"></span>
@@ -3387,7 +3385,7 @@ class FeedPage
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as unread');?>
      <?php }else{ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as unread');?>
-     <?php } ?> 
+     <?php } ?>
           <li><a href="<?php echo $query.'unread='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-unread"><span class="menu-text menu-mark-as-unread"> <?php echo $intl;?></span></a></li>
   <?php }elseif( $key1==='menuEdit' ){ ?>
      <?php if( $currentHashType=='folder' ){ ?>
@@ -3396,7 +3394,7 @@ class FeedPage
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit feed');?>
      <?php }else{ ?>
           <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit all');?>
-     <?php } ?> 
+     <?php } ?>
           <li><a href="<?php echo $query.'edit='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-edit"><span class="menu-text menu-edit"> <?php echo $intl;?></span></a></li>
   <?php }elseif( $key1==='menuAdd' ){ ?>
           <li><a href="<?php echo $query.'add';?>" title="<?php echo Intl::msg( 'Add a new feed' );?>" class="menu-ico ico-add-feed"><span class="menu-text menu-add-feed"> <?php echo Intl::msg( 'Add a new feed' );?></span></a></li>
@@ -3404,7 +3402,7 @@ class FeedPage
           <li><a href="<?php echo $query.'help';?>" title="<?php echo Intl::msg( 'Help' );?>" class="menu-ico ico-help"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Help' );?></span></a></li>
   <?php }elseif( $key1==='menuStars' ){ ?>
     <?php if( $template==='index' ){ ?>
-      <li><a href="<?php echo $query.'stars';?>" title="<?php echo Intl::msg( 'Starred items' );?>" class="menu-ico ico-star"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Starred items' );?></span></a></li>
+          <li><a href="<?php echo $query.'stars';?>" title="<?php echo Intl::msg( 'Starred items' );?>" class="menu-ico ico-star"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Starred items' );?></span></a></li>
     <?php } ?>
   <?php } ?>
 <?php } ?>

@@ -61,7 +61,7 @@
                 <img src="{$kf->getFaviconFeed($key)}" height="16" width="16" title="favicon" alt="favicon"/>
               </span>
               {/if}
-              <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a><a class="feed{isset($value.error)?' text-error':''}" href="?currentHash={$key}#folder-{$key1}-feed-{$key}" title="{$atitle|htmlspecialchars}">{$value.title|htmlspecialchars}</a>
+              <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a><a class="feed{if="isset($value.error)"} text-error{/if}" href="?currentHash={$key}#folder-{$key1}-feed-{$key}" title="{$atitle|htmlspecialchars}">{$value.title|htmlspecialchars}</a>
             </li>
             {/loop}
           </ul>

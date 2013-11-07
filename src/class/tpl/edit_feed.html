@@ -40,12 +40,10 @@
             <fieldset>
               <legend>{'Feed folders'|Intl::msg}</legend>
               {loop="$folders"}
-              {$checked=''}
-              {if="in_array($key, $feed.foldersHash)"}{$checked=' checked="checked"'}{/if}
               <div class="control-group">
                 <div class="controls">
                   <label for="folder-{$key}">
-                    <input type="checkbox" id="folder-{$key}" name="folders[]" {$checked} value="{$key}"> {$value.title|htmlspecialchars}
+                    <input type="checkbox" id="folder-{$key}" name="folders[]" {if="in_array($key, $feed.foldersHash)"} checked="checked"{/if} value="{$key}"> {$value.title|htmlspecialchars}
                   </label>
                 </div>
               </div>
