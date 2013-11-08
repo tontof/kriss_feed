@@ -108,6 +108,7 @@ if (isset($_GET['file'])) {
 }
 
 $pb = new PageBuilder('FeedPage');
+FeedPage::$pb = $pb;
 $pb->assign('base', MyTool::getUrl());
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');

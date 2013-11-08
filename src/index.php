@@ -4553,7 +4553,6 @@ class PageBuilder
     public function __construct($pageClass)
     {
         $this->pageClass = $pageClass;
-        $pageClass::$pb = $this;
     }
 
     public function assign($variable, $value = null)
@@ -8331,6 +8330,7 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 }
 
 $pb = new PageBuilder('FeedPage');
+FeedPage::$pb = $pb;
 $pb->assign('base', MyTool::getUrl());
 $pb->assign('version', FEED_VERSION);
 $pb->assign('pagetitle', 'KrISS feed');

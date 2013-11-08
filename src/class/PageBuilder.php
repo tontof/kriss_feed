@@ -19,7 +19,6 @@ class PageBuilder
     public function __construct($pageClass)
     {
         $this->pageClass = $pageClass;
-        $pageClass::$pb = $this;
     }
 
     /**
