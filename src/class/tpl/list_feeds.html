@@ -19,6 +19,10 @@
             {$atitle=$value.error}
           {/if}
 
+          {if="empty($value.title)"}
+            {$value.title=parse_url($value.xmlUrl, PHP_URL_HOST)}
+          {/if}
+
         <li id="feed-{$key}" class="feed{if="$value.nbUnread!==0"} has-unread{/if}{if="$currentHash==$key"} current-feed{/if}{if="$autohide&&$value.nbUnread==0"} autohide-feed{/if}">
           {if="$addFavicon"}
           <span class="feed-favicon">

@@ -3043,6 +3043,10 @@ class FeedPage
             <?php $atitle=FeedPage::$var['atitle']=$value1["error"];?>
           <?php } ?>
 
+          <?php if( empty($value1["title"]) ){ ?>
+            <?php $value1["title"]=FeedPage::$var['value']["title"]=parse_url($value1["xmlUrl"], PHP_URL_HOST);?>
+          <?php } ?>
+
         <li id="feed-<?php echo $key1;?>" class="feed<?php if( $value1["nbUnread"]!==0 ){ ?> has-unread<?php } ?><?php if( $currentHash==$key1 ){ ?> current-feed<?php } ?><?php if( $autohide&&$value1["nbUnread"]==0 ){ ?> autohide-feed<?php } ?>">
           <?php if( $addFavicon ){ ?>
           <span class="feed-favicon">
