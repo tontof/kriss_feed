@@ -745,6 +745,7 @@ class RainTPL{
 
 			// compile the variable for php
 			if( isset( $function ) ){
+                            // KrISS : add pull request for string interpretation issues https://github.com/rainphp/raintpl/pull/31
                             if (preg_match("/^(?:(?:\"(?:\\\\\"|[^\"])+\")|(?:'(?:\\\'|[^'])+'))$/is", $var))
                                 $php_var = $php_left_delimiter . ( !$is_init_variable && $echo ? 'echo ' : null ) . ( $params ? "( $function( $var, $params ) )" : "$function( $var )" ) . $php_right_delimiter;
 
