@@ -99,9 +99,9 @@
         <a class="item-shaarli" href="{$query}shaarli={$value}"><span class="label label-expanded">{$share}</span></a>
         {if="!isset($_GET['stars'])"}
           {if="$item['read'] == 1"}
-        <a class="item-mark-as" href="{$query}unread={$value}"><span class="label label-expanded">{$unread}</span></a>
+        <a class="item-mark-as" href="{$query}unread={$value}"><span class="label item-label-mark-as label-expanded">{$unread}</span></a>
           {else}
-        <a class="item-mark-as" href="{$query}read={$value}"><span class="label label-expanded">{$read}</span></a>
+        <a class="item-mark-as" href="{$query}read={$value}"><span class="label item-label-mark-as label-expanded">{$read}</span></a>
           {/if}
         {/if}
         {if="isset($item.starred) && $item.starred===1"}
