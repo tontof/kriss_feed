@@ -509,10 +509,6 @@ input[type=checkbox]:focus {
 }
 
 @media screen and (max-width: 768px) {
-  html, body  {
-    height: 100%;
-  } 
-  
   .full-height  {
 
   }
