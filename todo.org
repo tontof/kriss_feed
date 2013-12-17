@@ -9,6 +9,8 @@
 ** Template
 *** Try to fuse raintpl item template and javascript one
 * Improvements
+** Add direct button to go next and previous item and automatically open it in list mode
+*** http://tontof.net/index.php?2013/11/14/18/28/04-kriss-feed-integre-raintpl-enfin-presque#8
 ** Add feed preview when adding a new feed #299 + title personnalization #227 :plugin:
 ** Improve edit menu : #16 #197
 ** Replace auto blank option in config by a specific plugin #308 :javascript:plugin:
