@@ -3212,9 +3212,9 @@ class FeedPage
         <a class="item-shaarli" href="<?php echo $query;?>shaarli=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $share;?></span></a>
         <?php if( !isset($_GET['stars']) ){ ?>
           <?php if( $item['read'] == 1 ){ ?>
-        <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $unread;?></span></a>
+        <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label item-label-mark-as label-expanded"><?php echo $unread;?></span></a>
           <?php }else{ ?>
-        <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $read;?></span></a>
+        <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label item-label-mark-as label-expanded"><?php echo $read;?></span></a>
           <?php } ?>
         <?php } ?>
         <?php if( isset($item["starred"]) && $item["starred"]===1 ){ ?>
@@ -5298,13 +5298,6 @@ cite {
   font-style: normal;
 }
 
-ol,
-ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
 code {
   font-family: "Courier New", monospace;
   font-size: 12px;
@@ -5509,6 +5502,12 @@ input::-moz-focus-inner {
   float: left;
 }
 
+ul.nav {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 .navbar .nav > li {
   float: left;
 }
@@ -5528,6 +5527,13 @@ input::-moz-focus-inner {
 #paging-up,
 #paging-down {
   margin: 10px;
+}
+
+#paging-up ul, 
+#paging-down ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
 .input-append,
@@ -5568,6 +5574,12 @@ ol.inline > li {
 /**
  * List of feeds
  */
+#list-feeds ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 li.feed {
   margin-left: 4px;
 }
@@ -5611,6 +5623,12 @@ li.folder > h5:hover {
 /**
  * List of items
  */
+#list-items {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 li.item-list {
   border-bottom: 1px solid #ddd;
 }
@@ -7083,7 +7101,7 @@ dd {
       '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
       '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">' + intlShare + '</span></a> ' +
       (stars?'':
-      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkMarkAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkMarkAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as label-expanded">' + markAs + '</span></a> ') +
       '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkStarred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
       (view=='list'?
       '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +

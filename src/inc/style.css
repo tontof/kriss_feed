@@ -54,13 +54,6 @@ cite {
   font-style: normal;
 }
 
-ol,
-ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
 code {
   font-family: "Courier New", monospace;
   font-size: 12px;
@@ -265,6 +258,12 @@ input::-moz-focus-inner {
   float: left;
 }
 
+ul.nav {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 .navbar .nav > li {
   float: left;
 }
@@ -284,6 +283,13 @@ input::-moz-focus-inner {
 #paging-up,
 #paging-down {
   margin: 10px;
+}
+
+#paging-up ul, 
+#paging-down ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
 .input-append,
@@ -324,6 +330,12 @@ ol.inline > li {
 /**
  * List of feeds
  */
+#list-feeds ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 li.feed {
   margin-left: 4px;
 }
@@ -367,6 +379,12 @@ li.folder > h5:hover {
 /**
  * List of items
  */
+#list-items {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 li.item-list {
   border-bottom: 1px solid #ddd;
 }
