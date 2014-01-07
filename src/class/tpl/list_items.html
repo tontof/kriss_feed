@@ -92,7 +92,7 @@
         <article>
           {$item.content}
         </article>
-	{if="$item.enclosure!=''"}<a href="{$item.enclosure}">Media joint</a>{/if}
+        {if="isset($item.enclosure)"}<enclosure>{$item.enclosure}</enclosure>{/if}
       </div>
       <div class="clear"></div>
       <div class="item-info-end">

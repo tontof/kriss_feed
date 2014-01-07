@@ -922,6 +922,9 @@ class Feed
                 $newItems[$hashUrl]['description'] = mb_substr(
                     strip_tags($item['description']), 0, 500
                     );
+		if(!empty($item['enclosure'])) {
+			$newItems[$hashUrl]['enclosure'] = $item['enclosure'];
+		}
                 $newItems[$hashUrl]['content'] = $item['content'];
             }
         }

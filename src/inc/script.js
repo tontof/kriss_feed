@@ -896,8 +896,12 @@
   }
 
   function setDivItem(div, item) {
-    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star';
-
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star', textEnclosure = '';
+    
+    if(typeof item['enclosure'] != 'undefined') {
+      textEnclosure = '<enclosure>' + item['enclosure'] + '</enclosure>';
+    }
+    
     if (item['read'] == 1) {
       markAs = intlUnread;
       linkMarkAs = 'unread';
@@ -940,7 +944,9 @@
       '<div class="clear"></div>' +
       '<div class="item-content"><article>' +
       item['content'] +
-      '</article></div>' +
+      '</article>' + 
+      textEnclosure +
+      '</div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
