@@ -36,6 +36,7 @@
       intlStar = 'star',
       intlUnstar = 'unstar',
       intlFrom = 'from';
+      intlDownload = 'Download the attached media';
 
   /**
    * trim function
@@ -899,7 +900,7 @@
     var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star', textEnclosure = '';
     
     if(typeof item['enclosure'] != 'undefined') {
-      textEnclosure = '<enclosure>' + item['enclosure'] + '</enclosure>';
+      textEnclosure = '<enclosure><a href="' + item['enclosure'] + '">' + intlDownload + '</a></enclosure>';
     }
     
     if (item['read'] == 1) {

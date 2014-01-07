@@ -92,7 +92,7 @@
         <article>
           {$item.content}
         </article>
-        {if="isset($item.enclosure)"}<enclosure>{$item.enclosure}</enclosure>{/if}
+        {if="isset($item.enclosure)"}<enclosure><a href="{$item.enclosure|htmlspecialchars}">{'Download the attached media'|Intl::msg}</a></enclosure>{/if}
       </div>
       <div class="clear"></div>
       <div class="item-info-end">

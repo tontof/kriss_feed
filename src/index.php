@@ -3208,7 +3208,7 @@ class FeedPage
         <article>
           <?php echo $item["content"];?>
         </article>
-        <?php if( isset($item["enclosure"]) ){ ?><enclosure><?php echo $item["enclosure"];?></enclosure><?php } ?>
+        <?php if( isset($item["enclosure"]) ){ ?><enclosure><a href="<?php echo htmlspecialchars( $item["enclosure"] );?>"><?php echo Intl::msg( 'Download the attached media' );?></a></enclosure><?php } ?>
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
@@ -6196,6 +6196,7 @@ dd {
       intlStar = 'star',
       intlUnstar = 'unstar',
       intlFrom = 'from';
+      intlDownload = 'Download the attached media';
 
   /**
    * trim function
@@ -7059,7 +7060,7 @@ dd {
     var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star', textEnclosure = '';
     
     if(typeof item['enclosure'] != 'undefined') {
-      textEnclosure = '<enclosure>' + item['enclosure'] + '</enclosure>';
+      textEnclosure = '<enclosure><a href="' + item['enclosure'] + '">' + intlDownload + '</a></enclosure>';
     }
     
     if (item['read'] == 1) {
