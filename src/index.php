@@ -28,6 +28,621 @@ define('UPDATECHECK_INTERVAL', 86400);
 date_default_timezone_set('Europe/Paris');
 
 
+class FeedConf
+{
+    private $_file = '';
+
+    public $login = '';
+
+    public $hash = '';
+
+    public $disableSessionProtection = false;
+
+    public $salt = '';
+
+    public $title = "Kriss feed";
+
+    public $redirector = '';
+
+    public $locale = 'en_GB';
+
+    public $shaarli = '';
+
+    public $maxItems = 100;
+
+    public $maxUpdate = 60;
+
+    public $order = 'newerFirst';
+
+    public $autoreadItem = false;
+
+    public $autoreadPage = false;
+
+    public $autoUpdate = false;
+
+    public $autohide = false;
+
+    public $autofocus = true;
+
+    public $addFavicon = false;
+
+    public $preload = false;
+
+    public $blank = false;
+
+    public $visibility = 'private';
+
+    public $version;
+
+    public $view = 'list';
+
+    public $filter = 'unread';
+
+    public $listFeeds = 'show';
+
+    public $byPage = 10;
+
+    public $currentHash = 'all';
+
+    public $currentPage = 1;
+
+    public $lang = '';
+
+    public $menuView = 1;
+    public $menuListFeeds = 2;
+    public $menuFilter = 3;
+    public $menuOrder = 4;
+    public $menuUpdate = 5;
+    public $menuRead = 6;
+    public $menuUnread = 7;
+    public $menuEdit = 8;
+    public $menuAdd = 9;
+    public $menuHelp = 10;
+    public $menuStars = 11;
+
+    public $pagingItem = 1;
+    public $pagingPage = 2;
+    public $pagingByPage = 3;
+    public $pagingMarkAs = 4;
+
+    public function __construct($configFile, $version)
+    {
+        $this->_file = $configFile;
+        $this->version = $version;
+        $this->lang = Intl::$lang;
+
+        // Loading user config
+        if (file_exists($this->_file)) {
+            include_once $this->_file;
+        } else {
+            $this->_install();
+        }
+
+        Session::$disableSessionProtection = $this->disableSessionProtection;
+
+        if ($this->addFavicon) {
+            /* favicon dir */
+            if (!is_dir(INC_DIR)) {
+                if (!@mkdir(INC_DIR, 0755)) {
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
+                    FeedPage::$pb->renderPage('message');
+                }
+            }
+            if (!is_dir(FAVICON_DIR)) {
+                if (!@mkdir(FAVICON_DIR, 0755)) {
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
+                    FeedPage::$pb->renderPage('message');
+                }
+            }
+        }
+
+        if ($this->isLogged()) {
+            unset($_SESSION['view']);
+            unset($_SESSION['listFeeds']);
+            unset($_SESSION['filter']);
+            unset($_SESSION['order']);
+            unset($_SESSION['byPage']);
+            unset($_SESSION['lang']);
+        }
+
+        $view = $this->getView();
+        $listFeeds = $this->getListFeeds();
+        $filter = $this->getFilter();
+        $order = $this->getOrder();
+        $byPage = $this->getByPage();
+        $lang = $this->getLang();
+
+        if ($this->view != $view
+            || $this->listFeeds != $listFeeds
+            || $this->filter != $filter
+            || $this->order != $order
+            || $this->byPage != $byPage
+            || $this->lang != $lang
+        ) {
+            $this->view = $view;
+            $this->listFeeds = $listFeeds;
+            $this->filter = $filter;
+            $this->order = $order;
+            $this->byPage = $byPage;
+            $this->lang = $lang;
+
+            $this->write();
+        }
+
+        if (!$this->isLogged()) {
+            $_SESSION['view'] = $view;
+            $_SESSION['listFeeds'] = $listFeeds;
+            $_SESSION['filter'] = $filter;
+            $_SESSION['order'] = $order;
+            $_SESSION['byPage'] = $byPage;
+            $_SESSION['lang'] = $lang;
+        }
+
+        Intl::$lang = $this->lang;
+    }
+
+    private function _install()
+    {
+        if (!empty($_POST['setlogin']) && !empty($_POST['setpassword'])) {
+            $this->setSalt(sha1(uniqid('', true).'_'.mt_rand()));
+            $this->setLogin($_POST['setlogin']);
+            $this->setHash($_POST['setpassword']);
+
+            $this->write();
+
+            FeedPage::$pb->assign('pagetitle', 'KrISS feed installation');
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl().'?import');
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->renderPage('message');
+        } else {
+            FeedPage::$pb->assign('pagetitle', Intl::msg('KrISS feed installation'));
+            FeedPage::$pb->assign('token', Session::getToken());
+            FeedPage::$pb->renderPage('install');
+        }
+        exit();
+    }
+
+    public function hydrate(array $data)
+    {
+        foreach ($data as $key => $value) {
+            // get setter
+            $method = 'set'.ucfirst($key);
+            // if setter exists just call it
+            // (php is not case-sensitive with functions)
+            if (method_exists($this, $method)) {
+                $this->$method($value);
+            }
+        }
+
+        $this->write();
+    }
+
+    public function getLang()
+    {
+        $lang = $this->lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
+        }
+
+        if (!in_array($lang, array_keys(Intl::$langList))) {
+            $lang = $this->lang;
+        }
+
+        return $lang;
+    }
+
+    public function getView()
+    {
+        $view = $this->view;
+        if (isset($_GET['view'])) {
+            if ($_GET['view'] == 'expanded') {
+                $view = 'expanded';
+            }
+            if ($_GET['view'] == 'list') {
+                $view = 'list';
+            }
+        } else if (isset($_SESSION['view'])) {
+            $view = $_SESSION['view'];
+        }
+
+        return $view;
+    }
+
+    public function getFilter()
+    {
+        $filter = $this->filter;
+        if (isset($_GET['filter'])) {
+            if ($_GET['filter'] == 'unread') {
+                $filter = 'unread';
+            }
+            if ($_GET['filter'] == 'all') {
+                $filter = 'all';
+            }
+        } else if (isset($_SESSION['filter'])) {
+            $filter = $_SESSION['filter'];
+        }
+
+        return $filter;
+    }
+
+    public function getListFeeds()
+    {
+        $listFeeds = $this->listFeeds;
+        if (isset($_GET['listFeeds'])) {
+            if ($_GET['listFeeds'] == 'show') {
+                $listFeeds = 'show';
+            }
+            if ($_GET['listFeeds'] == 'hide') {
+                $listFeeds = 'hide';
+            }
+        } else if (isset($_SESSION['listFeeds'])) {
+            $listFeeds = $_SESSION['listFeeds'];
+        }
+
+        return $listFeeds;
+    }
+
+    public function getByPage()
+    {
+        $byPage = $this->byPage;
+        if (isset($_GET['byPage']) && is_numeric($_GET['byPage']) && $_GET['byPage'] > 0) {
+            $byPage = $_GET['byPage'];
+        } else if (isset($_SESSION['byPage'])) {
+            $byPage = $_SESSION['byPage'];
+        }
+
+        return $byPage;
+    }
+
+    public function getOrder()
+    {
+        $order = $this->order;
+        if (isset($_GET['order'])) {
+            if ($_GET['order'] === 'newerFirst') {
+                $order = 'newerFirst';
+            }
+            if ($_GET['order'] === 'olderFirst') {
+                $order = 'olderFirst';
+            }
+        } else if (isset($_SESSION['order'])) {
+            $order = $_SESSION['order'];
+        }
+
+        return $order;
+    }
+
+    public function getCurrentHash()
+    {
+        $currentHash = $this->currentHash;
+        if (isset($_GET['currentHash'])) {
+            $currentHash = preg_replace('/[^a-zA-Z0-9-_@]/', '', substr(trim($_GET['currentHash'], '/'), 0, 6));
+        }
+
+        if (empty($currentHash)) {
+            $currentHash = 'all';
+        }
+
+        return $currentHash;
+    }
+
+    public function getCurrentPage()
+    {
+        $currentPage = $this->currentPage;
+        if (isset($_GET['page']) && !empty($_GET['page'])) {
+            $currentPage = (int) $_GET['page'];
+        } else if (isset($_GET['previousPage']) && !empty($_GET['previousPage'])) {
+            $currentPage = (int) $_GET['previousPage'] - 1;
+            if ($currentPage < 1) {
+                $currentPage = 1;
+            }
+        } else if (isset($_GET['nextPage']) && !empty($_GET['nextPage'])) {
+            $currentPage = (int) $_GET['nextPage'] + 1;
+        }
+
+        return $currentPage;
+    }
+
+    public function setDisableSessionProtection($disableSessionProtection)
+    {
+        $this->disableSessionProtection = $disableSessionProtection;
+    }
+
+    public function setLogin($login)
+    {
+        $this->login = $login;
+    }
+
+    public function setVisibility($visibility)
+    {
+        $this->visibility = $visibility;
+    }
+
+    public function setHash($pass)
+    {
+        $this->hash = sha1($pass.$this->login.$this->salt);
+    }
+
+    public function setSalt($salt)
+    {
+        $this->salt = $salt;
+    }
+
+    public function setTitle($title)
+    {
+        $this->title = $title;
+    }
+
+    public function setLocale($locale)
+    {
+        $this->locale = $locale;
+    }
+
+    public function setRedirector($redirector)
+    {
+        $this->redirector = $redirector;
+    }
+
+    public function setAutoreadPage($autoreadPage)
+    {
+        $this->autoreadPage = $autoreadPage;
+    }
+
+    public function setAutoUpdate($autoUpdate)
+    {
+        $this->autoUpdate = $autoUpdate;
+    }
+
+    public function setAutoreadItem($autoreadItem)
+    {
+        $this->autoreadItem = $autoreadItem;
+    }
+
+    public function setAutohide($autohide)
+    {
+        $this->autohide = $autohide;
+    }
+
+    public function setAutofocus($autofocus)
+    {
+        $this->autofocus = $autofocus;
+    }
+
+    public function setAddFavicon($addFavicon)
+    {
+        $this->addFavicon = $addFavicon;
+    }
+
+    public function setPreload($preload)
+    {
+        $this->preload = $preload;
+    }
+
+    public function setShaarli($url)
+    {
+        $this->shaarli = $url;
+    }
+
+    public function setMaxUpdate($max)
+    {
+        $this->maxUpdate = $max;
+    }
+
+    public function setMaxItems($max)
+    {
+        $this->maxItems = $max;
+    }
+
+    public function setOrder($order)
+    {
+        $this->order = $order;
+    }
+
+    public function setBlank($blank)
+    {
+        $this->blank = $blank;
+    }
+
+    public function getMenu()
+    {
+        $menu = array();
+
+        if ($this->menuView != 0) {
+            $menu['menuView'] = $this->menuView;
+        }
+        if ($this->menuListFeeds != 0) {
+            $menu['menuListFeeds'] = $this->menuListFeeds;
+        }
+        if ($this->menuFilter != 0) {
+            $menu['menuFilter'] = $this->menuFilter;
+        }
+        if ($this->menuOrder != 0) {
+            $menu['menuOrder'] = $this->menuOrder;
+        }
+        if ($this->menuUpdate != 0) {
+            $menu['menuUpdate'] = $this->menuUpdate;
+        }
+        if ($this->menuRead != 0) {
+            $menu['menuRead'] = $this->menuRead;
+        }
+        if ($this->menuUnread != 0) {
+            $menu['menuUnread'] = $this->menuUnread;
+        }
+        if ($this->menuEdit != 0) {
+            $menu['menuEdit'] = $this->menuEdit;
+        }
+        if ($this->menuAdd != 0) {
+            $menu['menuAdd'] = $this->menuAdd;
+        }
+        if ($this->menuHelp != 0) {
+            $menu['menuHelp'] = $this->menuHelp;
+        }
+
+        if ($this->menuStars != 0) {
+            $menu['menuStars'] = $this->menuStars;
+        }
+
+        asort($menu);
+
+        return $menu;
+    }
+
+    public function getPaging()
+    {
+        $paging = array();
+
+        if ($this->pagingItem != 0) {
+            $paging['pagingItem'] = $this->pagingItem;
+        }
+        if ($this->pagingPage != 0) {
+            $paging['pagingPage'] = $this->pagingPage;
+        }
+        if ($this->pagingByPage != 0) {
+            $paging['pagingByPage'] = $this->pagingByPage;
+        }
+        if ($this->pagingMarkAs != 0) {
+            $paging['pagingMarkAs'] = $this->pagingMarkAs;
+        }
+
+        asort($paging);
+
+        return $paging;
+    }
+
+    public function setMenuView($menuView)
+    {
+        $this->menuView = $menuView;
+    }
+
+    public function setMenuListFeeds($menuListFeeds)
+    {
+        $this->menuListFeeds = $menuListFeeds;
+    }
+
+    public function setMenuFilter($menuFilter)
+    {
+        $this->menuFilter = $menuFilter;
+    }
+
+    public function setMenuOrder($menuOrder)
+    {
+        $this->menuOrder = $menuOrder;
+    }
+
+    public function setMenuUpdate($menuUpdate)
+    {
+        $this->menuUpdate = $menuUpdate;
+    }
+
+    public function setMenuRead($menuRead)
+    {
+        $this->menuRead = $menuRead;
+    }
+
+    public function setMenuUnread($menuUnread)
+    {
+        $this->menuUnread = $menuUnread;
+    }
+
+    public function setMenuEdit($menuEdit)
+    {
+        $this->menuEdit = $menuEdit;
+    }
+
+    public function setMenuAdd($menuAdd)
+    {
+        $this->menuAdd = $menuAdd;
+    }
+
+    public function setMenuHelp($menuHelp)
+    {
+        $this->menuHelp = $menuHelp;
+    }
+
+    public function setMenuStars($menuStars)
+    {
+        $this->menuStars = $menuStars;
+    }
+
+    public function setPagingItem($pagingItem)
+    {
+        $this->pagingItem = $pagingItem;
+    }
+
+    public function setPagingPage($pagingPage)
+    {
+        $this->pagingPage = $pagingPage;
+    }
+
+    public function setPagingByPage($pagingByPage)
+    {
+        $this->pagingByPage = $pagingByPage;
+    }
+
+    public function setPagingMarkAs($pagingMarkAs)
+    {
+        $this->pagingMarkAs = $pagingMarkAs;
+    }
+
+    public function isLogged()
+    {
+        global $argv;
+
+        if (Session::isLogged()
+            || $this->visibility === 'public'
+            || (isset($_GET['cron'])
+                && $_GET['cron'] === sha1($this->salt.$this->hash))
+            || (isset($argv)
+                && count($argv) >= 3
+                && $argv[1] == 'update'
+                && $argv[2] == sha1($this->salt.$this->hash))) {
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function write()
+    {
+        if ($this->isLogged() || !is_file($this->_file)) {
+            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
+            $out = '<?php';
+            $out .= "\n";
+            foreach ($data as $key) {
+                $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
+            }
+            $out .= '?>';
+
+            if (!@file_put_contents($this->_file, $out)) {
+                die("Can't write to ".CONFIG_FILE." check permissions");
+            }
+        }
+    }
+}
+
+class FeedPage
+{
+    public static $pb; // PageBuilder
+
+    public static $var = array();
+
+    public static function init($var)
+    {
+        FeedPage::$var = $var;
+    }
+}
+
 class Feed
 {
     public $dataFile = '';
@@ -1305,2280 +1920,6 @@ class Feed
 }
 
 
-class FeedConf
-{
-    private $_file = '';
-
-    public $login = '';
-
-    public $hash = '';
-
-    public $disableSessionProtection = false;
-
-    public $salt = '';
-
-    public $title = "Kriss feed";
-
-    public $redirector = '';
-
-    public $locale = 'en_GB';
-
-    public $shaarli = '';
-
-    public $maxItems = 100;
-
-    public $maxUpdate = 60;
-
-    public $order = 'newerFirst';
-
-    public $autoreadItem = false;
-
-    public $autoreadPage = false;
-
-    public $autoUpdate = false;
-
-    public $autohide = false;
-
-    public $autofocus = true;
-
-    public $addFavicon = false;
-
-    public $preload = false;
-
-    public $blank = false;
-
-    public $visibility = 'private';
-
-    public $version;
-
-    public $view = 'list';
-
-    public $filter = 'unread';
-
-    public $listFeeds = 'show';
-
-    public $byPage = 10;
-
-    public $currentHash = 'all';
-
-    public $currentPage = 1;
-
-    public $lang = '';
-
-    public $menuView = 1;
-    public $menuListFeeds = 2;
-    public $menuFilter = 3;
-    public $menuOrder = 4;
-    public $menuUpdate = 5;
-    public $menuRead = 6;
-    public $menuUnread = 7;
-    public $menuEdit = 8;
-    public $menuAdd = 9;
-    public $menuHelp = 10;
-    public $menuStars = 11;
-
-    public $pagingItem = 1;
-    public $pagingPage = 2;
-    public $pagingByPage = 3;
-    public $pagingMarkAs = 4;
-
-    public function __construct($configFile, $version)
-    {
-        $this->_file = $configFile;
-        $this->version = $version;
-        $this->lang = Intl::$lang;
-
-        // Loading user config
-        if (file_exists($this->_file)) {
-            include_once $this->_file;
-        } else {
-            $this->_install();
-        }
-
-        Session::$disableSessionProtection = $this->disableSessionProtection;
-
-        if ($this->addFavicon) {
-            /* favicon dir */
-            if (!is_dir(INC_DIR)) {
-                if (!@mkdir(INC_DIR, 0755)) {
-                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
-                    FeedPage::$pb->renderPage('message');
-                }
-            }
-            if (!is_dir(FAVICON_DIR)) {
-                if (!@mkdir(FAVICON_DIR, 0755)) {
-                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
-                    FeedPage::$pb->renderPage('message');
-                }
-            }
-        }
-
-        if ($this->isLogged()) {
-            unset($_SESSION['view']);
-            unset($_SESSION['listFeeds']);
-            unset($_SESSION['filter']);
-            unset($_SESSION['order']);
-            unset($_SESSION['byPage']);
-            unset($_SESSION['lang']);
-        }
-
-        $view = $this->getView();
-        $listFeeds = $this->getListFeeds();
-        $filter = $this->getFilter();
-        $order = $this->getOrder();
-        $byPage = $this->getByPage();
-        $lang = $this->getLang();
-
-        if ($this->view != $view
-            || $this->listFeeds != $listFeeds
-            || $this->filter != $filter
-            || $this->order != $order
-            || $this->byPage != $byPage
-            || $this->lang != $lang
-        ) {
-            $this->view = $view;
-            $this->listFeeds = $listFeeds;
-            $this->filter = $filter;
-            $this->order = $order;
-            $this->byPage = $byPage;
-            $this->lang = $lang;
-
-            $this->write();
-        }
-
-        if (!$this->isLogged()) {
-            $_SESSION['view'] = $view;
-            $_SESSION['listFeeds'] = $listFeeds;
-            $_SESSION['filter'] = $filter;
-            $_SESSION['order'] = $order;
-            $_SESSION['byPage'] = $byPage;
-            $_SESSION['lang'] = $lang;
-        }
-
-        Intl::$lang = $this->lang;
-    }
-
-    private function _install()
-    {
-        if (!empty($_POST['setlogin']) && !empty($_POST['setpassword'])) {
-            $this->setSalt(sha1(uniqid('', true).'_'.mt_rand()));
-            $this->setLogin($_POST['setlogin']);
-            $this->setHash($_POST['setpassword']);
-
-            $this->write();
-
-            FeedPage::$pb->assign('pagetitle', 'KrISS feed installation');
-            FeedPage::$pb->assign('class', 'text-success');
-            FeedPage::$pb->assign('message', Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'));
-            FeedPage::$pb->assign('referer', MyTool::getUrl().'?import');
-            FeedPage::$pb->assign('button', Intl::msg('Continue'));
-            FeedPage::$pb->renderPage('message');
-        } else {
-            FeedPage::$pb->assign('pagetitle', Intl::msg('KrISS feed installation'));
-            FeedPage::$pb->assign('token', Session::getToken());
-            FeedPage::$pb->renderPage('install');
-        }
-        exit();
-    }
-
-    public function hydrate(array $data)
-    {
-        foreach ($data as $key => $value) {
-            // get setter
-            $method = 'set'.ucfirst($key);
-            // if setter exists just call it
-            // (php is not case-sensitive with functions)
-            if (method_exists($this, $method)) {
-                $this->$method($value);
-            }
-        }
-
-        $this->write();
-    }
-
-    public function getLang()
-    {
-        $lang = $this->lang;
-        if (isset($_GET['lang'])) {
-            $lang = $_GET['lang'];
-        } else if (isset($_SESSION['lang'])) {
-            $lang = $_SESSION['lang'];
-        }
-
-        if (!in_array($lang, array_keys(Intl::$langList))) {
-            $lang = $this->lang;
-        }
-
-        return $lang;
-    }
-
-    public function getView()
-    {
-        $view = $this->view;
-        if (isset($_GET['view'])) {
-            if ($_GET['view'] == 'expanded') {
-                $view = 'expanded';
-            }
-            if ($_GET['view'] == 'list') {
-                $view = 'list';
-            }
-        } else if (isset($_SESSION['view'])) {
-            $view = $_SESSION['view'];
-        }
-
-        return $view;
-    }
-
-    public function getFilter()
-    {
-        $filter = $this->filter;
-        if (isset($_GET['filter'])) {
-            if ($_GET['filter'] == 'unread') {
-                $filter = 'unread';
-            }
-            if ($_GET['filter'] == 'all') {
-                $filter = 'all';
-            }
-        } else if (isset($_SESSION['filter'])) {
-            $filter = $_SESSION['filter'];
-        }
-
-        return $filter;
-    }
-
-    public function getListFeeds()
-    {
-        $listFeeds = $this->listFeeds;
-        if (isset($_GET['listFeeds'])) {
-            if ($_GET['listFeeds'] == 'show') {
-                $listFeeds = 'show';
-            }
-            if ($_GET['listFeeds'] == 'hide') {
-                $listFeeds = 'hide';
-            }
-        } else if (isset($_SESSION['listFeeds'])) {
-            $listFeeds = $_SESSION['listFeeds'];
-        }
-
-        return $listFeeds;
-    }
-
-    public function getByPage()
-    {
-        $byPage = $this->byPage;
-        if (isset($_GET['byPage']) && is_numeric($_GET['byPage']) && $_GET['byPage'] > 0) {
-            $byPage = $_GET['byPage'];
-        } else if (isset($_SESSION['byPage'])) {
-            $byPage = $_SESSION['byPage'];
-        }
-
-        return $byPage;
-    }
-
-    public function getOrder()
-    {
-        $order = $this->order;
-        if (isset($_GET['order'])) {
-            if ($_GET['order'] === 'newerFirst') {
-                $order = 'newerFirst';
-            }
-            if ($_GET['order'] === 'olderFirst') {
-                $order = 'olderFirst';
-            }
-        } else if (isset($_SESSION['order'])) {
-            $order = $_SESSION['order'];
-        }
-
-        return $order;
-    }
-
-    public function getCurrentHash()
-    {
-        $currentHash = $this->currentHash;
-        if (isset($_GET['currentHash'])) {
-            $currentHash = preg_replace('/[^a-zA-Z0-9-_@]/', '', substr(trim($_GET['currentHash'], '/'), 0, 6));
-        }
-
-        if (empty($currentHash)) {
-            $currentHash = 'all';
-        }
-
-        return $currentHash;
-    }
-
-    public function getCurrentPage()
-    {
-        $currentPage = $this->currentPage;
-        if (isset($_GET['page']) && !empty($_GET['page'])) {
-            $currentPage = (int) $_GET['page'];
-        } else if (isset($_GET['previousPage']) && !empty($_GET['previousPage'])) {
-            $currentPage = (int) $_GET['previousPage'] - 1;
-            if ($currentPage < 1) {
-                $currentPage = 1;
-            }
-        } else if (isset($_GET['nextPage']) && !empty($_GET['nextPage'])) {
-            $currentPage = (int) $_GET['nextPage'] + 1;
-        }
-
-        return $currentPage;
-    }
-
-    public function setDisableSessionProtection($disableSessionProtection)
-    {
-        $this->disableSessionProtection = $disableSessionProtection;
-    }
-
-    public function setLogin($login)
-    {
-        $this->login = $login;
-    }
-
-    public function setVisibility($visibility)
-    {
-        $this->visibility = $visibility;
-    }
-
-    public function setHash($pass)
-    {
-        $this->hash = sha1($pass.$this->login.$this->salt);
-    }
-
-    public function setSalt($salt)
-    {
-        $this->salt = $salt;
-    }
-
-    public function setTitle($title)
-    {
-        $this->title = $title;
-    }
-
-    public function setLocale($locale)
-    {
-        $this->locale = $locale;
-    }
-
-    public function setRedirector($redirector)
-    {
-        $this->redirector = $redirector;
-    }
-
-    public function setAutoreadPage($autoreadPage)
-    {
-        $this->autoreadPage = $autoreadPage;
-    }
-
-    public function setAutoUpdate($autoUpdate)
-    {
-        $this->autoUpdate = $autoUpdate;
-    }
-
-    public function setAutoreadItem($autoreadItem)
-    {
-        $this->autoreadItem = $autoreadItem;
-    }
-
-    public function setAutohide($autohide)
-    {
-        $this->autohide = $autohide;
-    }
-
-    public function setAutofocus($autofocus)
-    {
-        $this->autofocus = $autofocus;
-    }
-
-    public function setAddFavicon($addFavicon)
-    {
-        $this->addFavicon = $addFavicon;
-    }
-
-    public function setPreload($preload)
-    {
-        $this->preload = $preload;
-    }
-
-    public function setShaarli($url)
-    {
-        $this->shaarli = $url;
-    }
-
-    public function setMaxUpdate($max)
-    {
-        $this->maxUpdate = $max;
-    }
-
-    public function setMaxItems($max)
-    {
-        $this->maxItems = $max;
-    }
-
-    public function setOrder($order)
-    {
-        $this->order = $order;
-    }
-
-    public function setBlank($blank)
-    {
-        $this->blank = $blank;
-    }
-
-    public function getMenu()
-    {
-        $menu = array();
-
-        if ($this->menuView != 0) {
-            $menu['menuView'] = $this->menuView;
-        }
-        if ($this->menuListFeeds != 0) {
-            $menu['menuListFeeds'] = $this->menuListFeeds;
-        }
-        if ($this->menuFilter != 0) {
-            $menu['menuFilter'] = $this->menuFilter;
-        }
-        if ($this->menuOrder != 0) {
-            $menu['menuOrder'] = $this->menuOrder;
-        }
-        if ($this->menuUpdate != 0) {
-            $menu['menuUpdate'] = $this->menuUpdate;
-        }
-        if ($this->menuRead != 0) {
-            $menu['menuRead'] = $this->menuRead;
-        }
-        if ($this->menuUnread != 0) {
-            $menu['menuUnread'] = $this->menuUnread;
-        }
-        if ($this->menuEdit != 0) {
-            $menu['menuEdit'] = $this->menuEdit;
-        }
-        if ($this->menuAdd != 0) {
-            $menu['menuAdd'] = $this->menuAdd;
-        }
-        if ($this->menuHelp != 0) {
-            $menu['menuHelp'] = $this->menuHelp;
-        }
-
-        if ($this->menuStars != 0) {
-            $menu['menuStars'] = $this->menuStars;
-        }
-
-        asort($menu);
-
-        return $menu;
-    }
-
-    public function getPaging()
-    {
-        $paging = array();
-
-        if ($this->pagingItem != 0) {
-            $paging['pagingItem'] = $this->pagingItem;
-        }
-        if ($this->pagingPage != 0) {
-            $paging['pagingPage'] = $this->pagingPage;
-        }
-        if ($this->pagingByPage != 0) {
-            $paging['pagingByPage'] = $this->pagingByPage;
-        }
-        if ($this->pagingMarkAs != 0) {
-            $paging['pagingMarkAs'] = $this->pagingMarkAs;
-        }
-
-        asort($paging);
-
-        return $paging;
-    }
-
-    public function setMenuView($menuView)
-    {
-        $this->menuView = $menuView;
-    }
-
-    public function setMenuListFeeds($menuListFeeds)
-    {
-        $this->menuListFeeds = $menuListFeeds;
-    }
-
-    public function setMenuFilter($menuFilter)
-    {
-        $this->menuFilter = $menuFilter;
-    }
-
-    public function setMenuOrder($menuOrder)
-    {
-        $this->menuOrder = $menuOrder;
-    }
-
-    public function setMenuUpdate($menuUpdate)
-    {
-        $this->menuUpdate = $menuUpdate;
-    }
-
-    public function setMenuRead($menuRead)
-    {
-        $this->menuRead = $menuRead;
-    }
-
-    public function setMenuUnread($menuUnread)
-    {
-        $this->menuUnread = $menuUnread;
-    }
-
-    public function setMenuEdit($menuEdit)
-    {
-        $this->menuEdit = $menuEdit;
-    }
-
-    public function setMenuAdd($menuAdd)
-    {
-        $this->menuAdd = $menuAdd;
-    }
-
-    public function setMenuHelp($menuHelp)
-    {
-        $this->menuHelp = $menuHelp;
-    }
-
-    public function setMenuStars($menuStars)
-    {
-        $this->menuStars = $menuStars;
-    }
-
-    public function setPagingItem($pagingItem)
-    {
-        $this->pagingItem = $pagingItem;
-    }
-
-    public function setPagingPage($pagingPage)
-    {
-        $this->pagingPage = $pagingPage;
-    }
-
-    public function setPagingByPage($pagingByPage)
-    {
-        $this->pagingByPage = $pagingByPage;
-    }
-
-    public function setPagingMarkAs($pagingMarkAs)
-    {
-        $this->pagingMarkAs = $pagingMarkAs;
-    }
-
-    public function isLogged()
-    {
-        global $argv;
-
-        if (Session::isLogged()
-            || $this->visibility === 'public'
-            || (isset($_GET['cron'])
-                && $_GET['cron'] === sha1($this->salt.$this->hash))
-            || (isset($argv)
-                && count($argv) >= 3
-                && $argv[1] == 'update'
-                && $argv[2] == sha1($this->salt.$this->hash))) {
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public function write()
-    {
-        if ($this->isLogged() || !is_file($this->_file)) {
-            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
-                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
-                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
-            $out = '<?php';
-            $out .= "\n";
-            foreach ($data as $key) {
-                $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
-            }
-            $out .= '?>';
-
-            if (!@file_put_contents($this->_file, $out)) {
-                die("Can't write to ".CONFIG_FILE." check permissions");
-            }
-        }
-    }
-}
-
-class FeedPage
-{
-    public static $pb; // PageBuilder
-
-    public static $var = array();
-
-    public static function init($var)
-    {
-        FeedPage::$var = $var;
-    }
-
-    public static function add_feedTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div id="edit-all" class="span6 offset3">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" action="?add" method="POST">
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Add a new feed' );?></legend>
-              <div class="control-group">
-                <label class="control-label" ><?php echo Intl::msg( 'Feed URL' );?></label>
-                <div class="controls">
-                  <input type="text" id="newfeed" name="newfeed" value="<?php echo $newfeed;?>">
-                </div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Add selected folders to feed' );?></legend>
-              <div class="control-group">
-                <div class="controls">
-                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
-                  <label for="add-folder-<?php echo $key1;?>">
-                    <input type="checkbox" id="add-folder-<?php echo $key1;?>" name="folders[]" value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit feed' );?></a>)
-                  </label>
-                  <?php } ?>
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label"><?php echo Intl::msg( 'Add a new folder' );?></label>
-                <div class="controls">
-                  <input type="text" name="newfolder" value="">
-                </div>
-              </div>
-              <div class="control-group">
-                <div class="controls">
-                  <input class="btn" type="submit" name="add" value="<?php echo Intl::msg( 'Add new feed' );?>"/>
-                </div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Use bookmarklet to add a new feed' );?></legend>
-              <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('<?php echo Intl::msg( 'Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...' );?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $base;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
-              </div>
-            </fieldset>
-            <input type="hidden" name="token" value="<?php echo $token;?>">
-            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
-          </form>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function change_passwordTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-<?php FeedPage::includesTpl(); ?>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span6 offset3">
-          <div id="config">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-            <div id="section">
-              <form class="form-horizontal" method="post" action="">
-                <input type="hidden" name="token" value="<?php echo $token;?>">
-                <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
-                <fieldset>
-                  <legend><?php echo Intl::msg( 'Change your password' );?></legend>
-
-                  <div class="control-group">
-                    <label class="control-label" for="oldpassword"><?php echo Intl::msg( 'Old password' );?></label>
-                    <div class="controls">
-                      <input type="password" id="oldpassword" name="oldpassword">
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label" for="newpassword"><?php echo Intl::msg( 'New password' );?></label>
-                    <div class="controls">
-                      <input type="password" id="newpassword" name="newpassword">
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save new password' );?>" />
-                    </div>
-                  </div>
-                </fieldset>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function configTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-<?php FeedPage::includesTpl(); ?>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span6 offset3">
-          <div id="config">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-            <div id="section">
-              <form class="form-horizontal" method="post" action="">
-                <input type="hidden" name="token" value="<?php echo $token;?>"/>
-                <input type="hidden" name="returnurl" value="<?php echo $referer;?>"/>
-                <fieldset>
-                  <legend><?php echo Intl::msg( 'KrISS feed main information' );?></legend>
-
-                  <div class="control-group">
-                    <label class="control-label" for="title"><?php echo Intl::msg( 'KrISS feed title' );?></label>
-                    <div class="controls">
-                      <input type="text" id="title" name="title" value="<?php echo $kfctitle;?>">
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'KrISS feed visibility' );?></label>
-                    <div class="controls">
-                      <label for="publicReader">
-                        <input type="radio" id="publicReader" name="visibility" value="public" <?php if( $kfcvisibility==='public' ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Public KrISS feed' );?>
-                      </label>
-                      <span class="help-block">
-                        <?php echo Intl::msg( 'No restriction. Anyone can modify configuration, mark as read items, update feeds...' );?>
-                      </span>
-                      <label for="protectedReader">
-                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php if( $kfcvisibility==='protected' ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Protected KrISS feed' );?>
-                      </label>
-                      <span class="help-block">
-                        <?php echo Intl::msg( 'Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...' );?>
-                      </span>
-                      <label for="privateReader">
-                        <input type="radio" id="privateReader" name="visibility" value="private" <?php if( $kfcvisibility==='private' ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Private KrISS feed' );?>
-                      </label>
-                      <span class="help-block">
-                        <?php echo Intl::msg( 'Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds...' );?>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label" for="shaarli"><?php echo Intl::msg( 'Shaarli URL' );?></label>
-                    <div class="controls">
-                      <input type="text" id="shaarli" name="shaarli" value="<?php echo $kfcshaarli;?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Options:' );?><br>
-                        - <?php echo Intl::msg( '${url}: item link' );?><br>
-                        - <?php echo Intl::msg( '${title}: item title' );?><br>
-                        - <?php echo Intl::msg( '${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code>' );?><br>
-                        - <?php echo Intl::msg( '${sel}: <strong>Only available</strong> with javascript: <code>selected text</code>' );?><br>
-                        - <?php echo Intl::msg( 'example with shaarli:' );?> <code>http://your-shaarli/?post=${url}&title=${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label" for="redirector"><?php echo Intl::msg( 'KrISS feed redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)' );?></label>
-                    <div class="controls">
-                      <input type="text" id="redirector" name="redirector" value="<?php echo $kfcredirector;?>">
-                      <span class="help-block"><?php echo Intl::msg( '<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property' );?></span>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label" for="disablesessionprotection">Session protection</label>
-                    <div class="controls">
-                      <label><input type="checkbox" id="disablesessionprotection" name="disableSessionProtection" <?php if( $kfcdisablesessionprotection ){ ?>checked="checked"<?php } ?>><?php echo Intl::msg( 'Disable session cookie hijacking protection' );?></label>
-                      <span class="help-block"><?php echo Intl::msg( 'Check this if you get disconnected often or if your IP address changes often.' );?></span>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                    </div>
-                  </div>
-                </fieldset>
-                <fieldset>
-                  <legend><?php echo Intl::msg( 'KrISS feed preferences' );?></legend>
-
-                  <div class="control-group">
-                    <label class="control-label" for="maxItems"><?php echo Intl::msg( 'Maximum number of items by feed' );?></label>
-                    <div class="controls">
-                      <input type="text" maxlength="3" id="maxItems" name="maxItems" value="<?php echo $kfcmaxitems;?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Need update to be taken into consideration' );?></span>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label" for="maxUpdate"><?php echo Intl::msg( 'Maximum delay between feed update (in minutes)' );?></label>
-                    <div class="controls">
-                      <input type="text" maxlength="3" id="maxUpdate" name="maxUpdate" value="<?php echo $kfcmaxupdate;?>">
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Auto read next item option' );?></label>
-                    <div class="controls">
-                      <label for="donotautoreaditem">
-                        <input type="radio" id="donotautoreaditem" name="autoreadItem" value="0" <?php if( !$kfcautoreaditem ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not mark as read when next item' );?>
-                      </label>
-                      <label for="autoread">
-                        <input type="radio" id="autoread" name="autoreadItem" value="1" <?php if( $kfcautoreaditem ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Auto mark current as read when next item' );?>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Auto read next page option' );?></label>
-                    <div class="controls">
-                      <label for="donotautoreadpage">
-                        <input type="radio" id="donotautoreadpage" name="autoreadPage" value="0" <?php if( !$kfcautoreadpage ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not mark as read when next page' );?>
-                      </label>
-                      <label for="autoreadpage">
-                        <input type="radio" id="autoreadpage" name="autoreadPage" value="1" <?php if( $kfcautoreadpage ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Auto mark current as read when next page' );?>
-                      </label>
-                      <span class="help-block"><strong><?php echo Intl::msg( 'Not implemented yet' );?></strong></span>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Auto hide option' );?></label>
-                    <div class="controls">
-                      <label for="donotautohide">
-                        <input type="radio" id="donotautohide" name="autohide" value="0" <?php if( !$kfcautohide ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Always show feed in feeds list' );?>
-                      </label>
-                      <label for="autohide">
-                        <input type="radio" id="autohide" name="autohide" value="1" <?php if( $kfcautohide ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Automatically hide feed when 0 unread item' );?>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Auto focus option' );?></label>
-                    <div class="controls">
-                      <label for="donotautofocus">
-                        <input type="radio" id="donotautofocus" name="autofocus" value="0" <?php if( !$kfcautofocus ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not automatically jump to current item when it changes' );?>
-                      </label>
-                      <label for="autofocus">
-                        <input type="radio" id="autofocus" name="autofocus" value="1" <?php if( $kfcautofocus ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Automatically jump to the current item position' );?>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Add favicon option' );?></label>
-                    <div class="controls">
-                      <label for="donotaddfavicon">
-                        <input type="radio" id="donotaddfavicon" name="addFavicon" value="0" <?php if( !$kfcaddfavicon ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not add favicon next to feed on list of feeds/items' );?>
-                      </label>
-                      <label for="addfavicon">
-                        <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php if( $kfcaddfavicon ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Add favicon next to feed on list of feeds/items' );?><br><strong><?php echo Intl::msg( 'Warning: It depends on http://getfavicon.appspot.com/' );?><?php if( in_array('curl', get_loaded_extensions()) ){ ?><?php echo Intl::msg( 'but it will cache favicon on your server' );?><?php } ?></strong>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Preload option' );?></label>
-                    <div class="controls">
-                      <label for="donotpreload">
-                        <input type="radio" id="donotpreload" name="preload" value="0" <?php if( !$kfcpreload ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not preload items.' );?>
-                      </label>
-                      <label for="preload">
-                        <input type="radio" id="preload" name="preload" value="1" <?php if( $kfcpreload ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you do not read all the page items.' );?>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label">Auto target="_blank"</label>
-                    <div class="controls">
-                      <label for="donotblank">
-                        <input type="radio" id="donotblank" name="blank" value="0" <?php if( !$kfcblank ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not open link in new tab' );?>
-                      </label>
-                      <label for="doblank">
-                        <input type="radio" id="doblank" name="blank" value="1" <?php if( $kfcblank ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Automatically open link in new tab' );?>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label"><?php echo Intl::msg( 'Auto update with javascript' );?></label>
-                    <div class="controls">
-                      <label for="donotautoupdate">
-                        <input type="radio" id="donotautoupdate" name="autoUpdate" value="0" <?php if( !$kfcautoupdate ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Do not auto update with javascript' );?>
-                      </label>
-                      <label for="autoupdate">
-                        <input type="radio" id="autoupdate" name="autoUpdate" value="1" <?php if( $kfcautoupdate ){ ?>checked="checked"<?php } ?>/>
-                        <?php echo Intl::msg( 'Auto update with javascript' );?>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                    </div>
-                  </div>
-                </fieldset>
-                <?php $zero=FeedPage::$var['zero']=0;?>
-                <fieldset>
-                  <legend><?php echo Intl::msg( 'KrISS feed menu preferences' );?></legend>
-                  <?php echo Intl::msg( 'You can order or remove elements in the menu. Set a position or leave empty if you do not want the element to appear in the menu.' );?>
-                  <div class="control-group">
-                    <label class="control-label" for="menuView"><?php echo Intl::msg( 'View' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuView" name="menuView" value="<?php if( empty($kfcmenu['menuView']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuView"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'View as list' );?>/<?php echo Intl::msg( 'View as expanded' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuListFeeds"><?php echo Intl::msg( 'Feeds' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuListFeeds" name="menuListFeeds" value="<?php if( empty($kfcmenu['menuListFeeds']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuListFeeds"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Hide feeds list' );?>/<?php echo Intl::msg( 'Show feeds list' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuFilter"><?php echo Intl::msg( 'Filter' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuFilter" name="menuFilter" value="<?php if( empty($kfcmenu['menuFilter']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuFilter"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Show all items' );?>/<?php echo Intl::msg( 'Show unread items' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuOrder"><?php echo Intl::msg( 'Order' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuOrder" name="menuOrder" value="<?php if( empty($kfcmenu['menuOrder']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuOrder"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Show older first' );?>/<?php echo Intl::msg( 'Show newer first' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuUpdate"><?php echo Intl::msg( 'Update' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuUpdate" name="menuUpdate" value="<?php if( empty($kfcmenu['menuUpdate']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuUpdate"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Update all' );?>/<?php echo Intl::msg( 'Update folder' );?>/<?php echo Intl::msg( 'Update feed' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuRead"><?php echo Intl::msg( 'Mark as read' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuRead" name="menuRead" value="<?php if( empty($kfcmenu['menuRead']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuRead"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Mark all as read' );?>/<?php echo Intl::msg( 'Mark folder as read' );?>/<?php echo Intl::msg( 'Mark feed as read' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuUnread"><?php echo Intl::msg( 'Mark as unread' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuUnread" name="menuUnread" value="<?php if( empty($kfcmenu['menuUnread']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuUnread"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Mark all as unread' );?>/<?php echo Intl::msg( 'Mark folder as unread' );?>/<?php echo Intl::msg( 'Mark feed as unread' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuEdit"><?php echo Intl::msg( 'Edit' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuEdit" name="menuEdit" value="<?php if( empty($kfcmenu['menuEdit']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuEdit"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Edit all' );?>/<?php echo Intl::msg( 'Edit folder' );?>/<?php echo Intl::msg( 'Edit feed' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuAdd"><?php echo Intl::msg( 'Add a new feed' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuAdd" name="menuAdd" value="<?php if( empty($kfcmenu['menuAdd']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuAdd"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Add a new feed' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuHelp"><?php echo Intl::msg( 'Help' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuHelp" name="menuHelp" value="<?php if( empty($kfcmenu['menuHelp']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuHelp"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Help' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuStars"><?php echo Intl::msg( 'Starred items' );?></label>
-                    <div class="controls">
-                      <input type="text" id="menuStars" name="menuStars" value="<?php if( empty($kfcmenu['menuStars']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuStars"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'Starred items' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                    </div>
-                  </div>
-                </fieldset>
-                <fieldset>
-                  <legend><?php echo Intl::msg( 'KrISS feed paging menu preferences' );?></legend>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingItem"><?php echo Intl::msg( 'Item' );?></label>
-                    <div class="controls">
-                      <input type="text" id="pagingItem" name="pagingItem" value="<?php if( empty($kfcpaging['pagingItem']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingItem"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'If you want to go previous and next item' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingPage"><?php echo Intl::msg( 'Page' );?></label>
-                    <div class="controls">
-                      <input type="text" id="pagingPage" name="pagingPage" value="<?php if( empty($kfcpaging['pagingPage']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingPage"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'If you want to go previous and next page' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingByPage"><?php echo Intl::msg( 'Items by page' );?></label>
-                    <div class="controls">
-                      <input type="text" id="pagingByPage" name="pagingByPage" value="<?php if( empty($kfcpaging['pagingByPage']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingByPage"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'If you want to modify number of items by page' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingMarkAs"><?php echo Intl::msg( 'Mark as read' );?></label>
-                    <div class="controls">
-                      <input type="text" id="pagingMarkAs" name="pagingMarkAs" value="<?php if( empty($kfcpaging['pagingMarkAs']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingMarkAs"];?><?php } ?>">
-                      <span class="help-block"><?php echo Intl::msg( 'If you want to add a mark as read button into paging' );?></span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                    </div>
-                  </div>
-                </fieldset>
-                <fieldset>
-                  <legend><?php echo Intl::msg( 'Cron configuration' );?></legend>
-                  <code><?php echo $base;?>?update&cron=<?php echo $kfccron;?></code>
-                  <?php echo Intl::msg( 'You can use <code>&force</code> to force update.' );?><br>
-                  <?php echo Intl::msg( 'To update every hour:' );?><br>
-                  <code>0 * * * * wget "<?php echo $base;?>?update&cron=<?php echo $kfccron;?>" -O /tmp/kf.cron</code><br>
-                  <?php echo Intl::msg( 'If you can not use wget, you may try php command line:' );?><br>
-                  <code>0 * * * * php -f <?php echo $scriptfilename;?> update <?php echo $kfccron;?> > /tmp/kf.cron</code><br>
-                  <?php echo Intl::msg( 'If previous solutions do not work, try to create an update.php file into data directory containing:' );?><br>
-                  <code>
-                  &lt;?php<br>
-                  $url = "<?php echo $base;?>?update&cron=<?php echo $kfccron;?>";<br>
-                  $options = array('http'=>array('method'=>'GET'));<br>
-                  $context = stream_context_create($options);<br>
-                  $data=file_get_contents($url,false,$context);<br>
-                  print($data);
-                  </code><br>
-                  <?php echo Intl::msg( 'Then set up your cron with:' );?><br>
-                  <code>0 * * * * php -f <?php echo dirname( $scriptfilename );?>/data/update.php > /tmp/kf.cron</code><br>
-                  <?php echo Intl::msg( 'Do not forget to check permissions' );?><br>
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                    </div>
-                  </div>
-                </fieldset>
-              </form><br>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function edit_allTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div id="edit-all" class="span6 offset3">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="">
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Reorder folders' );?></legend>
-              <div class="control-group">
-                <div class="controls">
-                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
-                  <label for="order-folder-<?php echo $key1;?>">
-                    <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit folder' );?></a>) <br>
-                    <input type="text" id="order-folder-<?php echo $key1;?>" name="order-folder-<?php echo $key1;?>" value="<?php echo $counter1;?>">
-                  </label>
-                  <?php } ?>
-                </div>
-              </div>
-            </fieldset>
-
-            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Add selected folders to selected feeds' );?></legend>
-              <div class="control-group">
-                <div class="controls">
-                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
-                  <label for="add-folder-<?php echo $key1;?>">
-                    <input type="checkbox" id="add-folder-<?php echo $key1;?>" name="addfolders[]" value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit folder' );?></a>)
-                  </label>
-                  <?php } ?>
-                </div>
-                <div class="controls">
-                  <input type="text" name="addnewfolder" value="" placeholder="New folder">
-                </div>
-              </div>
-            </fieldset>
-
-            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Remove selected folders to selected feeds' );?></legend>
-              <div class="control-group">
-                <div class="controls">
-                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
-                  <label for="remove-folder-<?php echo $key1;?>">
-                    <input type="checkbox" id="remove-folder-<?php echo $key1;?>" name="removefolders[]" value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit folder' );?></a>)
-                  </label>
-                  <?php } ?>
-                </div>
-              </div>
-            </fieldset>
-
-            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-
-            <fieldset>
-              <legend><?php echo Intl::msg( 'List of feeds' );?></legend>
-
-              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = true; }" value="<?php echo Intl::msg( 'Select all' );?>">
-              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = false; }" value="<?php echo Intl::msg( 'Unselect all' );?>">
-
-              <ul class="unstyled">
-                <?php $counter1=-1; if( isset($listFeeds) && is_array($listFeeds) && sizeof($listFeeds) ) foreach( $listFeeds as $key1 => $value1 ){ $counter1++; ?>
-                <li>
-                  <label for="feed-<?php echo $key1;?>">
-                    <input type="checkbox" id="feed-<?php echo $key1;?>" name="feeds[]" value="<?php echo $key1;?>">
-                    <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit feed' );?></a>)
-                  </label>
-                </li>
-                <?php } ?>
-              </ul>
-            </fieldset>
-
-            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
-            <input type="hidden" name="token" value="<?php echo $token;?>">
-            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-            <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg( 'Delete selected feeds' );?>" onclick="return confirm('<?php echo Intl::msg( 'Do you really want to delete all selected feeds?' );?>');"/>
-            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-          </form>
-        </div>
-      </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function edit_feedTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div id="edit-feed" class="span6 offset3">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="">
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Feed main information' );?></legend>
-              <div class="control-group">
-                <label class="control-label" for="title"><?php echo Intl::msg( 'Feed title' );?></label>
-                <div class="controls">
-                  <input type="text" id="title" name="title" value="<?php echo htmlspecialchars( $feed["title"] );?>">
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label"><?php echo Intl::msg( 'Feed XML URL' );?></label>
-                <div class="controls">
-                  <input type="text" readonly="readonly" name="xmlUrl" value="<?php echo htmlspecialchars( $feed["xmlUrl"] );?>">
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label"><?php echo Intl::msg( 'Feed main URL' );?></label>
-                <div class="controls">
-                  <input type="text" name="htmlUrl" value="<?php echo htmlspecialchars( $feed["htmlUrl"] );?>">
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label" for="description"><?php echo Intl::msg( 'Feed description' );?></label>
-                <div class="controls">
-                  <input type="text" id="description" name="description" value="<?php echo htmlspecialchars( $feed["description"] );?>">
-                </div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Feed folders' );?></legend>
-              <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
-              <div class="control-group">
-                <div class="controls">
-                  <label for="folder-<?php echo $key1;?>">
-                    <input type="checkbox" id="folder-<?php echo $key1;?>" name="folders[]" <?php if( in_array($key1, $feed["foldersHash"]) ){ ?> checked="checked"<?php } ?> value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?>
-                  </label>
-                </div>
-              </div>
-              <?php } ?>
-              <div class="control-group">
-                <label class="control-label" for="newfolder"><?php echo Intl::msg( 'New folder' );?></label>
-                <div class="controls">
-                  <input type="text" name="newfolder" value="" placeholder="<?php echo Intl::msg( 'New folder' );?>">
-                </div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Feed preferences' );?></legend>
-              <div class="control-group">
-                <label class="control-label" for="timeUpdate"><?php echo Intl::msg( 'Time update' );?></label>
-                <div class="controls">
-                  <input type="text" id="timeUpdate" name="timeUpdate" value="<?php echo $feed["timeUpdate"];?>">
-                  <span class="help-block"><?php echo Intl::msg( '"auto", "max" or a number of minutes less than "max" define in <a href="?config">configuration</a>' );?></span>
-                </div>
-              </div>
-              <div class="control-group">
-                <label class="control-label"><?php echo Intl::msg( 'Last update' );?></label>
-                <div class="controls">
-                  <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate;?>">
-                </div>
-              </div>
-
-              <div class="control-group">
-                <div class="controls">
-                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                  <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg( 'Delete feed' );?>"/>
-                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                </div>
-              </div>
-            </fieldset>
-            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
-            <input type="hidden" name="token" value="<?php echo $token;?>">
-          </form><br>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function edit_folderTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div id="edit-folder" class="span4 offset4">
-<?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="">
-            <fieldset>
-              <div class="control-group">
-                <label class="control-label" for="foldertitle"><?php echo Intl::msg( 'Folder title' );?></label>
-                <div class="controls">
-                  <input type="text" id="foldertitle" name="foldertitle" value="<?php echo $foldertitle;?>">
-                  <span class="help-block"><?php echo Intl::msg( 'Leave empty to delete' );?></span>
-                </div>
-              </div>
-
-              <div class="control-group">
-                <div class="controls">
-                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
-                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
-                </div>
-              </div>
-            </fieldset>
-
-            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
-            <input type="hidden" name="token" value="<?php echo $token;?>">
-          </form>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function helpTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-<?php FeedPage::includesTpl(); ?>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span6 offset3">
-          <div id="config">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-            <div id="section">
-              <h2><?php echo Intl::msg( 'Keyboard shortcuts' );?></h2>
-              <fieldset>
-                <legend><?php echo Intl::msg( 'Key legend' );?></legend>
-                <dl class="dl-horizontal">
-                  <dt>&#x23b5;</dt>
-                  <dd><?php echo Intl::msg( 'Space key' );?></dd>
-                  <dt>&#x21e7;</dt>
-                  <dd><?php echo Intl::msg( 'Shift key' );?></dd>
-                  <dt>&#x2192;</dt>
-                  <dd><?php echo Intl::msg( 'Right arrow key' );?></dd>
-                  <dt>&#x2190;</dt>
-                  <dd><?php echo Intl::msg( 'Left arrow key' );?></dd>
-                </dl>
-              </fieldset>
-              <fieldset>
-                <legend><?php echo Intl::msg( 'Items navigation' );?></legend>
-                <dl class="dl-horizontal">
-                  <dt>&#x23b5;, t</dt>
-                  <dd><?php echo Intl::msg( 'Toggle current item (open, close item in list view)' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>m</dt>
-                  <dd><?php echo Intl::msg( 'Mark current item as read if unread or unread if read' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>&#x21e7; + m</dt>
-                  <dd><?php echo Intl::msg( 'Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>&#x2192;, n</dt>
-                  <dd><?php echo Intl::msg( 'Go to next item' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>&#x2190;, p</dt>
-                  <dd><?php echo Intl::msg( 'Go to previous item' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>&#x21e7; + n</dt>
-                  <dd><?php echo Intl::msg( 'Go to next page' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>&#x21e7; + p</dt>
-                  <dd><?php echo Intl::msg( 'Go to previous page' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>j</dt>
-                  <dd><?php echo Intl::msg( 'Go to next item and open it (in list view)' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>k</dt>
-                  <dd><?php echo Intl::msg( 'Go to previous item and open it (in list view)' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>o</dt>
-                  <dd><?php echo Intl::msg( 'Open current item in new tab' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>&#x21e7; + o</dt>
-                  <dd><?php echo Intl::msg( 'Open current item in current window' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>s</dt>
-                  <dd><?php echo Intl::msg( 'Share current item' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>a</dt>
-                  <dd><?php echo Intl::msg( 'Mark all items, all items from current feed or all items from current folder as read' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>*</dt>
-                  <dd><?php echo Intl::msg( 'Star/Unstar current item' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>z</dt>
-                  <dd><?php echo Intl::msg( 'Open all unread items from current page in new tabs and mark items as read' );?></dd>
-                </dl>
-              </fieldset>
-              <fieldset>
-                <legend><?php echo Intl::msg( 'Menu navigation' );?></legend>
-                <dl class="dl-horizontal">
-                  <dt>h</dt>
-                  <dd><?php echo Intl::msg( 'Go to Home page' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>v</dt>
-                  <dd><?php echo Intl::msg( 'Change view as list or expanded' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>f</dt>
-                  <dd><?php echo Intl::msg( 'Show or hide list of feeds/folders' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>e</dt>
-                  <dd><?php echo Intl::msg( 'Edit current selection (all, folder or feed)' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>u</dt>
-                  <dd><?php echo Intl::msg( 'Update current selection (all, folder or feed)' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>r</dt>
-                  <dd><?php echo Intl::msg( 'Reload the page as the F5 key in most of browsers' );?></dd>
-                </dl>
-                <dl class="dl-horizontal">
-                  <dt>?, F1</dt>
-                  <dd><?php echo Intl::msg( 'Go to Help page (this page)' );?></dd>
-                </dl>
-              </fieldset>
-              <h2><?php echo Intl::msg( 'Configuration check' );?></h2>
-              <fieldset>
-                <legend><?php echo Intl::msg( 'PHP configuration' );?></legend>
-                <dl class="dl-horizontal">
-                  <dt>open_ssl</dt>
-                  <dd>
-                    <?php if( extension_loaded('openssl') ){ ?>
-                    <span class="text-success"><?php echo Intl::msg( 'You should be able to load https:// rss links.' );?></span>
-                    <?php }else{ ?>
-                    <span class="text-error"><?php echo Intl::msg( 'You may have problems using https:// rss links.' );?></span>
-                    <?php } ?>
-                  </dd>
-                </dl>
-              </fieldset>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function importTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span4 offset4">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data" name="importform">
-            <fieldset>
-              <legend><?php echo Intl::msg( 'Import opml file' );?></legend>
-              <div class="control-group">
-                <label class="control-label" for="filetoupload"><?php echo Intl::msg( 'Opml file:' );?></label>
-                <div class="controls">
-                  <input tabindex="1" class="btn" type="file" id="filetoupload" name="filetoupload">
-                  <span class="help-block"><?php echo Intl::msg( 'Size max:' );?> <?php echo $humanmaxsize;?></span>
-                </div>
-              </div>
-
-              <div class="control-group">
-                <div class="controls">
-                  <label for="overwrite">
-                    <input type="checkbox" name="overwrite" id="overwrite">
-                    <?php echo Intl::msg( 'Overwrite existing feeds' );?>
-                  </label>
-                </div>
-              </div>
-
-              <div class="control-group">
-                <div class="controls">
-                  <input class="btn" type="submit" name="import" value="<?php echo Intl::msg( 'Import opml file' );?>">
-                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>">
-                </div>
-              </div>
-
-              <input type="hidden" name="MAX_FILE_SIZE" value="${maxsize}">
-              <input type="hidden" name="returnurl" value="<?php echo $referer;?>">
-              <input type="hidden" name="token" value="<?php echo $token;?>">
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </body>
-</html> 
-
-<?php
-    }
-
-
-    public static function includesTpl()
-    {
-        extract(FeedPage::$var);
-?>
-    <base href="<?php echo $base;;?>">
-    <title><?php echo $pagetitle;?></title>
-    <meta charset="utf-8">
-<?php if( is_file('inc/favicon.ico') ){ ?>
-    <link href="inc/favicon.ico" rel="icon" type="image/x-icon">
-<?php }else{ ?>
-    <link href="?file=favicon.ico" rel="icon" type="image/x-icon">
-<?php } ?>
-<?php if( is_file('inc/style.css') ){ ?>
-    <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
-<?php }else{ ?>
-    <link type="text/css" rel="stylesheet" href="?file=style.css&amp;version=<?php echo $version;?>" />
-<?php } ?>
-<?php if( is_file('inc/user.css') ){ ?>
-    <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
-<?php } ?>
-    <meta name="viewport" content="width=device-width">
-
-<?php
-    }
-
-
-    public static function indexTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
-      <div class="row-fluid full-height">
-        <?php if( $listFeeds == 'show' ){ ?>
-        <div id="main-container" class="span9 full-height">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <div id="paging-up">
-<?php FeedPage::pagingTpl(); ?>
-          </div>
-<?php FeedPage::list_itemsTpl(); ?>
-          <div id="paging-down">
-<?php FeedPage::pagingTpl(); ?>
-          </div>
-        </div>
-        <div id="minor-container" class="span3 full-height minor-container">
-<?php FeedPage::list_feedsTpl(); ?>
-        </div>
-        <?php }else{ ?>
-        <div id="main-container" class="span12 full-height">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <div id="paging-up">
-<?php FeedPage::pagingTpl(); ?>
-          </div>
-<?php FeedPage::list_itemsTpl(); ?>
-          <div id="paging-down">
-<?php FeedPage::pagingTpl(); ?>
-          </div>
-        </div>
-        <?php } ?>
-      </div>
-    </div>
-    <?php if( is_file('inc/script.js') ){ ?>
-    <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
-    <?php }else{ ?>
-    <script type="text/javascript" src="?file=script.js&amp;version=<?php echo $version;?>"></script>
-    <?php } ?>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function installTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span4 offset4">
-          <div id="install">
-            <form class="form-horizontal" method="post" action="" name="installform">
-              <fieldset>
-                <legend><?php echo Intl::msg( 'KrISS feed installation' );?></legend>
-                <div class="text-center">
-                  <?php echo Intl::msg( 'Click on flag to select your language.' );?><br><?php $counter1=-1; if( isset($langs) && is_array($langs) && sizeof($langs) ) foreach( $langs as $key1 => $value1 ){ $counter1++; ?>
-                  <a href="?lang=<?php echo $key1;?>" title="<?php echo $value1["name"];?>" class="flag <?php echo $value1["class"];?>"></a><?php } ?>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="setlogin"><?php echo Intl::msg( 'Login' );?></label>
-                  <div class="controls">
-                    <input type="text" id="setlogin" name="setlogin" placeholder="<?php echo Intl::msg( 'Login' );?>">
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="setlogin"><?php echo Intl::msg( 'Password' );?></label>
-                  <div class="controls">
-                    <input type="password" id="setpassword" name="setpassword" placeholder="<?php echo Intl::msg( 'Password' );?>">
-                  </div>
-                </div>
-                <div class="control-group">
-                  <div class="controls">
-                    <button type="submit" class="btn"><?php echo Intl::msg( 'Install KrISS feed' );?></button>
-                  </div>
-                </div>
-                <input type="hidden" name="token" value="<?php echo $token;?>">
-              </fieldset>
-            </form>
-<?php FeedPage::statusTpl(); ?>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script>document.installform.setlogin.focus();</script>
-  </body>
-</html>
-
-
-<?php
-    }
-
-
-    public static function list_feedsTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<div id="list-feeds">
-<?php if( $listFeeds==='show' ){ ?>
-  <input type="text" id="Nbunread" style="display:none;" value="<?php echo $feedsView["all"]["nbUnread"];?>">
-  <ul class="unstyled">
-    <li id="all-subscriptions" class="folder <?php if( $currentHash==='all' ){ ?> current-folder<?php } ?>">
-      <?php if( isset($_GET['stars']) ){ ?>
-      <h4><a class="mark-as" href="?stars&currentHash=all"><span class="label"><?php echo $feedsView["all"]["nbAll"];?></span></a><a href="?stars&currentHash=all"><?php echo $feedsView["all"]["title"];?></a></h4>
-      <?php }else{ ?>
-      <h4><a class="mark-as" href="<?php echo $feedsView["all"]["nbUnread"]==0?'?currentHash=all&unread':$query.'read';?>=all" title="<?php echo $feedsView["all"]["nbUnread"]==0?Intl::msg('Mark all as unread'):Intl::msg('Mark all as read');?>"><span class="label"><?php echo $feedsView["all"]["nbUnread"];?></span></a><a href="?currentHash=all"><?php echo $feedsView["all"]["title"];?></a></h4>
-      <?php } ?>
-
-      <ul class="unstyled">
-        <?php $counter1=-1; if( isset($feedsView["all"]["feeds"]) && is_array($feedsView["all"]["feeds"]) && sizeof($feedsView["all"]["feeds"]) ) foreach( $feedsView["all"]["feeds"] as $key1 => $value1 ){ $counter1++; ?>
-          <?php $atitle=FeedPage::$var['atitle']=$value1["description"];?>
-          <?php if( empty($atitle) ){ ?>
-            <?php $atitle=FeedPage::$var['atitle']=$value1["title"];?>
-          <?php } ?>
-          <?php if( isset($value1["error"]) ){ ?>
-            <?php $atitle=FeedPage::$var['atitle']=$value1["error"];?>
-          <?php } ?>
-
-          <?php if( empty($value1["title"]) ){ ?>
-            <?php $value1["title"]=FeedPage::$var['value']["title"]=parse_url($value1["xmlUrl"], PHP_URL_HOST);?>
-          <?php } ?>
-
-        <li id="feed-<?php echo $key1;?>" class="feed<?php if( $value1["nbUnread"]!==0 ){ ?> has-unread<?php } ?><?php if( $currentHash==$key1 ){ ?> current-feed<?php } ?><?php if( $autohide&&$value1["nbUnread"]==0 ){ ?> autohide-feed<?php } ?>">
-          <?php if( $addFavicon ){ ?>
-          <span class="feed-favicon">
-            <img src="<?php echo $kf->getFaviconFeed($key1);?>" height="16" width="16" title="favicon" alt="favicon"/>
-          </span>
-          <?php } ?>
-          <?php if( isset($_GET['stars']) ){ ?>
-          <a class="mark-as" href="<?php echo $query;?>currentHash=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbAll"];?></span></a><a class="feed" href="?stars&currentHash=<?php echo $key1;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
-          <?php }else{ ?>
-          <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbUnread"];?></span></a><a class="feed<?php if( isset($value1["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key1;?>#feed-<?php echo $key1;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
-          <?php } ?>
-        </li>
-        <?php } ?>
-        <?php $counter1=-1; if( isset($feedsView["folders"]) && is_array($feedsView["folders"]) && sizeof($feedsView["folders"]) ) foreach( $feedsView["folders"] as $key1 => $value1 ){ $counter1++; ?>
-        <li id="folder-<?php echo $key1;?>" class="folder<?php if( $currentHash==$key1 ){ ?> current-folder<?php } ?><?php if( $autohide&&$value1["nbUnread"]==0 ){ ?> autohide-folder<?php } ?>">
-          <h5>
-            <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbUnread"];?></span></a>
-            <a class="folder-toggle" href="<?php echo $query;?>toggleFolder=<?php echo $key1;?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $key1;?>">
-              <span class="ico">
-                <span class="ico-b-disc"></span>
-                <span class="ico-w-line-h"></span>
-                <span class="ico-w-line-v<?php echo $value1["isOpen"]?' folder-toggle-open':' folder-toggle-close';?>"></span>
-              </span>
-            </a>
-            <a href="?currentHash=<?php echo $key1;?>#folder-<?php echo $key1;?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
-          </h5>
-          <ul id="folder-ul-<?php echo $key1;?>" class="collapse unstyled<?php echo $value1["isOpen"]?' in':'';?>">
-            <?php $counter2=-1; if( isset($value1["feeds"]) && is_array($value1["feeds"]) && sizeof($value1["feeds"]) ) foreach( $value1["feeds"] as $key2 => $value2 ){ $counter2++; ?>
-              <?php $atitle=FeedPage::$var['atitle']=$value2["description"];?>
-              <?php if( empty($atitle) ){ ?>
-                <?php $atitle=FeedPage::$var['atitle']=$value2["title"];?>
-              <?php } ?>
-              <?php if( isset($value2["error"]) ){ ?>
-                <?php $atitle=FeedPage::$var['atitle']=$value2["error"];?>
-              <?php } ?>
-            <li id="folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" class="feed<?php if( $value2["nbUnread"]!== 0 ){ ?> has-unread<?php } ?><?php if( $currentHash == $key2 ){ ?> current-feed<?php } ?><?php if( $autohide&&$value2["nbUnread"]== 0 ){ ?> autohide-feed<?php } ?>">
-              
-              <?php if( $addFavicon ){ ?>
-              <span class="feed-favicon">
-                <img src="<?php echo $kf->getFaviconFeed($key2);?>" height="16" width="16" title="favicon" alt="favicon"/>
-              </span>
-              <?php } ?>
-              <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key2;?>"><span class="label"><?php echo $value2["nbUnread"];?></span></a><a class="feed<?php if( isset($value2["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key2;?>#folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value2["title"] );?></a>
-            </li>
-            <?php } ?>
-          </ul>
-        </li>
-      <?php } ?>
-      </ul>
-  </ul>
-<?php } ?>
-</div>
-
-<?php
-    }
-
-
-    public static function list_itemsTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<?php $unread=FeedPage::$var['unread']=Intl::msg('unread');?>
-<?php $read=FeedPage::$var['read']=Intl::msg('read');?>
-<?php $share=FeedPage::$var['share']=Intl::msg('share');?>
-<?php $star=FeedPage::$var['star']=Intl::msg('star');?>
-<?php $unstar=FeedPage::$var['unstar']=Intl::msg('unstar');?>
-<?php $top=FeedPage::$var['top']=Intl::msg('top');?>
-
-<ul id="list-items" class="unstyled">
-<?php $keys=FeedPage::$var['keys']=array_keys($items);?>
-<?php $counter1=-1; if( isset($keys) && is_array($keys) && sizeof($keys) ) foreach( $keys as $key1 => $value1 ){ $counter1++; ?>
-  <?php $item=FeedPage::$var['item']=$kf->getItem($value1);?>
-  <li id="item-<?php echo $value1;?>" class="<?php echo $view==='expanded'?'item-expanded':'item-list';?><?php if( $item["read"]==1 ){ ?> read<?php } ?><?php if( $value1==$currentItemHash ){ ?> current<?php } ?>">
-    <?php if( $view==='list' ){ ?>
-    <a id="item-toggle-<?php echo $value1;?>" class="item-toggle item-toggle-plus" href="<?php echo $query;?>current=<?php echo $value1;?><?php if( !isset($_GET['open'])||$currentItemHash!=$value1 ){ ?>&amp;open<?php } ?>" data-toggle="collapse" data-target="#item-div-<?php echo $value1;?>">
-      <span class="ico ico-toggle-item">
-        <span class="ico-b-disc"></span>
-        <span class="ico-w-line-h"></span>
-        <span class="ico-w-line-v<?php if( !isset($_GET['open'])||$currentItemHash!=$value1 ){ ?> item-toggle-close<?php }else{ ?> item-toggle-open<?php } ?>"></span>
-      </span>
-      <?php echo $item["time"]["list"];?>
-    </a>
-    <dl class="dl-horizontal item">
-      <dt class="item-feed">
-        <?php if( $addFavicon ){ ?>
-        <span class="item-favicon">
-          <img src="<?php echo $item["favicon"];?>" height="16" width="16" title="favicon" alt="favicon"/>
-        </span>
-        <?php } ?>
-        <span class="item-author">
-          <a class="item-feed" href="?currentHash=<?php echo ( substr( $value1, 0,6 ) );?>">
-            <?php echo $item["author"];?>
-          </a>
-        </span>
-      </dt>
-      <dd class="item-info">
-        <span class="item-title">
-          <?php if( !isset($_GET['stars']) ){ ?>
-            <?php if( $item["read"] == 1 ){ ?>
-          <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label"><?php echo $unread;?></span></a>
-            <?php }else{ ?>
-          <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label"><?php echo $read;?></span></a>
-            <?php } ?>
-          <?php } ?>
-          <a<?php if( $blank ){ ?> target="_blank"<?php } ?><?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> class="item-link" href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["link"];?>">
-            <?php echo $item["title"];?>
-          </a>
-        </span>
-        <span class="item-description">
-          <a class="item-toggle muted" href="<?php echo $query;?>current=<?php echo $value1;?><?php if( !isset($_GET['open']) || $currentItemHash != $value1 ){ ?>&amp;open<?php } ?>" data-toggle="collapse" data-target="#item-div-<?php echo $value1;?>">
-            <?php echo $item["description"];?>
-          </a>
-        </span>
-      </dd>
-    </dl>
-    <div class="clear"></div>
-    <?php } ?>
-
-    <div id="item-div-<?php echo $value1;?>" class="item collapse<?php if( $view==='expanded'||($currentItemHash==$value1&&isset($_GET['open'])) ){ ?> in well<?php } ?><?php if( $value1==$currentItemHash ){ ?> current<?php } ?>">
-      <?php if( $view==='expanded' or ($currentItemHash == $value1 and isset($_GET['open'])) ){ ?>
-      <div class="item-title">
-        <a class="item-shaarli" href="<?php echo $query;?>shaarli=<?php echo $value1;?>"><span class="label"><?php echo $share;?></span></a>
-        <?php if( (!isset($_GET['stars'])) ){ ?>
-          <?php if( ($item['read'] == 1) ){ ?>
-        <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label item-label-mark-as"><?php echo $unread;?></span></a>
-          <?php }else{ ?>
-        <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label item-label-mark-as"><?php echo $read;?></span></a>
-          <?php } ?>
-        <?php } ?>
-        <?php if( (isset($item['starred']) && $item['starred']===1) ){ ?>
-        <a class="item-starred" href="<?php echo $query;?>unstar=<?php echo $value1;?>"><span class="label"><?php echo $unstar;?></span></a>
-        <?php }else{ ?>
-        <a class="item-starred" href="<?php echo $query;?>star=<?php echo $value1;?>"><span class="label"><?php echo $star;?></span></a>
-        <?php } ?>
-        <a<?php if( $blank ){ ?> target="_blank"<?php } ?><?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> class="item-link" href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["link"];?>"><?php echo $item["title"];?></a>
-      </div>
-      <div class="clear"></div>
-      <div class="item-info-end item-info-time">
-        <?php echo $item["time"]["expanded"];?>
-      </div>
-      <div class="item-info-end item-info-author">
-        <a class="item-via"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["via"];?>"><?php echo $item["author"];?></a>
-        <a class="item-xml"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["xmlUrl"];?>">
-          <span class="ico">
-            <span class="ico-feed-dot"></span>
-            <span class="ico-feed-circle-1"></span>
-            <span class="ico-feed-circle-2"></span>
-          </span>
-        </a>
-      </div>
-      <div class="clear"></div>
-      <div class="item-content">
-        <article>
-          <?php echo $item["content"];?>
-        </article>
-      </div>
-      <div class="clear"></div>
-      <div class="item-info-end">
-        <a class="item-top" href="#status"><span class="label label-expanded"><?php echo $top;?></span></a> 
-        <a class="item-shaarli" href="<?php echo $query;?>shaarli=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $share;?></span></a>
-        <?php if( !isset($_GET['stars']) ){ ?>
-          <?php if( $item['read'] == 1 ){ ?>
-        <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label item-label-mark-as label-expanded"><?php echo $unread;?></span></a>
-          <?php }else{ ?>
-        <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label item-label-mark-as label-expanded"><?php echo $read;?></span></a>
-          <?php } ?>
-        <?php } ?>
-        <?php if( isset($item["starred"]) && $item["starred"]===1 ){ ?>
-        <a class="item-starred" href="<?php echo $query;?>unstar=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $unstar;?></span></a>
-        <?php }else{ ?>
-        <a class="item-starred" href="<?php echo $query;?>star=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $star;?></span></a>
-        <?php } ?>
-        <?php if( $view==='list' ){ ?>
-        <a id="item-toggle-<?php echo $value1;?>" class="item-toggle item-toggle-plus" href="<?php echo $query;?>current=<?php echo $value1;?><?php if( (!isset($_GET['open'])||$currentItemHash != $value1) ){ ?>&amp;open<?php } ?>" data-toggle="collapse" data-target="#item-div-<?php echo $value1;?>">
-          <span class="ico ico-toggle-item">
-            <span class="ico-b-disc"></span>
-            <span class="ico-w-line-h"></span>
-          </span>
-        </a>
-        <?php } ?>
-      </div>
-      <div class="clear"></div>
-      <?php } ?>
-    </div>
-  </li>
-<?php } ?>
-</ul>
-<div class="clear"></div>
-
-<?php
-    }
-
-
-    public static function loginTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-<?php FeedPage::includesTpl(); ?>
-  <body onload="document.loginform.login.focus();">
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span4 offset4">
-          <div id="login">
-            <form class="form-horizontal" method="post" action="?login" name="loginform">
-              <fieldset>
-                <legend><?php echo Intl::msg( 'Welcome to KrISS feed' );?></legend>
-                <div class="control-group">
-     <label class="control-label" for="login"><?php echo Intl::msg( 'Login' );?></label>
-                  <div class="controls">
-                    <input type="text" id="login" name="login" placeholder="<?php echo Intl::msg( 'Login' );?>" tabindex="1">
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="password"><?php echo Intl::msg( 'Password' );?></label>
-                  <div class="controls">
-                    <input type="password" id="password" name="password" placeholder="<?php echo Intl::msg( 'Password' );?>" tabindex="2">
-                  </div>
-                </div>
-                <div class="control-group">
-                  <div class="controls">
-                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;<?php echo Intl::msg( 'Stay signed in (do not check on public computers)' );?></label>
-                  </div>
-                </div>
-                
-                <div class="control-group">
-                  <div class="controls">
-                    <button type="submit" class="btn" tabindex="4"><?php echo Intl::msg( 'Sign in' );?></button>
-                  </div>
-                </div>
-              </fieldset>
-
-              <input type="hidden" name="returnurl" value="<?php echo htmlspecialchars( $referer );?>">
-              <input type="hidden" name="token" value="<?php echo $token;?>">
-            </form>
-<?php FeedPage::statusTpl(); ?>
-          </div>
-        </div>
-      </div>
-    </div>                                           
-  </body>
-</html> 
-
-<?php
-    }
-
-
-    public static function messageTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-<?php FeedPage::includesTpl(); ?>
-  <body onload="document.getElementById('again').focus();">
-    <div class="container-fluid full-height">
-      <div class="row-fluid full-height">
-        <div id="main-container" class="span12 full-height">
-<?php FeedPage::statusTpl(); ?>
-          <div class="text-center">
-            <?php echo Intl::msg( 'Click on flag to select your language.' );?><br><?php $counter1=-1; if( isset($langs) && is_array($langs) && sizeof($langs) ) foreach( $langs as $key1 => $value1 ){ $counter1++; ?>
-            <a href="?lang=<?php echo $key1;?>" title="<?php echo $value1["name"];?>" class="flag <?php echo $value1["class"];?>"></a><?php } ?>
-          </div>
-          <div class="<?php if( empty($class) ){ ?>text-error<?php }else{ ?><?php echo $class;?><?php } ?> text-center"><?php echo $message;?><br>
-     <a id="again" tabindex="1" class="btn" href="<?php echo $referer;?>"><?php if( empty($button) ){ ?><?php echo Intl::msg( 'Try again' );?><?php }else{ ?><?php echo $button;?><?php } ?></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-
-<?php
-    }
-
-
-    public static function navTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<div id="menu" class="navbar">
-  <div class="navbar-inner">
-    <div class="container">
-      <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse" title="<?php echo Intl::msg( 'Menu' );?>"><?php echo Intl::msg( 'Menu' );?></a>
-      <a id="nav-home" class="brand ico-home" href="<?php echo $base;?>" title="<?php echo Intl::msg( 'Home' );?>"></a>
-      <?php if( isset($currentHashView) ){ ?><span class="brand"><?php echo $currentHashView;?></span><?php } ?>
-
-      <div id="menu-collapse" class="nav-collapse collapse">
-        <ul class="nav">
-<?php if( $template==='stars' || $template==='index' ){ ?>
-<?php $counter1=-1; if( isset($menu) && is_array($menu) && sizeof($menu) ) foreach( $menu as $key1 => $value1 ){ $counter1++; ?>
-  <?php if( $key1==='menuView' ){ ?>
-    <?php if( $view==='expanded' ){ ?>
-          <li><a href="<?php echo $query.'view=list';?>" title="<?php echo Intl::msg( 'View as list' );?>" class="menu-ico ico-list"><span class="menu-text menu-list"> <?php echo Intl::msg( 'View as list' );?></span></a></li>
-    <?php }else{ ?>
-          <li><a href="<?php echo $query.'view=expanded';?>" title="<?php echo Intl::msg( 'View as expanded' );?>" class="menu-ico ico-expanded"><span class="menu-text menu-expanded"> <?php echo Intl::msg( 'View as expanded' );?></span></a></li>
-    <?php } ?>
-  <?php }elseif( $key1==='menuListFeeds' ){ ?>
-    <?php if( $listFeeds==='show' ){ ?>
-          <li><a href="<?php echo $query.'listFeeds=hide';?>" title="<?php echo Intl::msg( 'Hide feeds list' );?>" class="menu-ico ico-list-feeds-hide"><span class="menu-text menu-list-feeds-hide"> <?php echo Intl::msg( 'Hide feeds list' );?></span></a></li>
-    <?php }else{ ?>
-          <li><a href="<?php echo $query.'listFeeds=show';?>" title="<?php echo Intl::msg( 'Show feeds list' );?>" class="menu-ico ico-list-feeds-show"><span class="menu-text menu-list-feeds-show"> <?php echo Intl::msg( 'Show feeds list' );?></span></a></li>
-    <?php } ?>
-  <?php }elseif( $key1==='menuFilter' ){ ?>
-    <?php if( $filter==='unread' ){ ?>
-          <li><a href="<?php echo $query.'filter=all';?>" title="<?php echo Intl::msg( 'Show all items' );?>" class="menu-ico ico-filter-all"><span class="menu-text menu-filter-all"> <?php echo Intl::msg( 'Show all items' );?></span></a></li>
-    <?php }else{ ?>
-          <li><a href="<?php echo $query.'filter=unread';?>" title="<?php echo Intl::msg( 'Show unread items' );?>" class="menu-ico ico-filter-unread"><span class="menu-text menu-filter-unread"> <?php echo Intl::msg( 'Show unread items' );?></span></a></li>
-     <?php } ?>
-  <?php }elseif( $key1==='menuOrder' ){ ?>
-     <?php if( $order==='newerFirst' ){ ?>
-          <li><a href="<?php echo $query.'order=olderFirst';?>" title="<?php echo Intl::msg( 'Show older first' );?>" class="menu-ico ico-order-older"><span class="menu-text menu-order"> <?php echo Intl::msg( 'Show older first' );?></span></a></li>
-     <?php }else{ ?>
-          <li><a href="<?php echo $query.'order=newerFirst';?>" title="<?php echo Intl::msg( 'Show newer first' );?>" class="menu-ico ico-order-newer"><span class="menu-text menu-order"> <?php echo Intl::msg( 'Show newer first' );?></span></a></li>
-     <?php } ?>
-  <?php }elseif( $key1==='menuUpdate' ){ ?>
-     <?php if( $currentHashType=='folder' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update folder');?>
-     <?php }elseif( $currentHashType=='feed' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update feed');?>
-     <?php }else{ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update all');?>
-     <?php } ?>
-          <li><a href="<?php echo $query.'update='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-update"><span class="menu-text menu-update"> <?php echo $intl;?></span></a></li>
-  <?php }elseif( $key1==='menuRead' ){ ?>
-     <?php if( $currentHashType=='folder' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark folder as read');?>
-     <?php }elseif( $currentHashType=='feed' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as read');?>
-     <?php }else{ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as read');?>
-     <?php } ?>
-          <li><a href="<?php echo $query.'read='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-read"><span class="menu-text menu-mark-as-read"> <?php echo $intl;?></span></a></li>
-  <?php }elseif( $key1==='menuUnread' ){ ?>
-     <?php if( $currentHashType=='folder' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark folder as unread');?>
-     <?php }elseif( $currentHashType=='feed' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as unread');?>
-     <?php }else{ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as unread');?>
-     <?php } ?>
-          <li><a href="<?php echo $query.'unread='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-unread"><span class="menu-text menu-mark-as-unread"> <?php echo $intl;?></span></a></li>
-  <?php }elseif( $key1==='menuEdit' ){ ?>
-     <?php if( $currentHashType=='folder' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit folder');?>
-     <?php }elseif( $currentHashType=='feed' ){ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit feed');?>
-     <?php }else{ ?>
-          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit all');?>
-     <?php } ?>
-          <li><a href="<?php echo $query.'edit='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-edit"><span class="menu-text menu-edit"> <?php echo $intl;?></span></a></li>
-  <?php }elseif( $key1==='menuAdd' ){ ?>
-          <li><a href="<?php echo $query.'add';?>" title="<?php echo Intl::msg( 'Add a new feed' );?>" class="menu-ico ico-add-feed"><span class="menu-text menu-add-feed"> <?php echo Intl::msg( 'Add a new feed' );?></span></a></li>
-  <?php }elseif( $key1==='menuHelp' ){ ?>
-          <li><a href="<?php echo $query.'help';?>" title="<?php echo Intl::msg( 'Help' );?>" class="menu-ico ico-help"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Help' );?></span></a></li>
-  <?php }elseif( $key1==='menuStars' ){ ?>
-    <?php if( $template==='index' ){ ?>
-          <li><a href="<?php echo $query.'stars';?>" title="<?php echo Intl::msg( 'Starred items' );?>" class="menu-ico ico-star"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Starred items' );?></span></a></li>
-    <?php } ?>
-  <?php } ?>
-<?php } ?>
-<?php if( $kf->kfc->isLogged() ){ ?>
-          <li><a href="?config" title="<?php echo Intl::msg( 'Configuration' );?>" class="menu-ico ico-config"><span class="menu-text menu-config"> <?php echo Intl::msg( 'Configuration' );?></span></a></li>
-<?php } ?>
-<?php }elseif( $template==='config' ){ ?>
-          <li><a href="?password" title="<?php echo Intl::msg( 'Change password' );?>"> <?php echo Intl::msg( 'Change password' );?></a></li>
-          <li><a href="?import" title="<?php echo Intl::msg( 'Import opml file' );?>"> <?php echo Intl::msg( 'Import opml file' );?></a></li>
-          <li><a href="?export" title="<?php echo Intl::msg( 'Export opml file' );?>"> <?php echo Intl::msg( 'Export opml file' );?></a></li>
-          <li><a href="?plugins" title="<?php echo Intl::msg( 'Plugins management' );?>"> <?php echo Intl::msg( 'Plugins management' );?></a></li>
-<?php } ?>
-<?php if( Session::isLogged() ){ ?>
-          <li><a href="?logout" title="<?php echo Intl::msg( 'Sign out' );?>" class="menu-ico ico-logout"><span class="menu-text menu-logout"> <?php echo Intl::msg( 'Sign out' );?></span></a></li>
-<?php }else{ ?>
-          <li><a href="?login" title="<?php echo Intl::msg( 'Sign in' );?>" class="menu-ico ico-login"><span class="menu-text menu-login"> <?php echo Intl::msg( 'Sign in' );?></span></a></li>
-<?php } ?>
-        </ul>
-        <div class="clear"></div>
-      </div>
-      <div class="clear"></div>
-    </div>
-  </div>
-</div>
-
-<?php
-    }
-
-
-    public static function pagingTpl()
-    {
-        extract(FeedPage::$var);
-?>
-
-<ul class="inline">
-<?php $counter1=-1; if( isset($paging) && is_array($paging) && sizeof($paging) ) foreach( $paging as $key1 => $value1 ){ $counter1++; ?>
-  <?php if( $key1=='pagingItem' ){ ?>
-  <li>
-    <div class="btn-group">
-      <a class="btn btn2 btn-info previous-item" href="<?php echo $query;?>previous=<?php echo $currentItemHash;?>" title="<?php echo Intl::msg( 'Previous item' );?>"><?php echo Intl::msg( 'Previous item' );?></a>
-      <a class="btn btn2 btn-info next-item" href="<?php echo $query;?>next=<?php echo $currentItemHash;?>" title="<?php echo Intl::msg( 'Next item' );?>"><?php echo Intl::msg( 'Next item' );?></a>
-    </div>
-  </li>
-  <?php }elseif( $key1=='pagingMarkAs' ){ ?>
-  <li>
-    <div class="btn-group">
-      <a class="btn btn-info" href="<?php echo $query;?>read=<?php echo $currentHash;?>" title="<?php echo Intl::msg( 'Mark as read' );?>"><?php echo Intl::msg( 'Mark as read' );?></a>
-    </div>
-  </li>
-  <?php }elseif( $key1=='pagingPage' ){ ?>
-  <li>
-    <div class="btn-group">
-      <a class="btn btn3 btn-info previous-page<?php if( $currentPage===1 ){ ?> disabled<?php } ?>" href="<?php echo $query;?>previousPage=<?php echo $currentPage;?>" title="<?php echo Intl::msg( 'Previous page' );?>"><?php echo Intl::msg( 'Previous page' );?></a>
-      <button class="btn btn3 disabled current-max-page"><?php echo $currentPage;?> / <?php echo $maxPage;?></button>
-      <a class="btn btn3 btn-info next-page<?php if( $currentPage===$maxPage ){ ?> disabled<?php } ?>" href="<?php echo $query;?>nextPage=<?php echo $currentPage;?>" title="<?php echo Intl::msg( 'Next page' );?>"><?php echo Intl::msg( 'Next page' );?></a>
-    </div>
-  </li>
-  <?php }elseif( $key1=='pagingByPage' ){ ?>
-  <li>
-    <div class="btn-group">
-      <form class="form-inline" action="" method="GET">
-        <div class="input-prepend input-append paging-by-page">
-          <a class="btn btn3 btn-info" href="<?php echo $query;?>byPage=1">1</a>
-          <a class="btn btn3 btn-info" href="<?php echo $query;?>byPage=10">10</a>
-          <a class="btn btn3 btn-info" href="<?php echo $query;?>byPage=50">50</a>
-          <div class="btn-break"></div>
-          <input class="btn2 input-by-page input-mini" type="text" name="byPage">
-          <input type="hidden" name="currentHash" value="<?php echo $currentHash;?>">
-          <button type="submit" class="btn btn2"><?php echo Intl::msg( 'Items per page' );?></button>
-        </div>
-      </form>
-    </div>
-  </li>
-  <?php } ?>
-<?php } ?>
-</ul>
-<div class="clear"></div>
-
-<?php
-    }
-
-
-    public static function pluginsTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-<?php FeedPage::includesTpl(); ?>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span6 offset3">
-          <?php echo var_dump( $plugins );?>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-
-<?php
-    }
-
-
-    public static function statusTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<div id="status" class="text-center">
-  <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version;?></a>
-  <span class="hidden-phone"> - <?php echo Intl::msg( 'A simple and smart (or stupid) feed reader' );?></span>. <?php echo Intl::msg( 'By' );?> <a href="http://tontof.net">Tontof</a>
-  <span id="flags-sel">
-    <a id="hide-flags" href="<?php if( !empty($query_string) ){ ?>?<?php echo $query_string;?><?php } ?>#flags" class="flag <?php echo $lang["class"];?>" title="<?php echo $lang["name"];?>"></a>
-    <a id="show-flags" href="<?php if( !empty($query_string) ){ ?>?<?php echo $query_string;?><?php } ?>#flags-sel" class="flag <?php echo $lang["class"];?>" title="<?php echo $lang["name"];?>"></a>
-  </span>
-  <div id="flags"><?php $counter1=-1; if( isset($langs) && is_array($langs) && sizeof($langs) ) foreach( $langs as $key1 => $value1 ){ $counter1++; ?>
-    <a href="?lang=<?php echo $key1;?>" title="<?php echo $value1["name"];?>" class="flag <?php echo $value1["class"];?>"></a><?php } ?>
-  </div>
-</div>
-
-<?php
-    }
-
-
-    public static function updateTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-<?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid full-height">
-      <div class="row-fluid full-height">
-        <div class="span12 full-height">
-<?php FeedPage::statusTpl(); ?>
-<?php FeedPage::navTpl(); ?>
-          <div class="container-fluid">
-            <div class="row-fluid">
-              <div class="span6 offset3">
-                <ul class="unstyled">
-                  <?php echo $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html');?>
-                </ul>
-                <a class="btn ico-home" href="<?php echo $base;?>" title="<?php echo Intl::msg( 'Home' );?>"></a>
-                <?php if( !empty($referer) ){ ?>
-                <a class="btn" href="<?php echo $referer;?>"><?php echo Intl::msg( 'Go back' );?></a>
-                <?php } ?>
-                <a class="btn" href="<?php echo $query;?>update=<?php echo $currentHash;?>&amp;force"><?php echo Intl::msg( 'Force update' );?></a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <?php if( is_file('inc/script.js') ){ ?>
-    <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
-    <?php }else{ ?>
-    <script type="text/javascript" src="?file=script.js&amp;version=<?php echo $version;?>"></script>
-    <?php } ?>
-  </body>
-</html>
-
-<?php
-    }
-
-}
-
 class Intl
 {
     public static $lazy = false;
@@ -4591,6 +2932,19 @@ class PageBuilder
         return true;
     }
 
+    public function draw($file)
+    {
+        include "inc/lib/raintpl/rain.tpl.class.php";
+        raintpl::configure( 'tpl_dir', "class/tpl/");
+        if (!is_dir('tmp')) { mkdir('tmp',0705); chmod('tmp',0705); }
+        raintpl::configure( 'cache_dir', "tmp/");
+        raintpl::configure( 'path_replace', false );
+
+        $this->tpl = new RainTPL;
+        $this->tpl->assign($this->var);
+        $this->tpl->draw($file);
+        //include $file;
+    }
 }
 
 class Plugin
@@ -4645,6 +2999,7 @@ class Rss
     public static $itemFormat = array(
         'author' => array('>author>name', '>author', '>dc:creator', 'feed>author>name', '>dc:author', '>creator'),
         'content' => array('>content:encoded', '>content', '>description', '>summary', '>subtitle'),
+	'enclosure' => array('>enclosure[url]'),
         'description' => array('>description', '>summary', '>subtitle', '>content', '>content:encoded'),
         'via' => array('>guid', '>id'),
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
@@ -5195,7 +3550,6 @@ vVxLc9xIcr77V9QyZoZUBNlkk2w+WpoZa/UYaVeUGCKl8Zwc1ejqbohoAFsASFETivDV/8I3j/bgk/8B
 }
 
 
-
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
@@ -5236,7 +3590,35 @@ if (isset($_GET['file'])) {
     if ($_GET['file'] == 'favicon.ico') {
         header('Content-Type: image/vnd.microsoft.icon');
         $favicon = '
-AAABAAIAEBAAAAEACABoBQAAJgAAABAQAgABAAEAsAAAAI4FAAAoAAAAEAAAACAAAAABAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACZd2wAoXtsAK2DbAClh3QApZd8AK2ffAC1y5AAudOUALHTmAC525gAueegAL3rpADh86AAvfusAMn/rAE5/5ABYgeIAMILtADKC7QAzg+0AN4XtADGG7wAyiPAANYnwAEaJ7AA0i/EAUozqAECO8AA1j/QANpDzAD2Q8QA2kPQAN5D0ADWS9QA2k/UARZPxAFKT7gAylPYANZX3ADWX+AA4l/cAQ5f0ADmY9wA3mPgAOJn4ADmZ+ABzmOgAPpn3ADma+QA4m/kAOZv5ADmc+QA6nPkAOZz6AE6d9ABOnfUARp73AGug7gBGovoAZKPyAFGm+QBUpvgAWqn4AFeq+gBtq/QAXK36AG2u9gBlr/kAabD5AGiz+gBws/gAhLT0AIi29ACatu8AnLrxAJS89ACFvfkAi8H5AK/D8gCNxPsApcX1AI3G/ACnyvcAncz7ALnQ9gCv1/wAttj8ALvb/AC+2/sAw9z6ALzd/QDI4/4A1Of8ANXn/ADT6P0A4ez8AODv/gDi8P4A5/H9AOfz/gDz+f8A9Pn/APj7/wD7/P8A/P3/AP3+/wD+//8A////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMSkdFxMAAAAABgQBAgMAADE2P0MAAAAAAAAQLxEDAAAsQGFpAAAAAAAAS2xPAwAAJ0RmbFcAAAAADVVsSgQAACMwUFZCPgAASRlgAAAFAAAeIiYoQFxsXSRIAAAAAAAAGipHVGJsZEU4AAAAAAAAABZBZ2xqX0Y7WAAAAAAAAAASPF5ZTTk9W2tmAAAAAAAADxUcHzdOAABlUisAABQAAAwlU1pjAAAAADUyKSAYAAAJOmhsAAAAAAAAMzQpIQAABxtRTAAAAAAAAC0zNikAAAgICgsOAAAAADEpLjExAAAAAAAAAAAAAAAAAAAAAAABgAAAAYAAAAPAAAADwAAAAYAAAAAAAAAADAAAAB8AAAAfAAAADAAAAAAAAAGAAAADwAAAA8AAAAGAAAABgAAAKAAAABAAAAAgAAAAAQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAA=
+AAABAAIAEBAAAAEACABoBQAAJgAAABAQAgABAAEAsAAAAI4FAAAoAAAAEAAAACAAAAABAAgAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACZd2wAoXtsAK2DbAClh3QApZd8AK2ffAC1y5AAudOUA
+LHTmAC525gAueegAL3rpADh86AAvfusAMn/rAE5/5ABYgeIAMILtADKC7QAzg+0AN4XtADGG7wAy
+iPAANYnwAEaJ7AA0i/EAUozqAECO8AA1j/QANpDzAD2Q8QA2kPQAN5D0ADWS9QA2k/UARZPxAFKT
+7gAylPYANZX3ADWX+AA4l/cAQ5f0ADmY9wA3mPgAOJn4ADmZ+ABzmOgAPpn3ADma+QA4m/kAOZv5
+ADmc+QA6nPkAOZz6AE6d9ABOnfUARp73AGug7gBGovoAZKPyAFGm+QBUpvgAWqn4AFeq+gBtq/QA
+XK36AG2u9gBlr/kAabD5AGiz+gBws/gAhLT0AIi29ACatu8AnLrxAJS89ACFvfkAi8H5AK/D8gCN
+xPsApcX1AI3G/ACnyvcAncz7ALnQ9gCv1/wAttj8ALvb/AC+2/sAw9z6ALzd/QDI4/4A1Of8ANXn
+/ADT6P0A4ez8AODv/gDi8P4A5/H9AOfz/gDz+f8A9Pn/APj7/wD7/P8A/P3/AP3+/wD+//8A////
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMSkdFxMAAAAABgQBAgMAADE2P0MA
+AAAAAAAQLxEDAAAsQGFpAAAAAAAAS2xPAwAAJ0RmbFcAAAAADVVsSgQAACMwUFZCPgAASRlgAAAF
+AAAeIiYoQFxsXSRIAAAAAAAAGipHVGJsZEU4AAAAAAAAABZBZ2xqX0Y7WAAAAAAAAAASPF5ZTTk9
+W2tmAAAAAAAADxUcHzdOAABlUisAABQAAAwlU1pjAAAAADUyKSAYAAAJOmhsAAAAAAAAMzQpIQAA
+BxtRTAAAAAAAAC0zNikAAAgICgsOAAAAADEpLjExAAAAAAAAAAAAAAAAAAAAAAABgAAAAYAAAAPA
+AAADwAAAAYAAAAAAAAAADAAAAB8AAAAfAAAADAAAAAAAAAGAAAADwAAAA8AAAAGAAAABgAAAKAAA
+ABAAAAAgAAAAAQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAD/
+/wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//
+AAA=
 ';
         echo base64_decode($favicon);
     } else if ($_GET['file'] == 'style.css') {
@@ -6148,7 +4530,6 @@ dd {
 .flag.flag-fr {background-position: -16px 0}
 .flag.flag-gb {background-position: 0 -11px}
 .flag.flag-us {background-position: -16px -11px}
-
 <?php        
     } else if ($_GET['file'] == 'script.js') {
         header('Content-type: text/javascript');
@@ -8348,7 +6729,6 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
 
 	return this.construct();
 }());
-
 <?php
     }
     exit();
