@@ -35,7 +35,7 @@
       intlUnread = 'unread',
       intlStar = 'star',
       intlUnstar = 'unstar',
-      intlFrom = 'from';
+      intlFrom = 'from',
       intlDownload = 'Download the attached media';
 
   /**
@@ -1928,6 +1928,9 @@
     }
     if (elementIndex.hasAttribute('data-intl-from')) {
       intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
+    if (elementIndex.hasAttribute('data-intl-download')) {
+      intlDownload = elementIndex.getAttribute('data-intl-download');
     }
 
     status = document.getElementById('status').innerHTML;
