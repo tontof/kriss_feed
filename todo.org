@@ -9,6 +9,7 @@
 ** Template
 *** Try to fuse raintpl item template and javascript one
 * Improvements
+** Add header('Content-Type: text/html; charset=utf-8');
 ** Replace data-src to src to prevent lazy loading #329
 ** Add direct button to go next and previous item and automatically open it in list mode
 *** http://tontof.net/index.php?2013/11/14/18/28/04-kriss-feed-integre-raintpl-enfin-presque#8
