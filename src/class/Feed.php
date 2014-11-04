@@ -86,17 +86,32 @@ class Feed
     {
         if (empty($this->_data)) {
             if (file_exists($this->dataFile)) {
-                $this->_data = unserialize(
-                    gzinflate(
-                        base64_decode(
-                            substr(
-                                file_get_contents($this->dataFile),
-                                strlen(PHPPREFIX),
-                                -strlen(PHPSUFFIX)
+                $this->_data = @gzinflate(
+                    base64_decode(
+                        substr(
+                            file_get_contents($this->dataFile),
+                            strlen(PHPPREFIX),
+                            -strlen(PHPSUFFIX)
+                        )
+                    )
+                );
+
+                if ($this->_data !== false){
+                    $this->_data = unserialize($this->_data);
+                    copy($this->dataFile, $this->dataFile.".php");
+                } else {
+                    $this->_data = unserialize(
+                        gzinflate(
+                            base64_decode(
+                                substr(
+                                    file_get_contents($this->dataFile.".php"),
+                                    strlen(PHPPREFIX),
+                                    -strlen(PHPSUFFIX)
                                 )
                             )
                         )
                     );
+                }
 
                 return true;
             } else {
