@@ -253,7 +253,7 @@ class Feed
     public function getFaviconFeed($feedHash)
     {
         $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
-        $url = 'http://getfavicon.appspot.com/'.$htmlUrl.'?defaulticon=bluepng';
+        $url = 'http://www.google.com/s2/favicons?domain='.$htmlUrl;
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
         if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
