@@ -1290,7 +1290,7 @@
         }
       }, 0);
       
-      window.location = '#item-' + currentItemHash;
+      window.location.hash = '#item-' + currentItemHash;
     }
   }
 
