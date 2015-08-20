@@ -3284,7 +3284,7 @@ class Feed
                 }
                 $newItemsHash = array_keys($newItems);
                 $this->_data['feeds'][$feedHash]['items']
-                    = $newItems+$oldItems;
+                    = (is_array($newItems) ? $newItems : Array()) + (is_array($oldItems) ? $oldItems : Array());
 
                 // Check if items may have been missed
                 if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
