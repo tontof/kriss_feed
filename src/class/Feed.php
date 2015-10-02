@@ -905,7 +905,7 @@ class Feed
             if (!empty($item['link'])) {
                 $hashUrl = MyTool::smallHash($item['link']);
                 $newItems[$hashUrl] = array();
-                $newItems[$hashUrl]['title'] = $item['title'];
+                $newItems[$hashUrl]['title'] = empty($item['title'])?$item['link']:$item['title'];
                 $newItems[$hashUrl]['time']  = strtotime($item['time'])
                     ? strtotime($item['time'])
                     : time();
