@@ -19,6 +19,9 @@ msgstr "Impossible de créer le dossier %s, vérifiez les droits"
 msgid "Can not protect %s directory with .htaccess, check permissions"
 msgstr "Impossible de protéger le dossier %s avec un fichier .htaccess, vérifiez les droits"
 
+msgid "Download the attached media"
+msgstr "Télécharger le média associé"
+
 msgid "Wrong token"
 msgstr "Jeton de sécurité invalide"
 

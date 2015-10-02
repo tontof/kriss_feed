@@ -6,6 +6,18 @@ section {
   display: block;
 }
 
+enclosure {
+  display:block;
+  border-width:0.1em;
+  border-style:dashed;
+  border-color:black;
+  background:rgb(200, 200, 200);
+  padding-top:1em;
+  padding-bottom:1em;
+  padding-left:1em;
+  padding-right:1em;
+}
+
 html, button {
   font-size: 100%;
 }

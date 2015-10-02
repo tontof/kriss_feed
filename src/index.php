@@ -763,6 +763,9 @@ class Feed
                 $newItems[$hashUrl]['description'] = mb_substr(
                     strip_tags($item['description']), 0, 500
                     );
+		if(!empty($item['enclosure'])) {
+			$newItems[$hashUrl]['enclosure'] = $item['enclosure'];
+		}
                 $newItems[$hashUrl]['content'] = $item['content'];
             }
         }
@@ -2922,7 +2925,7 @@ class FeedPage
 <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>" data-intl-download="<?php echo Intl::msg( 'Download the attached media' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
       <div class="row-fluid full-height">
         <?php if( $listFeeds == 'show' ){ ?>
         <div id="main-container" class="span9 full-height">
@@ -3205,6 +3208,7 @@ class FeedPage
         <article>
           <?php echo $item["content"];?>
         </article>
+        <?php if( isset($item["enclosure"]) ){ ?><enclosure><a href="<?php echo htmlspecialchars( $item["enclosure"] );?>"><?php echo Intl::msg( 'Download the attached media' );?></a></enclosure><?php } ?>
       </div>
       <div class="clear"></div>
       <div class="item-info-end">
@@ -4645,6 +4649,7 @@ class Rss
     public static $itemFormat = array(
         'author' => array('>author>name', '>author', '>dc:creator', 'feed>author>name', '>dc:author', '>creator'),
         'content' => array('>content:encoded', '>content', '>description', '>summary', '>subtitle'),
+	'enclosure' => array('>enclosure[url]'),
         'description' => array('>description', '>summary', '>subtitle', '>content', '>content:encoded'),
         'via' => array('>guid', '>id'),
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
@@ -5248,6 +5253,18 @@ header,
 nav,
 section {
   display: block;
+}
+
+enclosure {
+  display:block;
+  border-width:0.1em;
+  border-style:dashed;
+  border-color:black;
+  background:rgb(200, 200, 200);
+  padding-top:1em;
+  padding-bottom:1em;
+  padding-left:1em;
+  padding-right:1em;
 }
 
 html, button {
@@ -6190,7 +6207,8 @@ dd {
       intlUnread = 'unread',
       intlStar = 'star',
       intlUnstar = 'unstar',
-      intlFrom = 'from';
+      intlFrom = 'from',
+      intlDownload = 'Download the attached media';
 
   /**
    * trim function
@@ -7051,8 +7069,12 @@ dd {
   }
 
   function setDivItem(div, item) {
-    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star';
-
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star', textEnclosure = '';
+    
+    if(typeof item['enclosure'] != 'undefined') {
+      textEnclosure = '<enclosure><a href="' + item['enclosure'] + '">' + intlDownload + '</a></enclosure>';
+    }
+    
     if (item['read'] == 1) {
       markAs = intlUnread;
       linkMarkAs = 'unread';
@@ -7095,7 +7117,9 @@ dd {
       '<div class="clear"></div>' +
       '<div class="item-content"><article>' +
       item['content'] +
-      '</article></div>' +
+      '</article>' + 
+      textEnclosure +
+      '</div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
@@ -8078,6 +8102,9 @@ dd {
     }
     if (elementIndex.hasAttribute('data-intl-from')) {
       intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
+    if (elementIndex.hasAttribute('data-intl-download')) {
+      intlDownload = elementIndex.getAttribute('data-intl-download');
     }
 
     status = document.getElementById('status').innerHTML;

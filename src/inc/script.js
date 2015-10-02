@@ -35,7 +35,8 @@
       intlUnread = 'unread',
       intlStar = 'star',
       intlUnstar = 'unstar',
-      intlFrom = 'from';
+      intlFrom = 'from',
+      intlDownload = 'Download the attached media';
 
   /**
    * trim function
@@ -896,8 +897,12 @@
   }
 
   function setDivItem(div, item) {
-    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star';
-
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star', textEnclosure = '';
+    
+    if(typeof item['enclosure'] != 'undefined') {
+      textEnclosure = '<enclosure><a href="' + item['enclosure'] + '">' + intlDownload + '</a></enclosure>';
+    }
+    
     if (item['read'] == 1) {
       markAs = intlUnread;
       linkMarkAs = 'unread';
@@ -940,7 +945,9 @@
       '<div class="clear"></div>' +
       '<div class="item-content"><article>' +
       item['content'] +
-      '</article></div>' +
+      '</article>' + 
+      textEnclosure +
+      '</div>' +
       '<div class="clear"></div>' +
       '<div class="item-info-end">' +
       '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
@@ -1923,6 +1930,9 @@
     }
     if (elementIndex.hasAttribute('data-intl-from')) {
       intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
+    if (elementIndex.hasAttribute('data-intl-download')) {
+      intlDownload = elementIndex.getAttribute('data-intl-download');
     }
 
     status = document.getElementById('status').innerHTML;
