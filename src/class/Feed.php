@@ -1095,7 +1095,7 @@ class Feed
         if (empty($output['feed']['error'])) {
             $this->loadFeed($feedHash);
             $oldItems = array();
-            if (!empty($this->_data['feeds'][$feedHash]['items'])) {
+            if (!empty($this->_data['feeds'][$feedHash]['items']) && is_array($this->_data['feeds'][$feedHash]['items'])) {
                 $oldItems = $this->_data['feeds'][$feedHash]['items'];
             }
 
