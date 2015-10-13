@@ -1289,6 +1289,8 @@
           container.scrollTop = itemPos;
         }
       }, 0);
+      
+      window.location.hash = '#item-' + currentItemHash;
     }
   }
 

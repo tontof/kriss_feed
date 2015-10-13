@@ -221,7 +221,7 @@ class Feed
     public function getFaviconFeed($feedHash)
     {
         $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
-        $url = 'http://getfavicon.appspot.com/'.$htmlUrl.'?defaulticon=bluepng';
+        $url = 'http://www.google.com/s2/favicons?domain='.$htmlUrl;
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
         if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
@@ -761,7 +761,7 @@ class Feed
             if (!empty($item['link'])) {
                 $hashUrl = MyTool::smallHash($item['link']);
                 $newItems[$hashUrl] = array();
-                $newItems[$hashUrl]['title'] = $item['title'];
+                $newItems[$hashUrl]['title'] = empty($item['title'])?$item['link']:$item['title'];
                 $newItems[$hashUrl]['time']  = strtotime($item['time'])
                     ? strtotime($item['time'])
                     : time();
@@ -912,7 +912,7 @@ class Feed
         if (empty($output['feed']['error'])) {
             $this->loadFeed($feedHash);
             $oldItems = array();
-            if (!empty($this->_data['feeds'][$feedHash]['items'])) {
+            if (!empty($this->_data['feeds'][$feedHash]['items']) && is_array($this->_data['feeds'][$feedHash]['items'])) {
                 $oldItems = $this->_data['feeds'][$feedHash]['items'];
             }
 
@@ -7459,6 +7459,8 @@ dd {
           container.scrollTop = itemPos;
         }
       }, 0);
+      
+      window.location.hash = '#item-' + currentItemHash;
     }
   }
 
