@@ -705,6 +705,35 @@ dd {
   .item-description {
     display: none;
   }
+
+  .form-horizontal .control-label {
+      float: none;
+      width: auto;
+      text-align: center;
+  }
+
+  .form-horizontal .controls {
+      margin: auto;
+  }
+
+  .form-horizontal {
+      text-align: center;
+  }
+
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-starred > .label,
+  .item-mark-as > .label {
+      display: block;
+      float: none;
+      margin: 2px 5px;
+      padding: 0px 24px;
+      line-height: 44px;
+      text-align: center;
+  }
+  .item-info-end {
+      float: none;
+  }
 }
 
 /* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
