@@ -5783,7 +5783,7 @@ dd {
 
   .label {
     border-radius: 10px !important;
-    padding: 0 24px;
+    padding: 5px;
   }
 
   .item-top > .label,
@@ -5793,9 +5793,11 @@ dd {
     display: block;
     float: left;
     margin: 0 5px;
+    padding: 0px 24px;
+    line-height: 44px;
   }
 
-  .item-title, .label {
+  .item-title {
       line-height: 44px;
   }
 
