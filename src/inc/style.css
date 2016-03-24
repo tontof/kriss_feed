@@ -724,7 +724,7 @@ dd {
   .item-shaarli > .label,
   .item-starred > .label,
   .item-mark-as > .label {
-      display: block;
+      display: inline-block;
       float: none;
       margin: 2px 5px;
       padding: 0px 24px;
@@ -733,6 +733,10 @@ dd {
   }
   .item-info-end {
       float: none;
+      height: 60px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
   }
 }
 
