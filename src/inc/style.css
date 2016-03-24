@@ -538,8 +538,8 @@ dd {
   }
 
   .label {
-    padding: 10px !important;
     border-radius: 10px !important;
+    padding: 0 24px;
   }
 
   .item-top > .label,
@@ -548,7 +548,11 @@ dd {
   .item-mark-as > .label {
     display: block;
     float: left;
-    margin: 5px;
+    margin: 0 5px;
+  }
+
+  .item-title, .label {
+      line-height: 44px;
   }
 
   .item-link {
