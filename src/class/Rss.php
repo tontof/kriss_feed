@@ -31,7 +31,8 @@ class Rss
         'via' => array('>guid', '>id'),
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
-        'title' => array('>title')
+        'title' => array('>title'),
+        'enclosure' => array('>enclosure*[url]')
     );
 
     /**

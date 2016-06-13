@@ -897,6 +897,32 @@ class Feed
         return $feed;
     }
 
+    private function showEnclosure($enclosure) {
+        $path = parse_url($enclosure, PHP_URL_PATH);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $link = '<a href="'.$enclosure.'">'.$enclosure.'</a>';
+        switch(strtolower($ext)) {
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+            $link = '<img src="'.$enclosure.'">';
+            break;
+        case 'mp3':
+        case 'oga':
+        case 'wav':
+            $link = '<audio controls><source src="'.$enclosure.'">'.$link.'</audio>';
+            break;
+        case 'mp4':
+        case 'ogg':
+        case 'webm':
+            $link = '<video controls><source src="'.$enclosure.'">'.$link.'</video>';
+            break;
+        }
+
+        return $link;
+    }
+
     public function updateItemsFromDom($dom) {
         $items = Rss::getItems($dom);
 
@@ -921,7 +947,12 @@ class Feed
                 mb_internal_encoding("UTF-8");
                 $newItems[$hashUrl]['description'] = mb_substr(
                     strip_tags($item['description']), 0, 500
-                    );
+                );
+                if(!empty($item['enclosure'])) {
+                    foreach($item['enclosure'] as $enclosure) {
+                        $item['content'] .= '<br>'.$this->showEnclosure($enclosure);
+                    }
+                }
                 $newItems[$hashUrl]['content'] = $item['content'];
             }
         }
