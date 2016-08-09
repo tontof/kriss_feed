@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.4);
+define('FEED_VERSION', 8.5);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -2178,7 +2178,7 @@ class FeedPage
                   <div class="control-group">
                     <label class="control-label" for="maxUpdate"><?php echo Intl::msg( 'Maximum delay between feed update (in minutes)' );?></label>
                     <div class="controls">
-                      <input type="text" maxlength="3" id="maxUpdate" name="maxUpdate" value="<?php echo $kfcmaxupdate;?>">
+                      <input type="number" id="maxUpdate" name="maxUpdate" value="<?php echo $kfcmaxupdate;?>">
                     </div>
                   </div>
 
