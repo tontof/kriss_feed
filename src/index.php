@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.5);
+define('FEED_VERSION', 8.6);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -2924,6 +2924,7 @@ class FeedPage
     <base href="<?php echo $base;;?>">
     <title><?php echo $pagetitle;?></title>
     <meta charset="utf-8">
+    <meta name="referrer" content="no-referrer">
 <?php if( is_file('inc/favicon.ico') ){ ?>
     <link href="inc/favicon.ico" rel="icon" type="image/x-icon">
 <?php }else{ ?>
