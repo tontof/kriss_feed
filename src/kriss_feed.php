@@ -115,7 +115,7 @@ $pb->assign('pagetitle', 'KrISS feed');
 $pb->assign('referer', $referer);
 $pb->assign('langs', Intl::$langList);
 $pb->assign('lang', Intl::$langList[Intl::$lang]);
-$pb->assign('query_string', $_SERVER['QUERY_STRING']);
+$pb->assign('query_string', isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
 
 if (!is_dir(DATA_DIR)) {
     if (!@mkdir(DATA_DIR, 0755)) {
