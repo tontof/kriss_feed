@@ -22,7 +22,7 @@ do
   echo "    class Intl_$lang {" >> ${intlFile}
   echo '        public static function init(&$messages) {' >> ${intlFile}
   echo '            $messages['"'$lang'"'] = unserialize(gzinflate(base64_decode("' >> ${intlFile} 
-  php5 -r "include('class/Plugin.php');include('class/Intl.php');echo base64_encode(gzdeflate(serialize(Intl::load('$lang'))));" >> ${intlFile}
+  php -r "include('class/Plugin.php');include('class/Intl.php');echo base64_encode(gzdeflate(serialize(Intl::load('$lang'))));" >> ${intlFile}
   echo '")));' >> ${intlFile}
   echo '        }' >> ${intlFile}
   echo '    }' >> ${intlFile}
