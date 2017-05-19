@@ -26,13 +26,13 @@ class Rss
 
     public static $itemFormat = array(
         'author' => array('>author>name', '>author', '>dc:creator', 'feed>author>name', '>dc:author', '>creator'),
-        'content' => array('>content:encoded', '>content', '>description', '>summary', '>subtitle'),
+        'content' => array('>content:encoded', '>content', '>description', '>summary', '>subtitle', '>media:group>media:description'),
         'description' => array('>description', '>summary', '>subtitle', '>content', '>content:encoded'),
         'via' => array('>guid', '>id'),
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
         'title' => array('>title'),
-        'enclosure' => array('>enclosure*[url]')
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
     );
 
     /**
