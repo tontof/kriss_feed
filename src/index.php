@@ -743,6 +743,11 @@ class Feed
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         $link = '<a href="'.$enclosure.'">'.$enclosure.'</a>';
         switch(strtolower($ext)) {
+        case '':
+            if (strpos($enclosure, 'https://www.youtube.com') === 0) {
+                $link = '<iframe src="'.$enclosure.'" width="640" height="360" allowfullscreen></iframe>';
+            }
+            break;
         case 'jpg':
         case 'jpeg':
         case 'png':
@@ -4682,7 +4687,7 @@ class Rss
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
         'title' => array('>title'),
-        'enclosure' => array('>enclosure*[url]')
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
     );
 
     public static function isValidNodeAttrs($node, $attrs)

@@ -32,7 +32,7 @@ class Rss
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
         'title' => array('>title'),
-        'enclosure' => array('>enclosure*[url]')
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
     );
 
     /**

@@ -902,6 +902,11 @@ class Feed
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         $link = '<a href="'.$enclosure.'">'.$enclosure.'</a>';
         switch(strtolower($ext)) {
+        case '':
+            if (strpos($enclosure, 'https://www.youtube.com') === 0) {
+                $link = '<iframe src="'.$enclosure.'" width="640" height="360" allowfullscreen></iframe>';
+            }
+            break;
         case 'jpg':
         case 'jpeg':
         case 'png':
