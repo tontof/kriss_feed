@@ -4954,6 +4954,8 @@ class Session
         if (isset($_SERVER['HTTP_HOST'])) {
             $domain = $_SERVER['HTTP_HOST'];
         }
+        // remove port from domain : http://php.net/manual/en/function.setcookie.php#36202
+        $domain = parse_url($domain, PHP_URL_HOST);
         // Check if secure
         $secure = false;
         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
