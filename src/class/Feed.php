@@ -904,7 +904,7 @@ class Feed
         switch(strtolower($ext)) {
         case '':
             if (strpos($enclosure, 'https://www.youtube.com') === 0) {
-                $link = '<iframe src="'.$enclosure.'" width="640" height="360" allowfullscreen></iframe>';
+                $link = '<iframe src="'.str_replace('/v/','/embed/', $enclosure).'" width="640" height="360" allowfullscreen></iframe>';
             }
             break;
         case 'jpg':
