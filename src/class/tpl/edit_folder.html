@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {include="includes"}
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="edit-folder" class="span4 offset4">
+          {include="nav"}
+          <form class="form-horizontal" method="post" action="">
+            <fieldset>
+              <div class="control-group">
+                <label class="control-label" for="foldertitle">{'Folder title'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" id="foldertitle" name="foldertitle" value="{$foldertitle}">
+                  <span class="help-block">{'Leave empty to delete'|Intl::msg}</span>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <div class="controls">
+                  <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}"/>
+                  <input class="btn" type="submit" name="save" value="{'Save modifications'|Intl::msg}" />
+                </div>
+              </div>
+            </fieldset>
+
+            <input type="hidden" name="returnurl" value="{$referer}" />
+            <input type="hidden" name="token" value="{$token}">
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

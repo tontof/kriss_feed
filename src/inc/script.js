@@ -1,5 +1,7 @@
-(function () {
+/*jshint sub:true, evil:true */
 
+(function () {
+  "use strict";
   var view = '', // data-view
       listFeeds = '', // data-list-feeds
       filter = '', // data-filter
@@ -15,13 +17,25 @@
       currentNbItems = 0, // data-nb-items
       autoupdate = false, // data-autoupdate
       autofocus = false, // data-autofocus
+      addFavicon = false, // data-add-favicon
+      preload = false, // data-preload
+      stars = false, // data-stars
+      isLogged = false, // data-is-logged
+      blank = false, // data-blank
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
       currentItemHash = '',
       currentUnread = 0,
       title = '',
-      cache = {};
+      cache = {},
+      intlTop = 'top',
+      intlShare = 'share',
+      intlRead = 'read',
+      intlUnread = 'unread',
+      intlStar = 'star',
+      intlUnstar = 'unstar',
+      intlFrom = 'from';
 
   /**
    * trim function
@@ -31,6 +45,17 @@
     String.prototype.trim = function () {
       return this.replace(/^\s+|\s+$/g,'');
     };
+  }
+  /**
+   * http://javascript.info/tutorial/bubbling-and-capturing
+   */
+  function stopBubbling(event) {
+    if(event.stopPropagation) {
+      event.stopPropagation();
+    }
+    else {
+      event.cancelBubble = true;
+    }
   }
 
   /**
@@ -72,7 +97,7 @@
         try {
           httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
         }
-        catch (e) {}
+        catch (e2) {}
       }
     }
 
@@ -83,21 +108,22 @@
    * http://www.sitepoint.com/xhrrequest-and-javascript-closures/
    */
   // Constructor for generic HTTP client
-  function HTTPClient() {};
+  function HTTPClient() {}
   HTTPClient.prototype = {
     url: null,
     xhr: null,
     callinprogress: false,
     userhandler: null,
-    init: function(url) {
+    init: function(url, obj) {
       this.url = url;
+      this.obj = obj;
       this.xhr = new getXHR();
     },
     asyncGET: function (handler) {
       // Prevent multiple calls
       if (this.callinprogress) {
         throw "Call in progress";
-      };
+      }
       this.callinprogress = true;
       this.userhandler = handler;
       // Open an async request - third argument makes it async
@@ -106,7 +132,7 @@
       // Assign a closure to the onreadystatechange callback
       this.xhr.onreadystatechange = function() {
         self.stateChangeCallback(self);
-      }
+      };
       this.xhr.send(null);
     },
     stateChangeCallback: function(client) {
@@ -155,14 +181,14 @@
         // Download complete
         case 4:
         try {
-          client.userhandler.onSuccess(client.xhr.responseText);
+          client.userhandler.onSuccess(client.xhr.responseText, client.obj);
         }
         catch (e) { /* Handler method not defined */ }
         finally { client.callinprogress = false; }
         break;
       }
     }
-  }
+  };
 
   /**
    * Handler
@@ -171,16 +197,22 @@
     onInit: function() {},
     onError: function(status, statusText) {},
     onProgress: function(responseText, length) {},
-    onSuccess: function(responseText) {
+    onSuccess: function(responseText, noFocus) {
       var result = JSON.parse(responseText);
 
+      if (result['logout'] && isLogged) {
+        alert('You have been disconnected');
+      }
       if (result['item']) {
         cache['item-' + result['item']['itemHash']] = result['item'];
-        loadDivItem(result['item']['itemHash']);
+        loadDivItem(result['item']['itemHash'], noFocus);
       }
       if (result['page']) {
         updateListItems(result['page']);
         setCurrentItem();
+        if (preload) {
+          preloadItems();
+        }
       }
       if (result['read']) {
         markAsRead(result['read']);
@@ -300,11 +332,14 @@
     }
   }
 
-  function collapseClick() {
+  function collapseClick(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     collapseElement(this);
   }
 
-  function initCollapse (list) {
+  function initCollapse(list) {
     var i = 0;
 
     for (i = 0; i < list.length; i += 1) {
@@ -317,6 +352,16 @@
   /**
    * Shaarli functions
    */
+  function htmlspecialchars_decode(string) {
+    return string
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&quot;/g, '"')
+           .replace(/&amp;/g, '&')
+           .replace(/&#0*39;/g, "'")
+           .replace(/&nbsp;/g, " ");
+  }
+
   function shaarliItem(itemHash) {
     var domainUrl, url, domainVia, via, title, sel, element;
 
@@ -324,10 +369,11 @@
     if (element.childNodes.length > 1) {
       title = getTitleItem(itemHash);
       url = getUrlItem(itemHash);
+      via = getViaItem(itemHash);
       if (redirector != 'noreferrer') {
         url = url.replace(redirector,'');
+        via = via.replace(redirector,'');
       }
-      via = getViaItem(itemHash);
       domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
       if (domainUrl !== domainVia) {
@@ -336,19 +382,23 @@
         via = '';
       }
       sel = getSelectionHtml();
-      if (sel != '') {
+      if (sel !== '') {
         sel = '«' + sel + '»';
       }
 
-      window.open(
-        shaarli
-        .replace('${url}', encodeURIComponent(url))
-        .replace('${title}', encodeURIComponent(title))
-        .replace('${via}', encodeURIComponent(via))
-        .replace('${sel}', encodeURIComponent(sel)),
-        '_blank',
-        'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
-      );
+      if (shaarli !== '') {
+        window.open(
+          shaarli
+          .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
+          .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
+          .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
+          .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
+          '_blank',
+          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no, dialog=1'
+        );
+      } else {
+        alert('Please configure your share link first');
+      }
     } else {
       loadDivItem(itemHash);
       alert('Sorry ! This item is not loaded, try again !');
@@ -359,7 +409,10 @@
     shaarliItem(currentItemHash);
   }
 
-  function shaarliClickItem() {
+  function shaarliClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     shaarliItem(getItemHash(this));
 
     return false;
@@ -369,7 +422,7 @@
    * Folder functions
    */
   function getFolder(element) {
-    var folder = null
+    var folder = null;
 
     while (folder === null && element !== null) {
       if (element.tagName === 'LI' && element.id.indexOf('folder-') === 0) {
@@ -379,6 +432,23 @@
     }
 
     return folder;
+  }
+
+  function getLiParentByClassName(element, classname) {
+    var li = null;
+
+    while (li === null && element !== null) {
+      if (element.tagName === 'LI' && hasClass(element, classname)) {
+        li = element;
+      }
+      element = element.parentNode;
+    }
+
+    if (classname === 'folder' && li.id === 'all-subscriptions') {
+      li = null;
+    }
+
+    return li;
   }
 
   function getFolderHash(element) {
@@ -421,7 +491,10 @@
     }
   }
 
-  function toggleClickFolder() {
+  function toggleClickFolder(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     toggleFolder(getFolderHash(this));
 
     return false;
@@ -466,22 +539,71 @@
         if (hasClass(listLinks[i], 'item-mark-as')) {
           if (listLinks[i].href.indexOf('unread=') > -1) {
             listLinks[i].href = listLinks[i].href.replace('unread=','read=');
-            listLinks[i].firstChild.innerHTML = 'read';
+            listLinks[i].firstChild.innerHTML = intlRead;
           } else {
             listLinks[i].href = listLinks[i].href.replace('read=','unread=');
-            listLinks[i].firstChild.innerHTML = 'unread';
+            listLinks[i].firstChild.innerHTML = intlUnread;
           }
         }
       }
     }
   }
 
+  function getUnreadLabelItems(itemHash) {
+    var i, listLinks, regex = new RegExp('read=' + itemHash.substr(0,6)), items = [];
+    listLinks = getListLinkFolders();
+    for (i = 0; i < listLinks.length; i += 1) {
+      if (regex.test(listLinks[i].href)) {
+        items.push(listLinks[i].children[0]);
+      }
+    }
+    return items;
+  }
+
+  function addToUnreadLabel(unreadLabelItem, value) {
+      var unreadLabel = -1;
+      if (unreadLabelItem !== null) {
+        unreadLabel = parseInt(unreadLabelItem.innerHTML, 10) + value;
+        unreadLabelItem.innerHTML = unreadLabel;
+      }
+      return unreadLabel;
+  }
+
+  function getUnreadLabel(folder) {
+    var element = null;
+    if (folder !== null) {
+      element = folder.getElementsByClassName('label')[0];
+    }
+    return element;
+  }
+
   function markAsItem(itemHash) {
-    var item, url, client, indexItem;
+    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder, addRead = 1;
 
     item = getItem(itemHash);
 
     if (item !== null) {
+      unreadLabelItems = getUnreadLabelItems(itemHash);
+      if (!hasClass(item, 'read')) {
+        addRead = -1;
+      }
+      for (i = 0; i < unreadLabelItems.length; i += 1) {
+        nb = addToUnreadLabel(unreadLabelItems[i], addRead);
+        if (nb === 0) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          removeClass(feed, 'has-unread');
+          if (autohide) {
+            addClass(feed, 'autohide-feed');
+          }
+        }
+        folder = getLiParentByClassName(unreadLabelItems[i], 'folder');
+        nb = addToUnreadLabel(getUnreadLabel(folder), addRead);
+        if (nb === 0 && autohide) {
+          addClass(folder, 'autohide-folder');
+        }
+      }
+      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), addRead);
+
       if (hasClass(item, 'read')) {
         url = '?unread=' + itemHash;
         removeClass(item, 'read');
@@ -491,9 +613,9 @@
         addClass(item, 'read');
         toggleMarkAsLinkItem(itemHash);
         if (filter === 'unread') {
-          url += '&currentHash=' + currentHash
-               + '&page=' + currentPage
-               + '&last=' + listItemsHash[listItemsHash.length - 1];
+          url += '&currentHash=' + currentHash +
+            '&page=' + currentPage +
+            '&last=' + listItemsHash[listItemsHash.length - 1];
 
           removeElement(item);
           indexItem = listItemsHash.indexOf(itemHash);
@@ -505,8 +627,8 @@
         }
       }
     } else {
-      url = '?currentHash=' + currentHash
-          + '&page=' + currentPage;
+      url = '?currentHash=' + currentHash +
+        '&page=' + currentPage;
     }
 
     client = new HTTPClient();
@@ -522,40 +644,105 @@
     markAsItem(currentItemHash);
   }
 
-  function markAsClickItem() {
+  function markAsClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     markAsItem(getItemHash(this));
+
+    return false;
+  }
+
+  function toggleMarkAsStarredLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks, url = '';
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-starred')) {
+          url = listLinks[i].href;
+          if (listLinks[i].href.indexOf('unstar=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
+            listLinks[i].firstChild.innerHTML = intlStar;
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
+            listLinks[i].firstChild.innerHTML = intlUnstar;
+          }
+        }
+      }
+    }
+
+    return url;
+  }
+
+  function markAsStarredCurrentItem() {
+    markAsStarredItem(currentItemHash);
+  }
+
+  function markAsStarredItem(itemHash) {
+    var url, client, indexItem;
+
+    url = toggleMarkAsStarredLinkItem(itemHash);
+    if (url.indexOf('unstar=') > -1 && stars) {
+      removeElement(getItem(itemHash));
+      indexItem = listItemsHash.indexOf(itemHash);
+      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+      if (listItemsHash.length <= byPage) {
+        appendItem(listItemsHash[listItemsHash.length - 1]);
+      }
+      setCurrentItem(listItemsHash[indexItem]);
+
+      url += '&page=' + currentPage;
+    }
+    if (url !== '') {
+      client = new HTTPClient();
+      client.init(url + '&ajax');
+      try {
+        client.asyncGET(ajaxHandler);
+      } catch (e) {
+        alert(e);
+      }
+    }
+  }
+
+  function markAsStarredClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsStarredItem(getItemHash(this));
 
     return false;
   }
 
   function markAsRead(itemHash) {
     setNbUnread(currentUnread - 1);
-
   }
 
   function markAsUnread(itemHash) {
     setNbUnread(currentUnread + 1);
-
   }
 
   /**
    * Div item functions
    */
-  function loadDivItem(itemHash) {
+  function loadDivItem(itemHash, noFocus) {
     var element, url, client, cacheItem;
-
     element = document.getElementById('item-div-'+itemHash);
     if (element.childNodes.length <= 1) {
       cacheItem = getCacheItem(itemHash);
-      if (cacheItem != null) {
+      if (cacheItem !== null) {
         setDivItem(element, cacheItem);
+        if(!noFocus) {
+          setItemFocus(element);
+        }
         removeCacheItem(itemHash);
       } else {
-        url = '?currentHash=' + currentHash
-            + '&current=' + itemHash
-            + '&ajax';
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
+          '&current=' + itemHash +
+          '&ajax';
         client = new HTTPClient();
-        client.init(url, element);
+        client.init(url, noFocus);
         try {
           client.asyncGET(ajaxHandler);
         } catch (e) {
@@ -609,7 +796,10 @@
     collapseElement(document.getElementById('item-toggle-' + currentItemHash));
   }
 
-  function toggleClickItem() {
+  function toggleClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     toggleItem(getItemHash(this));
 
     return false;
@@ -659,7 +849,7 @@
   }
 
   function getLiItem(element) {
-    var item = null
+    var item = null;
 
     while (item === null && element !== null) {
       if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
@@ -706,25 +896,40 @@
   }
 
   function setDivItem(div, item) {
-    var markAs = 'read';
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star';
 
-      if (item['read'] == 1) {
-        markAs = 'unread';
-      }
+    if (item['read'] == 1) {
+      markAs = intlUnread;
+      linkMarkAs = 'unread';
+    }
+
+    if (item['starred'] == 1) {
+      starred = intlUnstar;
+      linkStarred = 'unstar';
+    }
+
+    if (!blank) {
+      target = '';
+    }
 
     div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ' +
-      '<a target="_blank" class="item-link" href="' + item['link'] + '">' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">' + intlShare + '</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkMarkAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkStarred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a>' +
       '</div>' +
-      '<div class="item-info-end">' +
-      'from <a class="item-via" href="' + item['via'] + '">' +
+      '<div class="clear"></div>' +
+      '<div class="item-info-end item-info-time">' +
+      item['time']['expanded'] +
+      '</div>' +
+      '<div class="item-info-end item-info-authors">' +
+      intlFrom + ' <a class="item-via" href="' + item['via'] + '">' +
       item['author'] +
       '</a> ' +
-      item['time']['expanded'] +
-      ' <a class="item-xml" href="' + item['xmlUrl'] + '">' +
+      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
       '<span class="ico">' +
       '<span class="ico-feed-dot"></span>' +
       '<span class="ico-feed-circle-1"></span>' +
@@ -733,53 +938,77 @@
       '</a>' +
       '</div>' +
       '<div class="clear"></div>' +
-      '<div class="item-content">' +
+      '<div class="item-content"><article>' +
       item['content'] +
-      '</div>' +
+      '</article></div>' +
+      '<div class="clear"></div>' +
       '<div class="item-info-end">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">' + intlShare + '</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkMarkAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkStarred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
+      (view=='list'?
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '</span>' +
+      '</a>':'') +
       '</div>' +
       '<div class="clear"></div>';
 
     initLinkItems(div.getElementsByTagName('a'));
-
+    initCollapse(div.getElementsByTagName('a'));
     anonymize(div);
   }
 
   function setLiItem(li, item) {
-    var markAs = 'read';
+    var markAs = intlRead, target = ' target="_blank"';
 
     if (item['read'] == 1) {
-      markAs = 'unread';
+      markAs = intlUnread;
     }
 
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
-      item['time']['list'] +
-      ' <span class="ico">' +
-      '<span class="ico-circle"></span>' +
-      '<span class="ico-line-h"></span>' +
-      '<span class="ico-line-v item-toggle-close"></span>' +
+    if (!blank) {
+      target = '';
+    }
+
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '<span class="ico-w-line-v item-toggle-close"></span>' +
       '</span>' +
+      item['time']['list'] +
       '</a>' +
       '<dl class="dl-horizontal item">' +
       '<dt class="item-feed">' +
+      (addFavicon?
+      '<span class="item-favicon">' +
+      '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
+      '</span>':'' ) +
       '<span class="item-author">' +
+      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
       item['author'] +
+      '</a>' +
       '</span>' +
       '</dt>' +
       '<dd class="item-info">' +
       '<span class="item-title">' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ' +
-      '<a target="_blank" class="item-link" href="' + item['link'] + '">' +
+      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
       item['title'] +
       '</a> ' +
       '</span>' +
       '<span class="item-description">' +
+      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
       item['description'] +
+      '</a> ' +
       '</span>' +
       '</dd>' +
-      '</dl>';
+      '</dl>' +
+      '<div class="clear"></div>';
 
     initCollapse(li.getElementsByTagName('a'));
     initLinkItems(li.getElementsByTagName('a'));
@@ -880,6 +1109,9 @@
       if (hasClass(listItems[i], 'item-mark-as')) {
         listItems[i].onclick = markAsClickItem;
       }
+      if (hasClass(listItems[i], 'item-starred')) {
+        listItems[i].onclick = markAsStarredClickItem;
+      }
       if (hasClass(listItems[i], 'item-shaarli')) {
         listItems[i].onclick = shaarliClickItem;
       }
@@ -889,10 +1121,11 @@
   function initListItems() {
     var url, client;
 
-    url = '?currentHash=' + currentHash
-        + '&page=' + currentPage
-        + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax';
+    url = '?currentHash=' + currentHash +
+      '&page=' + currentPage +
+      '&last=' + listItemsHash[listItemsHash.length -1] +
+      '&ajax' +
+      (stars?'&stars':'');
 
     client = new HTTPClient();
     client.init(url);
@@ -900,6 +1133,15 @@
       client.asyncGET(ajaxHandler);
     } catch (e) {
       alert(e);
+    }
+  }
+
+  function preloadItems()
+  {
+    // Pre-fetch items from top to bottom
+    for(var i = 0, len = listItemsHash.length; i < len; ++i)
+    {
+      loadDivItem(listItemsHash[i], true);
     }
   }
 
@@ -984,7 +1226,7 @@
   }
 
   function updateNewItems(result) {
-    var i = 0, list, currentMin;
+    var i = 0, list, currentMin, folder, feed, unreadLabelItems, nbItems;
     setStatus('');
     if (result !== false) {
       if (result['feeds']) {
@@ -995,9 +1237,23 @@
           listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
         }
       }
-      if (result['newItems']) {
-        currentNbItems += result['newItems'].length;
-        setNbUnread(currentUnread + result['newItems'].length);
+      if (result.newItems && result.newItems.length > 0) {
+        nbItems = result.newItems.length;
+        currentNbItems += nbItems;
+        setNbUnread(currentUnread + nbItems);
+        addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), nbItems);
+        unreadLabelItems = getUnreadLabelItems(result.newItems[0].substr(0,6));
+        for (i = 0; i < unreadLabelItems.length; i += 1) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          folder = getLiParentByClassName(feed, 'folder');
+          addClass(feed, 'has-unread');
+          if (autohide) {
+            removeClass(feed, 'autohide-feed');
+            removeClass(folder, 'autohide-folder');
+          }
+          addToUnreadLabel(getUnreadLabel(feed), nbItems);
+          addToUnreadLabel(getUnreadLabel(folder), nbItems);
+        }
       }
       updateTimeout();
     }
@@ -1010,19 +1266,47 @@
   /**
    * Navigation
    */
-  function setWindowLocation() {
-    if (currentItemHash != '' && autofocus) {
-      window.location = '#item-' + currentItemHash;
+  function setItemFocus(item) {
+    if(autofocus) {
+      // First, let the browser do some rendering
+      // Indeed, the div might not be visible yet, so there is no scroll
+      setTimeout(function()
+      {
+        // Dummy implementation
+        var container = document.getElementById('main-container'),
+          scrollPos = container.scrollTop,
+          itemPos = item.offsetTop,
+          temp = item;
+        while(temp.offsetParent != document.body) {
+          temp = temp.offsetParent;
+          itemPos += temp.offsetTop;
+        }
+        var current = itemPos - scrollPos;
+        // Scroll only if necessary
+        // current < 0: Happens when asking for previous item and displayed item is filling the screen
+        // Or check if item bottom is outside screen
+        if(current < 0 || current + item.offsetHeight > container.clientHeight) {
+          container.scrollTop = itemPos;
+        }
+      }, 0);
+      
+      window.location.hash = '#item-' + currentItemHash;
     }
   }
 
-  function previousClickPage() {
+  function previousClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     previousPage();
 
     return false;
   }
 
-  function nextClickPage() {
+  function nextClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     nextPage();
 
     return false;
@@ -1033,7 +1317,7 @@
     if (currentPage > Math.ceil(currentNbItems / byPage)) {
       currentPage = Math.ceil(currentNbItems / byPage);
     }
-    if (listItemsHash.length == 0) {
+    if (listItemsHash.length === 0) {
       currentPage = 1;
     }
     listItemsHash = [];
@@ -1051,13 +1335,19 @@
     removeChildren(getListItems());
   }
 
-  function previousClickItem() {
+  function previousClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     previousItem();
 
     return false;
   }
 
-  function nextClickItem() {
+  function nextClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
     nextItem();
 
     return false;
@@ -1152,9 +1442,11 @@
       }
 
       if (currentItemHash !== '') {
-        addClass(document.getElementById('item-'+currentItemHash), 'current');
-        addClass(document.getElementById('item-div-'+currentItemHash), 'current');
-        setWindowLocation();
+        var item = document.getElementById('item-'+currentItemHash),
+          itemDiv = document.getElementById('item-div-'+currentItemHash);
+        addClass(item, 'current');
+        addClass(itemDiv, 'current');
+        setItemFocus(itemDiv);
         updateItemButton();
       }
     }
@@ -1188,7 +1480,7 @@
       start = { time: ( new Date() ).getTime(),
                 coords: [ touch.pageX, touch.pageY ] },
       stop;
-      function moveHandler( e ) {
+      var moveHandler = function ( e ) {
 
         if ( !start ) {
           return;
@@ -1198,29 +1490,23 @@
           var touch = e.targetTouches[0];
           stop = { time: ( new Date() ).getTime(),
                    coords: [ touch.pageX, touch.pageY ] };
-
-          // prevent scrolling
-          if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-                                        >  scrollSupressionThreshold
-             ) {
-            e.preventDefault();
-          }
         }
-      }
+      };
 
       addEvent(window, 'touchmove', moveHandler);
       addEvent(window, 'touchend', function (e) {
         removeEvent(window, 'touchmove', moveHandler);
         if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold
-            && Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-             > horizontalDistanceThreshold
-            && Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] )
-             < verticalDistanceThreshold
+          if ( stop.time - start.time < durationThreshold &&
+            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
              ) {
-            start.coords[0] > stop.coords[ 0 ]
-                ? nextItem()
-                : previousItem() ;
+            if ( start.coords[0] > stop.coords[ 0 ] ) {
+              nextItem();
+            }
+            else {
+              previousItem();
+            }
           }
           start = stop = undefined;
         }
@@ -1229,25 +1515,32 @@
   }
 
   function checkKey(e) {
-      var code;
-      if (!e) e = window.event;
-      if (e.keyCode) code = e.keyCode;
-      else if (e.which) code = e.which;
+    var code;
+    if (!e) e = window.event;
+    if (e.keyCode) code = e.keyCode;
+    else if (e.which) code = e.which;
+
+    if (!e.ctrlKey && !e.altKey) {
       switch(code) {
         case 32: // 'space'
         toggleCurrentItem();
         break;
+        case 65: // 'A'
+        if (window.confirm('Mark all current as read ?')) {
+          window.location.href = '?read=' + currentHash;
+        }
+		break;
         case 67: // 'C'
         window.location.href = '?config';
         break;
         case 69: // 'E'
-        window.location.href = (currentHash==''?'?edit':'?edit='+currentHash);
+        window.location.href = (currentHash===''?'?edit':'?edit='+currentHash);
         break;
         case 70: // 'F'
         if (listFeeds =='show') {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
         } else {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
         }
         break;
         case 72: // 'H'
@@ -1262,7 +1555,12 @@
         toggleCurrentItem();
         break;
         case 77: // 'M'
-        markAsCurrentItem();
+        if (e.shiftKey) {
+          markAsCurrentItem();
+          toggleCurrentItem();
+        } else {
+          markAsCurrentItem();
+        }
         break;
         case 39: // right arrow
         case 78: // 'N'
@@ -1297,15 +1595,27 @@
         toggleCurrentItem();
         break;
         case 85: // 'U'
-        window.location.href = (currentHash==''?'?update':'?update='+currentHash);
+        window.location.href = (currentHash===''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
         break;
         case 86: // 'V'
         if (view == 'list') {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
         } else {
-          window.location.href = (currentHash==''?'?':'?currentHash='+currentHash+'&')+'view=list';
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=list';
         }
         break;
+        case 90: // 'z'
+          for (var i=0;i<listItemsHash.length;i++){
+	      if (!hasClass(getItem(listItemsHash[i]), 'read')){
+		  window.open(getUrlItem(currentItemHash),'_blank');
+		  markAsCurrentItem();
+	      }
+	      nextItem();
+          }
+        break;
+        case 170: // '*'
+          markAsStarredCurrentItem();
+          break;
         case 112: // 'F1'
         case 188: // '?'
         case 191: // '?'
@@ -1314,6 +1624,7 @@
         default:
         break;
       }
+    }
     // e.ctrlKey e.altKey e.shiftKey
   }
 
@@ -1365,8 +1676,7 @@
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
           if (currentPage === 1) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -1378,8 +1688,7 @@
           }
         }
         if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
           if (currentPage === maxPage) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -1403,8 +1712,7 @@
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
           if (currentPage === 1) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -1416,8 +1724,7 @@
           }
         }
         if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
           if (currentPage === maxPage) {
             if (!hasClass(listElements[i], 'disabled')) {
               addClass(listElements[i], 'disabled');
@@ -1476,12 +1783,10 @@
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
         }
         if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
 
         }
       }
@@ -1492,13 +1797,10 @@
       listElements = paging.getElementsByTagName('a');
       for (i = 0; i < listElements.length; i += 1) {
         if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
         }
         if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
-
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
         }
       }
     }
@@ -1508,7 +1810,7 @@
    * init KrISS feed javascript
    */
   function initUnread() {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
     currentUnread = parseInt(element.innerHTML, 10);
 
@@ -1517,7 +1819,7 @@
   }
 
   function setNbUnread(nb) {
-    var element = document.getElementById('nb-unread');
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
 
     if (nb < 0) {
       nb = 0;
@@ -1525,7 +1827,6 @@
 
     currentUnread = nb;
     element.innerHTML = currentUnread;
-
     document.title = title + ' (' + currentUnread + ')';
   }
 
@@ -1582,6 +1883,47 @@
     if (elementIndex.hasAttribute('data-nb-items')) {
       currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
     }
+    if (elementIndex.hasAttribute('data-add-favicon')) {
+      addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
+      addFavicon = (addFavicon === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-preload')) {
+      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
+      preload = (preload === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-stars')) {
+      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
+      stars = (stars === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-blank')) {
+      blank = parseInt(elementIndex.getAttribute('data-blank'), 10);
+      blank = (blank === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-is-logged')) {
+      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
+      isLogged = (isLogged === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-intl-top')) {
+      intlTop = elementIndex.getAttribute('data-intl-top');
+    }
+    if (elementIndex.hasAttribute('data-intl-share')) {
+      intlShare = elementIndex.getAttribute('data-intl-share');
+    }
+    if (elementIndex.hasAttribute('data-intl-read')) {
+      intlRead = elementIndex.getAttribute('data-intl-read');
+    }
+    if (elementIndex.hasAttribute('data-intl-unread')) {
+      intlUnread = elementIndex.getAttribute('data-intl-unread');
+    }
+    if (elementIndex.hasAttribute('data-intl-star')) {
+      intlStar = elementIndex.getAttribute('data-intl-star');
+    }
+    if (elementIndex.hasAttribute('data-intl-unstar')) {
+      intlUnstar = elementIndex.getAttribute('data-intl-unstar');
+    }
+    if (elementIndex.hasAttribute('data-intl-from')) {
+      intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
 
     status = document.getElementById('status').innerHTML;
   }
@@ -1605,6 +1947,7 @@
 
     initListItemsHash();
     initListItems();
+
     initUnread();
 
     initItemButton();
@@ -1615,7 +1958,7 @@
     addEvent(window, 'keydown', checkKey);
     addEvent(window, 'touchstart', checkMove);
 
-    if (autoupdate) {
+    if (autoupdate && !stars) {
       initUpdate();
     }
 
@@ -1655,3 +1998,200 @@
   window.removeEvent = removeEvent;
   window.addEvent = addEvent;
 })();
+
+// unread count for favicon part
+if(typeof GM_getValue == 'undefined') {
+	GM_getValue = function(name, fallback) {
+		return fallback;
+	};
+}
+
+// Register GM Commands and Methods
+if(typeof GM_registerMenuCommand !== 'undefined') {
+  var setOriginalFavicon = function(val) { GM_setValue('originalFavicon', val); };
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false); } );
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true); } );
+}
+
+(function FaviconAlerts() {
+	var self = this;
+
+	this.construct = function() {
+		this.head = document.getElementsByTagName('head')[0];
+		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1]]}};
+
+		this.timer = setInterval(this.poll, 500);
+		this.poll();
+
+		return true;
+	};
+
+	this.drawUnreadCount = function(unread, callback) {
+		if(!self.textedCanvas) {
+			self.textedCanvas = [];
+		}
+
+		if(!self.textedCanvas[unread]) {
+			self.getUnreadCanvas(function(iconCanvas) {
+				var textedCanvas = document.createElement('canvas');
+				textedCanvas.height = textedCanvas.width = iconCanvas.width;
+				var ctx = textedCanvas.getContext('2d');
+				ctx.drawImage(iconCanvas, 0, 0);
+
+				ctx.fillStyle = '#b7bfc9';
+				ctx.strokeStyle = '#7792ba';
+				ctx.strokeWidth = 1;
+
+				var count = unread.length;
+
+				if(count > 4) {
+					unread = '1k+';
+					count = unread.length;
+				}
+
+				var bgHeight = self.pixelMaps.numbers[0].length;
+				var bgWidth = 0;
+				var padding = count < 4 ? 1 : 0;
+				var topMargin = 0;
+
+				for(var index = 0; index < count; index++) {
+					bgWidth += self.pixelMaps.numbers[unread[index]][0].length;
+					if(index < count-1) {
+						bgWidth += padding;
+					}
+				}
+				bgWidth = bgWidth > textedCanvas.width-4 ? textedCanvas.width-4 : bgWidth;
+
+				ctx.fillRect(textedCanvas.width-bgWidth-4,topMargin,bgWidth+4,bgHeight+4);
+
+				var digit;
+				var digitsWidth = bgWidth;
+				for(index = 0; index < count; index++) {
+					digit = unread[index];
+
+					if (self.pixelMaps.numbers[digit]) {
+						var map = self.pixelMaps.numbers[digit];
+						var height = map.length;
+						var width = map[0].length;
+
+						ctx.fillStyle = '#2c3323';
+
+						for (var y = 0; y < height; y++) {
+							for (var x = 0; x < width; x++) {
+								if(map[y][x]) {
+									ctx.fillRect(14- digitsWidth + x, y+topMargin+2, 1, 1);
+								}
+							}
+						}
+
+						digitsWidth -= width + padding;
+					}
+				}
+
+				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+0.5,bgWidth+3,bgHeight+3);
+
+				self.textedCanvas[unread] = textedCanvas;
+
+				callback(self.textedCanvas[unread]);
+			});
+      callback(self.textedCanvas[unread]);
+		}
+	};
+	this.getIcon = function(callback) {
+		self.getUnreadCanvas(function(canvas) {
+			callback(canvas.toDataURL('image/png'));
+		});
+	};
+  this.getIconSrc = function() {
+    var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].rel === 'icon') {
+        return links[i].href;
+      }
+    }
+    return false;
+  };
+	this.getUnreadCanvas = function(callback) {
+		if(!self.unreadCanvas) {
+			self.unreadCanvas = document.createElement('canvas');
+			self.unreadCanvas.height = self.unreadCanvas.width = 16;
+
+			var ctx = self.unreadCanvas.getContext('2d');
+			var img = new Image();
+
+			img.addEventListener('load', function() {
+				ctx.drawImage(img, 0, 0);
+				callback(self.unreadCanvas);
+			}, true);
+
+		//	if(GM_getValue('originalFavicon', false)) {
+		//		img.src = self.icons.original;
+		//	} else {
+		//		img.src = self.icons.current;
+		//	}
+		// img.src = 'inc/favicon.ico';
+                  img.src = self.getIconSrc();
+		} else {
+			callback(self.unreadCanvas);
+		}
+	};
+	this.getUnreadCount = function() {
+		matches = self.getSearchText().match(/\((.*)\)/);
+		return matches ? matches[1] : false;
+	};
+	this.getUnreadCountIcon = function(callback) {
+		var unread = self.getUnreadCount();
+    self.drawUnreadCount(unread, function(icon) {
+      if(icon) {
+        callback(icon.toDataURL('image/png'));
+      }
+    });
+	};
+	this.getSearchText = function() {
+                var elt = document.getElementById('nb-unread');
+                
+                if (!elt) {
+		  elt = document.getElementById('nb-starred');
+                }
+
+		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+	};
+	this.poll = function() {
+		if(self.getUnreadCount() != "0") {
+			self.getUnreadCountIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		} else {
+			self.getIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		}
+	};
+
+	this.setIcon = function(icon) {
+		var links = self.head.getElementsByTagName('link');
+		for (var i = 0; i < links.length; i++)
+			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
+        links[i].href != icon)
+				self.head.removeChild(links[i]);
+			else if(links[i].href == icon)
+				return;
+
+		var newIcon = document.createElement('link');
+		newIcon.type = 'image/png';
+		newIcon.rel = 'shortcut icon';
+		newIcon.href = icon;
+		self.head.appendChild(newIcon);
+
+		// Chrome hack for updating the favicon
+		//var shim = document.createElement('iframe');
+		//shim.width = shim.height = 0;
+		//document.body.appendChild(shim);
+		//shim.src = 'icon';
+		//document.body.removeChild(shim);
+	};
+
+	this.toString = function() { return '[object FaviconAlerts]'; };
+
+	return this.construct();
+}());

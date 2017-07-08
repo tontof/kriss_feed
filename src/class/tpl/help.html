@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>{include="includes"}</head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span6 offset3">
+          <div id="config">
+            {include="status"}
+            {include="nav"}
+            <div id="section">
+              <h2>{'Keyboard shortcuts'|Intl::msg}</h2>
+              <fieldset>
+                <legend>{'Key legend'|Intl::msg}</legend>
+                <dl class="dl-horizontal">
+                  <dt>&#x23b5;</dt>
+                  <dd>{'Space key'|Intl::msg}</dd>
+                  <dt>&#x21e7;</dt>
+                  <dd>{'Shift key'|Intl::msg}</dd>
+                  <dt>&#x2192;</dt>
+                  <dd>{'Right arrow key'|Intl::msg}</dd>
+                  <dt>&#x2190;</dt>
+                  <dd>{'Left arrow key'|Intl::msg}</dd>
+                </dl>
+              </fieldset>
+              <fieldset>
+                <legend>{'Items navigation'|Intl::msg}</legend>
+                <dl class="dl-horizontal">
+                  <dt>&#x23b5;, t</dt>
+                  <dd>{'Toggle current item (open, close item in list view)'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>m</dt>
+                  <dd>{'Mark current item as read if unread or unread if read'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + m</dt>
+                  <dd>{'Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x2192;, n</dt>
+                  <dd>{'Go to next item'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x2190;, p</dt>
+                  <dd>{'Go to previous item'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + n</dt>
+                  <dd>{'Go to next page'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + p</dt>
+                  <dd>{'Go to previous page'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>j</dt>
+                  <dd>{'Go to next item and open it (in list view)'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>k</dt>
+                  <dd>{'Go to previous item and open it (in list view)'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>o</dt>
+                  <dd>{'Open current item in new tab'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + o</dt>
+                  <dd>{'Open current item in current window'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>s</dt>
+                  <dd>{'Share current item'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>a</dt>
+                  <dd>{'Mark all items, all items from current feed or all items from current folder as read'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>*</dt>
+                  <dd>{'Star/Unstar current item'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>z</dt>
+                  <dd>{'Open all unread items from current page in new tabs and mark items as read'|Intl::msg}</dd>
+                </dl>
+              </fieldset>
+              <fieldset>
+                <legend>{'Menu navigation'|Intl::msg}</legend>
+                <dl class="dl-horizontal">
+                  <dt>h</dt>
+                  <dd>{'Go to Home page'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>v</dt>
+                  <dd>{'Change view as list or expanded'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>f</dt>
+                  <dd>{'Show or hide list of feeds/folders'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>e</dt>
+                  <dd>{'Edit current selection (all, folder or feed)'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>u</dt>
+                  <dd>{'Update current selection (all, folder or feed)'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>r</dt>
+                  <dd>{'Reload the page as the F5 key in most of browsers'|Intl::msg}</dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>?, F1</dt>
+                  <dd>{'Go to Help page (this page)'|Intl::msg}</dd>
+                </dl>
+              </fieldset>
+              <h2>{'Configuration check'|Intl::msg}</h2>
+              <fieldset>
+                <legend>{'PHP configuration'|Intl::msg}</legend>
+                <dl class="dl-horizontal">
+                  <dt>open_ssl</dt>
+                  <dd>
+                    {if="extension_loaded('openssl')"}
+                    <span class="text-success">{'You should be able to load https:// rss links.'|Intl::msg}</span>
+                    {else}
+                    <span class="text-error">{'You may have problems using https:// rss links.'|Intl::msg}</span>
+                    {/if}
+                  </dd>
+                </dl>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

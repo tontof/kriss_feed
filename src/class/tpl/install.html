@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {include="includes"}
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span4 offset4">
+          <div id="install">
+            <form class="form-horizontal" method="post" action="" name="installform">
+              <fieldset>
+                <legend>{'KrISS feed installation'|Intl::msg}</legend>
+                <div class="text-center">
+                  {'Click on flag to select your language.'|Intl::msg}<br>{loop="$langs"}
+                  <a href="?lang={$key}" title="{$value.name}" class="flag {$value.class}"></a>{/loop}
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="setlogin">{'Login'|Intl::msg}</label>
+                  <div class="controls">
+                    <input type="text" id="setlogin" name="setlogin" placeholder="{'Login'|Intl::msg}">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="setlogin">{'Password'|Intl::msg}</label>
+                  <div class="controls">
+                    <input type="password" id="setpassword" name="setpassword" placeholder="{'Password'|Intl::msg}">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <div class="controls">
+                    <button type="submit" class="btn">{'Install KrISS feed'|Intl::msg}</button>
+                  </div>
+                </div>
+                <input type="hidden" name="token" value="{$token}">
+              </fieldset>
+            </form>
+            {include="status"}
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>document.installform.setlogin.focus();</script>
+  </body>
+</html>
+

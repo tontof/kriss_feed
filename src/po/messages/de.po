@@ -1,0 +1,820 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: KrISS feed\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-10-05 10:36+0200\n"
+"PO-Revision-Date: 2017-01-23 17:07+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.10\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: Deutsch\n"
+
+#, php-format
+msgid "Can not create %s directory, check permissions"
+msgstr "Kann Verzeichnis %s nicht anlegen, Berechtigungen überprüfen"
+
+#, php-format
+msgid "Can not protect %s directory with .htaccess, check permissions"
+msgstr ""
+"Kann Verzeichnis %s nicht mit .htaccess schützen, Berechtigungen überprüfen"
+
+msgid "Wrong token"
+msgstr "Falsches Token"
+
+msgid "Login failed!"
+msgstr "Anmeldung fehlgeschlagen!"
+
+msgid "I said: NO. You are banned for the moment. Go away."
+msgstr "Ich sagte NEIN. Du bist im Moment gebannt. Verschwinde."
+
+msgid "Sign in"
+msgstr "Anmelden"
+
+msgid "Change your password"
+msgstr "Passwort ändern"
+
+msgid "Help"
+msgstr "Hilfe"
+
+msgid "Update"
+msgstr "Aktualisieren"
+
+msgid "Plugins management"
+msgstr "Plug-in-Verwaltung"
+
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#, php-format
+msgid ""
+"The file you are trying to upload is probably bigger than what this "
+"webserver can accept (%s). Please upload in smaller chunks."
+msgstr ""
+"Die Datei, die du versuchst hochzuladen, ist wahrscheinlich größer als "
+"dieser Webserver erlaubt (%s). Bitte in kleineren Teilen hochladen."
+
+msgid "Import"
+msgstr "Import"
+
+msgid "Add a new feed"
+msgstr "Einen neuen Feed hinzufügen"
+
+msgid "starred items"
+msgstr "Favoriten"
+
+msgid "Starred items"
+msgstr "Favoriten"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Please configure your share link first"
+msgstr "Bitte konfiguriere zuerst deinen Teilen-Link"
+
+msgid "unread items"
+msgstr "Ungelesene Einträge"
+
+msgid "Your simple and smart (or stupid) feed reader is now configured."
+msgstr ""
+"Dein einfacher und schlauer (oder dummer) Feed-Reader ist jetzt konfiguriert."
+
+msgid "Continue"
+msgstr "Fortsetzen"
+
+msgid "KrISS feed installation"
+msgstr "KrISS-Feed-Installation"
+
+msgid "All feeds"
+msgstr "Alle Feeds"
+
+msgid "Empty output data"
+msgstr "Leere Ausgabedaten"
+
+msgid "Duplicated feed"
+msgstr "Doppelter Feed"
+
+msgid "Unknown feedhash"
+msgstr "Unbekannter Feed-Hash"
+
+msgid "Items may have been missed since last update"
+msgstr "Seit der letzten Aktualisierung könnten Einträge verpasst worden sein"
+
+msgid "Feed"
+msgstr "Feed"
+
+msgid "New items"
+msgstr "Neue Einträge"
+
+msgid "Time"
+msgstr "Zeit"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Successfully updated"
+msgstr "Erfolgreich aktualisiert"
+
+msgid "Already up-to-date"
+msgstr "Schon auf dem neuesten Stand"
+
+msgid "Total:"
+msgstr "Insgesamt:"
+
+msgid "items"
+msgstr "Einträge"
+
+msgid "item"
+msgstr "Eintrag"
+
+msgid "Successes"
+msgstr "Erfolge"
+
+msgid "Success"
+msgstr "Erfolg"
+
+msgid "Up-to-date"
+msgstr "Auf dem neuesten Stand"
+
+msgid "Errors"
+msgstr "Fehler"
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Http code not valid"
+msgstr "Unzulässiger HTTP-Statuscode"
+
+msgid "Location not found"
+msgstr "Quelle nicht gefunden"
+
+msgid "Too many redirects"
+msgstr "Zu viele Weiterleitungen"
+
+msgid "Error when loading without curl"
+msgstr "Fehler beim Laden ohne cURL"
+
+#, php-format
+msgid "File %s (%s) was successfully processed: %d links imported"
+msgstr "Datei %s (%s) wurde erfolgreich verarbeitet: %d Links importiert"
+
+#, php-format
+msgid ""
+"File %s (%s) has an unknown file format. Check encoding, try to remove "
+"accents and try again. Nothing was imported."
+msgstr ""
+"Datei %s (%s) hat ein unbekanntes Dateiformat. Bitte das Encoding "
+"überprüfen, wenn möglich Akzente entfernen und erneut versuchen. Es wurde "
+"nichts importiert."
+
+msgid "Feed URL"
+msgstr "Feed-URL"
+
+msgid "Add selected folders to feed"
+msgstr "Ausgewählte Ordner zum Feed hinzufügen"
+
+msgid "Edit feed"
+msgstr "Feed bearbeiten"
+
+msgid "Add a new folder"
+msgstr "Einen neuen Ordner hinzufügen"
+
+msgid "Add new feed"
+msgstr "Einen neuen Feed hinzufügen"
+
+msgid "Use bookmarklet to add a new feed"
+msgstr "Ein Bookmarklet zum Hinzufügen eines neuen Feeds verwenden"
+
+msgid ""
+"Drag this link to your bookmarks toolbar, or right-click it and choose "
+"Bookmark This Link..."
+msgstr ""
+"Ziehe diesen Link auf deine Lesezeichenleiste oder wähle Rechtsklick und "
+"\"als Lesezeichen hinzufügen...\""
+
+msgid "Old password"
+msgstr "Altes Passwort"
+
+msgid "New password"
+msgstr "Neues Passwort"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Save new password"
+msgstr "Neues Passwort speichern"
+
+msgid "KrISS feed main information"
+msgstr "KrISS-Feed-Hauptinformation"
+
+msgid "KrISS feed title"
+msgstr "KrISS-Feed-Titel"
+
+msgid "KrISS feed visibility"
+msgstr "KrISS-Feed-Sichtbarkeit"
+
+msgid "Public KrISS feed"
+msgstr "Öffentlicher KrISS-Feed"
+
+msgid ""
+"No restriction. Anyone can modify configuration, mark as read items, update "
+"feeds..."
+msgstr ""
+"Keine Einschränkungen. Jeder kann die Konfiguration ändern, Einträge als "
+"gelesen markieren, Feeds aktualisieren..."
+
+msgid "Protected KrISS feed"
+msgstr "Geschützter KrISS-Feed"
+
+msgid ""
+"Anyone can access feeds and items but only you can modify configuration, "
+"mark as read items, update feeds..."
+msgstr ""
+"Jeder kann auf Feeds und Einträge zugreifen, aber nur du kannst die "
+"Konfiguration ändern, Einträge als gelesen markieren, Feeds aktualisieren..."
+
+msgid "Private KrISS feed"
+msgstr "Privater KrISS-Feed"
+
+msgid ""
+"Only you can access feeds and items and only you can modify configuration, "
+"mark as read items, update feeds..."
+msgstr ""
+"Nur du kannst auf Feeds und Einträge zugreifen und nur du kannst die "
+"Konfiguration ändern, Einträge als gelesen markieren, Feeds aktualisieren..."
+
+msgid "Shaarli URL"
+msgstr "Shaarli-URL"
+
+msgid "Options:"
+msgstr "Optionen:"
+
+msgid "${url}: item link"
+msgstr "${url}: Eintragslink"
+
+msgid "${title}: item title"
+msgstr "${title}: Eintragstitel"
+
+msgid ""
+"${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is "
+"equals to: <code>via &lt;guid&gt;</code>"
+msgstr ""
+"${via}: wenn die Domain von &lt;link&gt; und &lt;guid&gt; sich "
+"unterscheiden, ist ${via} gleich: <code>via &lt;guid&gt;</code>"
+
+msgid ""
+"${sel}: <strong>Only available</strong> with javascript: <code>selected "
+"text</code>"
+msgstr ""
+"${sel}: <strong>Nur verfügbar</strong> mit JavaScript: <code>ausgewählter "
+"Text</code>"
+
+msgid "example with shaarli:"
+msgstr "Beispiel mit Shaarli:"
+
+msgid ""
+"KrISS feed redirector (only for links, media are not considered, "
+"<strong>item content is anonymize only with javascript</strong>)"
+msgstr ""
+"KrISS Feed-Weiterleitung (nur für Links, Medien werden nicht einbezogen, "
+"<strong>Eintragsinhalte werden nur per JavaScript anonymisiert</strong>)"
+
+msgid ""
+"<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also "
+"use <strong>noreferrer</strong> to use HTML5 property"
+msgstr ""
+"<strong>http://anonym.to/?</strong> wird den HTTP_REFERRER maskieren. Du "
+"kannst auch <strong>noreferrer</strong> als HTML5-Eigenschaft verwenden"
+
+msgid "Disable session cookie hijacking protection"
+msgstr "Deaktiviere Sitzungscookie-Diebstahlschutz"
+
+msgid ""
+"Check this if you get disconnected often or if your IP address changes often."
+msgstr ""
+"Wähle diese Option, wenn du häufig getrennt wirst oder sich deine IP-Adresse "
+"oft ändert."
+
+msgid "Save modifications"
+msgstr "Änderungen speichern"
+
+msgid "KrISS feed preferences"
+msgstr "KrISS-Feed-Einstellungen"
+
+msgid "Maximum number of items by feed"
+msgstr "Höchstanzahl von Einträgen pro Feed"
+
+msgid "Need update to be taken into consideration"
+msgstr "Aktualisierung notwendig, um dies anzuwenden"
+
+msgid "Maximum delay between feed update (in minutes)"
+msgstr "Maximale Verzögerung zwischen Feed-Aktualisierungen (in Minuten)"
+
+msgid "Auto read next item option"
+msgstr "Automatische \"Gelesen\"-Markierung des nächsten Eintrags"
+
+msgid "Do not mark as read when next item"
+msgstr "Bei Erreichen des nächsten Eintrags nicht als gelesen markieren"
+
+msgid "Auto mark current as read when next item"
+msgstr ""
+"Den aktuellen Eintrag automatisch als gelesen markieren, wenn du den "
+"nächsten Eintrag erreichst"
+
+msgid "Auto read next page option"
+msgstr "Automatische \"Gelesen\"-Markierung der nächsten Seite"
+
+msgid "Do not mark as read when next page"
+msgstr "Bei Erreichen der nächsten Seite nicht als gelesen markieren"
+
+msgid "Auto mark current as read when next page"
+msgstr ""
+"Die aktuelle Seite automatisch als gelesen markieren, wenn du die nächste "
+"Seite erreichst"
+
+msgid "Not implemented yet"
+msgstr "Noch nicht implementiert"
+
+msgid "Auto hide option"
+msgstr "Automatisch verbergen"
+
+msgid "Always show feed in feeds list"
+msgstr "Feed immer in der Feed-Liste anzeigen"
+
+msgid "Automatically hide feed when 0 unread item"
+msgstr "Automatisch verbergen, wenn keine ungelesen Einträge vorhanden sind"
+
+msgid "Auto focus option"
+msgstr "Autofokus"
+
+msgid "Do not automatically jump to current item when it changes"
+msgstr "Nicht automatisch zum aktuellen Eintrag springen, wenn er sich ändert"
+
+msgid "Automatically jump to the current item position"
+msgstr "Automatisch zum aktuellen Eintrag springen"
+
+msgid "Add favicon option"
+msgstr "Favicon hinzufügen"
+
+msgid "Do not add favicon next to feed on list of feeds/items"
+msgstr "Favicon nicht neben dem Feed in der Feed-Liste anzeigen"
+
+msgid "Add favicon next to feed on list of feeds/items"
+msgstr "Favicon neben dem Feed in der Feed-Liste / neben Einträgen anzeigen"
+
+msgid "Warning: It depends on http://getfavicon.appspot.com/"
+msgstr "Warnung: Hängt ab von http://getfavicon.appspot.com/"
+
+msgid "but it will cache favicon on your server"
+msgstr "aber das Favicon wird auf deinem Server zwischengespeichert"
+
+msgid "Preload option"
+msgstr "Vorladen"
+
+msgid "Do not preload items."
+msgstr "Lade keine Einträge vorab herunter."
+
+msgid ""
+"Preload current page items in background. This greatly enhance speed "
+"sensation when opening a new item. Note: It uses your bandwith more than "
+"needed if you do not read all the page items."
+msgstr ""
+"Lade die Einträge der aktuellen Seite im Hintergrund vorab herunter. Dadurch "
+"werden neue Einträge deutlich schneller geöffnet. Verbraucht mehr Bandbreite "
+"als nötig, wenn du nicht alle Einträge einer Seite liest."
+
+msgid "Do not open link in new tab"
+msgstr "Link nicht in einem neuen Tab öffnen"
+
+msgid "Automatically open link in new tab"
+msgstr "Link automatisch in einem neuen Tab öffnen"
+
+msgid "Auto update with javascript"
+msgstr "Automatisch aktualisieren mit JavaScript"
+
+msgid "Do not auto update with javascript"
+msgstr "Nicht automatisch aktualisieren mit JavaScript"
+
+msgid "KrISS feed menu preferences"
+msgstr "KrISS-Feed-Menüeinstellungen"
+
+msgid ""
+"You can order or remove elements in the menu. Set a position or leave empty "
+"if you do not want the element to appear in the menu."
+msgstr ""
+"Du kannst Elemente im Menü neu anordnen oder entfernen. Setze eine Position "
+"oder lass das Feld leer, wenn du das Element nicht im Menü haben willst."
+
+msgid "View"
+msgstr "Anzeige"
+
+msgid "View as list"
+msgstr "Als Liste anzeigen"
+
+msgid "View as expanded"
+msgstr "Ausgeklappt anzeigen"
+
+msgid "Feeds"
+msgstr "Feeds"
+
+msgid "Hide feeds list"
+msgstr "Verstecke die Feed-Liste"
+
+msgid "Show feeds list"
+msgstr "Zeige die Feed-Liste"
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Show all items"
+msgstr "Zeige alle Einträge"
+
+msgid "Show unread items"
+msgstr "Zeige ungelesene Einträge"
+
+msgid "Order"
+msgstr "Reihenfolge"
+
+msgid "Show older first"
+msgstr "Zeige ältere Einträge zuerst"
+
+msgid "Show newer first"
+msgstr "Zeige neuere Einträge zuerst"
+
+msgid "Update all"
+msgstr "Alle aktualisieren"
+
+msgid "Update folder"
+msgstr "Ordner aktualisieren"
+
+msgid "Update feed"
+msgstr "Feed aktualisieren"
+
+msgid "Mark as read"
+msgstr "Als gelesen markieren"
+
+msgid "Mark all as read"
+msgstr "Alle als gelesen markieren"
+
+msgid "Mark folder as read"
+msgstr "Ordner als gelesen markieren"
+
+msgid "Mark feed as read"
+msgstr "Feed als gelesen markieren"
+
+msgid "Mark as unread"
+msgstr "Als ungelesen markieren"
+
+msgid "Mark all as unread"
+msgstr "Alle als ungelesen markieren"
+
+msgid "Mark folder as unread"
+msgstr "Ordner als ungelesen markieren"
+
+msgid "Mark feed as unread"
+msgstr "Feed als ungelesen markieren"
+
+msgid "Edit all"
+msgstr "Alle bearbeiten"
+
+msgid "Edit folder"
+msgstr "Ordner bearbeiten"
+
+msgid "KrISS feed paging menu preferences"
+msgstr "KrISS-Feed-Umblättereinstellungen"
+
+msgid "Item"
+msgstr "Eintrag"
+
+msgid "If you want to go previous and next item"
+msgstr "Wenn du zum vorherigen oder nächsten Eintrag springen willst"
+
+msgid "Page"
+msgstr "Seite"
+
+msgid "If you want to go previous and next page"
+msgstr "Wenn du zur vorherigen oder nächsten Seite springen willst"
+
+msgid "Items by page"
+msgstr "Einträge pro Seite"
+
+msgid "If you want to modify number of items by page"
+msgstr "Wenn du die Anzahl der Einträge pro Seite verändern willst"
+
+msgid "If you want to add a mark as read button into paging"
+msgstr ""
+"Wenn du einen \"Gelesen\"-Knopf in die Umblätterfunktion einfügen willst"
+
+msgid "Cron configuration"
+msgstr "Cron-Konfiguration"
+
+msgid "You can use <code>&force</code> to force update."
+msgstr ""
+"Du kannst <code>&force</code> verwenden, um die Aktualisierung zu erzwingen."
+
+msgid "To update every hour:"
+msgstr "Um stündlich zu aktualisieren:"
+
+msgid "If you can not use wget, you may try php command line:"
+msgstr "Wenn du wget nicht verwenden kannst, versuche die PHP-Kommandozeile:"
+
+msgid ""
+"If previous solutions do not work, try to create an update.php file into "
+"data directory containing:"
+msgstr ""
+"Wenn diese Möglichkeiten nicht funktionieren, versuche eine Datei namens "
+"update.php im data-Verzeichnis mit folgendem Inhalt anzulegen:"
+
+msgid "Then set up your cron with:"
+msgstr "Konfiguriere dann deinen Cron-Dienst mit:"
+
+msgid "Do not forget to check permissions"
+msgstr "Vergiss nicht, die Berechtigungen zu überprüfen"
+
+msgid "Reorder folders"
+msgstr "Ordner neu anordnen"
+
+msgid "Add selected folders to selected feeds"
+msgstr "Füge die ausgewählten Ordner zu den ausgewählten Feeds hinzu"
+
+msgid "Remove selected folders to selected feeds"
+msgstr "Entferne die ausgewählten Ordner von den ausgewählten Feeds"
+
+msgid "List of feeds"
+msgstr "Feed-Liste"
+
+msgid "Select all"
+msgstr "Alle auswählen"
+
+msgid "Unselect all"
+msgstr "Keinen auswählen"
+
+msgid "Delete selected feeds"
+msgstr "Ausgewählte Feeds löschen"
+
+msgid "Do you really want to delete all selected feeds?"
+msgstr "Möchtest du wirklich alle ausgewählten Feeds löschen?"
+
+msgid "Feed main information"
+msgstr "Feed-Hauptinformation"
+
+msgid "Feed title"
+msgstr "Feed-Titel"
+
+msgid "Feed XML URL"
+msgstr "Feed-XML-URL"
+
+msgid "Feed main URL"
+msgstr "Feed-Haupt-URL"
+
+msgid "Feed description"
+msgstr "Feed-Beschreibung"
+
+msgid "Feed folders"
+msgstr "Feed-Ordner"
+
+msgid "New folder"
+msgstr "Neuer Ordner"
+
+msgid "Feed preferences"
+msgstr "Feed-Einstellungen"
+
+msgid "Time update"
+msgstr "Aktualisierung planen"
+
+msgid ""
+"\"auto\", \"max\" or a number of minutes less than \"max\" define in <a href="
+"\"?config\">configuration</a>"
+msgstr ""
+"\"auto\", \"max\" oder eine Anzahl Minuten kleiner als \"max\", festgelegt "
+"in der <a href=\"config\">Konfiguration</a>"
+
+msgid "Last update"
+msgstr "Letzte Aktualisierung"
+
+msgid "Delete feed"
+msgstr "Feed löschen"
+
+msgid "Folder title"
+msgstr "Ordnertitel"
+
+msgid "Leave empty to delete"
+msgstr "Leer lassen, um zu löschen"
+
+msgid "Keyboard shortcuts"
+msgstr "Tastenkürzel"
+
+msgid "Key legend"
+msgstr "Tastenlegende"
+
+msgid "Space key"
+msgstr "Leertaste"
+
+msgid "Shift key"
+msgstr "Umschalttaste"
+
+msgid "Right arrow key"
+msgstr "Pfeil nach rechts"
+
+msgid "Left arrow key"
+msgstr "Pfeil nach links"
+
+msgid "Items navigation"
+msgstr "Eintrag-Navigation"
+
+msgid "Toggle current item (open, close item in list view)"
+msgstr ""
+"Aktuellen Eintrag umschalten (Eintrag in der Listenansicht öffnen/schließen)"
+
+msgid "Mark current item as read if unread or unread if read"
+msgstr ""
+"Markiere aktuellen Eintrag als gelesen, wenn ungelesen, oder als ungelesen, "
+"wenn gelesen"
+
+msgid ""
+"Mark current item as read if unread or unread if read and open current "
+"(useful in list view and unread filter)"
+msgstr ""
+"Markiere aktuellen Eintrag als gelesen, wenn ungelesen, oder als ungelesen, "
+"wenn gelesen, und öffne ihn (nützlich in der Listenansicht mit dem Ungelesen-"
+"Filter)"
+
+msgid "Go to next item"
+msgstr "Zum nächsten Eintrag springen"
+
+msgid "Go to previous item"
+msgstr "Zum vorherigen Eintrag springen"
+
+msgid "Go to next page"
+msgstr "Zur nächsten Seite springen"
+
+msgid "Go to previous page"
+msgstr "Zur vorherigen Seite springen"
+
+msgid "Go to next item and open it (in list view)"
+msgstr "Zum nächsten Eintrag springen und ihn öffnen (in der Listenansicht)"
+
+msgid "Go to previous item and open it (in list view)"
+msgstr "Zum vorherigen Eintrag springen und ihn öffnen (in der Listenansicht)"
+
+msgid "Open current item in new tab"
+msgstr "Aktuellen Eintrag in einem neuen Tab öffnen"
+
+msgid "Open current item in current window"
+msgstr "Aktuellen Eintrag im aktuellen Fenster öffnen"
+
+msgid "Share current item"
+msgstr "Aktuellen Eintrag teilen"
+
+msgid ""
+"Mark all items, all items from current feed or all items from current folder "
+"as read"
+msgstr ""
+"Markiere alle Einträge, alle Einträge des aktuellen Feeds oder alle Einträge "
+"des aktuellen Ordners als gelesen"
+
+msgid "Star/Unstar current item"
+msgstr "Aktuellen Eintrag zu Favoriten hinzufügen/entfernen"
+
+msgid ""
+"Open all unread items from current page in new tabs and mark items as read"
+msgstr ""
+"Öffne alle ungelesen Einträge der aktuellen Seite in neuen Tabs und markiere "
+"sie als gelesen"
+
+msgid "Menu navigation"
+msgstr "Menünavigation"
+
+msgid "Go to Home page"
+msgstr "Zur Startseite gehen"
+
+msgid "Change view as list or expanded"
+msgstr "Ansicht zwischen Liste und ausgeklappt umschalten"
+
+msgid "Show or hide list of feeds/folders"
+msgstr "Liste von Feeds/Ordnern anzeigen oder ausblenden"
+
+msgid "Edit current selection (all, folder or feed)"
+msgstr "Aktuelle Auswahl bearbeiten (alle, Ordner oder Feed)"
+
+msgid "Update current selection (all, folder or feed)"
+msgstr "Aktuelle Auswahl aktualisieren (alle, Ordner oder Feed)"
+
+msgid "Reload the page as the F5 key in most of browsers"
+msgstr ""
+"Die Seite kann mit der F5-Taste in den meisten Browsern neu geladen werden"
+
+msgid "Go to Help page (this page)"
+msgstr "Zur Hilfeseite gehen (diese Seite)"
+
+msgid "Configuration check"
+msgstr "Konfigurationscheck"
+
+msgid "PHP configuration"
+msgstr "PHP-Konfiguration"
+
+msgid "You should be able to load https:// rss links."
+msgstr "Du solltest in der Lage sein, https://-RSS-Links zu laden."
+
+msgid "You may have problems using https:// rss links."
+msgstr "Du könntest mit https://-RSS-Links Probleme kriegen."
+
+msgid "Import opml file"
+msgstr "OPML-Datei importieren"
+
+msgid "Opml file:"
+msgstr "OPML-Datei:"
+
+msgid "Size max:"
+msgstr "Max. Größe:"
+
+msgid "Overwrite existing feeds"
+msgstr "Bestehende Feeds überschreiben"
+
+msgid "top"
+msgstr "Top"
+
+msgid "share"
+msgstr "Teilen"
+
+msgid "read"
+msgstr "gelesen"
+
+msgid "unread"
+msgstr "ungelesen"
+
+msgid "star"
+msgstr "Favorit"
+
+msgid "unstar"
+msgstr "kein Favorit"
+
+msgid "from"
+msgstr "von"
+
+msgid "Click on flag to select your language."
+msgstr "Auf Flagge klicken, um Sprache auszuwählen."
+
+msgid "Login"
+msgstr "Benutzername"
+
+msgid "Password"
+msgstr "Passwort"
+
+msgid "Install KrISS feed"
+msgstr "KrISS-Feed installieren"
+
+msgid "Welcome to KrISS feed"
+msgstr "Willkommen zu KrISS-Feed"
+
+msgid "Stay signed in (do not check on public computers)"
+msgstr "Angemeldet bleiben (auf öffentlichen Computern nicht ankreuzen)"
+
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+msgid "Menu"
+msgstr "Menü"
+
+msgid "Home"
+msgstr "Startseite"
+
+msgid "Sign out"
+msgstr "Abmelden"
+
+msgid "Change password"
+msgstr "Passwort ändern"
+
+msgid "Export opml file"
+msgstr "OPML-Datei exportieren"
+
+msgid "Previous item"
+msgstr "Vorheriger Eintrag"
+
+msgid "Next item"
+msgstr "Nächster Eintrag"
+
+msgid "Previous page"
+msgstr "Vorherige Seite"
+
+msgid "Next page"
+msgstr "Nächste Seite"
+
+msgid "Items per page"
+msgstr "Einträge pro Seite"
+
+msgid "A simple and smart (or stupid) feed reader"
+msgstr "Ein einfacher und schlauer (oder dummer) Feed-Reader"
+
+#. KrISS: By Tontof
+msgid "By"
+msgstr "Von"
+
+msgid "Go back"
+msgstr "Zurück"
+
+msgid "Force update"
+msgstr "Aktualisierung erzwingen"

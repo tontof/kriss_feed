@@ -1,9 +1,15 @@
-kriss_feed (version 5)
+kriss_feed (version 8)
 ======================
 
 A simple and smart (or stupid) feed reader.
 
 An example is available on [tontof.net](http://tontof.net/feed).
+
+This is an alternative to Google Reader or other RSS feed readers:
+- It does not require SQL or database.
+- It works with PHP 5.2
+
+More information here: [KrISS feed](http://tontof.net/kriss/feed).
 
 Installation
 ============
@@ -13,6 +19,8 @@ on your server. Enjoy !
 * If you want to look at the source, look at the src directory.
 To generate index.php file, just run the command :
 bash generateIndex > index.php
+
+More information here: [KrISS feed](http://tontof.net/kriss/feed).
 
 Features
 ========
@@ -45,9 +53,27 @@ Features
   * bootstrap css
   * fully usable without javascript
 
+* version 6
+  * security is increased
+  * more functionnalities (thanks to your feedback)
+
+* version 7
+  * starred items
+  * order list of feeds
+  * list of feeds are updated with javascript
+
+* version 8
+  * internationalization
+  * plugins
+
 Licence
 =======
-kriss_feed simple and smart (or stupid) feed reader
-Copyleft (ɔ) 2012 Tontof - http://tontof.net
-use KrISS feed at your own risk
+Copyleft (ɔ) - Tontof - http://tontof.net
 
+Use KrISS feed at your own risk.
+
+[Free software means users have the four essential freedoms](http://www.gnu.org/philosophy/philosophy.html):
+* to run the program
+* to study and change the program in source code form
+* to redistribute exact copies, and
+* to distribute modified versions.

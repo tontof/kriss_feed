@@ -1,0 +1,52 @@
+* Ideas
+** Plugins
+*** Should be ok to personnalize specific feed configuration
+** Javascript
+*** https://github.com/aemkei/fishbone.js/
+*** Shortcuts
+**** http://dmauro.github.io/Keypress/
+**** http://craig.is/killing/mice
+** Template
+*** Try to fuse raintpl item template and javascript one
+* Improvements
+** Add header('Content-Type: text/html; charset=utf-8');
+** Replace data-src to src to prevent lazy loading #329
+** Add direct button to go next and previous item and automatically open it in list mode
+*** http://tontof.net/index.php?2013/11/14/18/28/04-kriss-feed-integre-raintpl-enfin-presque#8
+** Add feed preview when adding a new feed #299 + title personnalization #227 :plugin:
+** Improve edit menu : #16 #197
+** Replace auto blank option in config by a specific plugin #308 :javascript:plugin:
+** Add link to get unread item without login (using hash) : #97 (comment) :plugin:api:
+** History management in javascript : #25 #266               :javascript:
+** New version detection : #28                                   :plugin:
+** Use space key as in Google Reader (scroll + open) : #42 :plugin:javascript:
+** Add proxy parameters : #79                                    :plugin:
+** Update time items configuration : #85
+** Create RSS feed from starred item : #90                            :plugin:
+** Mark as read all previous : #94
+** Use javascript in menu and list of feeds : #100                :javascript:
+** Use tab in configuration : #104
+** Add button to modify autohide in list of feeds : #105
+** Add a search engine : #115                                         :plugin:
+** Think about relative link in content : #119
+** Let people customize template : #120                               :plugin:
+** Force update with javascript #124                              :javascript:
+** Remove feed title from items list when a single feed is selected : #127
+** Use ajax to load items when click on a specific feed : #141    :javascript:
+** Order list of feeds by unread items #150
+** Add javascript confirmation for mark as read (add &confirm in link) #151
+** Add no RSS feed page using external service as page2rss #152       :plugin:
+** Server side filtering #156 #157                                    :plugin:
+** Backup/Archive system #162                                         :plugin:
+** Close item when click outside #165                             :javascript:
+** Add manually updated items #169
+** Add some statistics about feed #185                                :plugin:
+** Personnalize shortcut http://tontof.net/index.php?2013/04/18/19/00/00-new-kriss-feed-update-version-7#29 :plugin:
+** Export public opml (by folder ?) http://tontof.net/index.php?2013/04/18/19/00/00-new-kriss-feed-update-version-7#29 :plugin:
+** Parse category as tag #229
+** Add a trashed status ? #242                                        :plugin:
+** Add log to try to find bug #257 #269
+** Transform date check restriction with plugins #262                 :plugin:
+** Add category when list of feed is hidden #290
+** Mark as read at opening : #38 (plugin ?)           :plugin:javascript:
+** autonext page : #6                                     :plugin:javascript:

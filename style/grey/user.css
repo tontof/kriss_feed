@@ -1,0 +1,110 @@
+body {
+	background: #ddd;
+}
+
+@media (max-width: 767px) {
+    body {
+        background: #fff;
+    }
+}
+
+li.feed {
+    margin: 4px;
+}
+
+li.folder > h5 {
+    border: 0px;
+}
+
+li.folder > h4 {
+    border: 0px;
+}
+
+li.feed.has-unread {
+    font-weight: normal;
+}
+
+.label, .badge {
+    color: #aaa;
+    background-color: transparent;
+}
+
+.ico-b-disc {
+	background-color: #aaa;
+}
+
+.well, .navbar {
+    border: 0px;
+    background-color: #fff;
+}
+
+.navbar {
+    max-width: 1024px;
+    margin: 15px auto;
+}
+
+.navbar .nav > li > a {
+    padding: 8px;
+}
+
+#paging-up, #paging-down {
+    display: none;
+}
+
+.nav-collapse.collapse {
+	font-size: 70%;
+}
+
+.item-info-end {
+    font-size: 70%;
+    color: #aaa;
+}
+
+.row-fluid .span3 {
+    width: 14%;
+    overflow: hidden;
+    font-size: 70%;
+}
+
+.row-fluid .span9 {
+    width: 85%;
+    border-radius: 3px;
+}
+
+#list-items {
+    max-width: 1024px;
+    margin: auto;
+    background: #fff;
+}
+
+.item-link {
+	color: #888;
+}
+
+.item-expanded {
+	color: #888;
+	border-top: 8px solid #ddd;
+}
+
+@media (max-width: 767px) {
+    .item-expanded {
+        border-top: 0px;
+    }
+}
+
+.current .item-link {
+	color: #000;
+}
+
+.current {
+	color: #000 !important;
+	background-color: #fff !important;
+}
+
+#list-feeds {
+	margin: 30px;
+}
+
+.folder {
+	margin: 15px 0;
+}

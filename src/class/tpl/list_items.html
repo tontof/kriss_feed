@@ -1,0 +1,127 @@
+{$unread=Intl::msg('unread')}
+{$read=Intl::msg('read')}
+{$share=Intl::msg('share')}
+{$star=Intl::msg('star')}
+{$unstar=Intl::msg('unstar')}
+{$top=Intl::msg('top')}
+
+<ul id="list-items" class="unstyled">
+{$keys=array_keys($items)}
+{loop="$keys"}
+  {$item=$kf->getItem($value)}
+  <li id="item-{$value}" class="{$view==='expanded'?'item-expanded':'item-list'}{if="$item.read==1"} read{/if}{if="$value==$currentItemHash"} current{/if}">
+    {if="$view==='list'"}
+    <a id="item-toggle-{$value}" class="item-toggle item-toggle-plus" href="{$query}current={$value}{if="!isset($_GET['open'])||$currentItemHash!=$value"}&amp;open{/if}" data-toggle="collapse" data-target="#item-div-{$value}">
+      <span class="ico ico-toggle-item">
+        <span class="ico-b-disc"></span>
+        <span class="ico-w-line-h"></span>
+        <span class="ico-w-line-v{if="!isset($_GET['open'])||$currentItemHash!=$value"} item-toggle-close{else} item-toggle-open{/if}"></span>
+      </span>
+      {$item.time.list}
+    </a>
+    <dl class="dl-horizontal item">
+      <dt class="item-feed">
+        {if="$addFavicon"}
+        <span class="item-favicon">
+          <img src="{$item.favicon}" height="16" width="16" title="favicon" alt="favicon"/>
+        </span>
+        {/if}
+        <span class="item-author">
+          <a class="item-feed" href="?currentHash={$value|substr:0,6}">
+            {$item.author}
+          </a>
+        </span>
+      </dt>
+      <dd class="item-info">
+        <span class="item-title">
+          {if="!isset($_GET['stars'])"}
+            {if="$item.read == 1"}
+          <a class="item-mark-as" href="{$query}unread={$value}"><span class="label">{$unread}</span></a>
+            {else}
+          <a class="item-mark-as" href="{$query}read={$value}"><span class="label">{$read}</span></a>
+            {/if}
+          {/if}
+          <a{if="$blank"} target="_blank"{/if}{if="$redirector==='noreferrer'"} rel="noreferrer"{/if} class="item-link" href="{if="$redirector!='noreferrer'"}{$redirector}{/if}{$item.link}">
+            {$item.title}
+          </a>
+        </span>
+        <span class="item-description">
+          <a class="item-toggle muted" href="{$query}current={$value}{if="!isset($_GET['open']) || $currentItemHash != $value"}&amp;open{/if}" data-toggle="collapse" data-target="#item-div-{$value}">
+            {$item.description}
+          </a>
+        </span>
+      </dd>
+    </dl>
+    <div class="clear"></div>
+    {/if}
+
+    <div id="item-div-{$value}" class="item collapse{if="$view==='expanded'||($currentItemHash==$value&&isset($_GET['open']))"} in well{/if}{if="$value==$currentItemHash"} current{/if}">
+      {if="$view==='expanded' or ($currentItemHash == $value and isset($_GET['open']))"}
+      <div class="item-title">
+        <a class="item-shaarli" href="{$query}shaarli={$value}"><span class="label">{$share}</span></a>
+        {if="(!isset($_GET['stars']))"}
+          {if="($item['read'] == 1)"}
+        <a class="item-mark-as" href="{$query}unread={$value}"><span class="label item-label-mark-as">{$unread}</span></a>
+          {else}
+        <a class="item-mark-as" href="{$query}read={$value}"><span class="label item-label-mark-as">{$read}</span></a>
+          {/if}
+        {/if}
+        {if="(isset($item['starred']) && $item['starred']===1)"}
+        <a class="item-starred" href="{$query}unstar={$value}"><span class="label">{$unstar}</span></a>
+        {else}
+        <a class="item-starred" href="{$query}star={$value}"><span class="label">{$star}</span></a>
+        {/if}
+        <a{if="$blank"} target="_blank"{/if}{if="$redirector==='noreferrer'"} rel="noreferrer"{/if} class="item-link" href="{if="$redirector!='noreferrer'"}{$redirector}{/if}{$item.link}">{$item.title}</a>
+      </div>
+      <div class="clear"></div>
+      <div class="item-info-end item-info-time">
+        {$item.time.expanded}
+      </div>
+      <div class="item-info-end item-info-author">
+        <a class="item-via"{if="$redirector==='noreferrer'"} rel="noreferrer"{/if} href="{if="$redirector!='noreferrer'"}{$redirector}{/if}{$item.via}">{$item.author}</a>
+        <a class="item-xml"{if="$redirector==='noreferrer'"} rel="noreferrer"{/if} href="{if="$redirector!='noreferrer'"}{$redirector}{/if}{$item.xmlUrl}">
+          <span class="ico">
+            <span class="ico-feed-dot"></span>
+            <span class="ico-feed-circle-1"></span>
+            <span class="ico-feed-circle-2"></span>
+          </span>
+        </a>
+      </div>
+      <div class="clear"></div>
+      <div class="item-content">
+        <article>
+          {$item.content}
+        </article>
+      </div>
+      <div class="clear"></div>
+      <div class="item-info-end">
+        <a class="item-top" href="#status"><span class="label label-expanded">{$top}</span></a> 
+        <a class="item-shaarli" href="{$query}shaarli={$value}"><span class="label label-expanded">{$share}</span></a>
+        {if="!isset($_GET['stars'])"}
+          {if="$item['read'] == 1"}
+        <a class="item-mark-as" href="{$query}unread={$value}"><span class="label item-label-mark-as label-expanded">{$unread}</span></a>
+          {else}
+        <a class="item-mark-as" href="{$query}read={$value}"><span class="label item-label-mark-as label-expanded">{$read}</span></a>
+          {/if}
+        {/if}
+        {if="isset($item.starred) && $item.starred===1"}
+        <a class="item-starred" href="{$query}unstar={$value}"><span class="label label-expanded">{$unstar}</span></a>
+        {else}
+        <a class="item-starred" href="{$query}star={$value}"><span class="label label-expanded">{$star}</span></a>
+        {/if}
+        {if="$view==='list'"}
+        <a id="item-toggle-{$value}" class="item-toggle item-toggle-plus" href="{$query}current={$value}{if="(!isset($_GET['open'])||$currentItemHash != $value)"}&amp;open{/if}" data-toggle="collapse" data-target="#item-div-{$value}">
+          <span class="ico ico-toggle-item">
+            <span class="ico-b-disc"></span>
+            <span class="ico-w-line-h"></span>
+          </span>
+        </a>
+        {/if}
+      </div>
+      <div class="clear"></div>
+      {/if}
+    </div>
+  </li>
+{/loop}
+</ul>
+<div class="clear"></div>

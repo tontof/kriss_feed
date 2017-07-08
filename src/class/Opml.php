@@ -95,29 +95,28 @@ class Opml
                 }
             }
 
-            echo '<script>alert("File '
-                . $filename . ' (' . MyTool::humanBytes($filesize)
-                . ') was successfully processed: ' . $importCount
-                . ' links imported.");document.location=\'?\';</script>';
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount));
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl());
+
+            FeedPage::$pb->renderPage('message', false);
 
             $kfData['feeds'] = $feeds;
             $kfData['folders'] = $folders;
 
             return $kfData;
         } else {
-            echo '<script>alert("File ' . $filename . ' ('
-                . MyTool::humanBytes($filesize) . ') has an unknown'
-                . ' file format. Check encoding, try to remove accents'
-                . ' and try again. Nothing was imported.");'
-                . 'document.location=\'?\';</script>';
-            exit;
+            FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)));
+
+            FeedPage::$pb->renderPage('message');
         }
     }
 
     /**
-     * Export feeds to an opml file
+     * Generate opml
      */
-    public static function exportOpml($feeds, $folders)
+    public static function generateOpml($feeds, $folders)
     {
         $withoutFolder = array();
         $withFolder = array();
@@ -133,12 +132,6 @@ class Opml
             }
         }
 
-        // generate opml file
-        header('Content-Type: text/xml; charset=utf-8');
-        header(
-            'Content-disposition: attachment; filename=kriss_feed_'
-            . strval(date('Ymd_His')) . '.opml'
-        );
         $opmlData = new DOMDocument('1.0', 'UTF-8');
 
         // we want a nice output
@@ -187,15 +180,15 @@ class Opml
                 $feeds[$hashUrl]['htmlUrl']
             );
             $outline->appendChild($outlineHtmlUrl);
+            $outlineType = $opmlData->createAttribute('type');
+            $outlineType->value = 'rss';
+            $outline->appendChild($outlineType);
             $body->appendChild($outline);
         }
 
         // with folder outline node
         foreach ($withFolder as $folderHash => $arrayHashUrl) {
             $outline = $opmlData->createElement('outline');
-            $outlineTitle = $opmlData->createAttribute('title');
-            $outlineTitle->value = htmlspecialchars($folders[$folderHash]['title']);
-            $outline->appendChild($outlineTitle);
             $outlineText = $opmlData->createAttribute('text');
             $outlineText->value = htmlspecialchars($folders[$folderHash]['title']);
             $outline->appendChild($outlineText);
@@ -226,6 +219,9 @@ class Opml
                 $outlineHtmlUrl->value
                     = htmlspecialchars($feeds[$hashUrl]['htmlUrl']);
                 $outlineKF->appendChild($outlineHtmlUrl);
+                $outlineType = $opmlData->createAttribute('type');
+                $outlineType->value = 'rss';
+                $outlineKF->appendChild($outlineType);
                 $outline->appendChild($outlineKF);
             }
             $body->appendChild($outline);
@@ -234,7 +230,23 @@ class Opml
         $opml->appendChild($body);
         $opmlData->appendChild($opml);
 
-        echo $opmlData->saveXML();
+        return $opmlData->saveXML();
+    }
+
+    /**
+     * Export feeds to an opml file
+     */
+    public static function exportOpml($feeds, $folders)
+    {
+
+        // generate opml file
+        header('Content-Type: text/xml; charset=utf-8');
+        header(
+            'Content-disposition: attachment; filename=kriss_feed_'
+            . strval(date('Ymd_His')) . '.opml'
+        );
+
+        echo self::generateOpml($feeds, $folders);
         exit();
     }
 

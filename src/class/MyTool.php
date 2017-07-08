@@ -12,6 +12,155 @@
  */
 class MyTool
 {
+    // http://php.net/manual/en/function.libxml-set-streams-context.php
+    static $opts = array();
+    static $redirects = 20;
+
+    const ERROR_UNKNOWN_CODE = 1;
+    const ERROR_LOCATION = 2;
+    const ERROR_TOO_MANY_REDIRECTS = 3;
+    const ERROR_NO_CURL = 4;
+
+    /** 
+     * loadUrl
+     * http://stackoverflow.com/questions/2511410/curl-follow-location-error
+     *
+     * @param string  $url to load
+     *
+     * @return array $output with header, code, data, error
+     */
+    public static function loadUrl($url)
+    {
+        $redirects = self::$redirects;
+        $opts = self::$opts;
+        $header = '';
+        $code = '';
+        $data = '';
+        $error = '';
+
+        if (in_array('curl', get_loaded_extensions())) {
+            $ch = curl_init($url);
+
+            if (!empty($opts)) {
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
+                curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
+                curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                if (!empty($opts['http']['headers'])) {
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $opts['http']['headers']);
+                }
+            }
+            curl_setopt($ch, CURLOPT_ENCODING, '');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+
+            if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
+                curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
+                $data = curl_exec($ch);
+            } else {
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+                curl_setopt($ch, CURLOPT_FORBID_REUSE, false);
+                do {
+                    $data = curl_exec($ch);
+                    if (curl_errno($ch)) {
+                        break;
+                    }
+                    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    /**
+                     * 301 Moved Permanently
+                     * 302 Found
+                     * 303 See Other
+                     * 307 Temporary Redirect
+                     */
+                    if ($code != 301 && $code != 302 && $code!=303 && $code!=307) {
+                        break;
+                    }
+
+                    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                    $header = substr($data, 0, $headerSize);
+                    if (!preg_match('/^(?:Location|URI): ([^\r\n]*)[\r\n]*$/im', $header, $matches)) {
+                        $error = self::ERROR_LOCATION;
+                        break;
+                    }
+                    curl_setopt($ch, CURLOPT_URL, $matches[1]);
+                } while (--$redirects);
+
+                if (!$redirects) {
+                    $error = self::ERROR_TOO_MANY_REDIRECTS;
+                }
+            }
+
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header = substr($data, 0, $headerSize);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $data = substr($data, $headerSize);
+            $error = curl_error($ch);
+
+            curl_close($ch);
+        } else {
+            $context = stream_context_create($opts);
+            if ($stream = fopen($url, 'r', false, $context)) {
+                $data = stream_get_contents($stream);
+                $status = $http_response_header[0];
+                $code = explode(' ', $status);
+                if (count($code)>1) {
+                    $code = $code[1];
+                } else {
+                    $code = '';
+                    $error = self::ERROR_UNKNOWN_CODE;
+                }
+                $header = implode("\r\n", $http_response_header);
+                fclose($stream);
+
+                if (substr($data,0,1) != '<') {
+                    $decoded = gzdecode($data);
+                    if (substr($decoded,0,1) == '<') {
+                        $data = $decoded;
+                    }
+                }
+            } else {
+                $error = self::ERROR_NO_CURL;
+            }
+        }
+
+        return array(
+            'header' => $header,
+            'code' => $code,
+            'data' => $data,
+            'error' => self::getError($error),
+        );
+    }
+
+    /**
+     * Get human readable error
+     *
+     * @param integer $error Number of error occured during a feed update
+     *
+     * @return string String of the corresponding error
+     */
+    public static function getError($error)
+    {
+        switch ($error) {
+        case self::ERROR_UNKNOWN_CODE:
+            return Intl::msg('Http code not valid');
+            break;
+        case self::ERROR_LOCATION:
+            return Intl::msg('Location not found');
+            break;
+        case self::ERROR_TOO_MANY_REDIRECTS:
+            return Intl::msg('Too many redirects');
+            break;
+        case self::ERROR_NO_CURL:
+            return Intl::msg('Error when loading without curl');
+            break;
+        default:
+            return $error;
+            break;
+        }
+    }
+
     /**
      * Test if php version is greater than 5, set error reporting, deal
      * with magic quotes for POST, GET and COOKIE and initialize bufferization
@@ -25,6 +174,7 @@ class MyTool
         }
 
         error_reporting(E_ALL);
+        ini_set('display_errors', 1);
 
         function stripslashesDeep($value) {
             return is_array($value)
@@ -39,7 +189,6 @@ class MyTool
         }
 
         ob_start();
-        register_shutdown_function('ob_end_flush');
     }
 
     /**
@@ -173,6 +322,11 @@ class MyTool
      */
     public static function getUrl()
     {
+        $base =  isset($GLOBALS['BASE_URL'])?$GLOBALS['BASE_URL']:'';
+        if (!empty($base)) {
+            return $base;
+        }
+
         $https = (!empty($_SERVER['HTTPS'])
                   && (strtolower($_SERVER['HTTPS']) == 'on'))
             || (isset($_SERVER["SERVER_PORT"])
@@ -183,7 +337,7 @@ class MyTool
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
-        $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
+        $scriptname = str_replace('/index.php', '/', $_SERVER["SCRIPT_NAME"]);
 
         if (!isset($_SERVER["SERVER_NAME"])) {
             return $scriptname;
@@ -290,6 +444,11 @@ class MyTool
         return $t;
     }
 
+    /**
+     * Render json from data
+     *
+     * @param mixed $data data to convert into json
+     */
     public static function renderJson($data)
     {
         header('Cache-Control: no-cache, must-revalidate');
@@ -299,6 +458,32 @@ class MyTool
         echo json_encode($data);
         exit();
     }
+
+    /**
+     * Grab to local a page/an image and save it into file and return a link
+     * to local if success or original link if it fails
+     *
+     * @param string $url to be downloaded
+     * @param string $file to be saved
+     * @param bool   $force to force update
+     */
+    public static function grabToLocal($url, $file, $force = false)
+    {
+        if ((!file_exists($file) || $force) && in_array('curl', get_loaded_extensions())){
+            $ch = curl_init ($url);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            $raw = curl_exec($ch);
+            if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
+                $fp = fopen($file, 'x');
+                fwrite($fp, $raw);
+                fclose($fp);
+            }
+            curl_close ($ch);
+        }
+    }
+
     /**
      * Redirect depending on returnurl form or REFERER
      *
@@ -309,7 +494,7 @@ class MyTool
         if ($rurl === '') {
             // if (!empty($_SERVER['HTTP_REFERER']) && strcmp(parse_url($_SERVER['HTTP_REFERER'],PHP_URL_HOST),$_SERVER['SERVER_NAME'])==0)
             $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
-            if (!empty($_POST)) {
+            if (isset($_POST['returnurl'])) {
                 $rurl = $_POST['returnurl'];
             }
         }
@@ -319,15 +504,13 @@ class MyTool
             $rurl = MyTool::getUrl();
         }
 
+        if (substr($rurl, 0, 1) !== '?') {
+            $ref = MyTool::getUrl();
+            if (substr($rurl, 0, strlen($ref)) !== $ref) {
+                $rurl = $ref;
+            }
+        }
         header('Location: '.$rurl);
         exit();
-    }
-
-    /**
-     * From Simplie Pie
-     */
-    public static function silence_errors($num, $str)
-    {
-	// No-op                                                       
     }
 }

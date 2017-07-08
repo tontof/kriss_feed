@@ -1,0 +1,733 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: KrISS feed\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Tontof <tontof@free.fr>\n"
+"Language-Team: \n"
+"Language: Français\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#, php-format
+msgid "Can not create %s directory, check permissions"
+msgstr "Impossible de créer le dossier %s, vérifiez les droits"
+
+#, php-format
+msgid "Can not protect %s directory with .htaccess, check permissions"
+msgstr "Impossible de protéger le dossier %s avec un fichier .htaccess, vérifiez les droits"
+
+msgid "Wrong token"
+msgstr "Jeton de sécurité invalide"
+
+msgid "Login failed!"
+msgstr "Échec de la connexion !"
+
+msgid "I said: NO. You are banned for the moment. Go away."
+msgstr "Vous avez été banni. Revenez plus tard."
+
+msgid "Sign in"
+msgstr "Connexion"
+
+msgid "Change your password"
+msgstr "Changer le mot de passe"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "Update"
+msgstr "Mise à jour"
+
+msgid "Plugins management"
+msgstr "Gestion des plugins"
+
+msgid "Configuration"
+msgstr "Configuration"
+
+#, php-format
+msgid "The file you are trying to upload is probably bigger than what this webserver can accept (%s). Please upload in smaller chunks."
+msgstr "Le fichier que vous essayer d'envoyer est trop volumineux par rapport à ce que le serveur peut accepter (%s). Essayez de réduire la taille de ce dernier."
+
+msgid "Import"
+msgstr "Importer"
+
+msgid "Add a new feed"
+msgstr "Ajouter un nouveau flux"
+
+msgid "starred items"
+msgstr "articles conservés"
+
+msgid "Starred items"
+msgstr "Articles conservés"
+
+msgid "Edit"
+msgstr "Éditer"
+
+msgid "Please configure your share link first"
+msgstr "Veuillez configurer votre lien de partage"
+
+msgid "unread items"
+msgstr "articles non lus"
+
+msgid "Your simple and smart (or stupid) feed reader is now configured."
+msgstr "Votre simple et superbe (ou stupide) lecteur de flux est bien configuré."
+
+msgid "Continue"
+msgstr "Suivant"
+
+msgid "KrISS feed installation"
+msgstr "Installation de KrISS feed"
+
+msgid "All feeds"
+msgstr "Tous les flux"
+
+msgid "Empty output data"
+msgstr "Données vides"
+
+msgid "Duplicated feed"
+msgstr "Flux déjà présent"
+
+msgid "Unknown feedhash"
+msgstr "Flux inconnu"
+
+msgid "Items may have been missed since last update"
+msgstr "Des articles peuvent être manquants depuis la dernière mise à jour"
+
+msgid "Feed"
+msgstr "Flux"
+
+msgid "New items"
+msgstr "Nouveaux articles"
+
+msgid "Time"
+msgstr "Durée"
+
+msgid "Status"
+msgstr "État"
+
+msgid "Successfully updated"
+msgstr "Mise à jour réussie"
+
+msgid "Already up-to-date"
+msgstr "Déjà à jour"
+
+msgid "Total:"
+msgstr "Total :"
+
+msgid "items"
+msgstr "articles"
+
+msgid "item"
+msgstr "article"
+
+msgid "Successes"
+msgstr "Succès"
+
+msgid "Success"
+msgstr "Succès"
+
+msgid "Up-to-date"
+msgstr "À jour"
+
+msgid "Errors"
+msgstr "Erreurs"
+
+msgid "Error"
+msgstr "Erreur"
+
+msgid "Http code not valid"
+msgstr "Code retour HTTP non valide"
+
+msgid "Location not found"
+msgstr "Redirection non trouvée"
+
+msgid "Too many redirects"
+msgstr "Trop de redirections"
+
+msgid "Error when loading without curl"
+msgstr "Erreur pendant le chargement sans curl"
+
+#, php-format
+msgid "File %s (%s) was successfully processed: %d links imported"
+msgstr "Le fichier %s (%s) a été correctement traité : %d liens ont été importés"
+
+#, php-format
+msgid "File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported."
+msgstr "Le fichier %s (%s) ne correspond pas à un format de fichier correct. Vérifiez l'encodage des caractères, supprimez les accents et réessayer. Rien a été importé."
+
+msgid "Feed URL"
+msgstr "URL du flux"
+
+msgid "Add selected folders to feed"
+msgstr "Associer un ou plusieurs dossiers au flux"
+
+msgid "Edit feed"
+msgstr "Éditer le flux"
+
+msgid "Add a new folder"
+msgstr "Ajouter un nouveau dossier"
+
+msgid "Add new feed"
+msgstr "Ajouter un nouveau flux"
+
+msgid "Use bookmarklet to add a new feed"
+msgstr "Utiliser le bookmarklet pour ajouter un nouveau flux"
+
+msgid "Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link..."
+msgstr "Glisser ce lien dans votre barre personnelle ou faîtes un clic droit puis marque page sur ce lien"
+
+msgid "Old password"
+msgstr "Ancien mot de passe"
+
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Save new password"
+msgstr "Enregistrer le nouveau mot de passe"
+
+msgid "KrISS feed main information"
+msgstr "Informations principales de KrISS feed"
+
+msgid "KrISS feed title"
+msgstr "Titre de KrISS feed"
+
+msgid "KrISS feed visibility"
+msgstr "Visibilité de KrISS feed"
+
+msgid "Public KrISS feed"
+msgstr "KrISS feed public"
+
+msgid "No restriction. Anyone can modify configuration, mark as read items, update feeds..."
+msgstr "Aucune restriction. N'importe qui peut modifier la configuration, marquer comme lus les articles, mettre à jour les flux..."
+
+msgid "Protected KrISS feed"
+msgstr "KrISS feed protégé"
+
+msgid "Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds..."
+msgstr "N'importe qui peut accéder aux flux et articles mais seulement vous pouvez modifier la configuration, marquer les articles comme lus, mettre à jour les flux..."
+
+msgid "Private KrISS feed"
+msgstr "KrISS feed privé"
+
+msgid "Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds..."
+msgstr "Seulement vous pouvez accéder aux flux et articles et seulement vous pouvez modifier la configuration, marquer les articles comme lus, mettre à jour les flux..."
+
+msgid "Shaarli URL"
+msgstr "URL de shaarli"
+
+msgid "Options:"
+msgstr "Options :"
+
+msgid "${url}: item link"
+msgstr "${url} : lien de l'article"
+
+msgid "${title}: item title"
+msgstr "${title}: titre de l'article"
+
+msgid "${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code>"
+msgstr "${via}: si le nom de domaine de &lt;link&gt; et &lt;guid&gt; sont différents ${via} vaut : <code>via &lt;guid&gt;</code>"
+
+msgid "${sel}: <strong>Only available</strong> with javascript: <code>selected text</code>"
+msgstr "${sel}: <strong>Seulement valable</strong> avec javascript: <code>texte sélectionné</code>"
+
+msgid "example with shaarli:"
+msgstr "exemple avec Shaarli :"
+
+msgid "KrISS feed redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)"
+msgstr "Redirecteur (seulement pour les liens, les média ne sont pas considérés, <strong>le contenu des articles est anonymisé seulement avec javascript</strong>)"
+
+msgid "<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property"
+msgstr "<strong>http://anonym.to/?</strong> masquera le HTTP_REFERER, vous pouvez également mettre <strong>noreferrer</strong> pour utiliser la propriété HTML5"
+
+msgid "Disable session cookie hijacking protection"
+msgstr "Désactiver la protection contre le vol de cookie de session"
+
+msgid "Check this if you get disconnected often or if your IP address changes often."
+msgstr "Cocher la case si vous êtes souvent déconnectés ou si votre adresse IP change souvent."
+
+msgid "Save modifications"
+msgstr "Enregistrer les modifications"
+
+msgid "KrISS feed preferences"
+msgstr "Préférences de KrISS feed"
+
+msgid "Maximum number of items by feed"
+msgstr "Nombre maximum d'articles par flux"
+
+msgid "Need update to be taken into consideration"
+msgstr "Nécessite une mise à jour pour être pris en compte"
+
+msgid "Maximum delay between feed update (in minutes)"
+msgstr "Délai maximum entre la mise à jour des flux (en minutes)"
+
+msgid "Auto read next item option"
+msgstr "Option de lecture automatique quand on passe à l'article suivant"
+
+msgid "Do not mark as read when next item"
+msgstr "Ne marque pas comme lu l'article courant quand on passe à l'article suivant"
+
+msgid "Auto mark current as read when next item"
+msgstr "Marque automatiquement l'article courant comme lu quand on passe à l'article suivant"
+
+msgid "Auto read next page option"
+msgstr "Option de lecture automatique quand on passe à la page suivante"
+
+msgid "Do not mark as read when next page"
+msgstr "Ne marque pas comme lu les articles de la page courante quand on passe à la page suivante"
+
+msgid "Auto mark current as read when next page"
+msgstr "Marque automatiquement comme lus les articles de la page courante quand on passe à la page suivante"
+
+msgid "Not implemented yet"
+msgstr "Pas encore implémenté"
+
+msgid "Auto hide option"
+msgstr "Option de cache automatique"
+
+msgid "Always show feed in feeds list"
+msgstr "Montre toujours les flux dans la liste des flux"
+
+msgid "Automatically hide feed when 0 unread item"
+msgstr "Masque automatiquement les flux ayant tous leurs articles lus."
+
+msgid "Auto focus option"
+msgstr "Option de focus automatique"
+
+msgid "Do not automatically jump to current item when it changes"
+msgstr "Ne se déplace pas automatiquement à l'article courant quand ce dernier change"
+
+msgid "Automatically jump to the current item position"
+msgstr "Se déplace automatiquement à l'article courant"
+
+msgid "Add favicon option"
+msgstr "Option de l'ajout des favicons"
+
+msgid "Do not add favicon next to feed on list of feeds/items"
+msgstr "N'ajoute pas les favicons à côté des flux dans la liste des flux/articles"
+
+msgid "Add favicon next to feed on list of feeds/items"
+msgstr "Ajoute les favicons à côté des flux dans la liste des flux/articles"
+
+msgid "Warning: It depends on http://getfavicon.appspot.com/"
+msgstr "Attention : utilise le service http://getfavicon.appspot.com/"
+
+msgid "but it will cache favicon on your server"
+msgstr "mais les favicons seront stockés sur votre serveur"
+
+msgid "Preload option"
+msgstr "Option de préchargement"
+
+msgid "Do not preload items."
+msgstr "Ne précharge pas les articles"
+
+msgid "Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you do not read all the page items."
+msgstr "Précharge les articles de la page courante. Cela permet d'améliorer la rapidité de chargement à l'ouverture d'un nouvel article. Note : cela va utiliser beaucoup plus de bande passante si vous ne lisez pas tous les articles de la page."
+
+msgid "Do not open link in new tab"
+msgstr "N'ouvre pas les liens dans un nouvel onglet"
+
+msgid "Automatically open link in new tab"
+msgstr "Ouvre automatiquement les liens dans un nouvel onglet"
+
+msgid "Auto update with javascript"
+msgstr "Met à jour automatiquement avec JavaScript"
+
+msgid "Do not auto update with javascript"
+msgstr "Ne met pas à jour automatiquement avec JavaScript"
+
+msgid "KrISS feed menu preferences"
+msgstr "Préférences du menu de KrISS feed"
+
+msgid "You can order or remove elements in the menu. Set a position or leave empty if you do not want the element to appear in the menu."
+msgstr "Vous pouvez ordonner ou supprimer les éléments dans le menu. Indiquer la position désirée ou laisser vide pour que l'élément n'apparaisse pas dans le menu."
+
+msgid "View"
+msgstr "Vue"
+
+msgid "View as list"
+msgstr "Voir en tant que liste"
+
+msgid "View as expanded"
+msgstr "Voir les contenus"
+
+msgid "Feeds"
+msgstr "Flux"
+
+msgid "Hide feeds list"
+msgstr "Cacher la liste des flux"
+
+msgid "Show feeds list"
+msgstr "Montrer la liste des flux"
+
+msgid "Filter"
+msgstr "Filtre"
+
+msgid "Show all items"
+msgstr "Montrer tous les articles"
+
+msgid "Show unread items"
+msgstr "Montrer les articles non lus"
+
+msgid "Order"
+msgstr "Ordre"
+
+msgid "Show older first"
+msgstr "Montrer les anciens flux en premier"
+
+msgid "Show newer first"
+msgstr "Montrer les nouveaux flux en premier"
+
+msgid "Update all"
+msgstr "Tout mettre à jour"
+
+msgid "Update folder"
+msgstr "Mettre à jour le dossier"
+
+msgid "Update feed"
+msgstr "Mettre à jour le flux"
+
+msgid "Mark as read"
+msgstr "Marquer comme lu"
+
+msgid "Mark all as read"
+msgstr "Tout marquer comme lu"
+
+msgid "Mark folder as read"
+msgstr "Marquer le dossier comme lu"
+
+msgid "Mark feed as read"
+msgstr "Marquer le flux comme lu"
+
+msgid "Mark as unread"
+msgstr "Marquer comme non lu"
+
+msgid "Mark all as unread"
+msgstr "Tout marquer comme non lu"
+
+msgid "Mark folder as unread"
+msgstr "Marquer le dossier comme non lu"
+
+msgid "Mark feed as unread"
+msgstr "Marquer le flux comme non lu"
+
+msgid "Edit all"
+msgstr "Tout modifier"
+
+msgid "Edit folder"
+msgstr "Modifier le dossier"
+
+msgid "KrISS feed paging menu preferences"
+msgstr "Préférence du menu de pagination de KrISS feed"
+
+msgid "Item"
+msgstr "Article"
+
+msgid "If you want to go previous and next item"
+msgstr "Si vous souhaitez accéder aux articles précédents et suivants"
+
+msgid "Page"
+msgstr "Page"
+
+msgid "If you want to go previous and next page"
+msgstr "Si vous souhaitez accéder aux pages précédentes et suivantes"
+
+msgid "Items by page"
+msgstr "Articles par page"
+
+msgid "If you want to modify number of items by page"
+msgstr "Si vous souhaitez modifier le nombre d'articles par page"
+
+msgid "If you want to add a mark as read button into paging"
+msgstr "Si vous souhaitez un bouton pour marquer comme lu"
+
+msgid "Cron configuration"
+msgstr "Configuration du cron"
+
+msgid "You can use <code>&force</code> to force update."
+msgstr "Vous pouvez utiliser <code>&force</code> pour forcer la mise à jour."
+
+msgid "To update every hour:"
+msgstr "Pour mettre à jour toutes les heures :"
+
+msgid "If you can not use wget, you may try php command line:"
+msgstr "Si vous ne pouvez pas utiliser wget, essayer avec la ligne de commande php suivante :"
+
+msgid "If previous solutions do not work, try to create an update.php file into data directory containing:"
+msgstr "Si les solutions précédentes ne fonctionnent pas, essayer de créer un fichier update.php dans le dossier data contenant :"
+
+msgid "Then set up your cron with:"
+msgstr "Ensuite configurez le cron avec :"
+
+msgid "Do not forget to check permissions"
+msgstr "Vérifiez les droits !"
+
+msgid "Reorder folders"
+msgstr "Trier les dossiers"
+
+msgid "Add selected folders to selected feeds"
+msgstr "Associer les dossiers sélectionnés aux flux sélectionnés"
+
+msgid "Remove selected folders to selected feeds"
+msgstr "Enlever les dossiers sélectionnés des flux sélectionnés"
+
+msgid "List of feeds"
+msgstr "Liste des flux"
+
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+msgid "Unselect all"
+msgstr "Tout désélectionner"
+
+msgid "Delete selected feeds"
+msgstr "Supprimer les flux sélectionnés"
+
+msgid "Do you really want to delete all selected feeds?"
+msgstr "Voulez-vous vraiment supprimer l'ensemble des flux sélectionnés ?"
+
+msgid "Feed main information"
+msgstr "Information principale du flux"
+
+msgid "Feed title"
+msgstr "Titre du flux"
+
+msgid "Feed XML URL"
+msgstr "URL du flux"
+
+msgid "Feed main URL"
+msgstr "URL du site du flux"
+
+msgid "Feed description"
+msgstr "Description du flux"
+
+msgid "Feed folders"
+msgstr "Dossiers du flux"
+
+msgid "New folder"
+msgstr "Nouveau dossier"
+
+msgid "Feed preferences"
+msgstr "Préférences du flux"
+
+msgid "Time update"
+msgstr "Temps entre les mises à jour"
+
+msgid "\"auto\", \"max\" or a number of minutes less than \"max\" define in <a href=\"?config\">configuration</a>"
+msgstr "\"auto\", \"max\" ou un nombre de minutes inférieur à \"max\" défin dans <a href=\"?config\">la configuration</a>"
+
+msgid "Last update"
+msgstr "Dernière mise à jour"
+
+msgid "Delete feed"
+msgstr "Supprimer le flux"
+
+msgid "Folder title"
+msgstr "Titre du dossier"
+
+msgid "Leave empty to delete"
+msgstr "Laisser vide pour supprimer"
+
+msgid "Keyboard shortcuts"
+msgstr "Raccourcis clavier"
+
+msgid "Key legend"
+msgstr "Légende des touches"
+
+msgid "Space key"
+msgstr "Touche espace"
+
+msgid "Shift key"
+msgstr "Touche majuscule"
+
+msgid "Right arrow key"
+msgstr "Touche flèche de droite"
+
+msgid "Left arrow key"
+msgstr "Touche flèche de gauche"
+
+msgid "Items navigation"
+msgstr "Navigation dans les articles"
+
+msgid "Toggle current item (open, close item in list view)"
+msgstr "Alterner l'article courant (ouvrir, fermer l'article avec la vue des titres"
+
+msgid "Mark current item as read if unread or unread if read"
+msgstr "Inverser la marque lire/à lire pour l'article courant"
+
+msgid "Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)"
+msgstr "Marque l'article courant comme lu si non lu ou non lu si lu et ouvre l'article courant (utile avec le filtre non lu et l'affichage des titres)"
+
+msgid "Go to next item"
+msgstr "Aller à l'article suivant"
+
+msgid "Go to previous item"
+msgstr "Aller à l'article précédent"
+
+msgid "Go to next page"
+msgstr "Aller à la page suivante"
+
+msgid "Go to previous page"
+msgstr "Aller à la page précédente"
+
+msgid "Go to next item and open it (in list view)"
+msgstr "Aller à l'article suivant puis l'ouvrir (avec la vue des titres)"
+
+msgid "Go to previous item and open it (in list view)"
+msgstr "Aller à l'article précédent puis l'ouvrir (avec la vue des titres)"
+
+msgid "Open current item in new tab"
+msgstr "Ouvrir l'article courant dans un nouvel onglet"
+
+msgid "Open current item in current window"
+msgstr "Ouvrir l'article courant dans la fenêtre active"
+
+msgid "Share current item"
+msgstr "Partager l'article courant"
+
+msgid "Mark all items, all items from current feed or all items from current folder as read"
+msgstr "Marque tous les articles, tous les articles du flux courant ou tous les articles du dossier courant comme lu"
+
+msgid "Star/Unstar current item"
+msgstr "Conserver/oublier l'article courant"
+
+msgid "Open all unread items from current page in new tabs and mark items as read"
+msgstr "Ouvre tous les articles non lus de la page dans des onglets et les marque comme lus"
+
+msgid "Menu navigation"
+msgstr "Navigation dans le menu"
+
+msgid "Go to Home page"
+msgstr "Aller à la page d'accueil"
+
+msgid "Change view as list or expanded"
+msgstr "Voir les titres ou le contenu des articles"
+
+msgid "Show or hide list of feeds/folders"
+msgstr "Montrer ou cacher la liste des flux/dossiers"
+
+msgid "Edit current selection (all, folder or feed)"
+msgstr "Éditer la sélection courante (tout, dossier ou flux)"
+
+msgid "Update current selection (all, folder or feed)"
+msgstr "Mettre à jour la sélection courante (tout, dossier ou flux)"
+
+msgid "Reload the page as the F5 key in most of browsers"
+msgstr "Recharger la page comme la touche F5 dans la plupart des navigateurs"
+
+msgid "Go to Help page (this page)"
+msgstr "Aller à la page d'aide (cette page)"
+
+msgid "Configuration check"
+msgstr "Vérification de la configuration"
+
+msgid "PHP configuration"
+msgstr "Configuration PHP"
+
+msgid "You should be able to load https:// rss links."
+msgstr "Vous devriez pouvoir charger des flux https://"
+
+msgid "You may have problems using https:// rss links."
+msgstr "Vous risquez d'avoir des problèmes en utilisant des flux https://"
+
+msgid "Import opml file"
+msgstr "Importer un fichier OPML"
+
+msgid "Opml file:"
+msgstr "Fichier OPML :"
+
+msgid "Size max:"
+msgstr "Taille maximale :"
+
+msgid "Overwrite existing feeds"
+msgstr "Écraser les flux existants"
+
+msgid "top"
+msgstr "haut"
+
+msgid "share"
+msgstr "partager"
+
+msgid "read"
+msgstr "lire"
+
+msgid "unread"
+msgstr "à lire"
+
+msgid "star"
+msgstr "conserver"
+
+msgid "unstar"
+msgstr "oublier"
+
+msgid "from"
+msgstr "de"
+
+msgid "Click on flag to select your language."
+msgstr "Cliquez sur le drapeau pour choisir votre langue."
+
+msgid "Login"
+msgstr "Nom d'utilisateur"
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Install KrISS feed"
+msgstr "Installer KrISS feed"
+
+msgid "Welcome to KrISS feed"
+msgstr "Bienvenue sur KrISS feed"
+
+msgid "Stay signed in (do not check on public computers)"
+msgstr "Rester connecté (ne pas cocher sur un ordinateur public)"
+
+msgid "Try again"
+msgstr "Réessayer"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Home"
+msgstr "Accueil"
+
+msgid "Sign out"
+msgstr "Déconnexion"
+
+msgid "Change password"
+msgstr "Changer le mot de passe"
+
+msgid "Export opml file"
+msgstr "Exporter en fichier OPML"
+
+msgid "Previous item"
+msgstr "Article précédent"
+
+msgid "Next item"
+msgstr "Article suivant"
+
+msgid "Previous page"
+msgstr "Page précédente"
+
+msgid "Next page"
+msgstr "Page suivante"
+
+msgid "Items per page"
+msgstr "Articles par page"
+
+msgid "A simple and smart (or stupid) feed reader"
+msgstr "Un simple et superbe (ou stupide) lecteur de flux"
+
+#. KrISS: By Tontof
+msgid "By"
+msgstr "Par"
+
+msgid "Go back"
+msgstr "Revenir en arrière"
+
+msgid "Force update"
+msgstr "Forcer la mise à jour"
+

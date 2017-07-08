@@ -8,10 +8,7 @@
  */
 class PageBuilder
 {
-    private $tpl; // For lazy initialization
-
     private $pageClass;
-
     public $var = array();
 
     /**
@@ -21,21 +18,9 @@ class PageBuilder
      */
     public function __construct($pageClass)
     {
-        $this->tpl = false;
         $this->pageClass = $pageClass;
     }
 
-    /**
-     * initialize
-     */
-    private function initialize()
-    {
-        $this->tpl = true;
-        $ref = empty($_SERVER['HTTP_REFERER']) ? '' : $_SERVER['HTTP_REFERER'];
-        $this->assign('referer', $ref);
-    }
-
-    // 
     /**
      * The following assign() method is basically the same as RainTPL
      * (except that it's lazy)
@@ -45,9 +30,6 @@ class PageBuilder
      */
     public function assign($variable, $value = null)
     {
-        if ($this->tpl === false) {
-            $this->initialize(); // Lazy initialization
-        }
         if (is_array($variable)) {
             $this->var += $variable;
         } else {
@@ -60,22 +42,40 @@ class PageBuilder
      * eg. pb.renderPage('picwall')
      * 
      * @param string $page page to render
+     *
+     * @return boolean true if no problem, false if page does not exist
      */
-    public function renderPage($page)
+    public function renderPage($page, $exit = true)
     {
-        if ($this->tpl===false) {
-            $this->initialize(); // Lazy initialization
-        }
+        $this->assign('template', $page);
         $method = $page.'Tpl';
         if (method_exists($this->pageClass, $method)) {
-            $this->assign('template', $page);
             $classPage = new $this->pageClass;
             $classPage->init($this->var);
             ob_start();
             $classPage->$method();
             ob_end_flush();
         } else {
-            die("renderPage does not exist: ".$page);
+            $this->draw($page);
         }
+        if ($exit) {
+            exit();
+        }
+
+        return true;
+    }
+
+    public function draw($file)
+    {
+        include "inc/lib/raintpl/rain.tpl.class.php";
+        raintpl::configure( 'tpl_dir', "class/tpl/");
+        if (!is_dir('tmp')) { mkdir('tmp',0705); chmod('tmp',0705); }
+        raintpl::configure( 'cache_dir', "tmp/");
+        raintpl::configure( 'path_replace', false );
+
+        $this->tpl = new RainTPL;
+        $this->tpl->assign($this->var);
+        $this->tpl->draw($file);
+        //include $file;
     }
 }

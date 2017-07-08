@@ -59,6 +59,24 @@ class Feed
         $this->_data = $data;
     }
 
+    public function initData()
+    {
+        $this->_data['feeds'] = array(
+            MyTool::smallHash('http://tontof.net/?rss') => array(
+                'title' => 'Tontof',
+                'foldersHash' => array(),
+                'timeUpdate' => 'auto',
+                'lastUpdate' => 0,
+                'nbUnread' => 0,
+                'nbAll' => 0,
+                'htmlUrl' => 'http://tontof.net',
+                'xmlUrl' => 'http://tontof.net/?rss',
+                'description' => 'A simple and smart (or stupid) blog'));
+        $this->_data['folders'] = array();
+        $this->_data['items'] = array();
+        $this->_data['newItems'] = array();
+    }
+
     /**
      * Load data file or create one if not exists
      *
@@ -79,22 +97,11 @@ class Feed
                             )
                         )
                     );
+
                 return true;
             } else {
-                $this->_data['feeds'] = array(
-                    MyTool::smallHash('http://tontof.net/?rss') => array(
-                        'title' => 'Tontof',
-                        'foldersHash' => array(),
-                        'timeUpdate' => 'auto',
-                        'lastUpdate' => 0,
-                        'nbUnread' => 0,
-                        'nbAll' => 0,
-                        'htmlUrl' => 'http://tontof.net',
-                        'xmlUrl' => 'http://tontof.net/?rss',
-                        'description' => 'A simple and smart (or stupid) blog'));
-                $this->_data['folders'] = array();
-                $this->_data['items'] = array();
-                $this->_data['newItems'] = array();
+                $this->initData();
+                $this->writeData();
 
                 return false;
             }
@@ -111,17 +118,22 @@ class Feed
      */
     public function writeData()
     {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged()) {
             $write = @file_put_contents(
                 $this->dataFile,
                 PHPPREFIX
                 . base64_encode(gzdeflate(serialize($this->_data)))
-                . PHPSUFFIX
+                . PHPSUFFIX,
+                LOCK_EX
                 );
             if (!$write) {
                 die("Can't write to " . $this->dataFile);
             }
         }
+    }
+
+    public function setFeeds($feeds) {
+        $this->_data['feeds'] = $feeds;
     }
 
     /**
@@ -146,6 +158,17 @@ class Feed
     }
 
     /**
+     * Sort by order  list of folder
+     */
+    public function sortFolders()
+    {
+        uasort(
+            $this->_data['folders'],
+            'Feed::sortByOrder'
+            );
+    }
+
+    /**
      * Return feeds with folders and read/unread information
      * array('title', 'feeds', 'nbUnread', 'nbAll', 'folders')
      *
@@ -153,16 +176,23 @@ class Feed
      */
     public function getFeedsView()
     {
-        $feedsView = array('all' => array('title' => 'All feeds', 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
+        $feedsView = array('all' => array('title' => Intl::msg('All feeds'), 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
         
         foreach ($this->_data['feeds'] as $feedHash => $feed) {
             if (isset($feed['error'])) {
-                $feed['error'] = $this->getError($feed['error']);
+                $feed['error'] = $feed['error'];
             }
-            $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            if (isset($feed['nbUnread'])) {
+                $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            } else {
+                $feedsView['all']['nbUnread'] += $feed['nbAll'];
+            }
             $feedsView['all']['nbAll'] += $feed['nbAll'];
             if (empty($feed['foldersHash'])) {
                 $feedsView['all']['feeds'][$feedHash] = $feed;
+                if (!isset($feed['nbUnread'])) {
+                    $feedsView['all']['feeds'][$feedHash]['nbUnread'] = $feed['nbAll'];
+                }
             } else {
                 foreach ($feed['foldersHash'] as $folderHash) {
                     $folder = $this->getFolder($folderHash);
@@ -172,6 +202,11 @@ class Feed
                             $feedsView['folders'][$folderHash]['isOpen'] = $folder['isOpen'];
                             $feedsView['folders'][$folderHash]['nbUnread'] = 0;
                             $feedsView['folders'][$folderHash]['nbAll'] = 0;
+                            if (isset($folder['order'])) {
+                                $feedsView['folders'][$folderHash]['order'] = $folder['order'];
+                            } else {
+                                $feedsView['folders'][$folderHash]['order'] = 0;
+                            }
                         }
                         $feedsView['folders'][$folderHash]['feeds'][$feedHash] = $feed;
                         $feedsView['folders'][$folderHash]['nbUnread'] += $feed['nbUnread'];
@@ -180,6 +215,8 @@ class Feed
                 }
             }
         }
+
+        uasort($feedsView['folders'], 'Feed::sortByOrder');
 
         return $feedsView;
     }
@@ -194,10 +231,40 @@ class Feed
     public function getFeed($feedHash)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
+            // FIX: problem of version 6 &amp;amp;
+            $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
+            $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
+
             return $this->_data['feeds'][$feedHash];
         }
 
         return false;
+    }
+
+    /**
+     * Return a link to favicon
+     * TODO: Try using Bronco one :
+     * http://www.warriordudimanche.net/article164/hands-up-give-me-your-favicon-right-now
+     *
+     * @param string $feedHash Hash corresponding to a feed
+     *
+     * @return string that corresponds to favicon of feed
+     */
+    public function getFaviconFeed($feedHash)
+    {
+        $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
+        $url = 'http://www.google.com/s2/favicons?domain='.$htmlUrl;
+        $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
+
+        if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
+            MyTool::grabToLocal($url, $file);
+        }
+
+        if (file_exists($file)) {
+            return $file;
+        } else {
+            return $url;
+        }
     }
 
     /**
@@ -272,7 +339,8 @@ class Feed
         $title,
         $description,
         $foldersHash,
-        $timeUpdate)
+        $timeUpdate,
+        $htmlUrl)
     {
         if (isset($this->_data['feeds'][$feedHash])) {
             if (!empty($title)) {
@@ -280,6 +348,9 @@ class Feed
             }
             if (!empty($description)) {
                 $this->_data['feeds'][$feedHash]['description'] = $description;
+            }
+            if (!empty($htmlUrl)) {
+                $this->_data['feeds'][$feedHash]['htmlUrl'] = $htmlUrl;
             }
             
             $this->_data['feeds'][$feedHash]['foldersHash'] = $foldersHash;
@@ -330,7 +401,7 @@ class Feed
      */
     public function writeFeed($feedHash, $feed)
     {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
             if (!is_dir($this->cacheDir)) {
                 if (!@mkdir($this->cacheDir, 0755)) {
                     die("Can not create cache dir: ".$this->cacheDir);
@@ -350,7 +421,8 @@ class Feed
                 $this->cacheDir.'/'.$feedHash.'.php',
                 PHPPREFIX
                 . base64_encode(gzdeflate(serialize($feed)))
-                . PHPSUFFIX
+                . PHPSUFFIX,
+                LOCK_EX
                 );
 
             if (!$write) {
@@ -371,6 +443,11 @@ class Feed
                 $newFeedsHash[] = $feedHash;
             }
         }
+
+        if ($this->kfc->order !== 'newerFirst') {
+            $newFeedsHash = array_reverse($newFeedsHash);
+        }
+
         foreach($feedsHash as $feedHash) {
             if (!in_array($feedHash, $newFeedsHash)) {
                 $newFeedsHash[] = $feedHash;
@@ -472,6 +549,15 @@ class Feed
         }
     }
 
+    public function orderFolder(
+        $folderHash,
+        $order)
+    {
+        if (isset($this->_data['folders'][$folderHash])) {
+            $this->_data['folders'][$folderHash]['order'] = $order;
+        }
+    }
+
     /**
      * Toggle isOpen folder to open or close a folder
      *
@@ -522,7 +608,11 @@ class Feed
     public function getItems($hash = 'all', $filter = 'all')
     {
         if (empty($hash) or $hash == 'all' and $filter == 'all') {
-            return $this->_data['items']+$this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['items']+$this->_data['newItems'];
+            } else {
+                return $this->_data['items'];
+            }
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'old') {
@@ -530,7 +620,11 @@ class Feed
         }
 
         if (empty($hash) or $hash == 'all' and $filter == 'new') {
-            return $this->_data['newItems'];
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['newItems'];
+            } else {
+                return array();
+            }
         }
         
         $list = array();
@@ -546,9 +640,11 @@ class Feed
                     $list[$itemHash] = $item;
                 }
             }
-            foreach ($this->_data['newItems'] as $itemHash => $item) {
-                if ($item[1] === $isRead) {
-                    $list[$itemHash] = $item;
+            if (isset($this->_data['newItems'])) {
+                foreach ($this->_data['newItems'] as $itemHash => $item) {
+                    if ($item[1] === $isRead) {
+                        $list[$itemHash] = $item;
+                    }
                 }
             }
         } else {
@@ -556,7 +652,7 @@ class Feed
                 // an item
                 if (isset($this->_data['items'][$hash])) {
                     $list[$hash] = $this->_data['items'][$hash];
-                } else if (isset($this->_data['newItems'][$hash])) {
+                } else if (isset($this->_data['newItems']) && isset($this->_data['newItems'][$hash])) {
                     $list[$hash] = $this->_data['newItems'][$hash];
                 }
             } else {
@@ -583,10 +679,12 @@ class Feed
                             }
                         }
                     }
-                    foreach ($this->_data['newItems'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            if ($filter === 'all' or $item[1] === $isRead) {
-                                $list[$itemHash] = $item;
+                    if (isset($this->_data['newItems'])) {
+                        foreach ($this->_data['newItems'] as $itemHash => $item) {
+                            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                                if ($filter === 'all' or $item[1] === $isRead) {
+                                    $list[$itemHash] = $item;
+                                }
                             }
                         }
                     }
@@ -595,6 +693,11 @@ class Feed
         }
 
         return $list;
+    }
+
+    public function setItems($items)
+    {
+        $this->_data['items'] = $items;
     }
 
     /**
@@ -635,20 +738,22 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-
+         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
             if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
                 // Today
-                $item['time'] = array('list' => utf8_encode(strftime('%R %p', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
             } else {
-                $item['time'] = array('list' => utf8_encode(strftime('%b %e, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));                
+                if (strftime('%Y', $time) == strftime('%Y', time())) {
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                } else {
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                }
             }
             if (isset($this->_data['items'][$itemHash])) {
                 $item['read'] = $this->_data['items'][$itemHash][1];
-
-                return $item;
             } else if (isset($this->_data['newItems'][$itemHash])) {
                 $item['read'] = $this->_data['newItems'][$itemHash][1];
 
@@ -662,12 +767,29 @@ class Feed
                 } else {
                     $_SESSION['lastNewItemsHash'] = $itemHash;
                 }
-
-                return $item;
             } else {
                 // FIX: data may be corrupted
                 return false;
             }
+            
+            $item['author'] = htmlspecialchars(html_entity_decode(strip_tags($item['author']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
+            $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
+            $item['link'] = htmlspecialchars($item['link']);
+            if (empty($item['title'])) {
+                $item['title'] = $item['link'];
+            }
+            $item['via'] = htmlspecialchars($item['via']);
+            
+            $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+            $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
+
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
+
+            return $item;
         }
 
         return false;
@@ -699,158 +821,144 @@ class Feed
         return false;
     }
 
-    /**
-     * Format xml channel into array
-     *
-     * @param DOMDocument $channel DOMDocument of the channel feed
-     *
-     * @return array Array with extracted information channel
-     */
-    public function formatChannel($channel)
+    public function initFeedCache($feed, $force)
     {
-        $newChannel = array();
+        if (!empty($feed)) {
+            if ($force) {
+                $feed['etag'] = '';
+                $feed['lastModified'] = '';
+            }
 
-        // list of format for each info in order of importance
-        $formats = array('title' => array('title'),
-                         'description' => array('description', 'subtitle'),
-                         'htmlUrl' => array('link', 'id', 'guid'));
+            MyTool::$opts['http']['headers'] = array();
+            if (!empty($feed['lastModified'])) {
+                MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
+            }
+            if (!empty($feed['etag'])) {
+                MyTool::$opts['http']['headers'][] = 'If-None-Match: ' . $feed['etag'];
+            }
+        }
+        
+        return $feed;
+    }
 
-        foreach ($formats as $format => $list) {
-            $newChannel[$format] = '';
-            $len = count($list);
-            for ($i = 0; $i < $len; $i++) {
-                if ($channel->hasChildNodes()) {
-                    $child = $channel->childNodes;
-                    for ($j = 0, $lenChannel = $child->length;
-                         $j<$lenChannel;
-                         $j++) {
-                        if (isset($child->item($j)->tagName)
-                            && $child->item($j)->tagName == $list[$i]
-                        ) {
-                            $newChannel[$format]
-                                = $child->item($j)->textContent;
-                        }
-                    }
+    public function updateFeedCache($feed, $outputUrl)
+    {
+        // really new (2XX) and errors (4XX and 5XX) are considered new
+        if ($outputUrl['code'] != 304) {
+            if (preg_match('/^ETag: ([^\r\n]*)[\r\n]*$/im', $outputUrl['header'], $matches)) {
+                $feed['etag'] = $matches[1];
+            }
+            if (preg_match('/^Last-Modified: ([^\r\n]*)[\r\n]*$/im', $outputUrl['header'], $matches)) {
+                $feed['lastModified'] = $matches[1];
+            }
+        }
+
+        if (empty($feed['etag'])) {
+            unset($feed['etag']);
+        }
+        if (empty($feed['lastModified'])) {
+            unset($feed['lastModified']);
+        }
+
+        return $feed;
+    }
+
+    public function updateFeedFromDom($feed, $dom) {
+        if (empty($feed)) {
+            // addFeed
+            $feed = Rss::getFeed($dom);
+
+            if (!MyTool::isUrl($feed['htmlUrl'])) {
+                $feed['htmlUrl'] = ' ';
+            }
+            if (empty($feed['description'])) {
+                $feed['description'] = ' ';
+            }
+            $feed['foldersHash'] = array();
+            $feed['timeUpdate'] = 'auto';            
+        } else if (empty($feed['description']) || empty($feed['htmlUrl'])) {
+            // if feed description/htmlUrl is empty try to update
+            // (after opml import, description/htmlUrl are often empty)
+            $rssFeed = Rss::getFeed($dom);
+            if (empty($feed['description'])) {
+                if (empty($rssFeed['description'])) {
+                    $rssFeed['description'] = ' ';
                 }
+                $feed['description'] = $rssFeed['description'];
+            }
+            if (empty($feed['htmlUrl'])) {
+                if (empty($rssFeed['htmlUrl'])) {
+                    $rssFeed['htmlUrl'] = ' ';
+                }
+                $feed['htmlUrl'] = $rssFeed['htmlUrl'];
             }
         }
 
-        return $newChannel;
+        return $feed;
     }
 
-    /**
-     * return channel from xmlUrl
-     *
-     * @param DOMDocument $xml DOMDocument of the feed
-     *
-     * @return array Array with extracted information channel
-     */
-    public function getChannelFromXml($xml)
-    {
-        $channel = array();
-
-        // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $channel = $feed->item(0);
-        } else {
-            $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $channel = $feed->item(0);
-            } else {
-                // unknown feed
+    private function showEnclosure($enclosure) {
+        $path = parse_url($enclosure, PHP_URL_PATH);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $link = '<a href="'.$enclosure.'">'.$enclosure.'</a>';
+        switch(strtolower($ext)) {
+        case '':
+            if (strpos($enclosure, 'https://www.youtube.com') === 0) {
+                $link = '<iframe src="'.str_replace('/v/','/embed/', $enclosure).'" width="640" height="360" allowfullscreen></iframe>';
             }
+            break;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+            $link = '<img src="'.$enclosure.'">';
+            break;
+        case 'mp3':
+        case 'oga':
+        case 'wav':
+            $link = '<audio controls><source src="'.$enclosure.'">'.$link.'</audio>';
+            break;
+        case 'mp4':
+        case 'ogg':
+        case 'webm':
+            $link = '<video controls><source src="'.$enclosure.'">'.$link.'</video>';
+            break;
         }
 
-        if (!empty($channel)) {
-            $channel = $this->formatChannel($channel);
-        }
-
-        return $channel;
+        return $link;
     }
 
-    /**
-     * format items into array
-     *
-     * @param DOMNodeList $items   DOMNodeList of items in a feed
-     * @param array       $formats List of information to extract
-     *
-     * @return array List of items with information
-     */
-    public function formatItems($items, $formats)
-    {
+    public function updateItemsFromDom($dom) {
+        $items = Rss::getItems($dom);
+
         $newItems = array();
-
-        foreach ($items as $item) {
-            $tmpItem = array();
-            foreach ($formats as $format => $list) {
-                $tmpItem[$format] = '';
-                $len = count($list);
-                for ($i = 0; $i < $len; $i++) {
-                    if (is_array($list[$i])) {
-                        $tag = $item->getElementsByTagNameNS(
-                            $list[$i][0],
-                            $list[$i][1]
-                        );
-                    } else {
-                        $tag = $item->getElementsByTagName($list[$i]);
-                        // wrong detection : e.g. media:content for content
-                        if ($tag->length != 0) {
-                            for ($j = $tag->length; --$j >= 0;) {
-                                $elt = &$tag->item($j);
-                                if ($tag->item($j)->tagName != $list[$i]) {
-                                    $elt->parentNode->removeChild($elt);
-                                }
-                            }
-                        }
-                    }
-                    if ($tag->length != 0) {
-                        // we find a correspondence for the current format
-                        // select first item (item(0)), (may not work)
-                        // stop to search for another one
-                        if ($format == 'link') {
-                            $tmpItem[$format] = '';
-                            for ($j = 0; $j < $tag->length; $j++) {
-                                if ($tag->item($j)->hasAttribute('rel') && $tag->item($j)->getAttribute('rel') == 'alternate') {
-                                    $tmpItem[$format]
-                                        = $tag->item($j)->getAttribute('href');
-                                    $j = $tag->length;
-                                }
-                            }
-                            if ($tmpItem[$format] == '') {
-                                $tmpItem[$format]
-                                    = $tag->item(0)->getAttribute('href');
-                            }
-                        }
-                        if (empty($tmpItem[$format])) {
-                            $tmpItem[$format] = $tag->item(0)->textContent;
-                        }
-                        $i = $len;
-                    }
-                }
-            }
-            if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['link']);
+        foreach($items as $item) {
+            if (!empty($item['link'])) {
+                $hashUrl = MyTool::smallHash($item['link']);
                 $newItems[$hashUrl] = array();
-                $newItems[$hashUrl]['title'] = $tmpItem['title'];
-                $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
-                    ? strtotime($tmpItem['time'])
+                $newItems[$hashUrl]['title'] = empty($item['title'])?$item['link']:$item['title'];
+                $newItems[$hashUrl]['time']  = strtotime($item['time'])
+                    ? strtotime($item['time'])
                     : time();
-                if (MyTool::isUrl($tmpItem['via'])
-                    && $tmpItem['via'] != $tmpItem['link']) {
-                    $newItems[$hashUrl]['via'] = $tmpItem['via'];
+                if (MyTool::isUrl($item['via']) &&
+                    parse_url($item['via'], PHP_URL_HOST)
+                    != parse_url($item['link'], PHP_URL_HOST)) {
+                    $newItems[$hashUrl]['via'] = $item['via'];
                 } else {
                     $newItems[$hashUrl]['via'] = '';
                 }
-                $newItems[$hashUrl]['link'] = $tmpItem['link'];
-                $newItems[$hashUrl]['author'] = $tmpItem['author'];
+                $newItems[$hashUrl]['link'] = $item['link'];
+                $newItems[$hashUrl]['author'] = $item['author'];
                 mb_internal_encoding("UTF-8");
                 $newItems[$hashUrl]['description'] = mb_substr(
-                    strip_tags($tmpItem['description']), 0, 500
+                    strip_tags($item['description']), 0, 500
                 );
-                $newItems[$hashUrl]['content'] = $tmpItem['content'];
+                if(!empty($item['enclosure'])) {
+                    foreach($item['enclosure'] as $enclosure) {
+                        $item['content'] .= '<br>'.$this->showEnclosure($enclosure);
+                    }
+                }
+                $newItems[$hashUrl]['content'] = $item['content'];
             }
         }
 
@@ -858,228 +966,48 @@ class Feed
     }
 
     /**
-     * Return array of items from xml
-     *
-     * @param DOMDocument $xml DOMDocument where to extract items
-     *
-     * @return array Array of items extracted from the DOMDocument
-     */
-    public function getItemsFromXml ($xml)
-    {
-        $items = array();
-
-        // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $feed = $xml->getElementsByTagName('item');
-            $len = $feed->length;
-            for ($i = 0; $i < $len; $i++) {
-                $items[$i] = $feed->item($i);
-            }
-            $feed = $xml->getElementsByTagName('rss');
-            if (!$feed->item(0)) {
-                $feed = $xml->getElementsByTagNameNS(
-                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-                    'RDF'
-                );
-            }
-        } else {
-            $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $feed = $xml->getElementsByTagName('entry');
-                $len = $feed->length;
-                for ($i = 0; $i < $len; $i++) {
-                    $items[$i] = $feed->item($i);
-                }
-                $feed = $xml->getElementsByTagName('feed');
-            }
-        }
-
-        // list of format for each info in order of importance
-        $formats = array(
-            'author'      => array('author', 'creator', 'dc:author',
-                                   'dc:creator'),
-            'content'     => array('content:encoded', 'content', 'description',
-                               'summary', 'subtitle'),
-            'description' => array('description', 'summary', 'subtitle',
-                                   'content', 'content:encoded'),
-            'via'        => array('guid', 'id'),
-            'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
-            'time'        => array('pubDate', 'updated', 'lastBuildDate',
-                                   'published', 'dc:date', 'date'),
-            'title'       => array('title'));
-
-        if ($feed->item(0)) {
-            $formats = $this->formatRDF($formats, $feed->item(0));
-        }
-
-        return $this->formatItems($items, $formats);
-    }
-
-    /**
-     * Search a namespaceURI into tags
-     * (used when namespaceURI are not defined in the root tag)
-     *
-     * @param DOMNode $feed DOMNode to look into
-     * @param string  $name String of the namespace to look for
-     *
-     * @return string The namespaceURI or empty string if not found
-     */
-    public function getAttributeNS ($feed, $name)
-    {
-        $res = '';
-        if ($feed->nodeName === $name) {
-            $ns = explode(':', $name);
-            $res = $feed->getAttribute('xmlns:'.$ns[0]);
-        } else {
-            if ($feed->hasChildNodes()) {
-                foreach ($feed->childNodes as $childNode) {
-                    if ($res === '') {
-                        $res = $this->getAttributeNS($childNode, $name);
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $res;
-    }
-
-    /**
-     * Add a namespaceURI when format corresponds to a rdf tag.
-     *
-     * @param array   $formats Array of formats
-     * @param DOMNode $feed    DOMNode corresponding to the channel root
-     *
-     * @return array Array of new formated format with namespaceURI
-     */
-    public function formatRDF($formats, $feed)
-    {
-        foreach ($formats as $format => $list) {
-            for ($i = 0, $len = count($list); $i < $len; $i++) {
-                $name = explode(':', $list[$i]);
-                if (count($name)>1) {
-                    $res = $feed->getAttribute('xmlns:'.$name[0]);
-                    if (!empty($res)) {
-                        $ns = $res;
-                    } else {
-                        $ns = $this->getAttributeNS($feed, $list[$i]);
-                    }
-                    $formats[$format][$i] = array($ns, $name[1]);
-                }
-            }
-        }
-
-        return $formats;
-    }
-
-    /** 
-     * loadUrl
-     *
-     * @param string url to load
-     * @param $opt to create context
-     *
-     * @return string content
-     */
-    public function loadUrl($url, $opts = array()){
-        $ch = curl_init($url);
-        if (!empty($opts)) {
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
-            curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
-            curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
-        }
-        curl_setopt($ch, CURLOPT_ENCODING, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
-        curl_setopt($ch, CURLOPT_URL, $url);
-
-        $output = $this->curl_exec_follow($ch);
-
-        curl_close($ch);
-
-        return $output;
-    }
- 
-    /**
-     * @param resource $ch curl
-     * @param integer  $redirects max number of redirects
-     * @param boolean  $curloptHeader
-     *
-     * http://stackoverflow.com/questions/2511410/curl-follow-location-error
-     */
-    function curl_exec_follow(&$ch, $redirects = 20, $curloptHeader = false) {
-        if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
-            curl_setopt($ch, CURLOPT_HEADER, $curloptHeader);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
-            curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
-            return curl_exec($ch);
-        } else {
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
-            curl_setopt($ch, CURLOPT_HEADER, true);
-            curl_setopt($ch, CURLOPT_FORBID_REUSE, false);
-
-            do {
-                $data = curl_exec($ch);
-                if (curl_errno($ch))
-                    break;
-                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                if ($code != 301 && $code != 302 && $code!=303)
-                    break;
-                $header_start = strpos($data, "\r\n")+2;
-                $headers = substr($data, $header_start, strpos($data, "\r\n\r\n", $header_start)+2-$header_start);
-                if (!preg_match("!\r\n(?:Location|URI): *(.*?) *\r\n!", $headers, $matches))
-                    break;
-                curl_setopt($ch, CURLOPT_URL, $matches[1]);
-            } while (--$redirects);
-            if (!$redirects)
-                trigger_error('Too many redirects. When following redirects, libcurl hit the maximum amount.', E_USER_WARNING);
-            if (!$curloptHeader)
-                $data = substr($data, strpos($data, "\r\n\r\n")+4);
-
-            return $data;
-        }
-    }
-
-    /**
      * Load an xml file through HTTP
      *
-     * @param string $xmlUrl String corresponding to the XML URL
+     * @param string  $xmlUrl String corresponding to the XML URL
+     * @param array   $feed   Feed
+     * @param array   $items  Items
+     * @param boolean $force  Force update
      *
-     * @return DOMDocument DOMDocument corresponding to the XML URL
+     * @return array containing feed and items
      */
-    public function loadXml($xmlUrl)
+    public function loadRss($xmlUrl, $feed = array(), $force = false)
     {
-        // hide warning/error
-        set_error_handler(array('MyTool', 'silence_errors'));
+        $items = array();
+        $feed = $this->initFeedCache($feed, $force);
 
-        // set user agent
-        // http://php.net/manual/en/function.libxml-set-streams-context.php
-        $opts = array(
-            'http' => array(
-                'timeout' => 4,
-                'user_agent' => 'KrISS feed agent '.$this->kfc->version.' by Tontof.net http://github.com/tontof/kriss_feed',
-                )
-            );
-        $document = false;
-
-        if (in_array('curl', get_loaded_extensions())) {
-            $output = $this->loadUrl($xmlUrl, $opts);
-            $document = DOMDocument::loadXML($output);
+        if( !ini_get('safe_mode') && isset(MyTool::$opts['http']['timeout'])){
+            set_time_limit(MyTool::$opts['http']['timeout']+1);
+        } 
+        $outputUrl = MyTool::loadUrl($xmlUrl);
+        
+        if (!empty($outputUrl['error'])) {
+            $feed['error'] = $outputUrl['error'];
+        } else if (empty($outputUrl['data'])) {
+            if ($outputUrl['code'] != 304) { // 304 Not modified
+                $feed['error'] = Intl::msg('Empty output data');;
+            }
         } else {
-            // try using libxml
-            $context = stream_context_create($opts);
-            libxml_set_streams_context($context);
-
-            // request a file through HTTP
-            $document = DOMDocument::load($xmlUrl);
+            $outputDom = Rss::loadDom($outputUrl['data']);
+            if (!empty($outputDom['error'])) {
+                $feed['error'] = $outputDom['error'];
+            } else {
+                unset($feed['error']);
+                $feed = $this->updateFeedFromDom($feed, $outputDom['dom']);
+                $feed = $this->updateFeedCache($feed, $outputUrl);
+                $items = $this->updateItemsFromDom($outputDom['dom']);
+            }
         }
-        // show back warning/error
-        restore_error_handler();
+        $feed['lastUpdate'] = time();
 
-        return $document;
+        return array(
+            'feed' => $feed,
+            'items' => $items,
+        );
     }
 
     /**
@@ -1092,23 +1020,27 @@ class Feed
     public function addChannel($xmlUrl)
     {
         $feedHash = MyTool::smallHash($xmlUrl);
+        $error = '';
         if (!isset($this->_data['feeds'][$feedHash])) {
-            $xml = $this->loadXml($xmlUrl);
+            $output = $this->loadRss($xmlUrl);
 
-            if (!$xml) {
-                return false;
-            } else {
-                $channel = $this->getChannelFromXml($xml);
-                $items = $this->getItemsFromXml($xml);
+            if (empty($output['feed']['error'])) {
+                $output['feed']['xmlUrl'] = $xmlUrl;
+                $output['feed']['nbUnread'] = count($output['items']);
+                $output['feed']['nbAll'] = count($output['items']);
+                $this->_data['feeds'][$feedHash] = $output['feed'];
+                $this->_data['needSort'] = true;
+
+                $items = $output['items'];
                 foreach (array_keys($items) as $itemHash) {
                     if (empty($items[$itemHash]['via'])) {
-                        $items[$itemHash]['via'] = $channel['htmlUrl'];
+                        $items[$itemHash]['via'] = $output['feed']['htmlUrl'];
                     }
                     if (empty($items[$itemHash]['author'])) {
-                        $items[$itemHash]['author'] = $channel['title'];
+                        $items[$itemHash]['author'] = $output['feed']['title'];
                     } else {
                         $items[$itemHash]['author']
-                            = $channel['title'] . ' ('
+                            = $output['feed']['title'] . ' ('
                             . $items[$itemHash]['author'] . ')';
                     }
                     $items[$itemHash]['xmlUrl'] = $xmlUrl;
@@ -1120,24 +1052,15 @@ class Feed
                     $items[$feedHash . $itemHash] = $items[$itemHash];
                     unset($items[$itemHash]);
                 }
-
-                $channel['xmlUrl'] = $xmlUrl;
-                $channel['foldersHash'] = array();
-                $channel['nbUnread'] = count($items);
-                $channel['nbAll'] = count($items);
-                $channel['timeUpdate'] = 'auto';
-                $channel['lastUpdate'] = time();
-
-                $this->_data['feeds'][$feedHash] = $channel;
-                $this->_data['needSort'] = true;
-
                 $this->writeFeed($feedHash, $items);
-
-                return true;
+            } else {
+                $error = $output['feed']['error'];
             }
+        } else {
+            $error = Intl::msg('Duplicated feed');
         }
 
-        return false;
+        return array('error' => $error);
     }
 
     /**
@@ -1181,31 +1104,6 @@ class Feed
     }
 
     /**
-     * Get human readable error
-     *
-     * @param integer $error Number of error occured during a feed update
-     *
-     * @return string String of the corresponding error
-     */
-    public static function getError($error)
-    {
-        switch ($error) {
-        case ERROR_NO_XML:
-            return 'Feed is not in XML format';
-            break;
-        case ERROR_ITEMS_MISSED:
-            return 'Items may have been missed since last update';
-            break;
-        case ERROR_LAST_UPDATE:
-            return 'Problem with the last update';
-            break;
-        default:
-            return 'unknown error';
-            break;
-        }
-    }
-
-    /**
      * Update channel and return feed information error, lastUpdate
      * and newItems
      *
@@ -1213,143 +1111,154 @@ class Feed
      *
      * @return array feed information, error, lastUpdate and newItems
      */
-    public function updateChannel($feedHash)
+    public function updateChannel($feedHash, $force = false)
     {
         $error = '';
         $newItems = array();
 
         if (!isset($this->_data['feeds'][$feedHash])) {
             return array(
-                'error' => $error,
+                'error' => Intl::msg('Unknown feedhash'),
                 'newItems' => $newItems
-                );
+            );
         }
 
-        unset($this->_data['feeds'][$feedHash]['error']);
         $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
-        $xml = $this->loadXml($xmlUrl);
 
-        if (!$xml) {
-            if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
-                $error = ERROR_LAST_UPDATE;
-            } else {
-                $error = ERROR_NO_XML;
-            }
-        } else {
-            // if feed description is empty try to update description
-            // (after opml import, description is often empty)
-            if (empty($this->_data['feeds'][$feedHash]['description'])) {
-                $channel = $this->getChannelFromXml($xml);
-                if (isset($channel['description'])) {
-                    $this->_data['feeds'][$feedHash]['description']
-                        = $channel['description'];
-                }
-                // Check description only the first time description is empty
-                if (empty($this->_data['feeds'][$feedHash]['description'])) {
-                    $this->_data['feeds'][$feedHash]['description'] = ' ';
-                }
-            }
-
+        $output = $this->loadRss($xmlUrl, $this->_data['feeds'][$feedHash], $force);
+        // Update feed information
+        $this->_data['feeds'][$feedHash] = $output['feed'];
+        if (empty($output['feed']['error'])) {
             $this->loadFeed($feedHash);
-            $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            $oldItems = array();
+            if (!empty($this->_data['feeds'][$feedHash]['items']) && is_array($this->_data['feeds'][$feedHash]['items'])) {
+                $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            }
 
-            $rssItems = $this->getItemsFromXml($xml);
+            $lastTime = 0;
+            if (isset($this->_data['feeds'][$feedHash]['lastTime'])) {
+                $lastTime = $this->_data['feeds'][$feedHash]['lastTime'];
+            }
+            if (!empty($oldItems)) {
+                $lastTime = current($oldItems);
+                $lastTime = $lastTime['time'];
+            }
+            $newLastTime = $lastTime;
+        
+            $rssItems = $output['items'];
             $rssItems = array_slice($rssItems, 0, $this->kfc->maxItems, true);
             $rssItemsHash = array_keys($rssItems);
+        
+            if (count($rssItemsHash) !== 0) {
+                // Look for new items
+                foreach ($rssItemsHash as $itemHash) {
+                    // itemHash is smallHash of link. To compare to item
+                    // hashes into data, we need to concatenate to feedHash.
+                    if (!isset($oldItems[$feedHash.$itemHash])) {
+                        if (empty($rssItems[$itemHash]['via'])) {
+                            $rssItems[$itemHash]['via']
+                                = $this->_data['feeds'][$feedHash]['htmlUrl'];
+                        }
+                        if (empty($rssItems[$itemHash]['author'])) {
+                            $rssItems[$itemHash]['author']
+                                = $this->_data['feeds'][$feedHash]['title'];
+                        } else {
+                            $rssItems[$itemHash]['author']
+                                = $this->_data['feeds'][$feedHash]['title'] . ' ('
+                                . $rssItems[$itemHash]['author'] . ')';
+                        }
+                        $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
 
-            // Look for new items
-            foreach ($rssItemsHash as $itemHash) {
-                // itemHash is smallHash of link. To compare to item
-                // hashes into data, we need to concatenate to feedHash.
-                if (!isset($oldItems[$feedHash.$itemHash])) {
-                    if (empty($rssItems[$itemHash]['via'])) {
-                        $rssItems[$itemHash]['via']
-                            = $this->_data['feeds'][$feedHash]['htmlUrl'];
+                        if ($rssItems[$itemHash]['time'] > $lastTime) {
+                            if ($rssItems[$itemHash]['time'] > $newLastTime) {
+                                $newLastTime = $rssItems[$itemHash]['time'];
+                            }
+                            $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
+                        }
                     }
-                    if (empty($rssItems[$itemHash]['author'])) {
-                        $rssItems[$itemHash]['author']
-                            = $this->_data['feeds'][$feedHash]['title'];
-                    } else {
-                        $rssItems[$itemHash]['author']
-                            = $this->_data['feeds'][$feedHash]['title'] . ' ('
-                            . $rssItems[$itemHash]['author'] . ')';
-                    }
-                    $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
-                    $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
                 }
-            }
-            $newItemsHash = array_keys($newItems);
-            $this->_data['feeds'][$feedHash]['items']
+                $newItemsHash = array_keys($newItems);
+                $this->_data['feeds'][$feedHash]['items']
                     = $newItems+$oldItems;
 
-            // Check if items may have been missed
-            if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
-                $error = ERROR_ITEMS_MISSED;
-            }
+                // Check if items may have been missed
+                if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
+                    $error = Intl::msg('Items may have been missed since last update');
+                }
 
-            // Remove useless items
-            foreach ($this->getItems($feedHash) as $itemHash => $item) {
-                $itemRssHash = substr($itemHash, 6, 6);
                 // Remove from cache already read items not any more in the feed
-                if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
-                    unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
+                $listOfOldItems = $this->getItems($feedHash);
+                foreach ($listOfOldItems as $itemHash => $item) {
+                    $itemRssHash = substr($itemHash, 6, 6);
+                    if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
+                        unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
+                    }
                 }
-                
-                if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
-                    // Remove items not any more in the cache
-                    unset($this->_data['items'][$itemHash]);
-                    unset($this->_data['newItems'][$itemHash]);
+
+                // Check if quota exceeded
+                $nbAll = count($this->_data['feeds'][$feedHash]['items']);
+                if ($nbAll > $this->kfc->maxItems) {
+                    $this->_data['feeds'][$feedHash]['items']
+                        = array_slice(
+                            $this->_data['feeds'][$feedHash]['items'],
+                            0,
+                            $this->kfc->maxItems, true
+                            );
+                    $nbAll = $this->kfc->maxItems;
                 }
-            }
 
-            // Check if quota exceeded
-            $nbAll = count($this->_data['feeds'][$feedHash]['items']);
-            if ($nbAll > $this->kfc->maxItems) {
-                $this->_data['feeds'][$feedHash]['items']
-                    = array_slice(
-                        $this->_data['feeds'][$feedHash]['items'],
-                        0,
-                        $this->kfc->maxItems, true
-                        );
-                $nbAll = $this->kfc->maxItems;
-            }
+                // Remove items not any more in the cache
+                foreach (array_keys($listOfOldItems) as $itemHash) {
+                    if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
+                        // Remove items not any more in the cache
+                        unset($this->_data['items'][$itemHash]);
+                        unset($this->_data['newItems'][$itemHash]);
+                    }
+                }
 
-            // Update items list and feed information (nbUnread, nbAll)
-            $this->_data['feeds'][$feedHash]['nbAll'] = $nbAll;
-            $nbUnread = 0;
-            foreach ($this->_data['feeds'][$feedHash]['items'] as $itemHash => $item) {
-                if (isset($this->_data['items'][$itemHash])) {
-                    if ($this->_data['items'][$itemHash][1] === 0) {
+                // Update items list and feed information (nbUnread, nbAll)
+                $this->_data['feeds'][$feedHash]['nbAll'] = $nbAll;
+                $nbUnread = 0;
+                foreach ($this->_data['feeds'][$feedHash]['items'] as $itemHash => $item) {
+                    if (isset($this->_data['items'][$itemHash])) {
+                        if ($this->_data['items'][$itemHash][1] === 0) {
+                            $nbUnread++;
+                        }
+                    } else if (isset($this->_data['newItems'][$itemHash])) {
+                        if ($this->_data['newItems'][$itemHash][1] === 0) {
+                            $nbUnread++;
+                        }
+                    } else {
+                        // TODO: Check if itemHash is appended at the end ??
+                        $this->_data['newItems'][$itemHash] = array(
+                            $item['time'],
+                            0                        
+                            );
                         $nbUnread++;
                     }
-                } else if (isset($this->_data['newItems'][$itemHash])) {
-                    if ($this->_data['newItems'][$itemHash][1] === 0) {
-                        $nbUnread++;
-                    }
-                } else {
-                    // TODO: Is appended at the end ??
-                    $this->_data['newItems'][$itemHash] = array(
-                        $item['time'],
-                        0                        
-                    );
-                    $nbUnread++;
                 }
+                $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
             }
-            $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
+
+            if (empty($this->_data['feeds'][$feedHash]['items'])) {
+                $this->_data['feeds'][$feedHash]['lastTime'] = $newLastTime;
+            } else {
+                unset($this->_data['feeds'][$feedHash]['lastTime']);
+            }
+            $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
+            unset($this->_data['feeds'][$feedHash]['items']);
+
+        } else {
+            $error = $output['feed']['error'];
         }
 
-        // update feed information
-        $this->_data['feeds'][$feedHash]['lastUpdate'] = time();
         if (!empty($error)) {
             $this->_data['feeds'][$feedHash]['error'] = $error;
         }
 
         if (empty($newItems)) {
-            unset($this->_data['feeds'][$feedHash]['items']);
             $this->writeData();
         } else {
-            $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
-            unset($this->_data['feeds'][$feedHash]['items']);
             $this->_data['needSort'] = true;
 
             if (isset($_SESSION['lastNewItemsHash'])) {
@@ -1381,40 +1290,100 @@ class Feed
      *
      * @param string $feedHash Hash corresponding to a feed
      *
-     * @return array feed information, error, lastUpdate and newItems
+     * @return empty string
      */
     public function updateFeedsHash($feedsHash, $force, $format = '')
     {
         $i = 0;
+        $errorCount = 0;
+        $noUpdateCount = 0;
+        $successCount = 0;
+        $nbItemsAdded = 0;
 
         $feedsHash = $this->orderFeedsForUpdate($feedsHash);
+        $nbFeeds = count($feedsHash);
 
         ob_end_flush();
         if (ob_get_level() == 0) ob_start();
+
+        if ($format === 'html') {
+            echo '<table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>'.Intl::msg('Feed').'</th>
+                  <th>'.Intl::msg('New items').'</th>
+                  <th>'.Intl::msg('Time').'</th>
+                  <th>'.Intl::msg('Status').'</th>
+                </tr>
+              </thead>
+              <tbody>';
+        }
         $start = microtime(true);
+        $lastTime = $start;
         foreach ($feedsHash as $feedHash) {
             $i++;
             $feed = $this->getFeed($feedHash);
-            $str = '<li>'.number_format(microtime(true)-$start,3).' seconds ('.$i.'/'.count($feedsHash).'): Updating: <a href="?currentHash='.$feedHash.'">'.$feed['title'].'</a></li>';
-            echo ($format==='html'?$str:strip_tags($str)).str_pad('',4096)."\n";
-            ob_flush();
-            flush();
+            $strBegin = "\n".'<tr><td>'.str_pad($i.'/'.$nbFeeds, 7, ' ', STR_PAD_LEFT).'</td><td> <a href="?currentHash='.$feedHash.'">'.substr(str_pad($feed['title'], 50), 0, 50).'</a> </td><td>';
+            if ($format === 'html') {
+                echo str_pad($strBegin, 4096);
+                ob_flush();
+                flush();
+            }
+
+            $strEnd = '';
+            $time = microtime(true) - $lastTime;
+            $lastTime += $time;
             if ($force or $this->needUpdate($feed)) {
-                $info = $this->updateChannel($feedHash);
-                $str = '<li>'.number_format(microtime(true)-$start,3).' seconds: Updated: <span class="text-success">'.count($info['newItems']).' new item(s)</span>';
+                $info = $this->updateChannel($feedHash, $force);
+                $countItems = count($info['newItems']);
+                $strEnd .= '<span class="text-success">'.str_pad($countItems, 3, ' ', STR_PAD_LEFT).'</span> </td><td>'.str_pad(number_format($time, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>';
                 if (empty($info['error'])) {
-                    $str .= '</li>';
+                    $strEnd .= Intl::msg('Successfully updated').'</td></tr>';
+                    $successCount++;
+                    $nbItemsAdded += $countItems;
                 } else {
-                    $str .= ' <span class="text-error">('.$this->getError($info['error']).')</span></li>';
+                    $strEnd .= '<span class="text-error">'.$info['error'].'</span></td></tr>';
+                    $errorCount++;
                 }
             } else {
-                $str = '<li>'.number_format(microtime(true)-$start,3).' seconds: Already up-to-date: <span class="text-warning">'.$feed['title'].'</span></li>';
-
+                $strEnd .= str_pad('0', 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format($time, 1), 6, ' ', STR_PAD_LEFT).'s </td><td><span class="text-warning">'.Intl::msg('Already up-to-date').'</span></td></tr>';
+                $noUpdateCount++;
             }
-            echo ($format==='html'?$str:strip_tags($str)).str_pad('',4096)."\n";
+            if ($format==='html') {
+                echo str_pad($strEnd, 4096);
+                ob_flush();
+                flush();
+            } else {
+                echo strip_tags($strBegin.$strEnd);
+            }
+        }
+
+        // summary
+        $strBegin = "\n".'<tr><td></td><td> '.Intl::msg('Total:').' '.$nbFeeds.' '.($nbFeeds > 1 ? Intl::msg('items') : Intl::msg('item')).'</td><td>';
+        if ($format === 'html') {
+            echo str_pad($strBegin, 4096);
             ob_flush();
             flush();
         }
+
+        $strEnd = str_pad($nbItemsAdded, 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format(microtime(true) - $start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>'
+            .'<span class="text-success">'.$successCount.' '.($successCount > 1 ? Intl::msg('Successes') : Intl::msg('Success')).' </span><br />'
+            .'<span class="text-warning">'.$noUpdateCount.' '.Intl::msg('Up-to-date').' </span><br />'
+            .'<span class="text-error">'.$errorCount.' '.($errorCount > 1 ? Intl::msg('Errors') : Intl::msg('Error')).' </span></td></tr>';
+        if ($format === 'html') {
+            echo str_pad($strEnd, 4096);
+            ob_flush();
+            flush();
+        } else {
+            echo strip_tags($strBegin.$strEnd);
+        }
+
+        if ($format === 'html') {
+            echo '</tbody></table>';
+        }
+
+        return '';
     }
 
     /**
@@ -1523,7 +1492,7 @@ class Feed
                 if ($read == 1) {
                     $this->_data['feeds'][$feedHash]['nbUnread'] = 0;
                 } else {
-                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds']['nbAll'];
+                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds'][$feedHash]['nbAll'];
                 }
             }
         }
@@ -1571,6 +1540,9 @@ class Feed
         return false;
     }
 
+        
+    
+
     /**
      * Get type of a hash : item, feed, folder or ''
      *
@@ -1606,6 +1578,17 @@ class Feed
         }
 
         return $type;
+    }
+
+    /** 
+     * Sort function by order (feed, folder)
+     * Used with uasort
+     *
+     * @param mixed $a a feed or a folder
+     * @param mixed $b a feed or a folder
+     */
+    public static function sortByOrder($a, $b) {
+        return strnatcasecmp($a['order'], $b['order']);
     }
 
     /** 

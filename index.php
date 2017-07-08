@@ -1,25 +1,1344 @@
 <?php
-// kriss_feed simple and smart (or stupid) feed reader
-// 2012 - Copyleft - Tontof - http://tontof.net
+// KrISS feed: a simple and smart (or stupid) feed reader
+// Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
+define('FEED_VERSION', 8.7);
+
 define('DATA_DIR', 'data');
+define('INC_DIR', 'inc');
 define('CACHE_DIR', DATA_DIR.'/cache');
+define('FAVICON_DIR', INC_DIR.'/favicon');
 
 define('DATA_FILE', DATA_DIR.'/data.php');
+define('STAR_FILE', DATA_DIR.'/star.php');
+define('ITEM_FILE', DATA_DIR.'/item.php');
 define('CONFIG_FILE', DATA_DIR.'/config.php');
-define('STYLE_FILE', 'style.css');
-
-define('FEED_VERSION', 5);
+define('OPML_FILE', DATA_DIR.'/feeds.opml');
+define('OPML_FILE_SAVE', DATA_DIR.'/feeds.bak.opml');
+define('BAN_FILE', DATA_DIR.'/ipbans.php');
 
 define('PHPPREFIX', '<?php /* '); // Prefix to encapsulate data in php code.
 define('PHPSUFFIX', ' */ ?>'); // Suffix to encapsulate data in php code.
 
 define('MIN_TIME_UPDATE', 5); // Minimum accepted time for update
+// Updates check frequency. 86400 seconds = 24 hours
+define('UPDATECHECK_INTERVAL', 86400);
 
-define('ERROR_NO_ERROR', 0);
-define('ERROR_NO_XML', 1);
-define('ERROR_ITEMS_MISSED', 2);
-define('ERROR_LAST_UPDATE', 3);
+// fix some warning
+date_default_timezone_set('Europe/Paris');
+
+
+class Feed
+{
+    public $dataFile = '';
+
+    public $cacheDir = '';
+
+    public $kfc;
+
+    private $_data = array();
+
+    public function __construct($dataFile, $cacheDir, $kfc)
+    {
+        $this->kfc = $kfc;
+        $this->dataFile = $dataFile;
+        $this->cacheDir = $cacheDir;
+    }
+
+    public function getData()
+    {
+        return $this->_data;
+    }
+
+    public function setData($data)
+    {
+        $this->_data = $data;
+    }
+
+    public function initData()
+    {
+        $this->_data['feeds'] = array(
+            MyTool::smallHash('http://tontof.net/?rss') => array(
+                'title' => 'Tontof',
+                'foldersHash' => array(),
+                'timeUpdate' => 'auto',
+                'lastUpdate' => 0,
+                'nbUnread' => 0,
+                'nbAll' => 0,
+                'htmlUrl' => 'http://tontof.net',
+                'xmlUrl' => 'http://tontof.net/?rss',
+                'description' => 'A simple and smart (or stupid) blog'));
+        $this->_data['folders'] = array();
+        $this->_data['items'] = array();
+        $this->_data['newItems'] = array();
+    }
+
+    public function loadData()
+    {
+        if (empty($this->_data)) {
+            if (file_exists($this->dataFile)) {
+                $this->_data = unserialize(
+                    gzinflate(
+                        base64_decode(
+                            substr(
+                                file_get_contents($this->dataFile),
+                                strlen(PHPPREFIX),
+                                -strlen(PHPSUFFIX)
+                                )
+                            )
+                        )
+                    );
+
+                return true;
+            } else {
+                $this->initData();
+                $this->writeData();
+
+                return false;
+            }
+        }
+
+        // data already loaded
+        return true;
+    }
+
+    public function writeData()
+    {
+        if ($this->kfc->isLogged()) {
+            $write = @file_put_contents(
+                $this->dataFile,
+                PHPPREFIX
+                . base64_encode(gzdeflate(serialize($this->_data)))
+                . PHPSUFFIX,
+                LOCK_EX
+                );
+            if (!$write) {
+                die("Can't write to " . $this->dataFile);
+            }
+        }
+    }
+
+    public function setFeeds($feeds) {
+        $this->_data['feeds'] = $feeds;
+    }
+
+    public function getFeeds()
+    {
+        return $this->_data['feeds'];
+    }
+
+    public function sortFeeds()
+    {
+        uasort(
+            $this->_data['feeds'],
+            'Feed::sortByTitle'
+            );
+    }
+
+    public function sortFolders()
+    {
+        uasort(
+            $this->_data['folders'],
+            'Feed::sortByOrder'
+            );
+    }
+
+    public function getFeedsView()
+    {
+        $feedsView = array('all' => array('title' => Intl::msg('All feeds'), 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
+        
+        foreach ($this->_data['feeds'] as $feedHash => $feed) {
+            if (isset($feed['error'])) {
+                $feed['error'] = $feed['error'];
+            }
+            if (isset($feed['nbUnread'])) {
+                $feedsView['all']['nbUnread'] += $feed['nbUnread'];
+            } else {
+                $feedsView['all']['nbUnread'] += $feed['nbAll'];
+            }
+            $feedsView['all']['nbAll'] += $feed['nbAll'];
+            if (empty($feed['foldersHash'])) {
+                $feedsView['all']['feeds'][$feedHash] = $feed;
+                if (!isset($feed['nbUnread'])) {
+                    $feedsView['all']['feeds'][$feedHash]['nbUnread'] = $feed['nbAll'];
+                }
+            } else {
+                foreach ($feed['foldersHash'] as $folderHash) {
+                    $folder = $this->getFolder($folderHash);
+                    if ($folder !== false) {
+                        if (!isset($feedsView['folders'][$folderHash]['title'])) {
+                            $feedsView['folders'][$folderHash]['title'] = $folder['title'];
+                            $feedsView['folders'][$folderHash]['isOpen'] = $folder['isOpen'];
+                            $feedsView['folders'][$folderHash]['nbUnread'] = 0;
+                            $feedsView['folders'][$folderHash]['nbAll'] = 0;
+                            if (isset($folder['order'])) {
+                                $feedsView['folders'][$folderHash]['order'] = $folder['order'];
+                            } else {
+                                $feedsView['folders'][$folderHash]['order'] = 0;
+                            }
+                        }
+                        $feedsView['folders'][$folderHash]['feeds'][$feedHash] = $feed;
+                        $feedsView['folders'][$folderHash]['nbUnread'] += $feed['nbUnread'];
+                        $feedsView['folders'][$folderHash]['nbAll'] += $feed['nbAll'];
+                    }
+                }
+            }
+        }
+
+        uasort($feedsView['folders'], 'Feed::sortByOrder');
+
+        return $feedsView;
+    }
+
+    public function getFeed($feedHash)
+    {
+        if (isset($this->_data['feeds'][$feedHash])) {
+            // FIX: problem of version 6 &amp;amp;
+            $this->_data['feeds'][$feedHash]['xmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['xmlUrl']);
+            $this->_data['feeds'][$feedHash]['htmlUrl'] = preg_replace('/&(amp;)*/', '&', $this->_data['feeds'][$feedHash]['htmlUrl']);
+
+            return $this->_data['feeds'][$feedHash];
+        }
+
+        return false;
+    }
+
+    public function getFaviconFeed($feedHash)
+    {
+        $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
+        $url = 'http://www.google.com/s2/favicons?domain='.$htmlUrl;
+        $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
+
+        if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
+            MyTool::grabToLocal($url, $file);
+        }
+
+        if (file_exists($file)) {
+            return $file;
+        } else {
+            return $url;
+        }
+    }
+
+    public function getFeedHtmlUrl($feedHash)
+    {
+        if (isset($this->_data['feeds'][$feedHash]['htmlUrl'])) {
+            return $this->_data['feeds'][$feedHash]['htmlUrl'];
+        }
+
+        return false;
+    }
+
+    public function getFeedTitle($feedHash)
+    {
+        if (isset($this->_data['feeds'][$feedHash]['title'])) {
+            return $this->_data['feeds'][$feedHash]['title'];
+        }
+
+        return false;
+    }
+
+    public function loadFeed($feedHash)
+    {
+        if (!isset($this->_data['feeds'][$feedHash]['items'])) {
+            $this->_data['feeds'][$feedHash]['items'] = array();
+
+            if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
+                $items = unserialize(
+                    gzinflate(
+                        base64_decode(
+                            substr(
+                                file_get_contents($this->cacheDir.'/'.$feedHash.'.php'),
+                                strlen(PHPPREFIX),
+                                -strlen(PHPSUFFIX)
+                                )
+                            )
+                        )
+                    );
+
+                $this->_data['feeds'][$feedHash]['items'] = $items;
+            }
+        }
+    }
+
+    public function editFeed(
+        $feedHash,
+        $title,
+        $description,
+        $foldersHash,
+        $timeUpdate,
+        $htmlUrl)
+    {
+        if (isset($this->_data['feeds'][$feedHash])) {
+            if (!empty($title)) {
+                $this->_data['feeds'][$feedHash]['title'] = $title;
+            }
+            if (!empty($description)) {
+                $this->_data['feeds'][$feedHash]['description'] = $description;
+            }
+            if (!empty($htmlUrl)) {
+                $this->_data['feeds'][$feedHash]['htmlUrl'] = $htmlUrl;
+            }
+            
+            $this->_data['feeds'][$feedHash]['foldersHash'] = $foldersHash;
+            $this->_data['feeds'][$feedHash]['timeUpdate'] = 'auto';
+            if (!empty($timeUpdate)) {
+                if ($timeUpdate == 'max') {
+                    $this->_data['feeds'][$feedHash]['timeUpdate'] = $timeUpdate;
+                } else {
+                    $this->_data['feeds'][$feedHash]['timeUpdate'] = (int) $timeUpdate;
+                    $maxUpdate = $this->kfc->maxUpdate;
+                    if ($this->_data['feeds'][$feedHash]['timeUpdate'] < MIN_TIME_UPDATE
+                        || $this->_data['feeds'][$feedHash]['timeUpdate'] > $maxUpdate
+                    ) {
+                        $this->_data['feeds'][$feedHash]['timeUpdate'] = 'auto';
+                    }
+                }
+            }
+        }
+    }
+
+    public function removeFeed($feedHash)
+    {
+        if (isset($this->_data['feeds'][$feedHash])) {
+            unset($this->_data['feeds'][$feedHash]);
+            unlink($this->cacheDir. '/' .$feedHash.'.php' );
+            foreach (array_keys($this->_data['items']) as $itemHash) {
+                if (substr($itemHash, 0, 6) === $feedHash) {
+                    unset($this->_data['items'][$itemHash]);
+                }
+            }
+            foreach (array_keys($this->_data['newItems']) as $itemHash) {
+                if (substr($itemHash, 0, 6) === $feedHash) {
+                    unset($this->_data['newItems'][$itemHash]);
+                }
+            }
+        }
+    }
+
+    public function writeFeed($feedHash, $feed)
+    {
+        if ($this->kfc->isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
+            if (!is_dir($this->cacheDir)) {
+                if (!@mkdir($this->cacheDir, 0755)) {
+                    die("Can not create cache dir: ".$this->cacheDir);
+                }
+                @chmod($this->cacheDir, 0755);
+                if (!is_file($this->cacheDir.'/.htaccess')) {
+                    if (!@file_put_contents(
+                            $this->cacheDir.'/.htaccess',
+                            "Allow from none\nDeny from all\n"
+                            )) {
+                        die("Can not protect cache dir: ".$this->cacheDir);
+                    }
+                }
+            }
+
+            $write = @file_put_contents(
+                $this->cacheDir.'/'.$feedHash.'.php',
+                PHPPREFIX
+                . base64_encode(gzdeflate(serialize($feed)))
+                . PHPSUFFIX,
+                LOCK_EX
+                );
+
+            if (!$write) {
+                die("Can't write to " . $this->cacheDir.'/'.$feedHash.'.php');
+            }
+        }
+    }
+
+    public function orderFeedsForUpdate($feedsHash)
+    {
+        $newFeedsHash = array();
+        foreach(array_keys($this->_data['items']) as $itemHash) {
+            $feedHash = substr($itemHash, 0, 6);
+            if (in_array($feedHash, $feedsHash) and !in_array($feedHash, $newFeedsHash)) {
+                $newFeedsHash[] = $feedHash;
+            }
+        }
+
+        if ($this->kfc->order !== 'newerFirst') {
+            $newFeedsHash = array_reverse($newFeedsHash);
+        }
+
+        foreach($feedsHash as $feedHash) {
+            if (!in_array($feedHash, $newFeedsHash)) {
+                $newFeedsHash[] = $feedHash;
+            }
+        }
+
+        return $newFeedsHash;
+    }
+
+    public function getFeedsHashFromFolderHash($folderHash)
+    {
+        $list = array();
+        $folders = $this->getFolders();
+
+        if (isset($folders[$folderHash])) {
+            foreach ($this->_data['feeds'] as $feedHash => $feed) {
+                if (in_array($folderHash, $feed['foldersHash'])) {
+                    $list[] = $feedHash;
+                }
+            }
+        }
+
+        return $list;
+    }
+
+    public function getFolders()
+    {
+        return $this->_data['folders'];
+    }
+
+    public function getFolder($folderHash)
+    {
+        if (isset($this->_data['folders'][$folderHash])) {
+            return $this->_data['folders'][$folderHash];
+        }
+
+        return false;
+    }
+
+    public function addFolder($folderTitle, $newFolderHash = '')
+    {
+        if (empty($newFolderHash)) {
+            $newFolderHash = MyTool::smallHash($newFolderTitle);
+        }
+        $this->_data['folders'][$newFolderHash] = array(
+            'title' => $folderTitle,
+            'isOpen' => 1
+        );
+    }
+
+    public function renameFolder($oldFolderHash, $newFolderTitle)
+    {
+        $newFolderHash = '';
+        if (!empty($newFolderTitle)) {
+            $newFolderHash = MyTool::smallHash($newFolderTitle);
+            $this->addFolder($newFolderTitle, $newFolderHash);
+            $this->_data['folders'][$newFolderHash]['isOpen'] = $this->_data['folders'][$oldFolderHash]['isOpen'];
+        }
+        unset($this->_data['folders'][$oldFolderHash]);
+
+        foreach ($this->_data['feeds'] as $feedHash => $feed) {
+            $i = array_search($oldFolderHash, $feed['foldersHash']);
+            if ($i !== false) {
+                unset($this->_data['feeds'][$feedHash]['foldersHash'][$i]);
+                if (!empty($newFolderTitle)) {
+                    $this->_data['feeds'][$feedHash]['foldersHash'][] = $newFolderHash;
+                }
+            }
+        }
+    }
+
+    public function orderFolder(
+        $folderHash,
+        $order)
+    {
+        if (isset($this->_data['folders'][$folderHash])) {
+            $this->_data['folders'][$folderHash]['order'] = $order;
+        }
+    }
+
+    public function toggleFolder($hash)
+    {
+        if ($this->_data['folders'][$hash]) {
+            $isOpen = $this->_data['folders'][$hash]['isOpen'];
+            if ($isOpen) {
+                $this->_data['folders'][$hash]['isOpen'] = 0;
+            } else {
+                $this->_data['folders'][$hash]['isOpen'] = 1;
+            }
+        }
+
+        return true;
+    }
+
+    public function getFolderTitle($folderHash)
+    {
+        if (isset($this->_data['folders'][$folderHash])) {
+            return $this->_data['folders'][$folderHash]['title'];
+        }
+
+        return false;
+    }
+
+    public function getItems($hash = 'all', $filter = 'all')
+    {
+        if (empty($hash) or $hash == 'all' and $filter == 'all') {
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['items']+$this->_data['newItems'];
+            } else {
+                return $this->_data['items'];
+            }
+        }
+
+        if (empty($hash) or $hash == 'all' and $filter == 'old') {
+            return $this->_data['items'];
+        }
+
+        if (empty($hash) or $hash == 'all' and $filter == 'new') {
+            if (isset($this->_data['newItems'])) {
+                return $this->_data['newItems'];
+            } else {
+                return array();
+            }
+        }
+        
+        $list = array();
+        $isRead = 1;
+        if ($filter === 'unread') {
+            $isRead = 0;
+        }
+
+        if (empty($hash) || $hash == 'all') {
+            // all items
+            foreach ($this->_data['items'] as $itemHash => $item) {
+                if ($item[1] === $isRead) {
+                    $list[$itemHash] = $item;
+                }
+            }
+            if (isset($this->_data['newItems'])) {
+                foreach ($this->_data['newItems'] as $itemHash => $item) {
+                    if ($item[1] === $isRead) {
+                        $list[$itemHash] = $item;
+                    }
+                }
+            }
+        } else {
+            if (strlen($hash) === 12) {
+                // an item
+                if (isset($this->_data['items'][$hash])) {
+                    $list[$hash] = $this->_data['items'][$hash];
+                } else if (isset($this->_data['newItems']) && isset($this->_data['newItems'][$hash])) {
+                    $list[$hash] = $this->_data['newItems'][$hash];
+                }
+            } else {
+                $feedsHash = array();
+                if (isset($this->_data['feeds'][$hash])) {
+                    // a feed
+                    $feedsHash[] = $hash;
+                } else if (isset($this->_data['folders'][$hash])) {
+                    // a folder
+                    foreach ($this->_data['feeds'] as $feedHash => $feed) {
+                        if (in_array($hash, $feed['foldersHash'])) {
+                            $feedsHash[] = $feedHash;
+                        }
+                    }
+                }
+
+                // get items from a list of feeds
+                if (!empty($feedsHash)) {
+                    $flipFeedsHash = array_flip($feedsHash);
+                    foreach ($this->_data['items'] as $itemHash => $item) {
+                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                            if ($filter === 'all' or $item[1] === $isRead) {
+                                $list[$itemHash] = $item;
+                            }
+                        }
+                    }
+                    if (isset($this->_data['newItems'])) {
+                        foreach ($this->_data['newItems'] as $itemHash => $item) {
+                            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                                if ($filter === 'all' or $item[1] === $isRead) {
+                                    $list[$itemHash] = $item;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $list;
+    }
+
+    public function setItems($items)
+    {
+        $this->_data['items'] = $items;
+    }
+
+    public function loadItem($itemHash, $keep)
+    {
+        $feedHash = substr($itemHash, 0, 6);
+        $item = array();
+        if (isset($this->_data['feeds'][$feedHash]['items'])) {
+            if (isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
+                $item = $this->_data['feeds'][$feedHash]['items'][$itemHash];
+            }
+        } else {
+            $this->loadFeed($feedHash);
+
+            return $this->loadItem($itemHash, $keep);
+        }
+
+        if (!$keep) {
+            unset($this->_data['feeds'][$feedHash]['items']);
+        }
+
+        return $item;
+    }
+
+    public function getItem($itemHash, $keep = true)
+    {
+        $item = $this->loadItem($itemHash, $keep);
+         
+        if (!empty($item)) {
+            $item['itemHash'] = $itemHash;
+            $time = $item['time'];
+            if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
+                // Today
+                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+            } else {
+                if (strftime('%Y', $time) == strftime('%Y', time())) {
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                } else {
+                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                }
+            }
+            if (isset($this->_data['items'][$itemHash])) {
+                $item['read'] = $this->_data['items'][$itemHash][1];
+            } else if (isset($this->_data['newItems'][$itemHash])) {
+                $item['read'] = $this->_data['newItems'][$itemHash][1];
+
+                $currentNewItemIndex = array_search($itemHash, array_keys($this->_data['newItems']));
+                if (isset($_SESSION['lastNewItemsHash'])) {
+                    $lastNewItemIndex = array_search($_SESSION['lastNewItemsHash'], array_keys($this->_data['newItems']));
+
+                    if ($lastNewItemIndex < $currentNewItemIndex) {
+                        $_SESSION['lastNewItemsHash'] = $itemHash;
+                    }
+                } else {
+                    $_SESSION['lastNewItemsHash'] = $itemHash;
+                }
+            } else {
+                // FIX: data may be corrupted
+                return false;
+            }
+            
+            $item['author'] = htmlspecialchars(html_entity_decode(strip_tags($item['author']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
+            $item['title'] = htmlspecialchars(html_entity_decode(strip_tags($item['title']), ENT_QUOTES, 'utf-8'), ENT_NOQUOTES);
+            $item['link'] = htmlspecialchars($item['link']);
+            if (empty($item['title'])) {
+                $item['title'] = $item['link'];
+            }
+            $item['via'] = htmlspecialchars($item['via']);
+            
+            $item['favicon'] = $this->getFaviconFeed(substr($itemHash, 0, 6));
+            $item['xmlUrl'] = htmlspecialchars($item['xmlUrl']);
+
+            if (isset($GLOBALS['starredItems'][$itemHash])) {
+                $item['starred'] = 1 ;
+            } else {
+                $item['starred'] = 0 ;
+            }
+
+            return $item;
+        }
+
+        return false;
+    }
+
+    public function updateItems()
+    {
+        if (isset($this->_data['needSort']) or (isset($this->_data['order']) and $this->_data['order'] != $this->kfc->order)) {
+            unset($this->_data['needSort']);
+
+            $this->_data['items'] = $this->_data['items']+$this->_data['newItems'];
+            $this->_data['newItems'] = array();
+            // sort items
+            if ($this->kfc->order === 'newerFirst') {
+                arsort($this->_data['items']);
+            } else {
+                asort($this->_data['items']);
+            }
+            $this->_data['order'] = $this->kfc->order;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function initFeedCache($feed, $force)
+    {
+        if (!empty($feed)) {
+            if ($force) {
+                $feed['etag'] = '';
+                $feed['lastModified'] = '';
+            }
+
+            MyTool::$opts['http']['headers'] = array();
+            if (!empty($feed['lastModified'])) {
+                MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
+            }
+            if (!empty($feed['etag'])) {
+                MyTool::$opts['http']['headers'][] = 'If-None-Match: ' . $feed['etag'];
+            }
+        }
+        
+        return $feed;
+    }
+
+    public function updateFeedCache($feed, $outputUrl)
+    {
+        // really new (2XX) and errors (4XX and 5XX) are considered new
+        if ($outputUrl['code'] != 304) {
+            if (preg_match('/^ETag: ([^\r\n]*)[\r\n]*$/im', $outputUrl['header'], $matches)) {
+                $feed['etag'] = $matches[1];
+            }
+            if (preg_match('/^Last-Modified: ([^\r\n]*)[\r\n]*$/im', $outputUrl['header'], $matches)) {
+                $feed['lastModified'] = $matches[1];
+            }
+        }
+
+        if (empty($feed['etag'])) {
+            unset($feed['etag']);
+        }
+        if (empty($feed['lastModified'])) {
+            unset($feed['lastModified']);
+        }
+
+        return $feed;
+    }
+
+    public function updateFeedFromDom($feed, $dom) {
+        if (empty($feed)) {
+            // addFeed
+            $feed = Rss::getFeed($dom);
+
+            if (!MyTool::isUrl($feed['htmlUrl'])) {
+                $feed['htmlUrl'] = ' ';
+            }
+            if (empty($feed['description'])) {
+                $feed['description'] = ' ';
+            }
+            $feed['foldersHash'] = array();
+            $feed['timeUpdate'] = 'auto';            
+        } else if (empty($feed['description']) || empty($feed['htmlUrl'])) {
+            // if feed description/htmlUrl is empty try to update
+            // (after opml import, description/htmlUrl are often empty)
+            $rssFeed = Rss::getFeed($dom);
+            if (empty($feed['description'])) {
+                if (empty($rssFeed['description'])) {
+                    $rssFeed['description'] = ' ';
+                }
+                $feed['description'] = $rssFeed['description'];
+            }
+            if (empty($feed['htmlUrl'])) {
+                if (empty($rssFeed['htmlUrl'])) {
+                    $rssFeed['htmlUrl'] = ' ';
+                }
+                $feed['htmlUrl'] = $rssFeed['htmlUrl'];
+            }
+        }
+
+        return $feed;
+    }
+
+    private function showEnclosure($enclosure) {
+        $path = parse_url($enclosure, PHP_URL_PATH);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $link = '<a href="'.$enclosure.'">'.$enclosure.'</a>';
+        switch(strtolower($ext)) {
+        case '':
+            if (strpos($enclosure, 'https://www.youtube.com') === 0) {
+                $link = '<iframe src="'.$enclosure.'" width="640" height="360" allowfullscreen></iframe>';
+            }
+            break;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+            $link = '<img src="'.$enclosure.'">';
+            break;
+        case 'mp3':
+        case 'oga':
+        case 'wav':
+            $link = '<audio controls><source src="'.$enclosure.'">'.$link.'</audio>';
+            break;
+        case 'mp4':
+        case 'ogg':
+        case 'webm':
+            $link = '<video controls><source src="'.$enclosure.'">'.$link.'</video>';
+            break;
+        }
+
+        return $link;
+    }
+
+    public function updateItemsFromDom($dom) {
+        $items = Rss::getItems($dom);
+
+        $newItems = array();
+        foreach($items as $item) {
+            if (!empty($item['link'])) {
+                $hashUrl = MyTool::smallHash($item['link']);
+                $newItems[$hashUrl] = array();
+                $newItems[$hashUrl]['title'] = empty($item['title'])?$item['link']:$item['title'];
+                $newItems[$hashUrl]['time']  = strtotime($item['time'])
+                    ? strtotime($item['time'])
+                    : time();
+                if (MyTool::isUrl($item['via']) &&
+                    parse_url($item['via'], PHP_URL_HOST)
+                    != parse_url($item['link'], PHP_URL_HOST)) {
+                    $newItems[$hashUrl]['via'] = $item['via'];
+                } else {
+                    $newItems[$hashUrl]['via'] = '';
+                }
+                $newItems[$hashUrl]['link'] = $item['link'];
+                $newItems[$hashUrl]['author'] = $item['author'];
+                mb_internal_encoding("UTF-8");
+                $newItems[$hashUrl]['description'] = mb_substr(
+                    strip_tags($item['description']), 0, 500
+                );
+                if(!empty($item['enclosure'])) {
+                    foreach($item['enclosure'] as $enclosure) {
+                        $item['content'] .= '<br>'.$this->showEnclosure($enclosure);
+                    }
+                }
+                $newItems[$hashUrl]['content'] = $item['content'];
+            }
+        }
+
+        return $newItems;
+    }
+
+    public function loadRss($xmlUrl, $feed = array(), $force = false)
+    {
+        $items = array();
+        $feed = $this->initFeedCache($feed, $force);
+
+        if( !ini_get('safe_mode') && isset(MyTool::$opts['http']['timeout'])){
+            set_time_limit(MyTool::$opts['http']['timeout']+1);
+        } 
+        $outputUrl = MyTool::loadUrl($xmlUrl);
+        
+        if (!empty($outputUrl['error'])) {
+            $feed['error'] = $outputUrl['error'];
+        } else if (empty($outputUrl['data'])) {
+            if ($outputUrl['code'] != 304) { // 304 Not modified
+                $feed['error'] = Intl::msg('Empty output data');;
+            }
+        } else {
+            $outputDom = Rss::loadDom($outputUrl['data']);
+            if (!empty($outputDom['error'])) {
+                $feed['error'] = $outputDom['error'];
+            } else {
+                unset($feed['error']);
+                $feed = $this->updateFeedFromDom($feed, $outputDom['dom']);
+                $feed = $this->updateFeedCache($feed, $outputUrl);
+                $items = $this->updateItemsFromDom($outputDom['dom']);
+            }
+        }
+        $feed['lastUpdate'] = time();
+
+        return array(
+            'feed' => $feed,
+            'items' => $items,
+        );
+    }
+
+    public function addChannel($xmlUrl)
+    {
+        $feedHash = MyTool::smallHash($xmlUrl);
+        $error = '';
+        if (!isset($this->_data['feeds'][$feedHash])) {
+            $output = $this->loadRss($xmlUrl);
+
+            if (empty($output['feed']['error'])) {
+                $output['feed']['xmlUrl'] = $xmlUrl;
+                $output['feed']['nbUnread'] = count($output['items']);
+                $output['feed']['nbAll'] = count($output['items']);
+                $this->_data['feeds'][$feedHash] = $output['feed'];
+                $this->_data['needSort'] = true;
+
+                $items = $output['items'];
+                foreach (array_keys($items) as $itemHash) {
+                    if (empty($items[$itemHash]['via'])) {
+                        $items[$itemHash]['via'] = $output['feed']['htmlUrl'];
+                    }
+                    if (empty($items[$itemHash]['author'])) {
+                        $items[$itemHash]['author'] = $output['feed']['title'];
+                    } else {
+                        $items[$itemHash]['author']
+                            = $output['feed']['title'] . ' ('
+                            . $items[$itemHash]['author'] . ')';
+                    }
+                    $items[$itemHash]['xmlUrl'] = $xmlUrl;
+
+                    $this->_data['newItems'][$feedHash . $itemHash] = array(
+                        $items[$itemHash]['time'],
+                        0
+                    );
+                    $items[$feedHash . $itemHash] = $items[$itemHash];
+                    unset($items[$itemHash]);
+                }
+                $this->writeFeed($feedHash, $items);
+            } else {
+                $error = $output['feed']['error'];
+            }
+        } else {
+            $error = Intl::msg('Duplicated feed');
+        }
+
+        return array('error' => $error);
+    }
+
+    public function getTimeUpdate($feed)
+    {
+        $max = $feed['timeUpdate'];
+
+        if ($max == 'auto') {
+            $max = $this->kfc->maxUpdate;
+        } elseif ($max == 'max') {
+            $max = $this->kfc->maxUpdate;
+        } elseif ((int) $max < MIN_TIME_UPDATE
+                  || (int) $max > $this->kfc->maxUpdate) {
+            $max = $this->kfc->maxUpdate;
+        }
+
+        return (int) $max;
+    }
+
+    public function needUpdate($feed)
+    {
+        $diff = (int) (time()-$feed['lastUpdate']);
+        if ($diff > $this->getTimeUpdate($feed) * 60) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function updateChannel($feedHash, $force = false)
+    {
+        $error = '';
+        $newItems = array();
+
+        if (!isset($this->_data['feeds'][$feedHash])) {
+            return array(
+                'error' => Intl::msg('Unknown feedhash'),
+                'newItems' => $newItems
+            );
+        }
+
+        $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
+
+        $output = $this->loadRss($xmlUrl, $this->_data['feeds'][$feedHash], $force);
+        // Update feed information
+        $this->_data['feeds'][$feedHash] = $output['feed'];
+        if (empty($output['feed']['error'])) {
+            $this->loadFeed($feedHash);
+            $oldItems = array();
+            if (!empty($this->_data['feeds'][$feedHash]['items']) && is_array($this->_data['feeds'][$feedHash]['items'])) {
+                $oldItems = $this->_data['feeds'][$feedHash]['items'];
+            }
+
+            $lastTime = 0;
+            if (isset($this->_data['feeds'][$feedHash]['lastTime'])) {
+                $lastTime = $this->_data['feeds'][$feedHash]['lastTime'];
+            }
+            if (!empty($oldItems)) {
+                $lastTime = current($oldItems);
+                $lastTime = $lastTime['time'];
+            }
+            $newLastTime = $lastTime;
+        
+            $rssItems = $output['items'];
+            $rssItems = array_slice($rssItems, 0, $this->kfc->maxItems, true);
+            $rssItemsHash = array_keys($rssItems);
+        
+            if (count($rssItemsHash) !== 0) {
+                // Look for new items
+                foreach ($rssItemsHash as $itemHash) {
+                    // itemHash is smallHash of link. To compare to item
+                    // hashes into data, we need to concatenate to feedHash.
+                    if (!isset($oldItems[$feedHash.$itemHash])) {
+                        if (empty($rssItems[$itemHash]['via'])) {
+                            $rssItems[$itemHash]['via']
+                                = $this->_data['feeds'][$feedHash]['htmlUrl'];
+                        }
+                        if (empty($rssItems[$itemHash]['author'])) {
+                            $rssItems[$itemHash]['author']
+                                = $this->_data['feeds'][$feedHash]['title'];
+                        } else {
+                            $rssItems[$itemHash]['author']
+                                = $this->_data['feeds'][$feedHash]['title'] . ' ('
+                                . $rssItems[$itemHash]['author'] . ')';
+                        }
+                        $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
+
+                        if ($rssItems[$itemHash]['time'] > $lastTime) {
+                            if ($rssItems[$itemHash]['time'] > $newLastTime) {
+                                $newLastTime = $rssItems[$itemHash]['time'];
+                            }
+                            $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
+                        }
+                    }
+                }
+                $newItemsHash = array_keys($newItems);
+                $this->_data['feeds'][$feedHash]['items']
+                    = $newItems+$oldItems;
+
+                // Check if items may have been missed
+                if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
+                    $error = Intl::msg('Items may have been missed since last update');
+                }
+
+                // Remove from cache already read items not any more in the feed
+                $listOfOldItems = $this->getItems($feedHash);
+                foreach ($listOfOldItems as $itemHash => $item) {
+                    $itemRssHash = substr($itemHash, 6, 6);
+                    if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
+                        unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
+                    }
+                }
+
+                // Check if quota exceeded
+                $nbAll = count($this->_data['feeds'][$feedHash]['items']);
+                if ($nbAll > $this->kfc->maxItems) {
+                    $this->_data['feeds'][$feedHash]['items']
+                        = array_slice(
+                            $this->_data['feeds'][$feedHash]['items'],
+                            0,
+                            $this->kfc->maxItems, true
+                            );
+                    $nbAll = $this->kfc->maxItems;
+                }
+
+                // Remove items not any more in the cache
+                foreach (array_keys($listOfOldItems) as $itemHash) {
+                    if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
+                        // Remove items not any more in the cache
+                        unset($this->_data['items'][$itemHash]);
+                        unset($this->_data['newItems'][$itemHash]);
+                    }
+                }
+
+                // Update items list and feed information (nbUnread, nbAll)
+                $this->_data['feeds'][$feedHash]['nbAll'] = $nbAll;
+                $nbUnread = 0;
+                foreach ($this->_data['feeds'][$feedHash]['items'] as $itemHash => $item) {
+                    if (isset($this->_data['items'][$itemHash])) {
+                        if ($this->_data['items'][$itemHash][1] === 0) {
+                            $nbUnread++;
+                        }
+                    } else if (isset($this->_data['newItems'][$itemHash])) {
+                        if ($this->_data['newItems'][$itemHash][1] === 0) {
+                            $nbUnread++;
+                        }
+                    } else {
+                        // TODO: Check if itemHash is appended at the end ??
+                        $this->_data['newItems'][$itemHash] = array(
+                            $item['time'],
+                            0                        
+                            );
+                        $nbUnread++;
+                    }
+                }
+                $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
+            }
+
+            if (empty($this->_data['feeds'][$feedHash]['items'])) {
+                $this->_data['feeds'][$feedHash]['lastTime'] = $newLastTime;
+            } else {
+                unset($this->_data['feeds'][$feedHash]['lastTime']);
+            }
+            $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
+            unset($this->_data['feeds'][$feedHash]['items']);
+
+        } else {
+            $error = $output['feed']['error'];
+        }
+
+        if (!empty($error)) {
+            $this->_data['feeds'][$feedHash]['error'] = $error;
+        }
+
+        if (empty($newItems)) {
+            $this->writeData();
+        } else {
+            $this->_data['needSort'] = true;
+
+            if (isset($_SESSION['lastNewItemsHash'])) {
+                $lastNewItemIndex = array_search($_SESSION['lastNewItemsHash'], array_keys($this->_data['newItems']));
+                $this->_data['items'] = $this->_data['items']+array_slice($this->_data['newItems'], 0, $lastNewItemIndex + 1, true);
+                $this->_data['newItems'] = array_slice($this->_data['newItems'], $lastNewItemIndex + 1, count($this->_data['newItems']) - $lastNewItemIndex, true);
+                unset($_SESSION['lastNewItemsHash']);
+            }
+
+            if ($this->kfc->order === 'newerFirst') {
+                arsort($this->_data['newItems']);
+            } else {
+                asort($this->_data['newItems']);
+            }
+            $this->_data['order'] = $this->kfc->order;
+
+            $this->writeData();
+        }
+
+        return array(
+            'error' => $error,
+            'newItems' => $newItems
+            );
+    }
+
+    public function updateFeedsHash($feedsHash, $force, $format = '')
+    {
+        $i = 0;
+        $errorCount = 0;
+        $noUpdateCount = 0;
+        $successCount = 0;
+        $nbItemsAdded = 0;
+
+        $feedsHash = $this->orderFeedsForUpdate($feedsHash);
+        $nbFeeds = count($feedsHash);
+
+        ob_end_flush();
+        if (ob_get_level() == 0) ob_start();
+
+        if ($format === 'html') {
+            echo '<table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>'.Intl::msg('Feed').'</th>
+                  <th>'.Intl::msg('New items').'</th>
+                  <th>'.Intl::msg('Time').'</th>
+                  <th>'.Intl::msg('Status').'</th>
+                </tr>
+              </thead>
+              <tbody>';
+        }
+        $start = microtime(true);
+        $lastTime = $start;
+        foreach ($feedsHash as $feedHash) {
+            $i++;
+            $feed = $this->getFeed($feedHash);
+            $strBegin = "\n".'<tr><td>'.str_pad($i.'/'.$nbFeeds, 7, ' ', STR_PAD_LEFT).'</td><td> <a href="?currentHash='.$feedHash.'">'.substr(str_pad($feed['title'], 50), 0, 50).'</a> </td><td>';
+            if ($format === 'html') {
+                echo str_pad($strBegin, 4096);
+                ob_flush();
+                flush();
+            }
+
+            $strEnd = '';
+            $time = microtime(true) - $lastTime;
+            $lastTime += $time;
+            if ($force or $this->needUpdate($feed)) {
+                $info = $this->updateChannel($feedHash, $force);
+                $countItems = count($info['newItems']);
+                $strEnd .= '<span class="text-success">'.str_pad($countItems, 3, ' ', STR_PAD_LEFT).'</span> </td><td>'.str_pad(number_format($time, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>';
+                if (empty($info['error'])) {
+                    $strEnd .= Intl::msg('Successfully updated').'</td></tr>';
+                    $successCount++;
+                    $nbItemsAdded += $countItems;
+                } else {
+                    $strEnd .= '<span class="text-error">'.$info['error'].'</span></td></tr>';
+                    $errorCount++;
+                }
+            } else {
+                $strEnd .= str_pad('0', 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format($time, 1), 6, ' ', STR_PAD_LEFT).'s </td><td><span class="text-warning">'.Intl::msg('Already up-to-date').'</span></td></tr>';
+                $noUpdateCount++;
+            }
+            if ($format==='html') {
+                echo str_pad($strEnd, 4096);
+                ob_flush();
+                flush();
+            } else {
+                echo strip_tags($strBegin.$strEnd);
+            }
+        }
+
+        // summary
+        $strBegin = "\n".'<tr><td></td><td> '.Intl::msg('Total:').' '.$nbFeeds.' '.($nbFeeds > 1 ? Intl::msg('items') : Intl::msg('item')).'</td><td>';
+        if ($format === 'html') {
+            echo str_pad($strBegin, 4096);
+            ob_flush();
+            flush();
+        }
+
+        $strEnd = str_pad($nbItemsAdded, 3, ' ', STR_PAD_LEFT).' </td><td>'.str_pad(number_format(microtime(true) - $start, 1), 6, ' ', STR_PAD_LEFT).'s </td><td>'
+            .'<span class="text-success">'.$successCount.' '.($successCount > 1 ? Intl::msg('Successes') : Intl::msg('Success')).' </span><br />'
+            .'<span class="text-warning">'.$noUpdateCount.' '.Intl::msg('Up-to-date').' </span><br />'
+            .'<span class="text-error">'.$errorCount.' '.($errorCount > 1 ? Intl::msg('Errors') : Intl::msg('Error')).' </span></td></tr>';
+        if ($format === 'html') {
+            echo str_pad($strEnd, 4096);
+            ob_flush();
+            flush();
+        } else {
+            echo strip_tags($strBegin.$strEnd);
+        }
+
+        if ($format === 'html') {
+            echo '</tbody></table>';
+        }
+
+        return '';
+    }
+
+    public function markAll($read) {
+        $save = false;
+
+        foreach (array_keys($this->_data['items']) as $itemHash) {
+            if (!$save and $this->_data['items'][$itemHash][1] != $read) {
+                $save = true;
+            }
+            $this->_data['items'][$itemHash][1] = $read;
+        }
+        foreach (array_keys($this->_data['newItems']) as $itemHash) {
+            if (!$save and $this->_data['newItems'][$itemHash][1] != $read) {
+                $save = true;
+            }
+            $this->_data['newItems'][$itemHash][1] = $read;
+        }
+
+        if ($save) {
+            foreach ($this->_data['feeds'] as $feedHash => $feed) {
+                if ($read == 1) {
+                    $this->_data['feeds'][$feedHash]['nbUnread'] = 0;
+                } else {
+                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds'][$feedHash]['nbAll'];
+                }
+            }
+        }
+
+        return $save;
+    }
+
+    public function markItem($itemHash, $read) {
+        $save = false;
+
+        if (isset($this->_data['items'][$itemHash])) {
+            if ($this->_data['items'][$itemHash][1] != $read) {
+                $save = true;
+                $this->_data['items'][$itemHash][1] = $read;
+            }
+        } else if (isset($this->_data['newItems'][$itemHash])) {
+            if ($this->_data['newItems'][$itemHash][1] != $read) {
+                $save = true;
+                $this->_data['newItems'][$itemHash][1] = $read;
+            }
+        }
+
+        if ($save) {
+            $feedHash = substr($itemHash, 0, 6);
+            if ($read == 1) {
+                $this->_data['feeds'][$feedHash]['nbUnread']--;
+            } else {
+                $this->_data['feeds'][$feedHash]['nbUnread']++;
+            }
+        }
+
+        return $save;
+    }
+
+    public function markFeeds($feedsHash, $read) {
+        $save = false;
+
+        // get items from a list of feeds
+        $flipFeedsHash = array_flip($feedsHash);
+        foreach ($this->_data['items'] as $itemHash => $item) {
+            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                if ($this->_data['items'][$itemHash][1] != $read) {
+                    $save = true;
+                    $this->_data['items'][$itemHash][1] = $read;
+                }
+            }
+        }
+        foreach ($this->_data['newItems'] as $itemHash => $item) {
+            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
+                if ($this->_data['newItems'][$itemHash][1] != $read) {
+                    $save = true;
+                    $this->_data['newItems'][$itemHash][1] = $read;
+                }
+            }
+        }
+
+        if ($save) {
+            foreach (array_values($feedsHash) as $feedHash) {
+                if ($read == 1) {
+                    $this->_data['feeds'][$feedHash]['nbUnread'] = 0;
+                } else {
+                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds'][$feedHash]['nbAll'];
+                }
+            }
+        }
+
+        return $save;
+    }
+        
+    public function mark($hash, $read)
+    {
+        if (empty($hash) || $hash == 'all') {
+            // all items
+            return $this->markAll($read);
+        } else {
+            if (strlen($hash) === 12) {
+                // an item
+                return $this->markItem($hash, $read);
+            } else {
+                $feedsHash = array();
+                if (isset($this->_data['feeds'][$hash])) {
+                    // a feed
+                    $feedsHash[] = $hash;
+                } else if (isset($this->_data['folders'][$hash])) {
+                    // a folder
+                    foreach ($this->_data['feeds'] as $feedHash => $feed) {
+                        if (in_array($hash, $feed['foldersHash'])) {
+                            $feedsHash[] = $feedHash;
+                        }
+                    }
+                }
+
+                return $this->markFeeds($feedsHash, $read);
+            }
+        }
+
+        return false;
+    }
+
+        
+    
+
+    public function hashType($hash)
+    {
+        $type = '';
+        if (empty($hash) || $hash=='all') {
+            $type = 'all';
+        } else {
+            if (strlen($hash) === 12) {
+                // should be an item
+                $type = 'item';
+            } else {
+                if (isset($this->_data['folders'][$hash])) {
+                    // a folder
+                    $type = 'folder';
+                } else {
+                    if (isset($this->_data['feeds'][$hash])) {
+                        // a feed
+                        $type = 'feed';
+                    } else {
+                        $type = 'unknown';
+                    }
+                }
+            }
+        }
+
+        return $type;
+    }
+
+    public static function sortByOrder($a, $b) {
+        return strnatcasecmp($a['order'], $b['order']);
+    }
+
+    public static function sortByTitle($a, $b) {
+        return strnatcasecmp($a['title'], $b['title']);
+    }
+}
 
 
 class FeedConf
@@ -29,6 +1348,8 @@ class FeedConf
     public $login = '';
 
     public $hash = '';
+
+    public $disableSessionProtection = false;
 
     public $salt = '';
 
@@ -56,7 +1377,13 @@ class FeedConf
 
     public $autofocus = true;
 
-    public $public = false;
+    public $addFavicon = false;
+
+    public $preload = false;
+
+    public $blank = false;
+
+    public $visibility = 'private';
 
     public $version;
 
@@ -72,6 +1399,8 @@ class FeedConf
 
     public $currentPage = 1;
 
+    public $lang = '';
+
     public $menuView = 1;
     public $menuListFeeds = 2;
     public $menuFilter = 3;
@@ -82,15 +1411,18 @@ class FeedConf
     public $menuEdit = 8;
     public $menuAdd = 9;
     public $menuHelp = 10;
+    public $menuStars = 11;
 
     public $pagingItem = 1;
     public $pagingPage = 2;
     public $pagingByPage = 3;
+    public $pagingMarkAs = 4;
 
     public function __construct($configFile, $version)
     {
         $this->_file = $configFile;
         $this->version = $version;
+        $this->lang = Intl::$lang;
 
         // Loading user config
         if (file_exists($this->_file)) {
@@ -99,12 +1431,31 @@ class FeedConf
             $this->_install();
         }
 
-        if (Session::isLogged()) {
+        Session::$disableSessionProtection = $this->disableSessionProtection;
+
+        if ($this->addFavicon) {
+            /* favicon dir */
+            if (!is_dir(INC_DIR)) {
+                if (!@mkdir(INC_DIR, 0755)) {
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
+                    FeedPage::$pb->renderPage('message');
+                }
+            }
+            if (!is_dir(FAVICON_DIR)) {
+                if (!@mkdir(FAVICON_DIR, 0755)) {
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
+                    FeedPage::$pb->renderPage('message');
+                }
+            }
+        }
+
+        if ($this->isLogged()) {
             unset($_SESSION['view']);
             unset($_SESSION['listFeeds']);
             unset($_SESSION['filter']);
             unset($_SESSION['order']);
             unset($_SESSION['byPage']);
+            unset($_SESSION['lang']);
         }
 
         $view = $this->getView();
@@ -112,31 +1463,35 @@ class FeedConf
         $filter = $this->getFilter();
         $order = $this->getOrder();
         $byPage = $this->getByPage();
+        $lang = $this->getLang();
 
         if ($this->view != $view
             || $this->listFeeds != $listFeeds
             || $this->filter != $filter
             || $this->order != $order
             || $this->byPage != $byPage
+            || $this->lang != $lang
         ) {
             $this->view = $view;
             $this->listFeeds = $listFeeds;
             $this->filter = $filter;
             $this->order = $order;
             $this->byPage = $byPage;
+            $this->lang = $lang;
 
-            if (Session::isLogged()) {
-                $this->write();
-            }
+            $this->write();
         }
 
-        if (!Session::isLogged()) {
+        if (!$this->isLogged()) {
             $_SESSION['view'] = $view;
             $_SESSION['listFeeds'] = $listFeeds;
             $_SESSION['filter'] = $filter;
             $_SESSION['order'] = $order;
             $_SESSION['byPage'] = $byPage;
+            $_SESSION['lang'] = $lang;
         }
+
+        Intl::$lang = $this->lang;
     }
 
     private function _install()
@@ -146,55 +1501,18 @@ class FeedConf
             $this->setLogin($_POST['setlogin']);
             $this->setHash($_POST['setpassword']);
 
-            if (!is_dir(DATA_DIR)) {
-                if (!@mkdir(DATA_DIR, 0755)) {
-                    echo '
-<script>
- alert("Error: can not create '.DATA_DIR.' directory, check permissions");
- document.location=window.location.href;
-</script>';
-                    exit();
-                }
-                @chmod(DATA_DIR, 0755);
-                if (!is_file(DATA_DIR.'/.htaccess')) {
-                    if (!@file_put_contents(
-                        DATA_DIR.'/.htaccess',
-                        "Allow from none\nDeny from all\n"
-                    )) {
-                        echo '
-<script>
- alert("Can not protect '.DATA_DIR.'");
- document.location=window.location.href;
-</script>';
-                        exit();
-                    }
-                }
-            }
+            $this->write();
 
-            if ($this->write()) {
-                echo '
-<script>
- alert("Your simple and smart (or stupid) feed reader is now configured.");
- document.location="'.MyTool::getUrl().'?import'.'";
-</script>';
-                    exit();
-            } else {
-                echo '
-<script>
- alert("Error: can not write config and data files.");
- document.location=window.location.href;
-</script>';
-                    exit();
-            }
-            Session::logout();
+            FeedPage::$pb->assign('pagetitle', 'KrISS feed installation');
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl().'?import');
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->renderPage('message');
         } else {
-            FeedPage::init(
-                array(
-                    'version' => $this->version,
-                    'pagetitle' => 'KrISS feed installation'
-                )
-            );
-            FeedPage::installTpl();
+            FeedPage::$pb->assign('pagetitle', Intl::msg('KrISS feed installation'));
+            FeedPage::$pb->assign('token', Session::getToken());
+            FeedPage::$pb->renderPage('install');
         }
         exit();
     }
@@ -211,9 +1529,23 @@ class FeedConf
             }
         }
 
-        if (!$this->write()) {
-            die("Can't write to ".CONFIG_FILE);
+        $this->write();
+    }
+
+    public function getLang()
+    {
+        $lang = $this->lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
         }
+
+        if (!in_array($lang, array_keys(Intl::$langList))) {
+            $lang = $this->lang;
+        }
+
+        return $lang;
     }
 
     public function getView()
@@ -300,7 +1632,7 @@ class FeedConf
     {
         $currentHash = $this->currentHash;
         if (isset($_GET['currentHash'])) {
-            $currentHash = substr(trim($_GET['currentHash'], '/'), 0, 6);
+            $currentHash = preg_replace('/[^a-zA-Z0-9-_@]/', '', substr(trim($_GET['currentHash'], '/'), 0, 6));
         }
 
         if (empty($currentHash)) {
@@ -314,17 +1646,22 @@ class FeedConf
     {
         $currentPage = $this->currentPage;
         if (isset($_GET['page']) && !empty($_GET['page'])) {
-            $currentPage = (int)$_GET['page'];
+            $currentPage = (int) $_GET['page'];
         } else if (isset($_GET['previousPage']) && !empty($_GET['previousPage'])) {
-            $currentPage = (int)$_GET['previousPage'] - 1;
+            $currentPage = (int) $_GET['previousPage'] - 1;
             if ($currentPage < 1) {
                 $currentPage = 1;
             }
         } else if (isset($_GET['nextPage']) && !empty($_GET['nextPage'])) {
-            $currentPage = (int)$_GET['nextPage'] + 1;
+            $currentPage = (int) $_GET['nextPage'] + 1;
         }
 
         return $currentPage;
+    }
+
+    public function setDisableSessionProtection($disableSessionProtection)
+    {
+        $this->disableSessionProtection = $disableSessionProtection;
     }
 
     public function setLogin($login)
@@ -332,9 +1669,9 @@ class FeedConf
         $this->login = $login;
     }
 
-    public function setPublic($public)
+    public function setVisibility($visibility)
     {
-        $this->public = $public;
+        $this->visibility = $visibility;
     }
 
     public function setHash($pass)
@@ -387,6 +1724,16 @@ class FeedConf
         $this->autofocus = $autofocus;
     }
 
+    public function setAddFavicon($addFavicon)
+    {
+        $this->addFavicon = $addFavicon;
+    }
+
+    public function setPreload($preload)
+    {
+        $this->preload = $preload;
+    }
+
     public function setShaarli($url)
     {
         $this->shaarli = $url;
@@ -405,6 +1752,11 @@ class FeedConf
     public function setOrder($order)
     {
         $this->order = $order;
+    }
+
+    public function setBlank($blank)
+    {
+        $this->blank = $blank;
     }
 
     public function getMenu()
@@ -442,6 +1794,10 @@ class FeedConf
             $menu['menuHelp'] = $this->menuHelp;
         }
 
+        if ($this->menuStars != 0) {
+            $menu['menuStars'] = $this->menuStars;
+        }
+
         asort($menu);
 
         return $menu;
@@ -459,6 +1815,9 @@ class FeedConf
         }
         if ($this->pagingByPage != 0) {
             $paging['pagingByPage'] = $this->pagingByPage;
+        }
+        if ($this->pagingMarkAs != 0) {
+            $paging['pagingMarkAs'] = $this->pagingMarkAs;
         }
 
         asort($paging);
@@ -516,6 +1875,11 @@ class FeedConf
         $this->menuHelp = $menuHelp;
     }
 
+    public function setMenuStars($menuStars)
+    {
+        $this->menuStars = $menuStars;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -531,409 +1895,124 @@ class FeedConf
         $this->pagingByPage = $pagingByPage;
     }
 
+    public function setPagingMarkAs($pagingMarkAs)
+    {
+        $this->pagingMarkAs = $pagingMarkAs;
+    }
+
+    public function isLogged()
+    {
+        global $argv;
+
+        if (Session::isLogged()
+            || $this->visibility === 'public'
+            || (isset($_GET['cron'])
+                && $_GET['cron'] === sha1($this->salt.$this->hash))
+            || (isset($argv)
+                && count($argv) >= 3
+                && $argv[1] == 'update'
+                && $argv[2] == sha1($this->salt.$this->hash))) {
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function write()
     {
-        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'public', 'filter', 'view','locale',
-                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage');
-        $out = '<?php';
-        $out .= "\n";
+        if ($this->isLogged() || !is_file($this->_file)) {
+            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
+            $out = '<?php';
+            $out .= "\n";
+            foreach ($data as $key) {
+                $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
+            }
+            $out .= '?>';
 
-        foreach ($data as $key) {
-            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-            $out .= '$this->'.$key.' = "'.$value."\";\n";
+            if (!@file_put_contents($this->_file, $out)) {
+                die("Can't write to ".CONFIG_FILE." check permissions");
+            }
         }
-
-        $out .= '?>';
-
-        if (!@file_put_contents($this->_file, $out)) {
-            return false;
-        }
-
-        return true;
     }
 }
 
 class FeedPage
 {
-    public static $var = array();
-    private static $_instance;
+    public static $pb; // PageBuilder
 
-    public function init($var)
+    public static $var = array();
+
+    public static function init($var)
     {
         FeedPage::$var = $var;
     }
 
-    public static function includesTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<title><?php echo $pagetitle;?></title>
-<meta charset="utf-8">
-
-<!-- <link href="images/favicon.ico" rel="shortcut icon" type="image/x-icon"> -->
-<?php if (is_file('inc/style.css')) { ?>
-<link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
-<?php } else { ?>
-<style>
-/*!
- * Bootstrap v2.3.0
- *
- * Copyright 2012 Twitter, Inc
- * Licensed under the Apache License v2.0
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Designed and built with all the love in the world @twitter by @mdo and @fat.
- */.clearfix{*zoom:1}.clearfix:before,.clearfix:after{display:table;line-height:0;content:""}.clearfix:after{clear:both}.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0}.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}article,aside,details,figcaption,figure,footer,header,hgroup,nav,section{display:block}audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([controls]){display:none}html{font-size:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}a:focus{outline:thin dotted #333;outline:5px auto -webkit-focus-ring-color;outline-offset:-2px}a:hover,a:active{outline:0}sub,sup{position:relative;font-size:75%;line-height:0;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{width:auto\9;height:auto;max-width:100%;vertical-align:middle;border:0;-ms-interpolation-mode:bicubic}#map_canvas img,.google-maps img{max-width:none}button,input,select,textarea{margin:0;font-size:100%;vertical-align:middle}button,input{*overflow:visible;line-height:normal}button::-moz-focus-inner,input::-moz-focus-inner{padding:0;border:0}button,html input[type="button"],input[type="reset"],input[type="submit"]{cursor:pointer;-webkit-appearance:button}label,select,button,input[type="button"],input[type="reset"],input[type="submit"],input[type="radio"],input[type="checkbox"]{cursor:pointer}input[type="search"]{-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;-webkit-appearance:textfield}input[type="search"]::-webkit-search-decoration,input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none}textarea{overflow:auto;vertical-align:top}@media print{*{color:#000!important;text-shadow:none!important;background:transparent!important;box-shadow:none!important}a,a:visited{text-decoration:underline}a[href]:after{content:" (" attr(href) ")"}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100%!important}@page{margin:.5cm}p,h2,h3{orphans:3;widows:3}h2,h3{page-break-after:avoid}}body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:20px;color:#333;background-color:#fff}a{color:#08c;text-decoration:none}a:hover,a:focus{color:#005580;text-decoration:underline}.ico-rounded{-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px}.ico-polaroid{padding:4px;background-color:#fff;border:1px solid #ccc;border:1px solid rgba(0,0,0,0.2);-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.1);-moz-box-shadow:0 1px 3px rgba(0,0,0,0.1);box-shadow:0 1px 3px rgba(0,0,0,0.1)}.ico-circle{-webkit-border-radius:500px;-moz-border-radius:500px;border-radius:500px}.row{margin-left:-20px;*zoom:1}.row:before,.row:after{display:table;line-height:0;content:""}.row:after{clear:both}[class*="span"]{float:left;min-height:1px;margin-left:20px}.container,.navbar-static-top .container,.navbar-fixed-top .container,.navbar-fixed-bottom .container{width:940px}.span12{width:940px}.span11{width:860px}.span10{width:780px}.span9{width:700px}.span8{width:620px}.span7{width:540px}.span6{width:460px}.span5{width:380px}.span4{width:300px}.span3{width:220px}.span2{width:140px}.span1{width:60px}.offset12{margin-left:980px}.offset11{margin-left:900px}.offset10{margin-left:820px}.offset9{margin-left:740px}.offset8{margin-left:660px}.offset7{margin-left:580px}.offset6{margin-left:500px}.offset5{margin-left:420px}.offset4{margin-left:340px}.offset3{margin-left:260px}.offset2{margin-left:180px}.offset1{margin-left:100px}.row-fluid{width:100%;*zoom:1}.row-fluid:before,.row-fluid:after{display:table;line-height:0;content:""}.row-fluid:after{clear:both}.row-fluid [class*="span"]{display:block;float:left;width:100%;min-height:30px;margin-left:2.127659574468085%;*margin-left:2.074468085106383%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.row-fluid [class*="span"]:first-child{margin-left:0}.row-fluid .controls-row [class*="span"]+[class*="span"]{margin-left:2.127659574468085%}.row-fluid .span12{width:100%;*width:99.94680851063829%}.row-fluid .span11{width:91.48936170212765%;*width:91.43617021276594%}.row-fluid .span10{width:82.97872340425532%;*width:82.92553191489361%}.row-fluid .span9{width:74.46808510638297%;*width:74.41489361702126%}.row-fluid .span8{width:65.95744680851064%;*width:65.90425531914893%}.row-fluid .span7{width:57.44680851063829%;*width:57.39361702127659%}.row-fluid .span6{width:48.93617021276595%;*width:48.88297872340425%}.row-fluid .span5{width:40.42553191489362%;*width:40.37234042553192%}.row-fluid .span4{width:31.914893617021278%;*width:31.861702127659576%}.row-fluid .span3{width:23.404255319148934%;*width:23.351063829787233%}.row-fluid .span2{width:14.893617021276595%;*width:14.840425531914894%}.row-fluid .span1{width:6.382978723404255%;*width:6.329787234042553%}.row-fluid .offset12{margin-left:104.25531914893617%;*margin-left:104.14893617021275%}.row-fluid .offset12:first-child{margin-left:102.12765957446808%;*margin-left:102.02127659574467%}.row-fluid .offset11{margin-left:95.74468085106382%;*margin-left:95.6382978723404%}.row-fluid .offset11:first-child{margin-left:93.61702127659574%;*margin-left:93.51063829787232%}.row-fluid .offset10{margin-left:87.23404255319149%;*margin-left:87.12765957446807%}.row-fluid .offset10:first-child{margin-left:85.1063829787234%;*margin-left:84.99999999999999%}.row-fluid .offset9{margin-left:78.72340425531914%;*margin-left:78.61702127659572%}.row-fluid .offset9:first-child{margin-left:76.59574468085106%;*margin-left:76.48936170212764%}.row-fluid .offset8{margin-left:70.2127659574468%;*margin-left:70.10638297872339%}.row-fluid .offset8:first-child{margin-left:68.08510638297872%;*margin-left:67.9787234042553%}.row-fluid .offset7{margin-left:61.70212765957446%;*margin-left:61.59574468085106%}.row-fluid .offset7:first-child{margin-left:59.574468085106375%;*margin-left:59.46808510638297%}.row-fluid .offset6{margin-left:53.191489361702125%;*margin-left:53.085106382978715%}.row-fluid .offset6:first-child{margin-left:51.063829787234035%;*margin-left:50.95744680851063%}.row-fluid .offset5{margin-left:44.68085106382979%;*margin-left:44.57446808510638%}.row-fluid .offset5:first-child{margin-left:42.5531914893617%;*margin-left:42.4468085106383%}.row-fluid .offset4{margin-left:36.170212765957444%;*margin-left:36.06382978723405%}.row-fluid .offset4:first-child{margin-left:34.04255319148936%;*margin-left:33.93617021276596%}.row-fluid .offset3{margin-left:27.659574468085104%;*margin-left:27.5531914893617%}.row-fluid .offset3:first-child{margin-left:25.53191489361702%;*margin-left:25.425531914893618%}.row-fluid .offset2{margin-left:19.148936170212764%;*margin-left:19.04255319148936%}.row-fluid .offset2:first-child{margin-left:17.02127659574468%;*margin-left:16.914893617021278%}.row-fluid .offset1{margin-left:10.638297872340425%;*margin-left:10.53191489361702%}.row-fluid .offset1:first-child{margin-left:8.51063829787234%;*margin-left:8.404255319148938%}[class*="span"].hide,.row-fluid [class*="span"].hide{display:none}[class*="span"].pull-right,.row-fluid [class*="span"].pull-right{float:right}.container{margin-right:auto;margin-left:auto;*zoom:1}.container:before,.container:after{display:table;line-height:0;content:""}.container:after{clear:both}.container-fluid{padding-right:20px;padding-left:20px;*zoom:1}.container-fluid:before,.container-fluid:after{display:table;line-height:0;content:""}.container-fluid:after{clear:both}p{margin:0 0 10px}.lead{margin-bottom:20px;font-size:21px;font-weight:200;line-height:30px}small{font-size:85%}strong{font-weight:bold}em{font-style:italic}cite{font-style:normal}.muted{color:#999}a.muted:hover,a.muted:focus{color:#808080}.text-warning{color:#c09853}a.text-warning:hover,a.text-warning:focus{color:#a47e3c}.text-error{color:#b94a48}a.text-error:hover,a.text-error:focus{color:#953b39}.text-info{color:#3a87ad}a.text-info:hover,a.text-info:focus{color:#2d6987}.text-success{color:#468847}a.text-success:hover,a.text-success:focus{color:#356635}.text-left{text-align:left}.text-right{text-align:right}.text-center{text-align:center}h1,h2,h3,h4,h5,h6{margin:10px 0;font-family:inherit;font-weight:bold;line-height:20px;color:inherit;text-rendering:optimizelegibility}h1 small,h2 small,h3 small,h4 small,h5 small,h6 small{font-weight:normal;line-height:1;color:#999}h1,h2,h3{line-height:40px}h1{font-size:38.5px}h2{font-size:31.5px}h3{font-size:24.5px}h4{font-size:17.5px}h5{font-size:14px}h6{font-size:11.9px}h1 small{font-size:24.5px}h2 small{font-size:17.5px}h3 small{font-size:14px}h4 small{font-size:14px}.page-header{padding-bottom:9px;margin:20px 0 30px;border-bottom:1px solid #eee}ul,ol{padding:0;margin:0 0 10px 25px}ul ul,ul ol,ol ol,ol ul{margin-bottom:0}li{line-height:20px}ul.unstyled,ol.unstyled{margin-left:0;list-style:none}ul.inline,ol.inline{margin-left:0;list-style:none}ul.inline>li,ol.inline>li{display:inline-block;*display:inline;padding-right:5px;padding-left:5px;*zoom:1}dl{margin-bottom:20px}dt,dd{line-height:20px}dt{font-weight:bold}dd{margin-left:10px}.dl-horizontal{*zoom:1}.dl-horizontal:before,.dl-horizontal:after{display:table;line-height:0;content:""}.dl-horizontal:after{clear:both}.dl-horizontal dt{float:left;width:160px;overflow:hidden;clear:left;text-align:right;text-overflow:ellipsis;white-space:nowrap}.dl-horizontal dd{margin-left:180px}hr{margin:20px 0;border:0;border-top:1px solid #eee;border-bottom:1px solid #fff}abbr[title],abbr[data-original-title]{cursor:help;border-bottom:1px dotted #999}abbr.initialism{font-size:90%;text-transform:uppercase}blockquote{padding:0 0 0 15px;margin:0 0 20px;border-left:5px solid #eee}blockquote p{margin-bottom:0;font-size:17.5px;font-weight:300;line-height:1.25}blockquote small{display:block;line-height:20px;color:#999}blockquote small:before{content:'\2014 \00A0'}blockquote.pull-right{float:right;padding-right:15px;padding-left:0;border-right:5px solid #eee;border-left:0}blockquote.pull-right p,blockquote.pull-right small{text-align:right}blockquote.pull-right small:before{content:''}blockquote.pull-right small:after{content:'\00A0 \2014'}q:before,q:after,blockquote:before,blockquote:after{content:""}address{display:block;margin-bottom:20px;font-style:normal;line-height:20px}code,pre{padding:0 3px 2px;font-family:Monaco,Menlo,Consolas,"Courier New",monospace;font-size:12px;color:#333;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px}code{padding:2px 4px;color:#d14;white-space:nowrap;background-color:#f7f7f9;border:1px solid #e1e1e8}pre{display:block;padding:9.5px;margin:0 0 10px;font-size:13px;line-height:20px;word-break:break-all;word-wrap:break-word;white-space:pre;white-space:pre-wrap;background-color:#f5f5f5;border:1px solid #ccc;border:1px solid rgba(0,0,0,0.15);-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}pre.prettyprint{margin-bottom:20px}pre code{padding:0;color:inherit;white-space:pre;white-space:pre-wrap;background-color:transparent;border:0}.pre-scrollable{max-height:340px;overflow-y:scroll}form{margin:0 0 20px}fieldset{padding:0;margin:0;border:0}legend{display:block;width:100%;padding:0;margin-bottom:20px;font-size:21px;line-height:40px;color:#333;border:0;border-bottom:1px solid #e5e5e5}legend small{font-size:15px;color:#999}label,input,button,select,textarea{font-size:14px;font-weight:normal;line-height:20px}input,button,select,textarea{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}label{display:block;margin-bottom:5px}select,textarea,input[type="text"],input[type="password"],input[type="datetime"],input[type="datetime-local"],input[type="date"],input[type="month"],input[type="time"],input[type="week"],input[type="number"],input[type="email"],input[type="url"],input[type="search"],input[type="tel"],input[type="color"],.uneditable-input{display:inline-block;height:20px;padding:4px 6px;margin-bottom:10px;font-size:14px;line-height:20px;color:#555;vertical-align:middle;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}input,textarea,.uneditable-input{width:206px}textarea{height:auto}textarea,input[type="text"],input[type="password"],input[type="datetime"],input[type="datetime-local"],input[type="date"],input[type="month"],input[type="time"],input[type="week"],input[type="number"],input[type="email"],input[type="url"],input[type="search"],input[type="tel"],input[type="color"],.uneditable-input{background-color:#fff;border:1px solid #ccc;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);-webkit-transition:border linear .2s,box-shadow linear .2s;-moz-transition:border linear .2s,box-shadow linear .2s;-o-transition:border linear .2s,box-shadow linear .2s;transition:border linear .2s,box-shadow linear .2s}textarea:focus,input[type="text"]:focus,input[type="password"]:focus,input[type="datetime"]:focus,input[type="datetime-local"]:focus,input[type="date"]:focus,input[type="month"]:focus,input[type="time"]:focus,input[type="week"]:focus,input[type="number"]:focus,input[type="email"]:focus,input[type="url"]:focus,input[type="search"]:focus,input[type="tel"]:focus,input[type="color"]:focus,.uneditable-input:focus{border-color:rgba(82,168,236,0.8);outline:0;outline:thin dotted \9;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 8px rgba(82,168,236,0.6);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 8px rgba(82,168,236,0.6);box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 8px rgba(82,168,236,0.6)}input[type="radio"],input[type="checkbox"]{margin:4px 0 0;margin-top:1px \9;*margin-top:0;line-height:normal}input[type="file"],input[type="image"],input[type="submit"],input[type="reset"],input[type="button"],input[type="radio"],input[type="checkbox"]{width:auto}select,input[type="file"]{height:30px;*margin-top:4px;line-height:30px}select{width:220px;background-color:#fff;border:1px solid #ccc}select[multiple],select[size]{height:auto}select:focus,input[type="file"]:focus,input[type="radio"]:focus,input[type="checkbox"]:focus{outline:thin dotted #333;outline:5px auto -webkit-focus-ring-color;outline-offset:-2px}.uneditable-input,.uneditable-textarea{color:#999;cursor:not-allowed;background-color:#fcfcfc;border-color:#ccc;-webkit-box-shadow:inset 0 1px 2px rgba(0,0,0,0.025);-moz-box-shadow:inset 0 1px 2px rgba(0,0,0,0.025);box-shadow:inset 0 1px 2px rgba(0,0,0,0.025)}.uneditable-input{overflow:hidden;white-space:nowrap}.uneditable-textarea{width:auto;height:auto}input:-moz-placeholder,textarea:-moz-placeholder{color:#999}input:-ms-input-placeholder,textarea:-ms-input-placeholder{color:#999}input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:#999}.radio,.checkbox{min-height:20px;padding-left:20px}.radio input[type="radio"],.checkbox input[type="checkbox"]{float:left;margin-left:-20px}.controls>.radio:first-child,.controls>.checkbox:first-child{padding-top:5px}.radio.inline,.checkbox.inline{display:inline-block;padding-top:5px;margin-bottom:0;vertical-align:middle}.radio.inline+.radio.inline,.checkbox.inline+.checkbox.inline{margin-left:10px}.input-mini{width:60px}.input-small{width:90px}.input-medium{width:150px}.input-large{width:210px}.input-xlarge{width:270px}.input-xxlarge{width:530px}input[class*="span"],select[class*="span"],textarea[class*="span"],.uneditable-input[class*="span"],.row-fluid input[class*="span"],.row-fluid select[class*="span"],.row-fluid textarea[class*="span"],.row-fluid .uneditable-input[class*="span"]{float:none;margin-left:0}.input-append input[class*="span"],.input-append .uneditable-input[class*="span"],.input-prepend input[class*="span"],.input-prepend .uneditable-input[class*="span"],.row-fluid input[class*="span"],.row-fluid select[class*="span"],.row-fluid textarea[class*="span"],.row-fluid .uneditable-input[class*="span"],.row-fluid .input-prepend [class*="span"],.row-fluid .input-append [class*="span"]{display:inline-block}input,textarea,.uneditable-input{margin-left:0}.controls-row [class*="span"]+[class*="span"]{margin-left:20px}input.span12,textarea.span12,.uneditable-input.span12{width:926px}input.span11,textarea.span11,.uneditable-input.span11{width:846px}input.span10,textarea.span10,.uneditable-input.span10{width:766px}input.span9,textarea.span9,.uneditable-input.span9{width:686px}input.span8,textarea.span8,.uneditable-input.span8{width:606px}input.span7,textarea.span7,.uneditable-input.span7{width:526px}input.span6,textarea.span6,.uneditable-input.span6{width:446px}input.span5,textarea.span5,.uneditable-input.span5{width:366px}input.span4,textarea.span4,.uneditable-input.span4{width:286px}input.span3,textarea.span3,.uneditable-input.span3{width:206px}input.span2,textarea.span2,.uneditable-input.span2{width:126px}input.span1,textarea.span1,.uneditable-input.span1{width:46px}.controls-row{*zoom:1}.controls-row:before,.controls-row:after{display:table;line-height:0;content:""}.controls-row:after{clear:both}.controls-row [class*="span"],.row-fluid .controls-row [class*="span"]{float:left}.controls-row .checkbox[class*="span"],.controls-row .radio[class*="span"]{padding-top:5px}input[disabled],select[disabled],textarea[disabled],input[readonly],select[readonly],textarea[readonly]{cursor:not-allowed;background-color:#eee}input[type="radio"][disabled],input[type="checkbox"][disabled],input[type="radio"][readonly],input[type="checkbox"][readonly]{background-color:transparent}.control-group.warning .control-label,.control-group.warning .help-block,.control-group.warning .help-inline{color:#c09853}.control-group.warning .checkbox,.control-group.warning .radio,.control-group.warning input,.control-group.warning select,.control-group.warning textarea{color:#c09853}.control-group.warning input,.control-group.warning select,.control-group.warning textarea{border-color:#c09853;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);box-shadow:inset 0 1px 1px rgba(0,0,0,0.075)}.control-group.warning input:focus,.control-group.warning select:focus,.control-group.warning textarea:focus{border-color:#a47e3c;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #dbc59e;-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #dbc59e;box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #dbc59e}.control-group.warning .input-prepend .add-on,.control-group.warning .input-append .add-on{color:#c09853;background-color:#fcf8e3;border-color:#c09853}.control-group.error .control-label,.control-group.error .help-block,.control-group.error .help-inline{color:#b94a48}.control-group.error .checkbox,.control-group.error .radio,.control-group.error input,.control-group.error select,.control-group.error textarea{color:#b94a48}.control-group.error input,.control-group.error select,.control-group.error textarea{border-color:#b94a48;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);box-shadow:inset 0 1px 1px rgba(0,0,0,0.075)}.control-group.error input:focus,.control-group.error select:focus,.control-group.error textarea:focus{border-color:#953b39;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #d59392;-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #d59392;box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #d59392}.control-group.error .input-prepend .add-on,.control-group.error .input-append .add-on{color:#b94a48;background-color:#f2dede;border-color:#b94a48}.control-group.success .control-label,.control-group.success .help-block,.control-group.success .help-inline{color:#468847}.control-group.success .checkbox,.control-group.success .radio,.control-group.success input,.control-group.success select,.control-group.success textarea{color:#468847}.control-group.success input,.control-group.success select,.control-group.success textarea{border-color:#468847;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);box-shadow:inset 0 1px 1px rgba(0,0,0,0.075)}.control-group.success input:focus,.control-group.success select:focus,.control-group.success textarea:focus{border-color:#356635;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #7aba7b;-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #7aba7b;box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #7aba7b}.control-group.success .input-prepend .add-on,.control-group.success .input-append .add-on{color:#468847;background-color:#dff0d8;border-color:#468847}.control-group.info .control-label,.control-group.info .help-block,.control-group.info .help-inline{color:#3a87ad}.control-group.info .checkbox,.control-group.info .radio,.control-group.info input,.control-group.info select,.control-group.info textarea{color:#3a87ad}.control-group.info input,.control-group.info select,.control-group.info textarea{border-color:#3a87ad;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075);box-shadow:inset 0 1px 1px rgba(0,0,0,0.075)}.control-group.info input:focus,.control-group.info select:focus,.control-group.info textarea:focus{border-color:#2d6987;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #7ab5d3;-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #7ab5d3;box-shadow:inset 0 1px 1px rgba(0,0,0,0.075),0 0 6px #7ab5d3}.control-group.info .input-prepend .add-on,.control-group.info .input-append .add-on{color:#3a87ad;background-color:#d9edf7;border-color:#3a87ad}input:focus:invalid,textarea:focus:invalid,select:focus:invalid{color:#b94a48;border-color:#ee5f5b}input:focus:invalid:focus,textarea:focus:invalid:focus,select:focus:invalid:focus{border-color:#e9322d;-webkit-box-shadow:0 0 6px #f8b9b7;-moz-box-shadow:0 0 6px #f8b9b7;box-shadow:0 0 6px #f8b9b7}.form-actions{padding:19px 20px 20px;margin-top:20px;margin-bottom:20px;background-color:#f5f5f5;border-top:1px solid #e5e5e5;*zoom:1}.form-actions:before,.form-actions:after{display:table;line-height:0;content:""}.form-actions:after{clear:both}.help-block,.help-inline{color:#595959}.help-block{display:block;margin-bottom:10px}.help-inline{display:inline-block;*display:inline;padding-left:5px;vertical-align:middle;*zoom:1}.input-append,.input-prepend{display:inline-block;margin-bottom:10px;font-size:0;white-space:nowrap;vertical-align:middle}.input-append input,.input-prepend input,.input-append select,.input-prepend select,.input-append .uneditable-input,.input-prepend .uneditable-input,.input-append .dropdown-menu,.input-prepend .dropdown-menu,.input-append .popover,.input-prepend .popover{font-size:14px}.input-append input,.input-prepend input,.input-append select,.input-prepend select,.input-append .uneditable-input,.input-prepend .uneditable-input{position:relative;margin-bottom:0;*margin-left:0;vertical-align:top;-webkit-border-radius:0 4px 4px 0;-moz-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.input-append input:focus,.input-prepend input:focus,.input-append select:focus,.input-prepend select:focus,.input-append .uneditable-input:focus,.input-prepend .uneditable-input:focus{z-index:2}.input-append .add-on,.input-prepend .add-on{display:inline-block;width:auto;height:20px;min-width:16px;padding:4px 5px;font-size:14px;font-weight:normal;line-height:20px;text-align:center;text-shadow:0 1px 0 #fff;background-color:#eee;border:1px solid #ccc}.input-append .add-on,.input-prepend .add-on,.input-append .btn,.input-prepend .btn,.input-append .btn-group>.dropdown-toggle,.input-prepend .btn-group>.dropdown-toggle{vertical-align:top;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.input-append .active,.input-prepend .active{background-color:#a9dba9;border-color:#46a546}.input-prepend .add-on,.input-prepend .btn{margin-right:-1px}.input-prepend .add-on:first-child,.input-prepend .btn:first-child{-webkit-border-radius:4px 0 0 4px;-moz-border-radius:4px 0 0 4px;border-radius:4px 0 0 4px}.input-append input,.input-append select,.input-append .uneditable-input{-webkit-border-radius:4px 0 0 4px;-moz-border-radius:4px 0 0 4px;border-radius:4px 0 0 4px}.input-append input+.btn-group .btn:last-child,.input-append select+.btn-group .btn:last-child,.input-append .uneditable-input+.btn-group .btn:last-child{-webkit-border-radius:0 4px 4px 0;-moz-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.input-append .add-on,.input-append .btn,.input-append .btn-group{margin-left:-1px}.input-append .add-on:last-child,.input-append .btn:last-child,.input-append .btn-group:last-child>.dropdown-toggle{-webkit-border-radius:0 4px 4px 0;-moz-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.input-prepend.input-append input,.input-prepend.input-append select,.input-prepend.input-append .uneditable-input{-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.input-prepend.input-append input+.btn-group .btn,.input-prepend.input-append select+.btn-group .btn,.input-prepend.input-append .uneditable-input+.btn-group .btn{-webkit-border-radius:0 4px 4px 0;-moz-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.input-prepend.input-append .add-on:first-child,.input-prepend.input-append .btn:first-child{margin-right:-1px;-webkit-border-radius:4px 0 0 4px;-moz-border-radius:4px 0 0 4px;border-radius:4px 0 0 4px}.input-prepend.input-append .add-on:last-child,.input-prepend.input-append .btn:last-child{margin-left:-1px;-webkit-border-radius:0 4px 4px 0;-moz-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.input-prepend.input-append .btn-group:first-child{margin-left:0}input.search-query{padding-right:14px;padding-right:4px \9;padding-left:14px;padding-left:4px \9;margin-bottom:0;-webkit-border-radius:15px;-moz-border-radius:15px;border-radius:15px}.form-search .input-append .search-query,.form-search .input-prepend .search-query{-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.form-search .input-append .search-query{-webkit-border-radius:14px 0 0 14px;-moz-border-radius:14px 0 0 14px;border-radius:14px 0 0 14px}.form-search .input-append .btn{-webkit-border-radius:0 14px 14px 0;-moz-border-radius:0 14px 14px 0;border-radius:0 14px 14px 0}.form-search .input-prepend .search-query{-webkit-border-radius:0 14px 14px 0;-moz-border-radius:0 14px 14px 0;border-radius:0 14px 14px 0}.form-search .input-prepend .btn{-webkit-border-radius:14px 0 0 14px;-moz-border-radius:14px 0 0 14px;border-radius:14px 0 0 14px}.form-search input,.form-inline input,.form-horizontal input,.form-search textarea,.form-inline textarea,.form-horizontal textarea,.form-search select,.form-inline select,.form-horizontal select,.form-search .help-inline,.form-inline .help-inline,.form-horizontal .help-inline,.form-search .uneditable-input,.form-inline .uneditable-input,.form-horizontal .uneditable-input,.form-search .input-prepend,.form-inline .input-prepend,.form-horizontal .input-prepend,.form-search .input-append,.form-inline .input-append,.form-horizontal .input-append{display:inline-block;*display:inline;margin-bottom:0;vertical-align:middle;*zoom:1}.form-search .hide,.form-inline .hide,.form-horizontal .hide{display:none}.form-search label,.form-inline label,.form-search .btn-group,.form-inline .btn-group{display:inline-block}.form-search .input-append,.form-inline .input-append,.form-search .input-prepend,.form-inline .input-prepend{margin-bottom:0}.form-search .radio,.form-search .checkbox,.form-inline .radio,.form-inline .checkbox{padding-left:0;margin-bottom:0;vertical-align:middle}.form-search .radio input[type="radio"],.form-search .checkbox input[type="checkbox"],.form-inline .radio input[type="radio"],.form-inline .checkbox input[type="checkbox"]{float:left;margin-right:3px;margin-left:0}.control-group{margin-bottom:10px}legend+.control-group{margin-top:20px;-webkit-margin-top-collapse:separate}.form-horizontal .control-group{margin-bottom:20px;*zoom:1}.form-horizontal .control-group:before,.form-horizontal .control-group:after{display:table;line-height:0;content:""}.form-horizontal .control-group:after{clear:both}.form-horizontal .control-label{float:left;width:160px;padding-top:5px;text-align:right}.form-horizontal .controls{*display:inline-block;*padding-left:20px;margin-left:180px;*margin-left:0}.form-horizontal .controls:first-child{*padding-left:180px}.form-horizontal .help-block{margin-bottom:0}.form-horizontal input+.help-block,.form-horizontal select+.help-block,.form-horizontal textarea+.help-block,.form-horizontal .uneditable-input+.help-block,.form-horizontal .input-prepend+.help-block,.form-horizontal .input-append+.help-block{margin-top:10px}.form-horizontal .form-actions{padding-left:180px}table{max-width:100%;background-color:transparent;border-collapse:collapse;border-spacing:0}.table{width:100%;margin-bottom:20px}.table th,.table td{padding:8px;line-height:20px;text-align:left;vertical-align:top;border-top:1px solid #ddd}.table th{font-weight:bold}.table thead th{vertical-align:bottom}.table caption+thead tr:first-child th,.table caption+thead tr:first-child td,.table colgroup+thead tr:first-child th,.table colgroup+thead tr:first-child td,.table thead:first-child tr:first-child th,.table thead:first-child tr:first-child td{border-top:0}.table tbody+tbody{border-top:2px solid #ddd}.table .table{background-color:#fff}.table-condensed th,.table-condensed td{padding:4px 5px}.table-bordered{border:1px solid #ddd;border-collapse:separate;*border-collapse:collapse;border-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.table-bordered th,.table-bordered td{border-left:1px solid #ddd}.table-bordered caption+thead tr:first-child th,.table-bordered caption+tbody tr:first-child th,.table-bordered caption+tbody tr:first-child td,.table-bordered colgroup+thead tr:first-child th,.table-bordered colgroup+tbody tr:first-child th,.table-bordered colgroup+tbody tr:first-child td,.table-bordered thead:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child th,.table-bordered tbody:first-child tr:first-child td{border-top:0}.table-bordered thead:first-child tr:first-child>th:first-child,.table-bordered tbody:first-child tr:first-child>td:first-child,.table-bordered tbody:first-child tr:first-child>th:first-child{-webkit-border-top-left-radius:4px;border-top-left-radius:4px;-moz-border-radius-topleft:4px}.table-bordered thead:first-child tr:first-child>th:last-child,.table-bordered tbody:first-child tr:first-child>td:last-child,.table-bordered tbody:first-child tr:first-child>th:last-child{-webkit-border-top-right-radius:4px;border-top-right-radius:4px;-moz-border-radius-topright:4px}.table-bordered thead:last-child tr:last-child>th:first-child,.table-bordered tbody:last-child tr:last-child>td:first-child,.table-bordered tbody:last-child tr:last-child>th:first-child,.table-bordered tfoot:last-child tr:last-child>td:first-child,.table-bordered tfoot:last-child tr:last-child>th:first-child{-webkit-border-bottom-left-radius:4px;border-bottom-left-radius:4px;-moz-border-radius-bottomleft:4px}.table-bordered thead:last-child tr:last-child>th:last-child,.table-bordered tbody:last-child tr:last-child>td:last-child,.table-bordered tbody:last-child tr:last-child>th:last-child,.table-bordered tfoot:last-child tr:last-child>td:last-child,.table-bordered tfoot:last-child tr:last-child>th:last-child{-webkit-border-bottom-right-radius:4px;border-bottom-right-radius:4px;-moz-border-radius-bottomright:4px}.table-bordered tfoot+tbody:last-child tr:last-child td:first-child{-webkit-border-bottom-left-radius:0;border-bottom-left-radius:0;-moz-border-radius-bottomleft:0}.table-bordered tfoot+tbody:last-child tr:last-child td:last-child{-webkit-border-bottom-right-radius:0;border-bottom-right-radius:0;-moz-border-radius-bottomright:0}.table-bordered caption+thead tr:first-child th:first-child,.table-bordered caption+tbody tr:first-child td:first-child,.table-bordered colgroup+thead tr:first-child th:first-child,.table-bordered colgroup+tbody tr:first-child td:first-child{-webkit-border-top-left-radius:4px;border-top-left-radius:4px;-moz-border-radius-topleft:4px}.table-bordered caption+thead tr:first-child th:last-child,.table-bordered caption+tbody tr:first-child td:last-child,.table-bordered colgroup+thead tr:first-child th:last-child,.table-bordered colgroup+tbody tr:first-child td:last-child{-webkit-border-top-right-radius:4px;border-top-right-radius:4px;-moz-border-radius-topright:4px}.table-striped tbody>tr:nth-child(odd)>td,.table-striped tbody>tr:nth-child(odd)>th{background-color:#f9f9f9}.table-hover tbody tr:hover>td,.table-hover tbody tr:hover>th{background-color:#f5f5f5}table td[class*="span"],table th[class*="span"],.row-fluid table td[class*="span"],.row-fluid table th[class*="span"]{display:table-cell;float:none;margin-left:0}.table td.span1,.table th.span1{float:none;width:44px;margin-left:0}.table td.span2,.table th.span2{float:none;width:124px;margin-left:0}.table td.span3,.table th.span3{float:none;width:204px;margin-left:0}.table td.span4,.table th.span4{float:none;width:284px;margin-left:0}.table td.span5,.table th.span5{float:none;width:364px;margin-left:0}.table td.span6,.table th.span6{float:none;width:444px;margin-left:0}.table td.span7,.table th.span7{float:none;width:524px;margin-left:0}.table td.span8,.table th.span8{float:none;width:604px;margin-left:0}.table td.span9,.table th.span9{float:none;width:684px;margin-left:0}.table td.span10,.table th.span10{float:none;width:764px;margin-left:0}.table td.span11,.table th.span11{float:none;width:844px;margin-left:0}.table td.span12,.table th.span12{float:none;width:924px;margin-left:0}.table tbody tr.success>td{background-color:#dff0d8}.table tbody tr.error>td{background-color:#f2dede}.table tbody tr.warning>td{background-color:#fcf8e3}.table tbody tr.info>td{background-color:#d9edf7}.table-hover tbody tr.success:hover>td{background-color:#d0e9c6}.table-hover tbody tr.error:hover>td{background-color:#ebcccc}.table-hover tbody tr.warning:hover>td{background-color:#faf2cc}.table-hover tbody tr.info:hover>td{background-color:#c4e3f3}[class^="icon-"],[class*=" icon-"]{display:inline-block;width:14px;height:14px;margin-top:1px;*margin-right:.3em;line-height:14px;vertical-align:text-top;background-image:url("../img/glyphicons-halflings.png");background-position:14px 14px;background-repeat:no-repeat}.ico-white,.nav-pills>.active>a>[class^="icon-"],.nav-pills>.active>a>[class*=" icon-"],.nav-list>.active>a>[class^="icon-"],.nav-list>.active>a>[class*=" icon-"],.navbar-inverse .nav>.active>a>[class^="icon-"],.navbar-inverse .nav>.active>a>[class*=" icon-"],.dropdown-menu>li>a:hover>[class^="icon-"],.dropdown-menu>li>a:focus>[class^="icon-"],.dropdown-menu>li>a:hover>[class*=" icon-"],.dropdown-menu>li>a:focus>[class*=" icon-"],.dropdown-menu>.active>a>[class^="icon-"],.dropdown-menu>.active>a>[class*=" icon-"],.dropdown-submenu:hover>a>[class^="icon-"],.dropdown-submenu:focus>a>[class^="icon-"],.dropdown-submenu:hover>a>[class*=" icon-"],.dropdown-submenu:focus>a>[class*=" icon-"]{background-image:url("../img/glyphicons-halflings-white.png")}.ico-glass{background-position:0 0}.ico-music{background-position:-24px 0}.ico-search{background-position:-48px 0}.ico-envelope{background-position:-72px 0}.ico-heart{background-position:-96px 0}.ico-star{background-position:-120px 0}.ico-star-empty{background-position:-144px 0}.ico-user{background-position:-168px 0}.ico-film{background-position:-192px 0}.ico-th-large{background-position:-216px 0}.ico-th{background-position:-240px 0}.ico-th-list{background-position:-264px 0}.ico-ok{background-position:-288px 0}.ico-remove{background-position:-312px 0}.ico-zoom-in{background-position:-336px 0}.ico-zoom-out{background-position:-360px 0}.ico-off{background-position:-384px 0}.ico-signal{background-position:-408px 0}.ico-cog{background-position:-432px 0}.ico-trash{background-position:-456px 0}.ico-home{background-position:0 -24px}.ico-file{background-position:-24px -24px}.ico-time{background-position:-48px -24px}.ico-road{background-position:-72px -24px}.ico-download-alt{background-position:-96px -24px}.ico-download{background-position:-120px -24px}.ico-upload{background-position:-144px -24px}.ico-inbox{background-position:-168px -24px}.ico-play-circle{background-position:-192px -24px}.ico-repeat{background-position:-216px -24px}.ico-refresh{background-position:-240px -24px}.ico-list-alt{background-position:-264px -24px}.ico-lock{background-position:-287px -24px}.ico-flag{background-position:-312px -24px}.ico-headphones{background-position:-336px -24px}.ico-volume-off{background-position:-360px -24px}.ico-volume-down{background-position:-384px -24px}.ico-volume-up{background-position:-408px -24px}.ico-qrcode{background-position:-432px -24px}.ico-barcode{background-position:-456px -24px}.ico-tag{background-position:0 -48px}.ico-tags{background-position:-25px -48px}.ico-book{background-position:-48px -48px}.ico-bookmark{background-position:-72px -48px}.ico-print{background-position:-96px -48px}.ico-camera{background-position:-120px -48px}.ico-font{background-position:-144px -48px}.ico-bold{background-position:-167px -48px}.ico-italic{background-position:-192px -48px}.ico-text-height{background-position:-216px -48px}.ico-text-width{background-position:-240px -48px}.ico-align-left{background-position:-264px -48px}.ico-align-center{background-position:-288px -48px}.ico-align-right{background-position:-312px -48px}.ico-align-justify{background-position:-336px -48px}.ico-list{background-position:-360px -48px}.ico-indent-left{background-position:-384px -48px}.ico-indent-right{background-position:-408px -48px}.ico-facetime-video{background-position:-432px -48px}.ico-picture{background-position:-456px -48px}.ico-pencil{background-position:0 -72px}.ico-map-marker{background-position:-24px -72px}.ico-adjust{background-position:-48px -72px}.ico-tint{background-position:-72px -72px}.ico-edit{background-position:-96px -72px}.ico-share{background-position:-120px -72px}.ico-check{background-position:-144px -72px}.ico-move{background-position:-168px -72px}.ico-step-backward{background-position:-192px -72px}.ico-fast-backward{background-position:-216px -72px}.ico-backward{background-position:-240px -72px}.ico-play{background-position:-264px -72px}.ico-pause{background-position:-288px -72px}.ico-stop{background-position:-312px -72px}.ico-forward{background-position:-336px -72px}.ico-fast-forward{background-position:-360px -72px}.ico-step-forward{background-position:-384px -72px}.ico-eject{background-position:-408px -72px}.ico-chevron-left{background-position:-432px -72px}.ico-chevron-right{background-position:-456px -72px}.ico-plus-sign{background-position:0 -96px}.ico-minus-sign{background-position:-24px -96px}.ico-remove-sign{background-position:-48px -96px}.ico-ok-sign{background-position:-72px -96px}.ico-question-sign{background-position:-96px -96px}.ico-info-sign{background-position:-120px -96px}.ico-screenshot{background-position:-144px -96px}.ico-remove-circle{background-position:-168px -96px}.ico-ok-circle{background-position:-192px -96px}.ico-ban-circle{background-position:-216px -96px}.ico-arrow-left{background-position:-240px -96px}.ico-arrow-right{background-position:-264px -96px}.ico-arrow-up{background-position:-289px -96px}.ico-arrow-down{background-position:-312px -96px}.ico-share-alt{background-position:-336px -96px}.ico-resize-full{background-position:-360px -96px}.ico-resize-small{background-position:-384px -96px}.ico-plus{background-position:-408px -96px}.ico-minus{background-position:-433px -96px}.ico-asterisk{background-position:-456px -96px}.ico-exclamation-sign{background-position:0 -120px}.ico-gift{background-position:-24px -120px}.ico-leaf{background-position:-48px -120px}.ico-fire{background-position:-72px -120px}.ico-eye-open{background-position:-96px -120px}.ico-eye-close{background-position:-120px -120px}.ico-warning-sign{background-position:-144px -120px}.ico-plane{background-position:-168px -120px}.ico-calendar{background-position:-192px -120px}.ico-random{width:16px;background-position:-216px -120px}.ico-comment{background-position:-240px -120px}.ico-magnet{background-position:-264px -120px}.ico-chevron-up{background-position:-288px -120px}.ico-chevron-down{background-position:-313px -119px}.ico-retweet{background-position:-336px -120px}.ico-shopping-cart{background-position:-360px -120px}.ico-folder-close{width:16px;background-position:-384px -120px}.ico-folder-open{width:16px;background-position:-408px -120px}.ico-resize-vertical{background-position:-432px -119px}.ico-resize-horizontal{background-position:-456px -118px}.ico-hdd{background-position:0 -144px}.ico-bullhorn{background-position:-24px -144px}.ico-bell{background-position:-48px -144px}.ico-certificate{background-position:-72px -144px}.ico-thumbs-up{background-position:-96px -144px}.ico-thumbs-down{background-position:-120px -144px}.ico-hand-right{background-position:-144px -144px}.ico-hand-left{background-position:-168px -144px}.ico-hand-up{background-position:-192px -144px}.ico-hand-down{background-position:-216px -144px}.ico-circle-arrow-right{background-position:-240px -144px}.ico-circle-arrow-left{background-position:-264px -144px}.ico-circle-arrow-up{background-position:-288px -144px}.ico-circle-arrow-down{background-position:-312px -144px}.ico-globe{background-position:-336px -144px}.ico-wrench{background-position:-360px -144px}.ico-tasks{background-position:-384px -144px}.ico-filter{background-position:-408px -144px}.ico-briefcase{background-position:-432px -144px}.ico-fullscreen{background-position:-456px -144px}.dropup,.dropdown{position:relative}.dropdown-toggle{*margin-bottom:-3px}.dropdown-toggle:active,.open .dropdown-toggle{outline:0}.caret{display:inline-block;width:0;height:0;vertical-align:top;border-top:4px solid #000;border-right:4px solid transparent;border-left:4px solid transparent;content:""}.dropdown .caret{margin-top:8px;margin-left:2px}.dropdown-menu{position:absolute;top:100%;left:0;z-index:1000;display:none;float:left;min-width:160px;padding:5px 0;margin:2px 0 0;list-style:none;background-color:#fff;border:1px solid #ccc;border:1px solid rgba(0,0,0,0.2);*border-right-width:2px;*border-bottom-width:2px;-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;-webkit-box-shadow:0 5px 10px rgba(0,0,0,0.2);-moz-box-shadow:0 5px 10px rgba(0,0,0,0.2);box-shadow:0 5px 10px rgba(0,0,0,0.2);-webkit-background-clip:padding-box;-moz-background-clip:padding;background-clip:padding-box}.dropdown-menu.pull-right{right:0;left:auto}.dropdown-menu .divider{*width:100%;height:1px;margin:9px 1px;*margin:-5px 0 5px;overflow:hidden;background-color:#e5e5e5;border-bottom:1px solid #fff}.dropdown-menu>li>a{display:block;padding:3px 20px;clear:both;font-weight:normal;line-height:20px;color:#333;white-space:nowrap}.dropdown-menu>li>a:hover,.dropdown-menu>li>a:focus,.dropdown-submenu:hover>a,.dropdown-submenu:focus>a{color:#fff;text-decoration:none;background-color:#0081c2;background-image:-moz-linear-gradient(top,#08c,#0077b3);background-image:-webkit-gradient(linear,0 0,0 100%,from(#08c),to(#0077b3));background-image:-webkit-linear-gradient(top,#08c,#0077b3);background-image:-o-linear-gradient(top,#08c,#0077b3);background-image:linear-gradient(to bottom,#08c,#0077b3);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0077b3',GradientType=0)}.dropdown-menu>.active>a,.dropdown-menu>.active>a:hover,.dropdown-menu>.active>a:focus{color:#fff;text-decoration:none;background-color:#0081c2;background-image:-moz-linear-gradient(top,#08c,#0077b3);background-image:-webkit-gradient(linear,0 0,0 100%,from(#08c),to(#0077b3));background-image:-webkit-linear-gradient(top,#08c,#0077b3);background-image:-o-linear-gradient(top,#08c,#0077b3);background-image:linear-gradient(to bottom,#08c,#0077b3);background-repeat:repeat-x;outline:0;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0077b3',GradientType=0)}.dropdown-menu>.disabled>a,.dropdown-menu>.disabled>a:hover,.dropdown-menu>.disabled>a:focus{color:#999}.dropdown-menu>.disabled>a:hover,.dropdown-menu>.disabled>a:focus{text-decoration:none;cursor:default;background-color:transparent;background-image:none;filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.open{*z-index:1000}.open>.dropdown-menu{display:block}.pull-right>.dropdown-menu{right:0;left:auto}.dropup .caret,.navbar-fixed-bottom .dropdown .caret{border-top:0;border-bottom:4px solid #000;content:""}.dropup .dropdown-menu,.navbar-fixed-bottom .dropdown .dropdown-menu{top:auto;bottom:100%;margin-bottom:1px}.dropdown-submenu{position:relative}.dropdown-submenu>.dropdown-menu{top:0;left:100%;margin-top:-6px;margin-left:-1px;-webkit-border-radius:0 6px 6px 6px;-moz-border-radius:0 6px 6px 6px;border-radius:0 6px 6px 6px}.dropdown-submenu:hover>.dropdown-menu{display:block}.dropup .dropdown-submenu>.dropdown-menu{top:auto;bottom:0;margin-top:0;margin-bottom:-2px;-webkit-border-radius:5px 5px 5px 0;-moz-border-radius:5px 5px 5px 0;border-radius:5px 5px 5px 0}.dropdown-submenu>a:after{display:block;float:right;width:0;height:0;margin-top:5px;margin-right:-10px;border-color:transparent;border-left-color:#ccc;border-style:solid;border-width:5px 0 5px 5px;content:" "}.dropdown-submenu:hover>a:after{border-left-color:#fff}.dropdown-submenu.pull-left{float:none}.dropdown-submenu.pull-left>.dropdown-menu{left:-100%;margin-left:10px;-webkit-border-radius:6px 0 6px 6px;-moz-border-radius:6px 0 6px 6px;border-radius:6px 0 6px 6px}.dropdown .dropdown-menu .nav-header{padding-right:20px;padding-left:20px}.typeahead{z-index:1051;margin-top:2px;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.well{min-height:20px;padding:19px;margin-bottom:20px;background-color:#f5f5f5;border:1px solid #e3e3e3;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.05);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.05);box-shadow:inset 0 1px 1px rgba(0,0,0,0.05)}.well blockquote{border-color:#ddd;border-color:rgba(0,0,0,0.15)}.well-large{padding:24px;-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px}.well-small{padding:9px;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px}.fade{opacity:0;-webkit-transition:opacity .15s linear;-moz-transition:opacity .15s linear;-o-transition:opacity .15s linear;transition:opacity .15s linear}.fade.in{opacity:1}.collapse{position:relative;height:0;overflow:hidden;-webkit-transition:height .35s ease;-moz-transition:height .35s ease;-o-transition:height .35s ease;transition:height .35s ease}.collapse.in{height:auto}.close{float:right;font-size:20px;font-weight:bold;line-height:20px;color:#000;text-shadow:0 1px 0 #fff;opacity:.2;filter:alpha(opacity=20)}.close:hover,.close:focus{color:#000;text-decoration:none;cursor:pointer;opacity:.4;filter:alpha(opacity=40)}button.close{padding:0;cursor:pointer;background:transparent;border:0;-webkit-appearance:none}.btn{display:inline-block;*display:inline;padding:4px 12px;margin-bottom:0;*margin-left:.3em;font-size:14px;line-height:20px;color:#333;text-align:center;text-shadow:0 1px 1px rgba(255,255,255,0.75);vertical-align:middle;cursor:pointer;background-color:#f5f5f5;*background-color:#e6e6e6;background-image:-moz-linear-gradient(top,#fff,#e6e6e6);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fff),to(#e6e6e6));background-image:-webkit-linear-gradient(top,#fff,#e6e6e6);background-image:-o-linear-gradient(top,#fff,#e6e6e6);background-image:linear-gradient(to bottom,#fff,#e6e6e6);background-repeat:repeat-x;border:1px solid #ccc;*border:0;border-color:#e6e6e6 #e6e6e6 #bfbfbf;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);border-bottom-color:#b3b3b3;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff',endColorstr='#ffe6e6e6',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);*zoom:1;-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);-moz-box-shadow:inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);box-shadow:inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05)}.btn:hover,.btn:focus,.btn:active,.btn.active,.btn.disabled,.btn[disabled]{color:#333;background-color:#e6e6e6;*background-color:#d9d9d9}.btn:active,.btn.active{background-color:#ccc \9}.btn:first-child{*margin-left:0}.btn:hover,.btn:focus{color:#333;text-decoration:none;background-position:0 -15px;-webkit-transition:background-position .1s linear;-moz-transition:background-position .1s linear;-o-transition:background-position .1s linear;transition:background-position .1s linear}.btn:focus{outline:thin dotted #333;outline:5px auto -webkit-focus-ring-color;outline-offset:-2px}.btn.active,.btn:active{background-image:none;outline:0;-webkit-box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);-moz-box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05)}.btn.disabled,.btn[disabled]{cursor:default;background-image:none;opacity:.65;filter:alpha(opacity=65);-webkit-box-shadow:none;-moz-box-shadow:none;box-shadow:none}.btn-large{padding:11px 19px;font-size:17.5px;-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px}.btn-large [class^="icon-"],.btn-large [class*=" icon-"]{margin-top:4px}.btn-small{padding:2px 10px;font-size:11.9px;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px}.btn-small [class^="icon-"],.btn-small [class*=" icon-"]{margin-top:0}.btn-mini [class^="icon-"],.btn-mini [class*=" icon-"]{margin-top:-1px}.btn-mini{padding:0 6px;font-size:10.5px;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px}.btn-block{display:block;width:100%;padding-right:0;padding-left:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.btn-block+.btn-block{margin-top:5px}input[type="submit"].btn-block,input[type="reset"].btn-block,input[type="button"].btn-block{width:100%}.btn-primary.active,.btn-warning.active,.btn-danger.active,.btn-success.active,.btn-info.active,.btn-inverse.active{color:rgba(255,255,255,0.75)}.btn-primary{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#006dcc;*background-color:#04c;background-image:-moz-linear-gradient(top,#08c,#04c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#08c),to(#04c));background-image:-webkit-linear-gradient(top,#08c,#04c);background-image:-o-linear-gradient(top,#08c,#04c);background-image:linear-gradient(to bottom,#08c,#04c);background-repeat:repeat-x;border-color:#04c #04c #002a80;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0044cc',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.btn-primary:hover,.btn-primary:focus,.btn-primary:active,.btn-primary.active,.btn-primary.disabled,.btn-primary[disabled]{color:#fff;background-color:#04c;*background-color:#003bb3}.btn-primary:active,.btn-primary.active{background-color:#039 \9}.btn-warning{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#faa732;*background-color:#f89406;background-image:-moz-linear-gradient(top,#fbb450,#f89406);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fbb450),to(#f89406));background-image:-webkit-linear-gradient(top,#fbb450,#f89406);background-image:-o-linear-gradient(top,#fbb450,#f89406);background-image:linear-gradient(to bottom,#fbb450,#f89406);background-repeat:repeat-x;border-color:#f89406 #f89406 #ad6704;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffbb450',endColorstr='#fff89406',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.btn-warning:hover,.btn-warning:focus,.btn-warning:active,.btn-warning.active,.btn-warning.disabled,.btn-warning[disabled]{color:#fff;background-color:#f89406;*background-color:#df8505}.btn-warning:active,.btn-warning.active{background-color:#c67605 \9}.btn-danger{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#da4f49;*background-color:#bd362f;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;border-color:#bd362f #bd362f #802420;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffee5f5b',endColorstr='#ffbd362f',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.btn-danger:hover,.btn-danger:focus,.btn-danger:active,.btn-danger.active,.btn-danger.disabled,.btn-danger[disabled]{color:#fff;background-color:#bd362f;*background-color:#a9302a}.btn-danger:active,.btn-danger.active{background-color:#942a25 \9}.btn-success{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#5bb75b;*background-color:#51a351;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;border-color:#51a351 #51a351 #387038;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462',endColorstr='#ff51a351',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.btn-success:hover,.btn-success:focus,.btn-success:active,.btn-success.active,.btn-success.disabled,.btn-success[disabled]{color:#fff;background-color:#51a351;*background-color:#499249}.btn-success:active,.btn-success.active{background-color:#408140 \9}.btn-info{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#49afcd;*background-color:#2f96b4;background-image:-moz-linear-gradient(top,#5bc0de,#2f96b4);background-image:-webkit-gradient(linear,0 0,0 100%,from(#5bc0de),to(#2f96b4));background-image:-webkit-linear-gradient(top,#5bc0de,#2f96b4);background-image:-o-linear-gradient(top,#5bc0de,#2f96b4);background-image:linear-gradient(to bottom,#5bc0de,#2f96b4);background-repeat:repeat-x;border-color:#2f96b4 #2f96b4 #1f6377;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de',endColorstr='#ff2f96b4',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.btn-info.disabled,.btn-info[disabled]{color:#fff;background-color:#2f96b4;*background-color:#2a85a0}.btn-info:active,.btn-info.active{background-color:#24748c \9}.btn-inverse{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#363636;*background-color:#222;background-image:-moz-linear-gradient(top,#444,#222);background-image:-webkit-gradient(linear,0 0,0 100%,from(#444),to(#222));background-image:-webkit-linear-gradient(top,#444,#222);background-image:-o-linear-gradient(top,#444,#222);background-image:linear-gradient(to bottom,#444,#222);background-repeat:repeat-x;border-color:#222 #222 #000;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff444444',endColorstr='#ff222222',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.btn-inverse:hover,.btn-inverse:focus,.btn-inverse:active,.btn-inverse.active,.btn-inverse.disabled,.btn-inverse[disabled]{color:#fff;background-color:#222;*background-color:#151515}.btn-inverse:active,.btn-inverse.active{background-color:#080808 \9}button.btn,input[type="submit"].btn{*padding-top:3px;*padding-bottom:3px}button.btn::-moz-focus-inner,input[type="submit"].btn::-moz-focus-inner{padding:0;border:0}button.btn.btn-large,input[type="submit"].btn.btn-large{*padding-top:7px;*padding-bottom:7px}button.btn.btn-small,input[type="submit"].btn.btn-small{*padding-top:3px;*padding-bottom:3px}button.btn.btn-mini,input[type="submit"].btn.btn-mini{*padding-top:1px;*padding-bottom:1px}.btn-link,.btn-link:active,.btn-link[disabled]{background-color:transparent;background-image:none;-webkit-box-shadow:none;-moz-box-shadow:none;box-shadow:none}.btn-link{color:#08c;cursor:pointer;border-color:transparent;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.btn-link:hover,.btn-link:focus{color:#005580;text-decoration:underline;background-color:transparent}.btn-link[disabled]:hover,.btn-link[disabled]:focus{color:#333;text-decoration:none}.btn-group{position:relative;display:inline-block;*display:inline;*margin-left:.3em;font-size:0;white-space:nowrap;vertical-align:middle;*zoom:1}.btn-group:first-child{*margin-left:0}.btn-group+.btn-group{margin-left:5px}.btn-toolbar{margin-top:10px;margin-bottom:10px;font-size:0}.btn-toolbar>.btn+.btn,.btn-toolbar>.btn-group+.btn,.btn-toolbar>.btn+.btn-group{margin-left:5px}.btn-group>.btn{position:relative;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.btn-group>.btn+.btn{margin-left:-1px}.btn-group>.btn,.btn-group>.dropdown-menu,.btn-group>.popover{font-size:14px}.btn-group>.btn-mini{font-size:10.5px}.btn-group>.btn-small{font-size:11.9px}.btn-group>.btn-large{font-size:17.5px}.btn-group>.btn:first-child{margin-left:0;-webkit-border-bottom-left-radius:4px;border-bottom-left-radius:4px;-webkit-border-top-left-radius:4px;border-top-left-radius:4px;-moz-border-radius-bottomleft:4px;-moz-border-radius-topleft:4px}.btn-group>.btn:last-child,.btn-group>.dropdown-toggle{-webkit-border-top-right-radius:4px;border-top-right-radius:4px;-webkit-border-bottom-right-radius:4px;border-bottom-right-radius:4px;-moz-border-radius-topright:4px;-moz-border-radius-bottomright:4px}.btn-group>.btn.large:first-child{margin-left:0;-webkit-border-bottom-left-radius:6px;border-bottom-left-radius:6px;-webkit-border-top-left-radius:6px;border-top-left-radius:6px;-moz-border-radius-bottomleft:6px;-moz-border-radius-topleft:6px}.btn-group>.btn.large:last-child,.btn-group>.large.dropdown-toggle{-webkit-border-top-right-radius:6px;border-top-right-radius:6px;-webkit-border-bottom-right-radius:6px;border-bottom-right-radius:6px;-moz-border-radius-topright:6px;-moz-border-radius-bottomright:6px}.btn-group>.btn:hover,.btn-group>.btn:focus,.btn-group>.btn:active,.btn-group>.btn.active{z-index:2}.btn-group .dropdown-toggle:active,.btn-group.open .dropdown-toggle{outline:0}.btn-group>.btn+.dropdown-toggle{*padding-top:5px;padding-right:8px;*padding-bottom:5px;padding-left:8px;-webkit-box-shadow:inset 1px 0 0 rgba(255,255,255,0.125),inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);-moz-box-shadow:inset 1px 0 0 rgba(255,255,255,0.125),inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);box-shadow:inset 1px 0 0 rgba(255,255,255,0.125),inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05)}.btn-group>.btn-mini+.dropdown-toggle{*padding-top:2px;padding-right:5px;*padding-bottom:2px;padding-left:5px}.btn-group>.btn-small+.dropdown-toggle{*padding-top:5px;*padding-bottom:4px}.btn-group>.btn-large+.dropdown-toggle{*padding-top:7px;padding-right:12px;*padding-bottom:7px;padding-left:12px}.btn-group.open .dropdown-toggle{background-image:none;-webkit-box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);-moz-box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05)}.btn-group.open .btn.dropdown-toggle{background-color:#e6e6e6}.btn-group.open .btn-primary.dropdown-toggle{background-color:#04c}.btn-group.open .btn-warning.dropdown-toggle{background-color:#f89406}.btn-group.open .btn-danger.dropdown-toggle{background-color:#bd362f}.btn-group.open .btn-success.dropdown-toggle{background-color:#51a351}.btn-group.open .btn-info.dropdown-toggle{background-color:#2f96b4}.btn-group.open .btn-inverse.dropdown-toggle{background-color:#222}.btn .caret{margin-top:8px;margin-left:0}.btn-large .caret{margin-top:6px}.btn-large .caret{border-top-width:5px;border-right-width:5px;border-left-width:5px}.btn-mini .caret,.btn-small .caret{margin-top:8px}.dropup .btn-large .caret{border-bottom-width:5px}.btn-primary .caret,.btn-warning .caret,.btn-danger .caret,.btn-info .caret,.btn-success .caret,.btn-inverse .caret{border-top-color:#fff;border-bottom-color:#fff}.btn-group-vertical{display:inline-block;*display:inline;*zoom:1}.btn-group-vertical>.btn{display:block;float:none;max-width:100%;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.btn-group-vertical>.btn+.btn{margin-top:-1px;margin-left:0}.btn-group-vertical>.btn:first-child{-webkit-border-radius:4px 4px 0 0;-moz-border-radius:4px 4px 0 0;border-radius:4px 4px 0 0}.btn-group-vertical>.btn:last-child{-webkit-border-radius:0 0 4px 4px;-moz-border-radius:0 0 4px 4px;border-radius:0 0 4px 4px}.btn-group-vertical>.btn-large:first-child{-webkit-border-radius:6px 6px 0 0;-moz-border-radius:6px 6px 0 0;border-radius:6px 6px 0 0}.btn-group-vertical>.btn-large:last-child{-webkit-border-radius:0 0 6px 6px;-moz-border-radius:0 0 6px 6px;border-radius:0 0 6px 6px}.alert{padding:8px 35px 8px 14px;margin-bottom:20px;text-shadow:0 1px 0 rgba(255,255,255,0.5);background-color:#fcf8e3;border:1px solid #fbeed5;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.alert,.alert h4{color:#c09853}.alert h4{margin:0}.alert .close{position:relative;top:-2px;right:-21px;line-height:20px}.alert-success{color:#468847;background-color:#dff0d8;border-color:#d6e9c6}.alert-success h4{color:#468847}.alert-danger,.alert-error{color:#b94a48;background-color:#f2dede;border-color:#eed3d7}.alert-danger h4,.alert-error h4{color:#b94a48}.alert-info{color:#3a87ad;background-color:#d9edf7;border-color:#bce8f1}.alert-info h4{color:#3a87ad}.alert-block{padding-top:14px;padding-bottom:14px}.alert-block>p,.alert-block>ul{margin-bottom:0}.alert-block p+p{margin-top:5px}.nav{margin-bottom:20px;margin-left:0;list-style:none}.nav>li>a{display:block}.nav>li>a:hover,.nav>li>a:focus{text-decoration:none;background-color:#eee}.nav>li>a>img{max-width:none}.nav>.pull-right{float:right}.nav-header{display:block;padding:3px 15px;font-size:11px;font-weight:bold;line-height:20px;color:#999;text-shadow:0 1px 0 rgba(255,255,255,0.5);text-transform:uppercase}.nav li+.nav-header{margin-top:9px}.nav-list{padding-right:15px;padding-left:15px;margin-bottom:0}.nav-list>li>a,.nav-list .nav-header{margin-right:-15px;margin-left:-15px;text-shadow:0 1px 0 rgba(255,255,255,0.5)}.nav-list>li>a{padding:3px 15px}.nav-list>.active>a,.nav-list>.active>a:hover,.nav-list>.active>a:focus{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.2);background-color:#08c}.nav-list [class^="icon-"],.nav-list [class*=" icon-"]{margin-right:2px}.nav-list .divider{*width:100%;height:1px;margin:9px 1px;*margin:-5px 0 5px;overflow:hidden;background-color:#e5e5e5;border-bottom:1px solid #fff}.nav-tabs,.nav-pills{*zoom:1}.nav-tabs:before,.nav-pills:before,.nav-tabs:after,.nav-pills:after{display:table;line-height:0;content:""}.nav-tabs:after,.nav-pills:after{clear:both}.nav-tabs>li,.nav-pills>li{float:left}.nav-tabs>li>a,.nav-pills>li>a{padding-right:12px;padding-left:12px;margin-right:2px;line-height:14px}.nav-tabs{border-bottom:1px solid #ddd}.nav-tabs>li{margin-bottom:-1px}.nav-tabs>li>a{padding-top:8px;padding-bottom:8px;line-height:20px;border:1px solid transparent;-webkit-border-radius:4px 4px 0 0;-moz-border-radius:4px 4px 0 0;border-radius:4px 4px 0 0}.nav-tabs>li>a:hover,.nav-tabs>li>a:focus{border-color:#eee #eee #ddd}.nav-tabs>.active>a,.nav-tabs>.active>a:hover,.nav-tabs>.active>a:focus{color:#555;cursor:default;background-color:#fff;border:1px solid #ddd;border-bottom-color:transparent}.nav-pills>li>a{padding-top:8px;padding-bottom:8px;margin-top:2px;margin-bottom:2px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.nav-pills>.active>a,.nav-pills>.active>a:hover,.nav-pills>.active>a:focus{color:#fff;background-color:#08c}.nav-stacked>li{float:none}.nav-stacked>li>a{margin-right:0}.nav-tabs.nav-stacked{border-bottom:0}.nav-tabs.nav-stacked>li>a{border:1px solid #ddd;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.nav-tabs.nav-stacked>li:first-child>a{-webkit-border-top-right-radius:4px;border-top-right-radius:4px;-webkit-border-top-left-radius:4px;border-top-left-radius:4px;-moz-border-radius-topright:4px;-moz-border-radius-topleft:4px}.nav-tabs.nav-stacked>li:last-child>a{-webkit-border-bottom-right-radius:4px;border-bottom-right-radius:4px;-webkit-border-bottom-left-radius:4px;border-bottom-left-radius:4px;-moz-border-radius-bottomright:4px;-moz-border-radius-bottomleft:4px}.nav-tabs.nav-stacked>li>a:hover,.nav-tabs.nav-stacked>li>a:focus{z-index:2;border-color:#ddd}.nav-pills.nav-stacked>li>a{margin-bottom:3px}.nav-pills.nav-stacked>li:last-child>a{margin-bottom:1px}.nav-tabs .dropdown-menu{-webkit-border-radius:0 0 6px 6px;-moz-border-radius:0 0 6px 6px;border-radius:0 0 6px 6px}.nav-pills .dropdown-menu{-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px}.nav .dropdown-toggle .caret{margin-top:6px;border-top-color:#08c;border-bottom-color:#08c}.nav .dropdown-toggle:hover .caret,.nav .dropdown-toggle:focus .caret{border-top-color:#005580;border-bottom-color:#005580}.nav-tabs .dropdown-toggle .caret{margin-top:8px}.nav .active .dropdown-toggle .caret{border-top-color:#fff;border-bottom-color:#fff}.nav-tabs .active .dropdown-toggle .caret{border-top-color:#555;border-bottom-color:#555}.nav>.dropdown.active>a:hover,.nav>.dropdown.active>a:focus{cursor:pointer}.nav-tabs .open .dropdown-toggle,.nav-pills .open .dropdown-toggle,.nav>li.dropdown.open.active>a:hover,.nav>li.dropdown.open.active>a:focus{color:#fff;background-color:#999;border-color:#999}.nav li.dropdown.open .caret,.nav li.dropdown.open.active .caret,.nav li.dropdown.open a:hover .caret,.nav li.dropdown.open a:focus .caret{border-top-color:#fff;border-bottom-color:#fff;opacity:1;filter:alpha(opacity=100)}.tabs-stacked .open>a:hover,.tabs-stacked .open>a:focus{border-color:#999}.tabbable{*zoom:1}.tabbable:before,.tabbable:after{display:table;line-height:0;content:""}.tabbable:after{clear:both}.tab-content{overflow:auto}.tabs-below>.nav-tabs,.tabs-right>.nav-tabs,.tabs-left>.nav-tabs{border-bottom:0}.tab-content>.tab-pane,.pill-content>.pill-pane{display:none}.tab-content>.active,.pill-content>.active{display:block}.tabs-below>.nav-tabs{border-top:1px solid #ddd}.tabs-below>.nav-tabs>li{margin-top:-1px;margin-bottom:0}.tabs-below>.nav-tabs>li>a{-webkit-border-radius:0 0 4px 4px;-moz-border-radius:0 0 4px 4px;border-radius:0 0 4px 4px}.tabs-below>.nav-tabs>li>a:hover,.tabs-below>.nav-tabs>li>a:focus{border-top-color:#ddd;border-bottom-color:transparent}.tabs-below>.nav-tabs>.active>a,.tabs-below>.nav-tabs>.active>a:hover,.tabs-below>.nav-tabs>.active>a:focus{border-color:transparent #ddd #ddd #ddd}.tabs-left>.nav-tabs>li,.tabs-right>.nav-tabs>li{float:none}.tabs-left>.nav-tabs>li>a,.tabs-right>.nav-tabs>li>a{min-width:74px;margin-right:0;margin-bottom:3px}.tabs-left>.nav-tabs{float:left;margin-right:19px;border-right:1px solid #ddd}.tabs-left>.nav-tabs>li>a{margin-right:-1px;-webkit-border-radius:4px 0 0 4px;-moz-border-radius:4px 0 0 4px;border-radius:4px 0 0 4px}.tabs-left>.nav-tabs>li>a:hover,.tabs-left>.nav-tabs>li>a:focus{border-color:#eee #ddd #eee #eee}.tabs-left>.nav-tabs .active>a,.tabs-left>.nav-tabs .active>a:hover,.tabs-left>.nav-tabs .active>a:focus{border-color:#ddd transparent #ddd #ddd;*border-right-color:#fff}.tabs-right>.nav-tabs{float:right;margin-left:19px;border-left:1px solid #ddd}.tabs-right>.nav-tabs>li>a{margin-left:-1px;-webkit-border-radius:0 4px 4px 0;-moz-border-radius:0 4px 4px 0;border-radius:0 4px 4px 0}.tabs-right>.nav-tabs>li>a:hover,.tabs-right>.nav-tabs>li>a:focus{border-color:#eee #eee #eee #ddd}.tabs-right>.nav-tabs .active>a,.tabs-right>.nav-tabs .active>a:hover,.tabs-right>.nav-tabs .active>a:focus{border-color:#ddd #ddd #ddd transparent;*border-left-color:#fff}.nav>.disabled>a{color:#999}.nav>.disabled>a:hover,.nav>.disabled>a:focus{text-decoration:none;cursor:default;background-color:transparent}.navbar{*position:relative;*z-index:2;margin-bottom:20px;overflow:visible}.navbar-inner{min-height:40px;padding-right:20px;padding-left:20px;background-color:#fafafa;background-image:-moz-linear-gradient(top,#fff,#f2f2f2);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fff),to(#f2f2f2));background-image:-webkit-linear-gradient(top,#fff,#f2f2f2);background-image:-o-linear-gradient(top,#fff,#f2f2f2);background-image:linear-gradient(to bottom,#fff,#f2f2f2);background-repeat:repeat-x;border:1px solid #d4d4d4;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff',endColorstr='#fff2f2f2',GradientType=0);*zoom:1;-webkit-box-shadow:0 1px 4px rgba(0,0,0,0.065);-moz-box-shadow:0 1px 4px rgba(0,0,0,0.065);box-shadow:0 1px 4px rgba(0,0,0,0.065)}.navbar-inner:before,.navbar-inner:after{display:table;line-height:0;content:""}.navbar-inner:after{clear:both}.navbar .container{width:auto}.nav-collapse.collapse{height:auto;overflow:visible}.navbar .brand{display:block;float:left;padding:10px 20px 10px;margin-left:-20px;font-size:20px;font-weight:200;color:#777;text-shadow:0 1px 0 #fff}.navbar .brand:hover,.navbar .brand:focus{text-decoration:none}.navbar-text{margin-bottom:0;line-height:40px;color:#777}.navbar-link{color:#777}.navbar-link:hover,.navbar-link:focus{color:#333}.navbar .divider-vertical{height:40px;margin:0 9px;border-right:1px solid #fff;border-left:1px solid #f2f2f2}.navbar .btn,.navbar .btn-group{margin-top:5px}.navbar .btn-group .btn,.navbar .input-prepend .btn,.navbar .input-append .btn,.navbar .input-prepend .btn-group,.navbar .input-append .btn-group{margin-top:0}.navbar-form{margin-bottom:0;*zoom:1}.navbar-form:before,.navbar-form:after{display:table;line-height:0;content:""}.navbar-form:after{clear:both}.navbar-form input,.navbar-form select,.navbar-form .radio,.navbar-form .checkbox{margin-top:5px}.navbar-form input,.navbar-form select,.navbar-form .btn{display:inline-block;margin-bottom:0}.navbar-form input[type="image"],.navbar-form input[type="checkbox"],.navbar-form input[type="radio"]{margin-top:3px}.navbar-form .input-append,.navbar-form .input-prepend{margin-top:5px;white-space:nowrap}.navbar-form .input-append input,.navbar-form .input-prepend input{margin-top:0}.navbar-search{position:relative;float:left;margin-top:5px;margin-bottom:0}.navbar-search .search-query{padding:4px 14px;margin-bottom:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:13px;font-weight:normal;line-height:1;-webkit-border-radius:15px;-moz-border-radius:15px;border-radius:15px}.navbar-static-top{position:static;margin-bottom:0}.navbar-static-top .navbar-inner{-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.navbar-fixed-top,.navbar-fixed-bottom{position:fixed;right:0;left:0;z-index:1030;margin-bottom:0}.navbar-fixed-top .navbar-inner,.navbar-static-top .navbar-inner{border-width:0 0 1px}.navbar-fixed-bottom .navbar-inner{border-width:1px 0 0}.navbar-fixed-top .navbar-inner,.navbar-fixed-bottom .navbar-inner{padding-right:0;padding-left:0;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0}.navbar-static-top .container,.navbar-fixed-top .container,.navbar-fixed-bottom .container{width:940px}.navbar-fixed-top{top:0}.navbar-fixed-top .navbar-inner,.navbar-static-top .navbar-inner{-webkit-box-shadow:0 1px 10px rgba(0,0,0,0.1);-moz-box-shadow:0 1px 10px rgba(0,0,0,0.1);box-shadow:0 1px 10px rgba(0,0,0,0.1)}.navbar-fixed-bottom{bottom:0}.navbar-fixed-bottom .navbar-inner{-webkit-box-shadow:0 -1px 10px rgba(0,0,0,0.1);-moz-box-shadow:0 -1px 10px rgba(0,0,0,0.1);box-shadow:0 -1px 10px rgba(0,0,0,0.1)}.navbar .nav{position:relative;left:0;display:block;float:left;margin:0 10px 0 0}.navbar .nav.pull-right{float:right;margin-right:0}.navbar .nav>li{float:left}.navbar .nav>li>a{float:none;padding:10px 15px 10px;color:#777;text-decoration:none;text-shadow:0 1px 0 #fff}.navbar .nav .dropdown-toggle .caret{margin-top:8px}.navbar .nav>li>a:focus,.navbar .nav>li>a:hover{color:#333;text-decoration:none;background-color:transparent}.navbar .nav>.active>a,.navbar .nav>.active>a:hover,.navbar .nav>.active>a:focus{color:#555;text-decoration:none;background-color:#e5e5e5;-webkit-box-shadow:inset 0 3px 8px rgba(0,0,0,0.125);-moz-box-shadow:inset 0 3px 8px rgba(0,0,0,0.125);box-shadow:inset 0 3px 8px rgba(0,0,0,0.125)}.navbar .btn-navbar{display:none;float:right;padding:7px 10px;margin-right:5px;margin-left:5px;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#ededed;*background-color:#e5e5e5;background-image:-moz-linear-gradient(top,#f2f2f2,#e5e5e5);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f2f2f2),to(#e5e5e5));background-image:-webkit-linear-gradient(top,#f2f2f2,#e5e5e5);background-image:-o-linear-gradient(top,#f2f2f2,#e5e5e5);background-image:linear-gradient(to bottom,#f2f2f2,#e5e5e5);background-repeat:repeat-x;border-color:#e5e5e5 #e5e5e5 #bfbfbf;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff2f2f2',endColorstr='#ffe5e5e5',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 1px 0 rgba(255,255,255,0.075);-moz-box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 1px 0 rgba(255,255,255,0.075);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 1px 0 rgba(255,255,255,0.075)}.navbar .btn-navbar:hover,.navbar .btn-navbar:focus,.navbar .btn-navbar:active,.navbar .btn-navbar.active,.navbar .btn-navbar.disabled,.navbar .btn-navbar[disabled]{color:#fff;background-color:#e5e5e5;*background-color:#d9d9d9}.navbar .btn-navbar:active,.navbar .btn-navbar.active{background-color:#ccc \9}.navbar .btn-navbar .ico-bar{display:block;width:18px;height:2px;background-color:#f5f5f5;-webkit-border-radius:1px;-moz-border-radius:1px;border-radius:1px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,0.25);-moz-box-shadow:0 1px 0 rgba(0,0,0,0.25);box-shadow:0 1px 0 rgba(0,0,0,0.25)}.btn-navbar .ico-bar+.ico-bar{margin-top:3px}.navbar .nav>li>.dropdown-menu:before{position:absolute;top:-7px;left:9px;display:inline-block;border-right:7px solid transparent;border-bottom:7px solid #ccc;border-left:7px solid transparent;border-bottom-color:rgba(0,0,0,0.2);content:''}.navbar .nav>li>.dropdown-menu:after{position:absolute;top:-6px;left:10px;display:inline-block;border-right:6px solid transparent;border-bottom:6px solid #fff;border-left:6px solid transparent;content:''}.navbar-fixed-bottom .nav>li>.dropdown-menu:before{top:auto;bottom:-7px;border-top:7px solid #ccc;border-bottom:0;border-top-color:rgba(0,0,0,0.2)}.navbar-fixed-bottom .nav>li>.dropdown-menu:after{top:auto;bottom:-6px;border-top:6px solid #fff;border-bottom:0}.navbar .nav li.dropdown>a:hover .caret,.navbar .nav li.dropdown>a:focus .caret{border-top-color:#333;border-bottom-color:#333}.navbar .nav li.dropdown.open>.dropdown-toggle,.navbar .nav li.dropdown.active>.dropdown-toggle,.navbar .nav li.dropdown.open.active>.dropdown-toggle{color:#555;background-color:#e5e5e5}.navbar .nav li.dropdown>.dropdown-toggle .caret{border-top-color:#777;border-bottom-color:#777}.navbar .nav li.dropdown.open>.dropdown-toggle .caret,.navbar .nav li.dropdown.active>.dropdown-toggle .caret,.navbar .nav li.dropdown.open.active>.dropdown-toggle .caret{border-top-color:#555;border-bottom-color:#555}.navbar .pull-right>li>.dropdown-menu,.navbar .nav>li>.dropdown-menu.pull-right{right:0;left:auto}.navbar .pull-right>li>.dropdown-menu:before,.navbar .nav>li>.dropdown-menu.pull-right:before{right:12px;left:auto}.navbar .pull-right>li>.dropdown-menu:after,.navbar .nav>li>.dropdown-menu.pull-right:after{right:13px;left:auto}.navbar .pull-right>li>.dropdown-menu .dropdown-menu,.navbar .nav>li>.dropdown-menu.pull-right .dropdown-menu{right:100%;left:auto;margin-right:-1px;margin-left:0;-webkit-border-radius:6px 0 6px 6px;-moz-border-radius:6px 0 6px 6px;border-radius:6px 0 6px 6px}.navbar-inverse .navbar-inner{background-color:#1b1b1b;background-image:-moz-linear-gradient(top,#222,#111);background-image:-webkit-gradient(linear,0 0,0 100%,from(#222),to(#111));background-image:-webkit-linear-gradient(top,#222,#111);background-image:-o-linear-gradient(top,#222,#111);background-image:linear-gradient(to bottom,#222,#111);background-repeat:repeat-x;border-color:#252525;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff222222',endColorstr='#ff111111',GradientType=0)}.navbar-inverse .brand,.navbar-inverse .nav>li>a{color:#999;text-shadow:0 -1px 0 rgba(0,0,0,0.25)}.navbar-inverse .brand:hover,.navbar-inverse .nav>li>a:hover,.navbar-inverse .brand:focus,.navbar-inverse .nav>li>a:focus{color:#fff}.navbar-inverse .brand{color:#999}.navbar-inverse .navbar-text{color:#999}.navbar-inverse .nav>li>a:focus,.navbar-inverse .nav>li>a:hover{color:#fff;background-color:transparent}.navbar-inverse .nav .active>a,.navbar-inverse .nav .active>a:hover,.navbar-inverse .nav .active>a:focus{color:#fff;background-color:#111}.navbar-inverse .navbar-link{color:#999}.navbar-inverse .navbar-link:hover,.navbar-inverse .navbar-link:focus{color:#fff}.navbar-inverse .divider-vertical{border-right-color:#222;border-left-color:#111}.navbar-inverse .nav li.dropdown.open>.dropdown-toggle,.navbar-inverse .nav li.dropdown.active>.dropdown-toggle,.navbar-inverse .nav li.dropdown.open.active>.dropdown-toggle{color:#fff;background-color:#111}.navbar-inverse .nav li.dropdown>a:hover .caret,.navbar-inverse .nav li.dropdown>a:focus .caret{border-top-color:#fff;border-bottom-color:#fff}.navbar-inverse .nav li.dropdown>.dropdown-toggle .caret{border-top-color:#999;border-bottom-color:#999}.navbar-inverse .nav li.dropdown.open>.dropdown-toggle .caret,.navbar-inverse .nav li.dropdown.active>.dropdown-toggle .caret,.navbar-inverse .nav li.dropdown.open.active>.dropdown-toggle .caret{border-top-color:#fff;border-bottom-color:#fff}.navbar-inverse .navbar-search .search-query{color:#fff;background-color:#515151;border-color:#111;-webkit-box-shadow:inset 0 1px 2px rgba(0,0,0,0.1),0 1px 0 rgba(255,255,255,0.15);-moz-box-shadow:inset 0 1px 2px rgba(0,0,0,0.1),0 1px 0 rgba(255,255,255,0.15);box-shadow:inset 0 1px 2px rgba(0,0,0,0.1),0 1px 0 rgba(255,255,255,0.15);-webkit-transition:none;-moz-transition:none;-o-transition:none;transition:none}.navbar-inverse .navbar-search .search-query:-moz-placeholder{color:#ccc}.navbar-inverse .navbar-search .search-query:-ms-input-placeholder{color:#ccc}.navbar-inverse .navbar-search .search-query::-webkit-input-placeholder{color:#ccc}.navbar-inverse .navbar-search .search-query:focus,.navbar-inverse .navbar-search .search-query.focused{padding:5px 15px;color:#333;text-shadow:0 1px 0 #fff;background-color:#fff;border:0;outline:0;-webkit-box-shadow:0 0 3px rgba(0,0,0,0.15);-moz-box-shadow:0 0 3px rgba(0,0,0,0.15);box-shadow:0 0 3px rgba(0,0,0,0.15)}.navbar-inverse .btn-navbar{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#0e0e0e;*background-color:#040404;background-image:-moz-linear-gradient(top,#151515,#040404);background-image:-webkit-gradient(linear,0 0,0 100%,from(#151515),to(#040404));background-image:-webkit-linear-gradient(top,#151515,#040404);background-image:-o-linear-gradient(top,#151515,#040404);background-image:linear-gradient(to bottom,#151515,#040404);background-repeat:repeat-x;border-color:#040404 #040404 #000;border-color:rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff151515',endColorstr='#ff040404',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false)}.navbar-inverse .btn-navbar:hover,.navbar-inverse .btn-navbar:focus,.navbar-inverse .btn-navbar:active,.navbar-inverse .btn-navbar.active,.navbar-inverse .btn-navbar.disabled,.navbar-inverse .btn-navbar[disabled]{color:#fff;background-color:#040404;*background-color:#000}.navbar-inverse .btn-navbar:active,.navbar-inverse .btn-navbar.active{background-color:#000 \9}.breadcrumb{padding:8px 15px;margin:0 0 20px;list-style:none;background-color:#f5f5f5;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.breadcrumb>li{display:inline-block;*display:inline;text-shadow:0 1px 0 #fff;*zoom:1}.breadcrumb>li>.divider{padding:0 5px;color:#ccc}.breadcrumb>.active{color:#999}.pagination{margin:20px 0}.pagination ul{display:inline-block;*display:inline;margin-bottom:0;margin-left:0;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;*zoom:1;-webkit-box-shadow:0 1px 2px rgba(0,0,0,0.05);-moz-box-shadow:0 1px 2px rgba(0,0,0,0.05);box-shadow:0 1px 2px rgba(0,0,0,0.05)}.pagination ul>li{display:inline}.pagination ul>li>a,.pagination ul>li>span{float:left;padding:4px 12px;line-height:20px;text-decoration:none;background-color:#fff;border:1px solid #ddd;border-left-width:0}.pagination ul>li>a:hover,.pagination ul>li>a:focus,.pagination ul>.active>a,.pagination ul>.active>span{background-color:#f5f5f5}.pagination ul>.active>a,.pagination ul>.active>span{color:#999;cursor:default}.pagination ul>.disabled>span,.pagination ul>.disabled>a,.pagination ul>.disabled>a:hover,.pagination ul>.disabled>a:focus{color:#999;cursor:default;background-color:transparent}.pagination ul>li:first-child>a,.pagination ul>li:first-child>span{border-left-width:1px;-webkit-border-bottom-left-radius:4px;border-bottom-left-radius:4px;-webkit-border-top-left-radius:4px;border-top-left-radius:4px;-moz-border-radius-bottomleft:4px;-moz-border-radius-topleft:4px}.pagination ul>li:last-child>a,.pagination ul>li:last-child>span{-webkit-border-top-right-radius:4px;border-top-right-radius:4px;-webkit-border-bottom-right-radius:4px;border-bottom-right-radius:4px;-moz-border-radius-topright:4px;-moz-border-radius-bottomright:4px}.pagination-centered{text-align:center}.pagination-right{text-align:right}.pagination-large ul>li>a,.pagination-large ul>li>span{padding:11px 19px;font-size:17.5px}.pagination-large ul>li:first-child>a,.pagination-large ul>li:first-child>span{-webkit-border-bottom-left-radius:6px;border-bottom-left-radius:6px;-webkit-border-top-left-radius:6px;border-top-left-radius:6px;-moz-border-radius-bottomleft:6px;-moz-border-radius-topleft:6px}.pagination-large ul>li:last-child>a,.pagination-large ul>li:last-child>span{-webkit-border-top-right-radius:6px;border-top-right-radius:6px;-webkit-border-bottom-right-radius:6px;border-bottom-right-radius:6px;-moz-border-radius-topright:6px;-moz-border-radius-bottomright:6px}.pagination-mini ul>li:first-child>a,.pagination-small ul>li:first-child>a,.pagination-mini ul>li:first-child>span,.pagination-small ul>li:first-child>span{-webkit-border-bottom-left-radius:3px;border-bottom-left-radius:3px;-webkit-border-top-left-radius:3px;border-top-left-radius:3px;-moz-border-radius-bottomleft:3px;-moz-border-radius-topleft:3px}.pagination-mini ul>li:last-child>a,.pagination-small ul>li:last-child>a,.pagination-mini ul>li:last-child>span,.pagination-small ul>li:last-child>span{-webkit-border-top-right-radius:3px;border-top-right-radius:3px;-webkit-border-bottom-right-radius:3px;border-bottom-right-radius:3px;-moz-border-radius-topright:3px;-moz-border-radius-bottomright:3px}.pagination-small ul>li>a,.pagination-small ul>li>span{padding:2px 10px;font-size:11.9px}.pagination-mini ul>li>a,.pagination-mini ul>li>span{padding:0 6px;font-size:10.5px}.pager{margin:20px 0;text-align:center;list-style:none;*zoom:1}.pager:before,.pager:after{display:table;line-height:0;content:""}.pager:after{clear:both}.pager li{display:inline}.pager li>a,.pager li>span{display:inline-block;padding:5px 14px;background-color:#fff;border:1px solid #ddd;-webkit-border-radius:15px;-moz-border-radius:15px;border-radius:15px}.pager li>a:hover,.pager li>a:focus{text-decoration:none;background-color:#f5f5f5}.pager .next>a,.pager .next>span{float:right}.pager .previous>a,.pager .previous>span{float:left}.pager .disabled>a,.pager .disabled>a:hover,.pager .disabled>a:focus,.pager .disabled>span{color:#999;cursor:default;background-color:#fff}.modal-backdrop{position:fixed;top:0;right:0;bottom:0;left:0;z-index:1040;background-color:#000}.modal-backdrop.fade{opacity:0}.modal-backdrop,.modal-backdrop.fade.in{opacity:.8;filter:alpha(opacity=80)}.modal{position:fixed;top:10%;left:50%;z-index:1050;width:560px;margin-left:-280px;background-color:#fff;border:1px solid #999;border:1px solid rgba(0,0,0,0.3);*border:1px solid #999;-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;outline:0;-webkit-box-shadow:0 3px 7px rgba(0,0,0,0.3);-moz-box-shadow:0 3px 7px rgba(0,0,0,0.3);box-shadow:0 3px 7px rgba(0,0,0,0.3);-webkit-background-clip:padding-box;-moz-background-clip:padding-box;background-clip:padding-box}.modal.fade{top:-25%;-webkit-transition:opacity .3s linear,top .3s ease-out;-moz-transition:opacity .3s linear,top .3s ease-out;-o-transition:opacity .3s linear,top .3s ease-out;transition:opacity .3s linear,top .3s ease-out}.modal.fade.in{top:10%}.modal-header{padding:9px 15px;border-bottom:1px solid #eee}.modal-header .close{margin-top:2px}.modal-header h3{margin:0;line-height:30px}.modal-body{position:relative;max-height:400px;padding:15px;overflow-y:auto}.modal-form{margin-bottom:0}.modal-footer{padding:14px 15px 15px;margin-bottom:0;text-align:right;background-color:#f5f5f5;border-top:1px solid #ddd;-webkit-border-radius:0 0 6px 6px;-moz-border-radius:0 0 6px 6px;border-radius:0 0 6px 6px;*zoom:1;-webkit-box-shadow:inset 0 1px 0 #fff;-moz-box-shadow:inset 0 1px 0 #fff;box-shadow:inset 0 1px 0 #fff}.modal-footer:before,.modal-footer:after{display:table;line-height:0;content:""}.modal-footer:after{clear:both}.modal-footer .btn+.btn{margin-bottom:0;margin-left:5px}.modal-footer .btn-group .btn+.btn{margin-left:-1px}.modal-footer .btn-block+.btn-block{margin-left:0}.tooltip{position:absolute;z-index:1030;display:block;font-size:11px;line-height:1.4;opacity:0;filter:alpha(opacity=0);visibility:visible}.tooltip.in{opacity:.8;filter:alpha(opacity=80)}.tooltip.top{padding:5px 0;margin-top:-3px}.tooltip.right{padding:0 5px;margin-left:3px}.tooltip.bottom{padding:5px 0;margin-top:3px}.tooltip.left{padding:0 5px;margin-left:-3px}.tooltip-inner{max-width:200px;padding:8px;color:#fff;text-align:center;text-decoration:none;background-color:#000;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.tooltip-arrow{position:absolute;width:0;height:0;border-color:transparent;border-style:solid}.tooltip.top .tooltip-arrow{bottom:0;left:50%;margin-left:-5px;border-top-color:#000;border-width:5px 5px 0}.tooltip.right .tooltip-arrow{top:50%;left:0;margin-top:-5px;border-right-color:#000;border-width:5px 5px 5px 0}.tooltip.left .tooltip-arrow{top:50%;right:0;margin-top:-5px;border-left-color:#000;border-width:5px 0 5px 5px}.tooltip.bottom .tooltip-arrow{top:0;left:50%;margin-left:-5px;border-bottom-color:#000;border-width:0 5px 5px}.popover{position:absolute;top:0;left:0;z-index:1010;display:none;max-width:276px;padding:1px;text-align:left;white-space:normal;background-color:#fff;border:1px solid #ccc;border:1px solid rgba(0,0,0,0.2);-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;-webkit-box-shadow:0 5px 10px rgba(0,0,0,0.2);-moz-box-shadow:0 5px 10px rgba(0,0,0,0.2);box-shadow:0 5px 10px rgba(0,0,0,0.2);-webkit-background-clip:padding-box;-moz-background-clip:padding;background-clip:padding-box}.popover.top{margin-top:-10px}.popover.right{margin-left:10px}.popover.bottom{margin-top:10px}.popover.left{margin-left:-10px}.popover-title{padding:8px 14px;margin:0;font-size:14px;font-weight:normal;line-height:18px;background-color:#f7f7f7;border-bottom:1px solid #ebebeb;-webkit-border-radius:5px 5px 0 0;-moz-border-radius:5px 5px 0 0;border-radius:5px 5px 0 0}.popover-title:empty{display:none}.popover-content{padding:9px 14px}.popover .arrow,.popover .arrow:after{position:absolute;display:block;width:0;height:0;border-color:transparent;border-style:solid}.popover .arrow{border-width:11px}.popover .arrow:after{border-width:10px;content:""}.popover.top .arrow{bottom:-11px;left:50%;margin-left:-11px;border-top-color:#999;border-top-color:rgba(0,0,0,0.25);border-bottom-width:0}.popover.top .arrow:after{bottom:1px;margin-left:-10px;border-top-color:#fff;border-bottom-width:0}.popover.right .arrow{top:50%;left:-11px;margin-top:-11px;border-right-color:#999;border-right-color:rgba(0,0,0,0.25);border-left-width:0}.popover.right .arrow:after{bottom:-10px;left:1px;border-right-color:#fff;border-left-width:0}.popover.bottom .arrow{top:-11px;left:50%;margin-left:-11px;border-bottom-color:#999;border-bottom-color:rgba(0,0,0,0.25);border-top-width:0}.popover.bottom .arrow:after{top:1px;margin-left:-10px;border-bottom-color:#fff;border-top-width:0}.popover.left .arrow{top:50%;right:-11px;margin-top:-11px;border-left-color:#999;border-left-color:rgba(0,0,0,0.25);border-right-width:0}.popover.left .arrow:after{right:1px;bottom:-10px;border-left-color:#fff;border-right-width:0}.thumbnails{margin-left:-20px;list-style:none;*zoom:1}.thumbnails:before,.thumbnails:after{display:table;line-height:0;content:""}.thumbnails:after{clear:both}.row-fluid .thumbnails{margin-left:0}.thumbnails>li{float:left;margin-bottom:20px;margin-left:20px}.thumbnail{display:block;padding:4px;line-height:20px;border:1px solid #ddd;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.055);-moz-box-shadow:0 1px 3px rgba(0,0,0,0.055);box-shadow:0 1px 3px rgba(0,0,0,0.055);-webkit-transition:all .2s ease-in-out;-moz-transition:all .2s ease-in-out;-o-transition:all .2s ease-in-out;transition:all .2s ease-in-out}a.thumbnail:hover,a.thumbnail:focus{border-color:#08c;-webkit-box-shadow:0 1px 4px rgba(0,105,214,0.25);-moz-box-shadow:0 1px 4px rgba(0,105,214,0.25);box-shadow:0 1px 4px rgba(0,105,214,0.25)}.thumbnail>img{display:block;max-width:100%;margin-right:auto;margin-left:auto}.thumbnail .caption{padding:9px;color:#555}.media,.media-body{overflow:hidden;*overflow:visible;zoom:1}.media,.media .media{margin-top:15px}.media:first-child{margin-top:0}.media-object{display:block}.media-heading{margin:0 0 5px}.media>.pull-left{margin-right:10px}.media>.pull-right{margin-left:10px}.media-list{margin-left:0;list-style:none}.label,.badge{display:inline-block;padding:2px 4px;font-size:11.844px;font-weight:bold;line-height:14px;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.25);white-space:nowrap;vertical-align:baseline;background-color:#999}.label{-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px}.badge{padding-right:9px;padding-left:9px;-webkit-border-radius:9px;-moz-border-radius:9px;border-radius:9px}.label:empty,.badge:empty{display:none}a.label:hover,a.label:focus,a.badge:hover,a.badge:focus{color:#fff;text-decoration:none;cursor:pointer}.label-important,.badge-important{background-color:#b94a48}.label-important[href],.badge-important[href]{background-color:#953b39}.label-warning,.badge-warning{background-color:#f89406}.label-warning[href],.badge-warning[href]{background-color:#c67605}.label-success,.badge-success{background-color:#468847}.label-success[href],.badge-success[href]{background-color:#356635}.label-info,.badge-info{background-color:#3a87ad}.label-info[href],.badge-info[href]{background-color:#2d6987}.label-inverse,.badge-inverse{background-color:#333}.label-inverse[href],.badge-inverse[href]{background-color:#1a1a1a}.btn .label,.btn .badge{position:relative;top:-1px}.btn-mini .label,.btn-mini .badge{top:0}@-webkit-keyframes progress-bar-stripes{from{background-position:40px 0}to{background-position:0 0}}@-moz-keyframes progress-bar-stripes{from{background-position:40px 0}to{background-position:0 0}}@-ms-keyframes progress-bar-stripes{from{background-position:40px 0}to{background-position:0 0}}@-o-keyframes progress-bar-stripes{from{background-position:0 0}to{background-position:40px 0}}@keyframes progress-bar-stripes{from{background-position:40px 0}to{background-position:0 0}}.progress{height:20px;margin-bottom:20px;overflow:hidden;background-color:#f7f7f7;background-image:-moz-linear-gradient(top,#f5f5f5,#f9f9f9);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f5f5f5),to(#f9f9f9));background-image:-webkit-linear-gradient(top,#f5f5f5,#f9f9f9);background-image:-o-linear-gradient(top,#f5f5f5,#f9f9f9);background-image:linear-gradient(to bottom,#f5f5f5,#f9f9f9);background-repeat:repeat-x;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff5f5f5',endColorstr='#fff9f9f9',GradientType=0);-webkit-box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);-moz-box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);box-shadow:inset 0 1px 2px rgba(0,0,0,0.1)}.progress .bar{float:left;width:0;height:100%;font-size:12px;color:#fff;text-align:center;text-shadow:0 -1px 0 rgba(0,0,0,0.25);background-color:#0e90d2;background-image:-moz-linear-gradient(top,#149bdf,#0480be);background-image:-webkit-gradient(linear,0 0,0 100%,from(#149bdf),to(#0480be));background-image:-webkit-linear-gradient(top,#149bdf,#0480be);background-image:-o-linear-gradient(top,#149bdf,#0480be);background-image:linear-gradient(to bottom,#149bdf,#0480be);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff149bdf',endColorstr='#ff0480be',GradientType=0);-webkit-box-shadow:inset 0 -1px 0 rgba(0,0,0,0.15);-moz-box-shadow:inset 0 -1px 0 rgba(0,0,0,0.15);box-shadow:inset 0 -1px 0 rgba(0,0,0,0.15);-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;-webkit-transition:width .6s ease;-moz-transition:width .6s ease;-o-transition:width .6s ease;transition:width .6s ease}.progress .bar+.bar{-webkit-box-shadow:inset 1px 0 0 rgba(0,0,0,0.15),inset 0 -1px 0 rgba(0,0,0,0.15);-moz-box-shadow:inset 1px 0 0 rgba(0,0,0,0.15),inset 0 -1px 0 rgba(0,0,0,0.15);box-shadow:inset 1px 0 0 rgba(0,0,0,0.15),inset 0 -1px 0 rgba(0,0,0,0.15)}.progress-striped .bar{background-color:#149bdf;background-image:-webkit-gradient(linear,0 100%,100% 0,color-stop(0.25,rgba(255,255,255,0.15)),color-stop(0.25,transparent),color-stop(0.5,transparent),color-stop(0.5,rgba(255,255,255,0.15)),color-stop(0.75,rgba(255,255,255,0.15)),color-stop(0.75,transparent),to(transparent));background-image:-webkit-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-moz-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-o-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);-webkit-background-size:40px 40px;-moz-background-size:40px 40px;-o-background-size:40px 40px;background-size:40px 40px}.progress.active .bar{-webkit-animation:progress-bar-stripes 2s linear infinite;-moz-animation:progress-bar-stripes 2s linear infinite;-ms-animation:progress-bar-stripes 2s linear infinite;-o-animation:progress-bar-stripes 2s linear infinite;animation:progress-bar-stripes 2s linear infinite}.progress-danger .bar,.progress .bar-danger{background-color:#dd514c;background-image:-moz-linear-gradient(top,#ee5f5b,#c43c35);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#c43c35));background-image:-webkit-linear-gradient(top,#ee5f5b,#c43c35);background-image:-o-linear-gradient(top,#ee5f5b,#c43c35);background-image:linear-gradient(to bottom,#ee5f5b,#c43c35);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffee5f5b',endColorstr='#ffc43c35',GradientType=0)}.progress-danger.progress-striped .bar,.progress-striped .bar-danger{background-color:#ee5f5b;background-image:-webkit-gradient(linear,0 100%,100% 0,color-stop(0.25,rgba(255,255,255,0.15)),color-stop(0.25,transparent),color-stop(0.5,transparent),color-stop(0.5,rgba(255,255,255,0.15)),color-stop(0.75,rgba(255,255,255,0.15)),color-stop(0.75,transparent),to(transparent));background-image:-webkit-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-moz-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-o-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent)}.progress-success .bar,.progress .bar-success{background-color:#5eb95e;background-image:-moz-linear-gradient(top,#62c462,#57a957);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#57a957));background-image:-webkit-linear-gradient(top,#62c462,#57a957);background-image:-o-linear-gradient(top,#62c462,#57a957);background-image:linear-gradient(to bottom,#62c462,#57a957);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462',endColorstr='#ff57a957',GradientType=0)}.progress-success.progress-striped .bar,.progress-striped .bar-success{background-color:#62c462;background-image:-webkit-gradient(linear,0 100%,100% 0,color-stop(0.25,rgba(255,255,255,0.15)),color-stop(0.25,transparent),color-stop(0.5,transparent),color-stop(0.5,rgba(255,255,255,0.15)),color-stop(0.75,rgba(255,255,255,0.15)),color-stop(0.75,transparent),to(transparent));background-image:-webkit-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-moz-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-o-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent)}.progress-info .bar,.progress .bar-info{background-color:#4bb1cf;background-image:-moz-linear-gradient(top,#5bc0de,#339bb9);background-image:-webkit-gradient(linear,0 0,0 100%,from(#5bc0de),to(#339bb9));background-image:-webkit-linear-gradient(top,#5bc0de,#339bb9);background-image:-o-linear-gradient(top,#5bc0de,#339bb9);background-image:linear-gradient(to bottom,#5bc0de,#339bb9);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de',endColorstr='#ff339bb9',GradientType=0)}.progress-info.progress-striped .bar,.progress-striped .bar-info{background-color:#5bc0de;background-image:-webkit-gradient(linear,0 100%,100% 0,color-stop(0.25,rgba(255,255,255,0.15)),color-stop(0.25,transparent),color-stop(0.5,transparent),color-stop(0.5,rgba(255,255,255,0.15)),color-stop(0.75,rgba(255,255,255,0.15)),color-stop(0.75,transparent),to(transparent));background-image:-webkit-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-moz-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-o-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent)}.progress-warning .bar,.progress .bar-warning{background-color:#faa732;background-image:-moz-linear-gradient(top,#fbb450,#f89406);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fbb450),to(#f89406));background-image:-webkit-linear-gradient(top,#fbb450,#f89406);background-image:-o-linear-gradient(top,#fbb450,#f89406);background-image:linear-gradient(to bottom,#fbb450,#f89406);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffbb450',endColorstr='#fff89406',GradientType=0)}.progress-warning.progress-striped .bar,.progress-striped .bar-warning{background-color:#fbb450;background-image:-webkit-gradient(linear,0 100%,100% 0,color-stop(0.25,rgba(255,255,255,0.15)),color-stop(0.25,transparent),color-stop(0.5,transparent),color-stop(0.5,rgba(255,255,255,0.15)),color-stop(0.75,rgba(255,255,255,0.15)),color-stop(0.75,transparent),to(transparent));background-image:-webkit-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-moz-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:-o-linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent);background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,0.15) 50%,rgba(255,255,255,0.15) 75%,transparent 75%,transparent)}.accordion{margin-bottom:20px}.accordion-group{margin-bottom:2px;border:1px solid #e5e5e5;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.accordion-heading{border-bottom:0}.accordion-heading .accordion-toggle{display:block;padding:8px 15px}.accordion-toggle{cursor:pointer}.accordion-inner{padding:9px 15px;border-top:1px solid #e5e5e5}.carousel{position:relative;margin-bottom:20px;line-height:1}.carousel-inner{position:relative;width:100%;overflow:hidden}.carousel-inner>.item{position:relative;display:none;-webkit-transition:.6s ease-in-out left;-moz-transition:.6s ease-in-out left;-o-transition:.6s ease-in-out left;transition:.6s ease-in-out left}.carousel-inner>.item>img,.carousel-inner>.item>a>img{display:block;line-height:1}.carousel-inner>.active,.carousel-inner>.next,.carousel-inner>.prev{display:block}.carousel-inner>.active{left:0}.carousel-inner>.next,.carousel-inner>.prev{position:absolute;top:0;width:100%}.carousel-inner>.next{left:100%}.carousel-inner>.prev{left:-100%}.carousel-inner>.next.left,.carousel-inner>.prev.right{left:0}.carousel-inner>.active.left{left:-100%}.carousel-inner>.active.right{left:100%}.carousel-control{position:absolute;top:40%;left:15px;width:40px;height:40px;margin-top:-20px;font-size:60px;font-weight:100;line-height:30px;color:#fff;text-align:center;background:#222;border:3px solid #fff;-webkit-border-radius:23px;-moz-border-radius:23px;border-radius:23px;opacity:.5;filter:alpha(opacity=50)}.carousel-control.right{right:15px;left:auto}.carousel-control:hover,.carousel-control:focus{color:#fff;text-decoration:none;opacity:.9;filter:alpha(opacity=90)}.carousel-indicators{position:absolute;top:15px;right:15px;z-index:5;margin:0;list-style:none}.carousel-indicators li{display:block;float:left;width:10px;height:10px;margin-left:5px;text-indent:-999px;background-color:#ccc;background-color:rgba(255,255,255,0.25);border-radius:5px}.carousel-indicators .active{background-color:#fff}.carousel-caption{position:absolute;right:0;bottom:0;left:0;padding:15px;background:#333;background:rgba(0,0,0,0.75)}.carousel-caption h4,.carousel-caption p{line-height:20px;color:#fff}.carousel-caption h4{margin:0 0 5px}.carousel-caption p{margin-bottom:0}.hero-unit{padding:60px;margin-bottom:30px;font-size:18px;font-weight:200;line-height:30px;color:inherit;background-color:#eee;-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px}.hero-unit h1{margin-bottom:0;font-size:60px;line-height:1;letter-spacing:-1px;color:inherit}.hero-unit li{line-height:30px}.pull-right{float:right}.pull-left{float:left}.hide{display:none}.show{display:block}.invisible{visibility:hidden}.affix{position:fixed}
-/*!
- * Bootstrap Responsive v2.3.0
- *
- * Copyright 2012 Twitter, Inc
- * Licensed under the Apache License v2.0
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Designed and built with all the love in the world @twitter by @mdo and @fat.
- */.clearfix{*zoom:1}.clearfix:before,.clearfix:after{display:table;line-height:0;content:""}.clearfix:after{clear:both}.hide-text{font:0/0 a;color:transparent;text-shadow:none;background-color:transparent;border:0}.input-block-level{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}@-ms-viewport{width:device-width}.hidden{display:none;visibility:hidden}.visible-phone{display:none!important}.visible-tablet{display:none!important}.hidden-desktop{display:none!important}.visible-desktop{display:inherit!important}@media(min-width:768px) and (max-width:979px){.hidden-desktop{display:inherit!important}.visible-desktop{display:none!important}.visible-tablet{display:inherit!important}.hidden-tablet{display:none!important}}@media(max-width:767px){.hidden-desktop{display:inherit!important}.visible-desktop{display:none!important}.visible-phone{display:inherit!important}.hidden-phone{display:none!important}}.visible-print{display:none!important}@media print{.visible-print{display:inherit!important}.hidden-print{display:none!important}}@media(min-width:1200px){.row{margin-left:-30px;*zoom:1}.row:before,.row:after{display:table;line-height:0;content:""}.row:after{clear:both}[class*="span"]{float:left;min-height:1px;margin-left:30px}.container,.navbar-static-top .container,.navbar-fixed-top .container,.navbar-fixed-bottom .container{width:1170px}.span12{width:1170px}.span11{width:1070px}.span10{width:970px}.span9{width:870px}.span8{width:770px}.span7{width:670px}.span6{width:570px}.span5{width:470px}.span4{width:370px}.span3{width:270px}.span2{width:170px}.span1{width:70px}.offset12{margin-left:1230px}.offset11{margin-left:1130px}.offset10{margin-left:1030px}.offset9{margin-left:930px}.offset8{margin-left:830px}.offset7{margin-left:730px}.offset6{margin-left:630px}.offset5{margin-left:530px}.offset4{margin-left:430px}.offset3{margin-left:330px}.offset2{margin-left:230px}.offset1{margin-left:130px}.row-fluid{width:100%;*zoom:1}.row-fluid:before,.row-fluid:after{display:table;line-height:0;content:""}.row-fluid:after{clear:both}.row-fluid [class*="span"]{display:block;float:left;width:100%;min-height:30px;margin-left:2.564102564102564%;*margin-left:2.5109110747408616%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.row-fluid [class*="span"]:first-child{margin-left:0}.row-fluid .controls-row [class*="span"]+[class*="span"]{margin-left:2.564102564102564%}.row-fluid .span12{width:100%;*width:99.94680851063829%}.row-fluid .span11{width:91.45299145299145%;*width:91.39979996362975%}.row-fluid .span10{width:82.90598290598291%;*width:82.8527914166212%}.row-fluid .span9{width:74.35897435897436%;*width:74.30578286961266%}.row-fluid .span8{width:65.81196581196582%;*width:65.75877432260411%}.row-fluid .span7{width:57.26495726495726%;*width:57.21176577559556%}.row-fluid .span6{width:48.717948717948715%;*width:48.664757228587014%}.row-fluid .span5{width:40.17094017094017%;*width:40.11774868157847%}.row-fluid .span4{width:31.623931623931625%;*width:31.570740134569924%}.row-fluid .span3{width:23.076923076923077%;*width:23.023731587561375%}.row-fluid .span2{width:14.52991452991453%;*width:14.476723040552828%}.row-fluid .span1{width:5.982905982905983%;*width:5.929714493544281%}.row-fluid .offset12{margin-left:105.12820512820512%;*margin-left:105.02182214948171%}.row-fluid .offset12:first-child{margin-left:102.56410256410257%;*margin-left:102.45771958537915%}.row-fluid .offset11{margin-left:96.58119658119658%;*margin-left:96.47481360247316%}.row-fluid .offset11:first-child{margin-left:94.01709401709402%;*margin-left:93.91071103837061%}.row-fluid .offset10{margin-left:88.03418803418803%;*margin-left:87.92780505546462%}.row-fluid .offset10:first-child{margin-left:85.47008547008548%;*margin-left:85.36370249136206%}.row-fluid .offset9{margin-left:79.48717948717949%;*margin-left:79.38079650845607%}.row-fluid .offset9:first-child{margin-left:76.92307692307693%;*margin-left:76.81669394435352%}.row-fluid .offset8{margin-left:70.94017094017094%;*margin-left:70.83378796144753%}.row-fluid .offset8:first-child{margin-left:68.37606837606839%;*margin-left:68.26968539734497%}.row-fluid .offset7{margin-left:62.393162393162385%;*margin-left:62.28677941443899%}.row-fluid .offset7:first-child{margin-left:59.82905982905982%;*margin-left:59.72267685033642%}.row-fluid .offset6{margin-left:53.84615384615384%;*margin-left:53.739770867430444%}.row-fluid .offset6:first-child{margin-left:51.28205128205128%;*margin-left:51.175668303327875%}.row-fluid .offset5{margin-left:45.299145299145295%;*margin-left:45.1927623204219%}.row-fluid .offset5:first-child{margin-left:42.73504273504273%;*margin-left:42.62865975631933%}.row-fluid .offset4{margin-left:36.75213675213675%;*margin-left:36.645753773413354%}.row-fluid .offset4:first-child{margin-left:34.18803418803419%;*margin-left:34.081651209310785%}.row-fluid .offset3{margin-left:28.205128205128204%;*margin-left:28.0987452264048%}.row-fluid .offset3:first-child{margin-left:25.641025641025642%;*margin-left:25.53464266230224%}.row-fluid .offset2{margin-left:19.65811965811966%;*margin-left:19.551736679396257%}.row-fluid .offset2:first-child{margin-left:17.094017094017094%;*margin-left:16.98763411529369%}.row-fluid .offset1{margin-left:11.11111111111111%;*margin-left:11.004728132387708%}.row-fluid .offset1:first-child{margin-left:8.547008547008547%;*margin-left:8.440625568285142%}input,textarea,.uneditable-input{margin-left:0}.controls-row [class*="span"]+[class*="span"]{margin-left:30px}input.span12,textarea.span12,.uneditable-input.span12{width:1156px}input.span11,textarea.span11,.uneditable-input.span11{width:1056px}input.span10,textarea.span10,.uneditable-input.span10{width:956px}input.span9,textarea.span9,.uneditable-input.span9{width:856px}input.span8,textarea.span8,.uneditable-input.span8{width:756px}input.span7,textarea.span7,.uneditable-input.span7{width:656px}input.span6,textarea.span6,.uneditable-input.span6{width:556px}input.span5,textarea.span5,.uneditable-input.span5{width:456px}input.span4,textarea.span4,.uneditable-input.span4{width:356px}input.span3,textarea.span3,.uneditable-input.span3{width:256px}input.span2,textarea.span2,.uneditable-input.span2{width:156px}input.span1,textarea.span1,.uneditable-input.span1{width:56px}.thumbnails{margin-left:-30px}.thumbnails>li{margin-left:30px}.row-fluid .thumbnails{margin-left:0}}@media(min-width:768px) and (max-width:979px){.row{margin-left:-20px;*zoom:1}.row:before,.row:after{display:table;line-height:0;content:""}.row:after{clear:both}[class*="span"]{float:left;min-height:1px;margin-left:20px}.container,.navbar-static-top .container,.navbar-fixed-top .container,.navbar-fixed-bottom .container{width:724px}.span12{width:724px}.span11{width:662px}.span10{width:600px}.span9{width:538px}.span8{width:476px}.span7{width:414px}.span6{width:352px}.span5{width:290px}.span4{width:228px}.span3{width:166px}.span2{width:104px}.span1{width:42px}.offset12{margin-left:764px}.offset11{margin-left:702px}.offset10{margin-left:640px}.offset9{margin-left:578px}.offset8{margin-left:516px}.offset7{margin-left:454px}.offset6{margin-left:392px}.offset5{margin-left:330px}.offset4{margin-left:268px}.offset3{margin-left:206px}.offset2{margin-left:144px}.offset1{margin-left:82px}.row-fluid{width:100%;*zoom:1}.row-fluid:before,.row-fluid:after{display:table;line-height:0;content:""}.row-fluid:after{clear:both}.row-fluid [class*="span"]{display:block;float:left;width:100%;min-height:30px;margin-left:2.7624309392265194%;*margin-left:2.709239449864817%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.row-fluid [class*="span"]:first-child{margin-left:0}.row-fluid .controls-row [class*="span"]+[class*="span"]{margin-left:2.7624309392265194%}.row-fluid .span12{width:100%;*width:99.94680851063829%}.row-fluid .span11{width:91.43646408839778%;*width:91.38327259903608%}.row-fluid .span10{width:82.87292817679558%;*width:82.81973668743387%}.row-fluid .span9{width:74.30939226519337%;*width:74.25620077583166%}.row-fluid .span8{width:65.74585635359117%;*width:65.69266486422946%}.row-fluid .span7{width:57.18232044198895%;*width:57.12912895262725%}.row-fluid .span6{width:48.61878453038674%;*width:48.56559304102504%}.row-fluid .span5{width:40.05524861878453%;*width:40.00205712942283%}.row-fluid .span4{width:31.491712707182323%;*width:31.43852121782062%}.row-fluid .span3{width:22.92817679558011%;*width:22.87498530621841%}.row-fluid .span2{width:14.3646408839779%;*width:14.311449394616199%}.row-fluid .span1{width:5.801104972375691%;*width:5.747913483013988%}.row-fluid .offset12{margin-left:105.52486187845304%;*margin-left:105.41847889972962%}.row-fluid .offset12:first-child{margin-left:102.76243093922652%;*margin-left:102.6560479605031%}.row-fluid .offset11{margin-left:96.96132596685082%;*margin-left:96.8549429881274%}.row-fluid .offset11:first-child{margin-left:94.1988950276243%;*margin-left:94.09251204890089%}.row-fluid .offset10{margin-left:88.39779005524862%;*margin-left:88.2914070765252%}.row-fluid .offset10:first-child{margin-left:85.6353591160221%;*margin-left:85.52897613729868%}.row-fluid .offset9{margin-left:79.8342541436464%;*margin-left:79.72787116492299%}.row-fluid .offset9:first-child{margin-left:77.07182320441989%;*margin-left:76.96544022569647%}.row-fluid .offset8{margin-left:71.2707182320442%;*margin-left:71.16433525332079%}.row-fluid .offset8:first-child{margin-left:68.50828729281768%;*margin-left:68.40190431409427%}.row-fluid .offset7{margin-left:62.70718232044199%;*margin-left:62.600799341718584%}.row-fluid .offset7:first-child{margin-left:59.94475138121547%;*margin-left:59.838368402492065%}.row-fluid .offset6{margin-left:54.14364640883978%;*margin-left:54.037263430116376%}.row-fluid .offset6:first-child{margin-left:51.38121546961326%;*margin-left:51.27483249088986%}.row-fluid .offset5{margin-left:45.58011049723757%;*margin-left:45.47372751851417%}.row-fluid .offset5:first-child{margin-left:42.81767955801105%;*margin-left:42.71129657928765%}.row-fluid .offset4{margin-left:37.01657458563536%;*margin-left:36.91019160691196%}.row-fluid .offset4:first-child{margin-left:34.25414364640884%;*margin-left:34.14776066768544%}.row-fluid .offset3{margin-left:28.45303867403315%;*margin-left:28.346655695309746%}.row-fluid .offset3:first-child{margin-left:25.69060773480663%;*margin-left:25.584224756083227%}.row-fluid .offset2{margin-left:19.88950276243094%;*margin-left:19.783119783707537%}.row-fluid .offset2:first-child{margin-left:17.12707182320442%;*margin-left:17.02068884448102%}.row-fluid .offset1{margin-left:11.32596685082873%;*margin-left:11.219583872105325%}.row-fluid .offset1:first-child{margin-left:8.56353591160221%;*margin-left:8.457152932878806%}input,textarea,.uneditable-input{margin-left:0}.controls-row [class*="span"]+[class*="span"]{margin-left:20px}input.span12,textarea.span12,.uneditable-input.span12{width:710px}input.span11,textarea.span11,.uneditable-input.span11{width:648px}input.span10,textarea.span10,.uneditable-input.span10{width:586px}input.span9,textarea.span9,.uneditable-input.span9{width:524px}input.span8,textarea.span8,.uneditable-input.span8{width:462px}input.span7,textarea.span7,.uneditable-input.span7{width:400px}input.span6,textarea.span6,.uneditable-input.span6{width:338px}input.span5,textarea.span5,.uneditable-input.span5{width:276px}input.span4,textarea.span4,.uneditable-input.span4{width:214px}input.span3,textarea.span3,.uneditable-input.span3{width:152px}input.span2,textarea.span2,.uneditable-input.span2{width:90px}input.span1,textarea.span1,.uneditable-input.span1{width:28px}}@media(max-width:767px){body{padding-right:20px;padding-left:20px}.navbar-fixed-top,.navbar-fixed-bottom,.navbar-static-top{margin-right:-20px;margin-left:-20px}.container-fluid{padding:0}.dl-horizontal dt{float:none;width:auto;clear:none;text-align:left}.dl-horizontal dd{margin-left:0}.container{width:auto}.row-fluid{width:100%}.row,.thumbnails{margin-left:0}.thumbnails>li{float:none;margin-left:0}[class*="span"],.uneditable-input[class*="span"],.row-fluid [class*="span"]{display:block;float:none;width:100%;margin-left:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.span12,.row-fluid .span12{width:100%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.row-fluid [class*="offset"]:first-child{margin-left:0}.input-large,.input-xlarge,.input-xxlarge,input[class*="span"],select[class*="span"],textarea[class*="span"],.uneditable-input{display:block;width:100%;min-height:30px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.input-prepend input,.input-append input,.input-prepend input[class*="span"],.input-append input[class*="span"]{display:inline-block;width:auto}.controls-row [class*="span"]+[class*="span"]{margin-left:0}.modal{position:fixed;top:20px;right:20px;left:20px;width:auto;margin:0}.modal.fade{top:-100px}.modal.fade.in{top:20px}}@media(max-width:480px){.nav-collapse{-webkit-transform:translate3d(0,0,0)}.page-header h1 small{display:block;line-height:20px}input[type="checkbox"],input[type="radio"]{border:1px solid #ccc}.form-horizontal .control-label{float:none;width:auto;padding-top:0;text-align:left}.form-horizontal .controls{margin-left:0}.form-horizontal .control-list{padding-top:0}.form-horizontal .form-actions{padding-right:10px;padding-left:10px}.media .pull-left,.media .pull-right{display:block;float:none;margin-bottom:10px}.media-object{margin-right:0;margin-left:0}.modal{top:10px;right:10px;left:10px}.modal-header .close{padding:10px;margin:-10px}.carousel-caption{position:static}}@media(max-width:979px){body{padding-top:0}.navbar-fixed-top,.navbar-fixed-bottom{position:static}.navbar-fixed-top{margin-bottom:20px}.navbar-fixed-bottom{margin-top:20px}.navbar-fixed-top .navbar-inner,.navbar-fixed-bottom .navbar-inner{padding:5px}.navbar .container{width:auto;padding:0}.navbar .brand{padding-right:10px;padding-left:10px;margin:0 0 0 -5px}.nav-collapse{clear:both}.nav-collapse .nav{float:none;margin:0 0 10px}.nav-collapse .nav>li{float:none}.nav-collapse .nav>li>a{margin-bottom:2px}.nav-collapse .nav>.divider-vertical{display:none}.nav-collapse .nav .nav-header{color:#777;text-shadow:none}.nav-collapse .nav>li>a,.nav-collapse .dropdown-menu a{padding:9px 15px;font-weight:bold;color:#777;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px}.nav-collapse .btn{padding:4px 10px 4px;font-weight:normal;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nav-collapse .dropdown-menu li+li a{margin-bottom:2px}.nav-collapse .nav>li>a:hover,.nav-collapse .nav>li>a:focus,.nav-collapse .dropdown-menu a:hover,.nav-collapse .dropdown-menu a:focus{background-color:#f2f2f2}.navbar-inverse .nav-collapse .nav>li>a,.navbar-inverse .nav-collapse .dropdown-menu a{color:#999}.navbar-inverse .nav-collapse .nav>li>a:hover,.navbar-inverse .nav-collapse .nav>li>a:focus,.navbar-inverse .nav-collapse .dropdown-menu a:hover,.navbar-inverse .nav-collapse .dropdown-menu a:focus{background-color:#111}.nav-collapse.in .btn-group{padding:0;margin-top:5px}.nav-collapse .dropdown-menu{position:static;top:auto;left:auto;display:none;float:none;max-width:none;padding:0;margin:0 15px;background-color:transparent;border:0;-webkit-border-radius:0;-moz-border-radius:0;border-radius:0;-webkit-box-shadow:none;-moz-box-shadow:none;box-shadow:none}.nav-collapse .open>.dropdown-menu{display:block}.nav-collapse .dropdown-menu:before,.nav-collapse .dropdown-menu:after{display:none}.nav-collapse .dropdown-menu .divider{display:none}.nav-collapse .nav>li>.dropdown-menu:before,.nav-collapse .nav>li>.dropdown-menu:after{display:none}.nav-collapse .navbar-form,.nav-collapse .navbar-search{float:none;padding:10px 15px;margin:10px 0;border-top:1px solid #f2f2f2;border-bottom:1px solid #f2f2f2;-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 1px 0 rgba(255,255,255,0.1);-moz-box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 1px 0 rgba(255,255,255,0.1);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 1px 0 rgba(255,255,255,0.1)}.navbar-inverse .nav-collapse .navbar-form,.navbar-inverse .nav-collapse .navbar-search{border-top-color:#111;border-bottom-color:#111}.navbar .nav-collapse .nav.pull-right{float:none;margin-left:0}.nav-collapse,.nav-collapse.collapse{height:0;overflow:hidden}.navbar .btn-navbar{display:block}.navbar-static .navbar-inner{padding-right:10px;padding-left:10px}}@media(min-width:980px){.nav-collapse.collapse{height:auto!important;overflow:visible!important}}
-
-
-/* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
-/* https://github.com/lucianmarin/peculiar */
-.ico {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-}
-.ico-feed-dot {
-  background-color: #000;
-  width: 4px;
-  height: 4px;
-  border-radius: 3px;
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-}
-.ico-feed-circle-1 {
-  border: #000 2px solid;
-  border-bottom-color: transparent;
-  border-left-color: transparent;
-  width: 6px;
-  height: 6px;
-  border-radius: 6px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-.ico-feed-circle-2 {
-  border: #000 2px solid;
-  border-bottom-color: transparent;
-  border-left-color: transparent;
-  width: 9px;
-  height: 9px;
-  border-radius: 4px 7px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-.ico-circle {
-  background-color: #000;
-  border-radius:8px;
-  width: 16px;
-  height: 16px;
-  position: absolute;
-  top:0;
-  left:0;
-}
-.ico-line-h {
-  background-color: #fff;
-  width: 8px;
-  height: 2px;
-  border-radius: 1px;
-  position: absolute;
-  top:7px;
-  left: 4px;
-}
-.ico-line-v {
-  background-color: #fff;
-  width: 2px;
-  height: 8px;
-  border-radius: 1px;
-  position: absolute;
-  top:4px;
-  left: 7px;
-}
-.ico-triangle-up {
-    border-color: transparent transparent #000000;
-    border-image: none;
-    border-style: solid;
-    border-width: 8px;
-    bottom: 7px;
-    height: 0;
-    left: 0;
-    position: absolute;
-    width: 0;
-}
-.ico-square {
-    background-color: #000000;
-    border-bottom-left-radius: 1px;
-    border-bottom-right-radius: 1px;
-    bottom: 1px;
-    height: 10px;
-    left: 3px;
-    position: absolute;
-    width: 10px;
-}
-.ico-home-line {
-    background-color: #000000;
-    border-radius: 1px 1px 1px 1px;
-    height: 5px;
-    left: 3px;
-    position: absolute;
-    top: 2px;
-    width: 2px;
-}
-
-html, body, .full-height {
-  height: 100%;
-  overflow: auto;
-}
-
-li.feed {
-  border-bottom: 1px dotted #999;
-  font-weight: normal;
-}
-
-li.feed.has-unread {
-  font-weight: bold;
-}
-
-li.folder {
-  font-weight: bold;
-}
-
-li.item-list {
-  border-bottom: 1px dotted #999;
-}
-
-h5.folder {
-  background-color: #ddd;
-  border-radius: 4px;
-  padding: 2px;
-  margin: 2px 0;
-}
-
-.mark-as {
-  float: right;
-}
-
-.content {
-  clear: both;
-}
-
-.current {
-  border-color: red !important;
-}
-
-dl {
-  margin-bottom: 0px !important;
-}
-
-.item-info {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.read {
-  opacity: 0.4;
-}
-
-
-#main-container {
-  float: right;
-}
-
-#minor-container {
-  margin-left: 0;
-}
-
-.clear {
-  clear: both;
-}
-
-#menu-toggle {
-  color: #000 !important;
-}
-
-#status {
-  font-size: 85%;
-}
-
-.item-toggle-plus {
-  float: right;
-}
-
-.item-title {
-  margin-bottom: 10px;
-}
-
-.item-info-end {
-  float: right;
-}
-
-.item-description {
-  text-decoration: none;
-}
-
-.folder-toggle:focus, .folder-toggle:hover, .folder-toggle:active, .item-toggle:focus, .item-toggle:hover, .item-toggle:active {
-  text-decoration: none;
-}
-
-.folder-toggle-open, .item-toggle-open, .item-close {
-  display: none;
-}
-
-.folder-toggle-close, .item-toggle-close, .item-open {
-  display: block;
-}
-
-.label-expanded {
-  padding: 6px;
-}
-
-/* Large desktop */
-@media (min-width: 1200px) {
-
-}
-
-/* Portrait tablet to landscape and desktop */
-@media (min-width: 768px) and (max-width: 979px) {
-
-}
-
-/* Landscape phone to portrait tablet */
-@media (max-width: 767px) {
-    html, body, .full-height {
-        height: auto;
-    }
-}
-
-/* Landscape phones and down */
-@media (max-width: 480px) {
-  ul.inline {
-    width: 100%;
-  }
-
-  ul.inline > li {
-    width: 90%;
-    padding-bottom: 10px;
-    margin: auto;
-  }
-
-  .btn-group {
-    width: 100%;
-  }
-
-  .btn-group > a {
-    width: 100%;
-    margin-left: -1px;
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .btn-group > .btn {
-    width: 100%;
-    float: left;
-    border-radius: 4px;
-  }
-
-  .item-title {
-    no-wrap: normal;
-  }
-
-  .paging-by-page {
-    width: 100%;
-  }
-
-  .paging-by-page > a {
-    width: 100%;
-    margin-left: -1px;
-    padding-left: 0;
-    padding-right: 0;
-    border-radius: 4px;
-  }
-
-  .paging-by-page > input {
-    width: 100%;
-    float: left;
-    margin-left: -1px;
-    padding-left: 0;
-    padding-right: 0;
-    border-radius: 4px;
-  }
-
-  .paging-by-page > .btn {
-    width: 100%;
-    float: left;
-    border-radius: 4px !important;
-  }
-}
-</style>
-<?php } ?>
-<?php if (is_file('inc/user.css')) { ?>
-<link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
-<?php } ?>
-<meta name="viewport" content="width=device-width">
-<?php
-    }
-
-    public static function installTpl()
+    public static function add_feedTpl()
     {
         extract(FeedPage::$var);
 ?>
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
-        <div class="span4 offset4">
-          <div id="install">
-            <form class="form-horizontal" method="post" action="" name="installform">
-              <fieldset>
-                <legend>KrISS feed installation</legend>
-                <div class="control-group">
-                  <label class="control-label" for="setlogin">Login</label>
-                  <div class="controls">
-                    <input type="text" id="setlogin" name="setlogin" placeholder="Login">
-                  </div>
+        <div id="edit-all" class="span6 offset3">
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
+          <form class="form-horizontal" action="?add" method="POST">
+            <fieldset>
+              <legend><?php echo Intl::msg( 'Add a new feed' );?></legend>
+              <div class="control-group">
+                <label class="control-label" ><?php echo Intl::msg( 'Feed URL' );?></label>
+                <div class="controls">
+                  <input type="text" id="newfeed" name="newfeed" value="<?php echo $newfeed;?>">
                 </div>
-                <div class="control-group">
-                  <label class="control-label" for="setlogin">Password</label>
-                  <div class="controls">
-                    <input type="password" id="setpassword" name="setpassword" placeholder="Password">
-                  </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend><?php echo Intl::msg( 'Add selected folders to feed' );?></legend>
+              <div class="control-group">
+                <div class="controls">
+                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
+                  <label for="add-folder-<?php echo $key1;?>">
+                    <input type="checkbox" id="add-folder-<?php echo $key1;?>" name="folders[]" value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit feed' );?></a>)
+                  </label>
+                  <?php } ?>
                 </div>
-                <div class="control-group">
-                  <div class="controls">
-                    <button type="submit" class="btn">Submit</button>
-                  </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label"><?php echo Intl::msg( 'Add a new folder' );?></label>
+                <div class="controls">
+                  <input type="text" name="newfolder" value="">
                 </div>
-                <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-              </fieldset>
-            </form>
-            <?php FeedPage::statusTpl(); ?>
-          </div>
+              </div>
+              <div class="control-group">
+                <div class="controls">
+                  <input class="btn" type="submit" name="add" value="<?php echo Intl::msg( 'Add new feed' );?>"/>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend><?php echo Intl::msg( 'Use bookmarklet to add a new feed' );?></legend>
+              <div id="add-feed-bookmarklet" class="text-center">
+                <a onclick="alert('<?php echo Intl::msg( 'Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...' );?>');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $base;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
+              </div>
+            </fieldset>
+            <input type="hidden" name="token" value="<?php echo $token;?>">
+            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
+          </form>
         </div>
-        <script>
-          document.installform.setlogin.focus();
-        </script>
       </div>
     </div>
   </body>
@@ -942,202 +2021,61 @@ dl {
 <?php
     }
 
-    public static function loginTpl()
+
+    public static function change_passwordTpl()
     {
         extract(FeedPage::$var);
 ?>
 <!DOCTYPE html>
 <html>
-  <head>
-    <?php FeedPage::includesTpl(); ?>
-  </head>
-  <body onload="document.loginform.login.focus();">
+<?php FeedPage::includesTpl(); ?>
+  <body>
     <div class="container-fluid">
       <div class="row-fluid">
-        <div class="span4 offset4">
-          <div id="login">
-            <form class="form-horizontal" method="post" action="?login" name="loginform">
-              <fieldset>
-                <legend>Welcome to KrISS feed</legend>
-                <div class="control-group">
-                  <label class="control-label" for="login">Login</label>
-                  <div class="controls">
-                    <input type="text" id="login" name="login" placeholder="Login" tabindex="1">
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="password">Password</label>
-                  <div class="controls">
-                    <input type="password" id="password" name="password" placeholder="Password" tabindex="2">
-                  </div>
-                </div>
-                <div class="control-group">
-                  <div class="controls">
-                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;Stay signed in (Do not check on public computers)</label>
-                  </div>
-                </div>
-                
-                <div class="control-group">
-                  <div class="controls">
-                    <button type="submit" class="btn" tabindex="4">Sign in</button>
-                  </div>
-                </div>
-              </fieldset>
+        <div class="span6 offset3">
+          <div id="config">
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
+            <div id="section">
+              <form class="form-horizontal" method="post" action="">
+                <input type="hidden" name="token" value="<?php echo $token;?>">
+                <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
+                <fieldset>
+                  <legend><?php echo Intl::msg( 'Change your password' );?></legend>
 
-              <input type="hidden" name="returnurl" value="<?php echo htmlspecialchars($referer);?>">
-              <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-            </form>
-            <?php FeedPage::statusTpl(); ?>
+                  <div class="control-group">
+                    <label class="control-label" for="oldpassword"><?php echo Intl::msg( 'Old password' );?></label>
+                    <div class="controls">
+                      <input type="password" id="oldpassword" name="oldpassword">
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label" for="newpassword"><?php echo Intl::msg( 'New password' );?></label>
+                    <div class="controls">
+                      <input type="password" id="newpassword" name="newpassword">
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <div class="controls">
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save new password' );?>" />
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>                                           
-  </body>
-</html> 
-<?php
-    }
-
-    public static function navTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<div id="menu" class="navbar">
-  <div class="navbar-inner">
-    <div class="container">
-      
-      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-      <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse">
-        menu
-      </a>
-      <a id="nav-home" class="brand" href="<?php echo MyTool::getUrl(); ?>" title="Home">
-        <span class="ico ico-navbar">
-          <span class="ico-square"></span>
-          <span class="ico-triangle-up"></span>
-          <span class="ico-home-line"></span>
-        </span>
-        &nbsp;
-        &nbsp;
-      </a>
-      <?php if (isset($currentHashView)) { ?>
-      <span class="brand">
-        <?php echo $currentHashView ?>
-      </span>
-      <?php } ?>
-      <div id="menu-collapse" class="nav-collapse collapse">
-        <ul class="nav">
-          <?php
-             switch($template) {
-             case 'index':
-             ?>
-          <?php foreach(array_keys($menu) as $menuOpt) { ?>
-          <?php switch($menuOpt) {
-                case 'menuView': ?>
-          <?php if ($view === 'expanded') { ?>
-          <li><a href="<?php echo $query.'view=list'; ?>" title="Switch to list view (one line per item)">View as list</a></li>
-          <?php } else { ?>
-          <li><a href="<?php echo $query.'view=expanded'; ?>" title="Switch to expanded view">View as expanded</a></li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuListFeeds': ?>
-          <?php if ($listFeeds == 'show') { ?>
-          <li><a href="<?php echo $query.'listFeeds=hide'; ?>" title="Hide the feeds list">Hide feeds list</a></li>
-          <?php } else { ?>
-          <li><a href="<?php echo $query.'listFeeds=show'; ?>" title="Show the feeds list">Show feeds list</a></li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuFilter': ?>
-          <?php if ($filter === 'unread') { ?>
-          <li><a href="<?php echo $query.'filter=all'; ?>" title="Filter: show all (read and unread) items">Show all items</a></li>
-          <?php } else { ?>
-          <li><a href="<?php echo $query.'filter=unread'; ?>" title="Filter: show unread items">Show unread items</a></li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuOrder': ?>
-          <?php if ($order === 'newerFirst') { ?>
-          <li><a href="<?php echo $query.'order=olderFirst'; ?>" title="Show older first items">Show older first</a></li>
-          <?php } else { ?>
-          <li><a href="<?php echo $query.'order=newerFirst'; ?>" title="Show newer first items">Show newer first</a></li>
-          <?php } ?>
-          <?php break; ?>
-          <?php case 'menuUpdate': ?>
-          <li>
-            <a href="<?php echo $query.'update='.$currentHash; ?>" class="admin" title="Update <?php echo $currentHashType; ?> manually">Update <?php echo $currentHashType; ?></a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuRead': ?>
-          <li>
-            <a href="<?php echo $query.'read='.$currentHash; ?>" class="admin" title="Mark <?php echo $currentHashType; ?> as read">Mark <?php echo $currentHashType; ?> as read</a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuUnread': ?>
-          <li>
-            <a href="<?php echo $query.'unread='.$currentHash; ?>" class="admin" title="Mark <?php echo $currentHashType; ?> as unread">Mark <?php echo $currentHashType; ?> as unread</a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuEdit': ?>
-          <li>
-            <a href="<?php echo $query.'edit='.$currentHash; ?>" class="admin" title="Edit <?php echo $currentHashType; ?>">Edit <?php echo $currentHashType; ?></a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuAdd': ?>
-          <li>
-            <a href="<?php echo $query.'add'; ?>" class="admin" title="Add a new feed">Add a new feed</a>
-          </li>
-          <?php break; ?>
-          <?php case 'menuHelp': ?>
-          <li>
-            <a href="<?php echo $query.'help'; ?>" title="Help : how to use KrISS feed">Help</a>
-          </li>
-          <?php break; ?>
-          <?php default: ?>
-          <?php break; ?>
-          <?php } ?>
-          <?php } ?>
-          <?php if (Session::isLogged()) { ?>
-          <li><a href="?config" class="admin" title="Configuration">Configuration</a></li>
-          <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
-          <?php } else { ?>
-          <li><a href="?login">Login</a></li>
-          <?php } ?>
-          <?php
-             break;
-             case 'config':
-             ?>
-          <li><a href="?import" class="admin" title="Import OPML file">Import</a></li>
-          <li><a href="?export" class="admin" title="Export OPML file">Export</a></li>
-          <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
-          <?php
-             break;
-             default:
-             ?>
-          <?php if (Session::isLogged()) { ?>
-          <li><a href="?config" class="admin text-error" title="Configuration">Configuration</a></li>
-          <li><a href="?logout" class="admin" title="Logout">Logout</a></li>
-          <?php } else { ?>
-          <li><a href="?login">Login</a></li>
-          <?php } ?>
-          <?php
-             break;
-             }
-             ?>
-        </ul>
-      </div>
     </div>
-  </div>
-</div>
+  </body>
+</html>
+
 <?php
     }
 
-    public static function statusTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<div id="status" class="text-center">
-  <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version; ?></a>
-  <span class="hidden-phone"> - A simple and smart (or stupid) feed reader</span>. By <a href="http://tontof.net">Tontof</a>
-</div>
-<?php
-    }
 
     public static function configTpl()
     {
@@ -1145,287 +2083,379 @@ dl {
 ?>
 <!DOCTYPE html>
 <html>
-  <head><?php FeedPage::includesTpl(); ?></head>
+<?php FeedPage::includesTpl(); ?>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span6 offset3">
           <div id="config">
-            <?php FeedPage::navTpl(); ?>
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
             <div id="section">
               <form class="form-horizontal" method="post" action="">
-                <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-                <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
+                <input type="hidden" name="token" value="<?php echo $token;?>"/>
+                <input type="hidden" name="returnurl" value="<?php echo $referer;?>"/>
                 <fieldset>
-                  <legend>KrISS feed Reader information</legend>
+                  <legend><?php echo Intl::msg( 'KrISS feed main information' );?></legend>
 
                   <div class="control-group">
-                    <label class="control-label" for="title">Feed reader title</label>
+                    <label class="control-label" for="title"><?php echo Intl::msg( 'KrISS feed title' );?></label>
                     <div class="controls">
-                      <input type="text" id="title" name="title" value="<?php echo $kfctitle; ?>">
+                      <input type="text" id="title" name="title" value="<?php echo $kfctitle;?>">
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Public/private reader</label>
+                    <label class="control-label"><?php echo Intl::msg( 'KrISS feed visibility' );?></label>
                     <div class="controls">
                       <label for="publicReader">
-                        <input type="radio" id="publicReader" name="public" value="1" <?php echo ($kfcpublic? 'checked="checked"' : ''); ?>/>
-                        Public kriss feed
+                        <input type="radio" id="publicReader" name="visibility" value="public" <?php if( $kfcvisibility==='public' ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Public KrISS feed' );?>
                       </label>
+                      <span class="help-block">
+                        <?php echo Intl::msg( 'No restriction. Anyone can modify configuration, mark as read items, update feeds...' );?>
+                      </span>
+                      <label for="protectedReader">
+                        <input type="radio" id="protectedReader" name="visibility" value="protected" <?php if( $kfcvisibility==='protected' ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Protected KrISS feed' );?>
+                      </label>
+                      <span class="help-block">
+                        <?php echo Intl::msg( 'Anyone can access feeds and items but only you can modify configuration, mark as read items, update feeds...' );?>
+                      </span>
                       <label for="privateReader">
-                        <input type="radio" id="privateReader" name="public" value="0" <?php echo (!$kfcpublic? 'checked="checked"' : ''); ?>/>
-                        Private kriss feed
+                        <input type="radio" id="privateReader" name="visibility" value="private" <?php if( $kfcvisibility==='private' ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Private KrISS feed' );?>
                       </label>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label class="control-label" for="shaarli">Shaarli url</label>
-                    <div class="controls">
-                      <input type="text" id="shaarli" name="shaarli" value="<?php echo $kfcshaarli; ?>">
-                      <span class="help-block">options :<br>
-                        - ${url}: link of item<br>
-                        - ${title}: title of item<br>
-                        - ${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code><br>
-                        - ${sel}: <strong>Only available</strong> with javascript: <code>« selected text »</code><br>
-                        - example with shaarli : <code>http://your-shaarli/?post=${url}&title=${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>
+                      <span class="help-block">
+                        <?php echo Intl::msg( 'Only you can access feeds and items and only you can modify configuration, mark as read items, update feeds...' );?>
                       </span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label" for="redirector">Feed reader redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)</label>
+                    <label class="control-label" for="shaarli"><?php echo Intl::msg( 'Shaarli URL' );?></label>
                     <div class="controls">
-                      <input type="text" id="redirector" name="redirector" value="<?php echo $kfcredirector; ?>">
-                      <span class="help-block">(e.g. http://anonym.to/? will mask the HTTP_REFERER)</span>
+                      <input type="text" id="shaarli" name="shaarli" value="<?php echo $kfcshaarli;?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Options:' );?><br>
+                        - <?php echo Intl::msg( '${url}: item link' );?><br>
+                        - <?php echo Intl::msg( '${title}: item title' );?><br>
+                        - <?php echo Intl::msg( '${via}: if domain of &lt;link&gt; and &lt;guid&gt; are different ${via} is equals to: <code>via &lt;guid&gt;</code>' );?><br>
+                        - <?php echo Intl::msg( '${sel}: <strong>Only available</strong> with javascript: <code>selected text</code>' );?><br>
+                        - <?php echo Intl::msg( 'example with shaarli:' );?> <code>http://your-shaarli/?post=${url}&title=${title}&description=${sel}%0A%0A${via}&source=bookmarklet</code>
+                      </span>
                     </div>
                   </div>
+
+                  <div class="control-group">
+                    <label class="control-label" for="redirector"><?php echo Intl::msg( 'KrISS feed redirector (only for links, media are not considered, <strong>item content is anonymize only with javascript</strong>)' );?></label>
+                    <div class="controls">
+                      <input type="text" id="redirector" name="redirector" value="<?php echo $kfcredirector;?>">
+                      <span class="help-block"><?php echo Intl::msg( '<strong>http://anonym.to/?</strong> will mask the HTTP_REFERER, you can also use <strong>noreferrer</strong> to use HTML5 property' );?></span>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label" for="disablesessionprotection">Session protection</label>
+                    <div class="controls">
+                      <label><input type="checkbox" id="disablesessionprotection" name="disableSessionProtection" <?php if( $kfcdisablesessionprotection ){ ?>checked="checked"<?php } ?>><?php echo Intl::msg( 'Disable session cookie hijacking protection' );?></label>
+                      <span class="help-block"><?php echo Intl::msg( 'Check this if you get disconnected often or if your IP address changes often.' );?></span>
+                    </div>
+                  </div>
+
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
                     </div>
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>KrISS feed reader preferences</legend>
+                  <legend><?php echo Intl::msg( 'KrISS feed preferences' );?></legend>
 
                   <div class="control-group">
-                    <label class="control-label" for="maxItems">Maximum number of items by feed</label>
+                    <label class="control-label" for="maxItems"><?php echo Intl::msg( 'Maximum number of items by feed' );?></label>
                     <div class="controls">
-                      <input type="text" maxlength="3" id="maxItems" name="maxItems" value="<?php echo $kfcmaxitems; ?>">
-                      <span class="help-block">Need update to be taken into consideration</span>
+                      <input type="text" maxlength="3" id="maxItems" name="maxItems" value="<?php echo $kfcmaxitems;?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Need update to be taken into consideration' );?></span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label" for="maxUpdate">Maximum delay between feed update (in minutes)</label>
+                    <label class="control-label" for="maxUpdate"><?php echo Intl::msg( 'Maximum delay between feed update (in minutes)' );?></label>
                     <div class="controls">
-                      <input type="text" maxlength="3" id="maxUpdate" name="maxUpdate" value="<?php echo $kfcmaxupdate; ?>">
+                      <input type="number" id="maxUpdate" name="maxUpdate" value="<?php echo $kfcmaxupdate;?>">
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto read next item option</label>
+                    <label class="control-label"><?php echo Intl::msg( 'Auto read next item option' );?></label>
                     <div class="controls">
                       <label for="donotautoreaditem">
-                        <input type="radio" id="donotautoreaditem" name="autoreadItem" value="0" <?php echo (!$kfcautoreaditem ? 'checked="checked"' : ''); ?>/>
-                        Do not mark as read when next item
+                        <input type="radio" id="donotautoreaditem" name="autoreadItem" value="0" <?php if( !$kfcautoreaditem ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not mark as read when next item' );?>
                       </label>
                       <label for="autoread">
-                        <input type="radio" id="autoread" name="autoreadItem" value="1" <?php echo ($kfcautoreaditem ? 'checked="checked"' : ''); ?>/>
-                        Auto mark current as read when next item
+                        <input type="radio" id="autoread" name="autoreadItem" value="1" <?php if( $kfcautoreaditem ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Auto mark current as read when next item' );?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto read next page option</label>
+                    <label class="control-label"><?php echo Intl::msg( 'Auto read next page option' );?></label>
                     <div class="controls">
                       <label for="donotautoreadpage">
-                        <input type="radio" id="donotautoreadpage" name="autoreadPage" value="0" <?php echo (!$kfcautoreadpage ? 'checked="checked"' : ''); ?>/>
-                        Do not mark as read when next page
+                        <input type="radio" id="donotautoreadpage" name="autoreadPage" value="0" <?php if( !$kfcautoreadpage ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not mark as read when next page' );?>
                       </label>
                       <label for="autoreadpage">
-                        <input type="radio" id="autoreadpage" name="autoreadPage" value="1" <?php echo ($kfcautoreadpage ? 'checked="checked"' : ''); ?>/>
-                        Auto mark current as read when next page
+                        <input type="radio" id="autoreadpage" name="autoreadPage" value="1" <?php if( $kfcautoreadpage ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Auto mark current as read when next page' );?>
                       </label>
-                      <span class="help-block"><strong>Not implemented yet</strong></span>
+                      <span class="help-block"><strong><?php echo Intl::msg( 'Not implemented yet' );?></strong></span>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto hide option</label>
+                    <label class="control-label"><?php echo Intl::msg( 'Auto hide option' );?></label>
                     <div class="controls">
                       <label for="donotautohide">
-                        <input type="radio" id="donotautohide" name="autohide" value="0" <?php echo (!$kfcautohide ? 'checked="checked"' : ''); ?>/>
-                        Always show feed in feeds list
+                        <input type="radio" id="donotautohide" name="autohide" value="0" <?php if( !$kfcautohide ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Always show feed in feeds list' );?>
                       </label>
                       <label for="autohide">
-                        <input type="radio" id="autohide" name="autohide" value="1" <?php echo ($kfcautohide ? 'checked="checked"' : ''); ?>/>
-                        Automatically hide feed when 0 unread item
+                        <input type="radio" id="autohide" name="autohide" value="1" <?php if( $kfcautohide ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Automatically hide feed when 0 unread item' );?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto focus option</label>
+                    <label class="control-label"><?php echo Intl::msg( 'Auto focus option' );?></label>
                     <div class="controls">
                       <label for="donotautofocus">
-                        <input type="radio" id="donotautofocus" name="autofocus" value="0" <?php echo (!$kfcautofocus ? 'checked="checked"' : ''); ?>/>
-                        Do not automatically jump to current item when it changes
+                        <input type="radio" id="donotautofocus" name="autofocus" value="0" <?php if( !$kfcautofocus ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not automatically jump to current item when it changes' );?>
                       </label>
                       <label for="autofocus">
-                        <input type="radio" id="autofocus" name="autofocus" value="1" <?php echo ($kfcautofocus ? 'checked="checked"' : ''); ?>/>
-                        Automatically jump to the current item position
+                        <input type="radio" id="autofocus" name="autofocus" value="1" <?php if( $kfcautofocus ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Automatically jump to the current item position' );?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
-                    <label class="control-label">Auto update with javascript</label>
+                    <label class="control-label"><?php echo Intl::msg( 'Add favicon option' );?></label>
+                    <div class="controls">
+                      <label for="donotaddfavicon">
+                        <input type="radio" id="donotaddfavicon" name="addFavicon" value="0" <?php if( !$kfcaddfavicon ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not add favicon next to feed on list of feeds/items' );?>
+                      </label>
+                      <label for="addfavicon">
+                        <input type="radio" id="addfavicon" name="addFavicon" value="1" <?php if( $kfcaddfavicon ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Add favicon next to feed on list of feeds/items' );?><br><strong><?php echo Intl::msg( 'Warning: It depends on http://getfavicon.appspot.com/' );?><?php if( in_array('curl', get_loaded_extensions()) ){ ?><?php echo Intl::msg( 'but it will cache favicon on your server' );?><?php } ?></strong>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label"><?php echo Intl::msg( 'Preload option' );?></label>
+                    <div class="controls">
+                      <label for="donotpreload">
+                        <input type="radio" id="donotpreload" name="preload" value="0" <?php if( !$kfcpreload ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not preload items.' );?>
+                      </label>
+                      <label for="preload">
+                        <input type="radio" id="preload" name="preload" value="1" <?php if( $kfcpreload ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Preload current page items in background. This greatly enhance speed sensation when opening a new item. Note: It uses your bandwith more than needed if you do not read all the page items.' );?>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label">Auto target="_blank"</label>
+                    <div class="controls">
+                      <label for="donotblank">
+                        <input type="radio" id="donotblank" name="blank" value="0" <?php if( !$kfcblank ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not open link in new tab' );?>
+                      </label>
+                      <label for="doblank">
+                        <input type="radio" id="doblank" name="blank" value="1" <?php if( $kfcblank ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Automatically open link in new tab' );?>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-group">
+                    <label class="control-label"><?php echo Intl::msg( 'Auto update with javascript' );?></label>
                     <div class="controls">
                       <label for="donotautoupdate">
-                        <input type="radio" id="donotautoupdate" name="autoUpdate" value="0" <?php echo (!$kfcautoupdate ? 'checked="checked"' : ''); ?>/>
-                        Do not auto update with javascript
+                        <input type="radio" id="donotautoupdate" name="autoUpdate" value="0" <?php if( !$kfcautoupdate ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not auto update with javascript' );?>
                       </label>
                       <label for="autoupdate">
-                        <input type="radio" id="autoupdate" name="autoUpdate" value="1" <?php echo ($kfcautoupdate ? 'checked="checked"' : ''); ?>/>
-                        Auto update with javascript
+                        <input type="radio" id="autoupdate" name="autoUpdate" value="1" <?php if( $kfcautoupdate ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Auto update with javascript' );?>
                       </label>
                     </div>
                   </div>
 
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
+                    </div>
+                  </div>
+                </fieldset>
+                <?php $zero=FeedPage::$var['zero']=0;?>
+                <fieldset>
+                  <legend><?php echo Intl::msg( 'KrISS feed menu preferences' );?></legend>
+                  <?php echo Intl::msg( 'You can order or remove elements in the menu. Set a position or leave empty if you do not want the element to appear in the menu.' );?>
+                  <div class="control-group">
+                    <label class="control-label" for="menuView"><?php echo Intl::msg( 'View' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuView" name="menuView" value="<?php if( empty($kfcmenu['menuView']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuView"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'View as list' );?>/<?php echo Intl::msg( 'View as expanded' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuListFeeds"><?php echo Intl::msg( 'Feeds' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuListFeeds" name="menuListFeeds" value="<?php if( empty($kfcmenu['menuListFeeds']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuListFeeds"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Hide feeds list' );?>/<?php echo Intl::msg( 'Show feeds list' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuFilter"><?php echo Intl::msg( 'Filter' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuFilter" name="menuFilter" value="<?php if( empty($kfcmenu['menuFilter']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuFilter"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Show all items' );?>/<?php echo Intl::msg( 'Show unread items' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuOrder"><?php echo Intl::msg( 'Order' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuOrder" name="menuOrder" value="<?php if( empty($kfcmenu['menuOrder']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuOrder"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Show older first' );?>/<?php echo Intl::msg( 'Show newer first' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuUpdate"><?php echo Intl::msg( 'Update' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuUpdate" name="menuUpdate" value="<?php if( empty($kfcmenu['menuUpdate']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuUpdate"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Update all' );?>/<?php echo Intl::msg( 'Update folder' );?>/<?php echo Intl::msg( 'Update feed' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuRead"><?php echo Intl::msg( 'Mark as read' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuRead" name="menuRead" value="<?php if( empty($kfcmenu['menuRead']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuRead"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Mark all as read' );?>/<?php echo Intl::msg( 'Mark folder as read' );?>/<?php echo Intl::msg( 'Mark feed as read' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuUnread"><?php echo Intl::msg( 'Mark as unread' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuUnread" name="menuUnread" value="<?php if( empty($kfcmenu['menuUnread']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuUnread"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Mark all as unread' );?>/<?php echo Intl::msg( 'Mark folder as unread' );?>/<?php echo Intl::msg( 'Mark feed as unread' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuEdit"><?php echo Intl::msg( 'Edit' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuEdit" name="menuEdit" value="<?php if( empty($kfcmenu['menuEdit']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuEdit"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Edit all' );?>/<?php echo Intl::msg( 'Edit folder' );?>/<?php echo Intl::msg( 'Edit feed' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuAdd"><?php echo Intl::msg( 'Add a new feed' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuAdd" name="menuAdd" value="<?php if( empty($kfcmenu['menuAdd']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuAdd"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Add a new feed' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuHelp"><?php echo Intl::msg( 'Help' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuHelp" name="menuHelp" value="<?php if( empty($kfcmenu['menuHelp']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuHelp"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Help' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="menuStars"><?php echo Intl::msg( 'Starred items' );?></label>
+                    <div class="controls">
+                      <input type="text" id="menuStars" name="menuStars" value="<?php if( empty($kfcmenu['menuStars']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcmenu["menuStars"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'Starred items' );?></span>
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <div class="controls">
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
                     </div>
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>KrISS feed menu preferences</legend>
-                  You can order or remove elements in the menu. Set a position or leave empty if you don't want the element to appear in the menu.
+                  <legend><?php echo Intl::msg( 'KrISS feed paging menu preferences' );?></legend>
                   <div class="control-group">
-                    <label class="control-label" for="menuView">View</label>
+                    <label class="control-label" for="pagingItem"><?php echo Intl::msg( 'Item' );?></label>
                     <div class="controls">
-                      <input type="text" id="menuView" name="menuView" value="<?php echo empty($kfcmenu['menuView'])?'0':$kfcmenu['menuView']; ?>">
-                      <span class="help-block">If you want to switch between list and expanded view</span>
+                      <input type="text" id="pagingItem" name="pagingItem" value="<?php if( empty($kfcpaging['pagingItem']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingItem"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'If you want to go previous and next item' );?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuListFeeds">List of feeds</label>
+                    <label class="control-label" for="pagingPage"><?php echo Intl::msg( 'Page' );?></label>
                     <div class="controls">
-                      <input type="text" id="menuListFeeds" name="menuListFeeds" value="<?php echo empty($kfcmenu['menuListFeeds'])?'0':$kfcmenu['menuListFeeds']; ?>">
-                      <span class="help-block">If you want to show or hide list of feeds</span>
+                      <input type="text" id="pagingPage" name="pagingPage" value="<?php if( empty($kfcpaging['pagingPage']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingPage"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'If you want to go previous and next page' );?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuFilter">Filter</label>
+                    <label class="control-label" for="pagingByPage"><?php echo Intl::msg( 'Items by page' );?></label>
                     <div class="controls">
-                      <input type="text" id="menuFilter" name="menuFilter" value="<?php echo empty($kfcmenu['menuFilter'])?'0':$kfcmenu['menuFilter']; ?>">
-                      <span class="help-block">If you want to filter all or unread items</span>
+                      <input type="text" id="pagingByPage" name="pagingByPage" value="<?php if( empty($kfcpaging['pagingByPage']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingByPage"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'If you want to modify number of items by page' );?></span>
                     </div>
                   </div>
                   <div class="control-group">
-                    <label class="control-label" for="menuOrder">Order</label>
+                    <label class="control-label" for="pagingMarkAs"><?php echo Intl::msg( 'Mark as read' );?></label>
                     <div class="controls">
-                      <input type="text" id="menuOrder" name="menuOrder" value="<?php echo empty($kfcmenu['menuOrder'])?'0':$kfcmenu['menuOrder']; ?>">
-                      <span class="help-block">If you want to order by newer or older items</span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuUpdate">Update</label>
-                    <div class="controls">
-                      <input type="text" id="menuUpdate" name="menuUpdate" value="<?php echo empty($kfcmenu['menuUpdate'])?'0':$kfcmenu['menuUpdate']; ?>">
-                      <span class="help-block">If you want to update all, folder or a feed</span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuRead">Read</label>
-                    <div class="controls">
-                      <input type="text" id="menuRead" name="menuRead" value="<?php echo empty($kfcmenu['menuRead'])?'0':$kfcmenu['menuRead']; ?>">
-                      <span class="help-block">If you want to mark all, folder or a feed as read</span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuUnread">Unread</label>
-                    <div class="controls">
-                      <input type="text" id="menuUnread" name="menuUnread" value="<?php echo empty($kfcmenu['menuUnread'])?'0':$kfcmenu['menuUnread']; ?>">
-                      <span class="help-block">If you want to mark all, folder or a feed as unread</span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuEdit">Edit</label>
-                    <div class="controls">
-                      <input type="text" id="menuEdit" name="menuEdit" value="<?php echo empty($kfcmenu['menuEdit'])?'0':$kfcmenu['menuEdit']; ?>">
-                      <span class="help-block">If you want to edit all, folder or a feed</span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuAdd">Add</label>
-                    <div class="controls">
-                      <input type="text" id="menuAdd" name="menuAdd" value="<?php echo empty($kfcmenu['menuAdd'])?'0':$kfcmenu['menuAdd']; ?>">
-                      <span class="help-block">If you want to add a feed</span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="menuHelp">Help</label>
-                    <div class="controls">
-                      <input type="text" id="menuHelp" name="menuHelp" value="<?php echo empty($kfcmenu['menuHelp'])?'0':$kfcmenu['menuHelp']; ?>">
-                      <span class="help-block">If you want to add a link to the help</span>
+                      <input type="text" id="pagingMarkAs" name="pagingMarkAs" value="<?php if( empty($kfcpaging['pagingMarkAs']) ){ ?><?php echo $zero;?><?php }else{ ?><?php echo $kfcpaging["pagingMarkAs"];?><?php } ?>">
+                      <span class="help-block"><?php echo Intl::msg( 'If you want to add a mark as read button into paging' );?></span>
                     </div>
                   </div>
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
                     </div>
                   </div>
                 </fieldset>
                 <fieldset>
-                  <legend>KrISS feed paging menu preferences</legend>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingItem">Item</label>
-                    <div class="controls">
-                      <input type="text" id="pagingItem" name="pagingItem" value="<?php echo empty($kfcpaging['pagingItem'])?'0':$kfcpaging['pagingItem']; ?>">
-                      <span class="help-block">If you want to go previous and next item </span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingPage">Page</label>
-                    <div class="controls">
-                      <input type="text" id="pagingPage" name="pagingPage" value="<?php echo empty($kfcpaging['pagingPage'])?'0':$kfcpaging['pagingPage']; ?>">
-                      <span class="help-block">If you want to go previous and next page </span>
-                    </div>
-                  </div>
-                  <div class="control-group">
-                    <label class="control-label" for="pagingByPage">Items by page</label>
-                    <div class="controls">
-                      <input type="text" id="pagingByPage" name="pagingByPage" value="<?php echo empty($kfcpaging['pagingByPage'])?'0':$kfcpaging['pagingByPage']; ?>">
-                      <span class="help-block">If you want to modify number of items by page</span>
-                    </div>
-                  </div>
+                  <legend><?php echo Intl::msg( 'Cron configuration' );?></legend>
+                  <code><?php echo $base;?>?update&cron=<?php echo $kfccron;?></code>
+                  <?php echo Intl::msg( 'You can use <code>&force</code> to force update.' );?><br>
+                  <?php echo Intl::msg( 'To update every hour:' );?><br>
+                  <code>0 * * * * wget "<?php echo $base;?>?update&cron=<?php echo $kfccron;?>" -O /tmp/kf.cron</code><br>
+                  <?php echo Intl::msg( 'If you can not use wget, you may try php command line:' );?><br>
+                  <code>0 * * * * php -f <?php echo $scriptfilename;?> update <?php echo $kfccron;?> > /tmp/kf.cron</code><br>
+                  <?php echo Intl::msg( 'If previous solutions do not work, try to create an update.php file into data directory containing:' );?><br>
+                  <code>
+                  &lt;?php<br>
+                  $url = "<?php echo $base;?>?update&cron=<?php echo $kfccron;?>";<br>
+                  $options = array('http'=>array('method'=>'GET'));<br>
+                  $context = stream_context_create($options);<br>
+                  $data=file_get_contents($url,false,$context);<br>
+                  print($data);
+                  </code><br>
+                  <?php echo Intl::msg( 'Then set up your cron with:' );?><br>
+                  <code>0 * * * * php -f <?php echo dirname( $scriptfilename );?>/data/update.php > /tmp/kf.cron</code><br>
+                  <?php echo Intl::msg( 'Do not forget to check permissions' );?><br>
                   <div class="control-group">
                     <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
-                    </div>
-                  </div>
-                </fieldset>
-                <fieldset>
-                  <legend>Cron configuration</legend>
-                  <code><?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?></code>
-                  You can use <code>&force</code> to force update.<br>
-                  To update every 15 minutes
-                  <code>*/15 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code>
-                  To update every hour
-                  <code>0 * * * * wget "<?php echo MyTool::getUrl().'?update&cron='.$kfccron; ?>" -O /tmp/kf.cron</code>
-                  <div class="control-group">
-                    <div class="controls">
-                      <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                      <input class="btn" type="submit" name="save" value="Save" />
+                      <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                      <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
                     </div>
                   </div>
                 </fieldset>
@@ -1437,168 +2467,51 @@ dl {
     </div>
   </body>
 </html>
+
 <?php
     }
 
-    public static function helpTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head><?php FeedPage::includesTpl(); ?></head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div class="span6 offset3">
-          <div id="config">
-            <?php FeedPage::navTpl(); ?>
-            <div id="section">
-              <h2>Keyboard shortcut</h2>
-              <dl class="dl-horizontal">
-                <dt>'space' or 't'</dt>
-                <dd>When viewing items as list, let you open or close current item ('t'oggle current item)</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'m'</dt>
-                <dd>'M'ark current item as read if unread or unread if read</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'n' or right arrow</dt>
-                <dd>Go to 'n'ext item</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'p' or left arrow</dt>
-                <dd>Go to 'p'revious item</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'shift' + 'n'</dt>
-                <dd>Go to 'n'ext page</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'shift' + 'p'</dt>
-                <dd>Go to 'p'revious page</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'j'</dt>
-                <dd>Go to 'n'ext item and open it (in list view)</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'k'</dt>
-                <dd>Go to 'p'revious item and open it (in list view)</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'o' or 'v'</dt>
-                <dd>'O'pen/'V'iew current item in new tab</dd>
-                <dt>'shift' + 'o' or 'shift' + 'v'</dt>
-                <dd>'O'pen/'V'iew current item in current window</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'s'</dt>
-                <dd>'S'hare current item (go in <a href="?config" title="configuration">configuration</a> to set up you link)</dd>
-              </dl>
-              <dl class="dl-horizontal">
-                <dt>'h'</dt>
-                <dd>Go to 'H'ome page</dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-<?php
-    }
 
-    public static function addFeedTpl()
+    public static function edit_allTpl()
     {
         extract(FeedPage::$var);
 ?>
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div id="edit-all" class="span6 offset3">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" action="?add" method="POST">
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
+          <form class="form-horizontal" method="post" action="">
             <fieldset>
-              <legend>Add a new feed</legend>
-              <div class="control-group">
-                <label class="control-label" > Feed url</label>
-                <div class="controls">
-                  <input type="text" id="newfeed" name="newfeed" value="<?php echo $newfeed; ?>">                  
-                </div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>Add selected folders to feed</legend>
+              <legend><?php echo Intl::msg( 'Reorder folders' );?></legend>
               <div class="control-group">
                 <div class="controls">
-                  <?php foreach ($folders as $hash => $folder) { ?>
-                  <label for="add-folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="folders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
+                  <label for="order-folder-<?php echo $key1;?>">
+                    <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit folder' );?></a>) <br>
+                    <input type="text" id="order-folder-<?php echo $key1;?>" name="order-folder-<?php echo $key1;?>" value="<?php echo $counter1;?>">
                   </label>
                   <?php } ?>
                 </div>
               </div>
-              <div class="control-group">
-                <label class="control-label" >Add to a new folder</label>
-                <div class="controls">
-                  <input type="text" name="newfolder" value="">
-                </div>
-              </div>
-              <div class="control-group">
-                <div class="controls">
-                  <input class="btn" type="submit" name="add" value="Add new feed"/>
-                </div>
-              </div>
             </fieldset>
-            <fieldset>
-              <legend>Use bookmarklet to add a new feed</legend>
-              <div id="add-feed-bookmarklet" class="text-center">
-                <a onclick="alert('Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('<?php echo $kfurl;?>?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>Add KF</b></a>
-              </div>
-            </fieldset>
-            <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-            <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
-          </form>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-<?php
-    }
 
-    public static function editAllTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-    <?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div id="edit-all" class="span6 offset3">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="">
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
+
             <fieldset>
-              <legend>Add selected folders to selected feeds</legend>
+              <legend><?php echo Intl::msg( 'Add selected folders to selected feeds' );?></legend>
               <div class="control-group">
                 <div class="controls">
-                  <?php foreach ($folders as $hash => $folder) { ?>
-                  <label for="add-folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="add-folder-<?php echo $hash; ?>" name="addfolders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
+                  <label for="add-folder-<?php echo $key1;?>">
+                    <input type="checkbox" id="add-folder-<?php echo $key1;?>" name="addfolders[]" value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit folder' );?></a>)
                   </label>
                   <?php } ?>
                 </div>
@@ -1608,234 +2521,349 @@ dl {
               </div>
             </fieldset>
 
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
+
             <fieldset>
-              <legend>Remove selected folders to selected feeds</legend>
+              <legend><?php echo Intl::msg( 'Remove selected folders to selected feeds' );?></legend>
               <div class="control-group">
                 <div class="controls">
-                  <?php foreach ($folders as $hash => $folder) { ?>
-                  <label for="remove-folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="remove-folder-<?php echo $hash; ?>" name="removefolders[]" value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?> (<a href="?edit=<?php echo $hash; ?>">edit</a>)
+                  <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
+                  <label for="remove-folder-<?php echo $key1;?>">
+                    <input type="checkbox" id="remove-folder-<?php echo $key1;?>" name="removefolders[]" value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit folder' );?></a>)
                   </label>
                   <?php } ?>
                 </div>
               </div>
             </fieldset>
 
-            <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
-            <input class="btn" type="submit" name="save" value="Save selected" />
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
 
             <fieldset>
-              <legend>List of feeds</legend>
+              <legend><?php echo Intl::msg( 'List of feeds' );?></legend>
 
-              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = true; }" value="Select all">
-              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = false; }" value="Unselect all">
+              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = true; }" value="<?php echo Intl::msg( 'Select all' );?>">
+              <input class="btn" type="button" onclick="var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = false; }" value="<?php echo Intl::msg( 'Unselect all' );?>">
 
               <ul class="unstyled">
-                <?php foreach ($listFeeds as $feedHash => $feed) { ?>
+                <?php $counter1=-1; if( isset($listFeeds) && is_array($listFeeds) && sizeof($listFeeds) ) foreach( $listFeeds as $key1 => $value1 ){ $counter1++; ?>
                 <li>
-                  <label for="feed-<?php echo $feedHash; ?>">
-                    <input type="checkbox" id="feed-<?php echo $feedHash; ?>" name="feeds[]" value="<?php echo $feedHash; ?>">
-                    <?php echo htmlspecialchars($feed['title']); ?> (<a href="?edit=<?php echo $feedHash; ?>">edit</a>)
+                  <label for="feed-<?php echo $key1;?>">
+                    <input type="checkbox" id="feed-<?php echo $key1;?>" name="feeds[]" value="<?php echo $key1;?>">
+                    <?php echo htmlspecialchars( $value1["title"] );?> (<a href="?edit=<?php echo $key1;?>"><?php echo Intl::msg( 'Edit feed' );?></a>)
                   </label>
                 </li>
                 <?php } ?>
               </ul>
             </fieldset>
 
-            <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
-            <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-            <input class="btn" type="submit" name="cancel" value="Cancel"/>
-            <input class="btn" type="submit" name="delete" value="Delete selected" onclick="return confirm('Do really want to delete all selected ?');"/>
-            <input class="btn" type="submit" name="save" value="Save selected" />
+            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
+            <input type="hidden" name="token" value="<?php echo $token;?>">
+            <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+            <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg( 'Delete selected feeds' );?>" onclick="return confirm('<?php echo Intl::msg( 'Do you really want to delete all selected feeds?' );?>');"/>
+            <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
           </form>
         </div>
       </div>
   </body>
 </html>
+
 <?php
     }
 
-    public static function editFolderTpl()
+
+    public static function edit_feedTpl()
     {
         extract(FeedPage::$var);
 ?>
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
-  </head>
-  <body>
-    <div class="container-fluid">
-      <div class="row-fluid">
-        <div id="edit-folder" class="span4 offset4">
-          <?php FeedPage::navTpl(); ?>
-          <form class="form-horizontal" method="post" action="">
-            <fieldset>
-              <div class="control-group">
-                <label class="control-label" for="foldertitle">Folder title</label>
-                <div class="controls">
-                  <input type="text" id="foldertitle" name="foldertitle" value="<?php echo $foldertitle; ?>">
-                  <span class="help-block">Leave empty to delete</span>
-                </div>
-              </div>
-
-              <div class="control-group">
-                <div class="controls">
-                  <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                  <input class="btn" type="submit" name="save" value="Save" />
-                </div>
-              </div>
-            </fieldset>
-
-            <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
-            <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
-          </form>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
-<?php
-    }
-
-    public static function editFeedTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<!DOCTYPE html>
-<html>
-  <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div id="edit-feed" class="span6 offset3">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
           <form class="form-horizontal" method="post" action="">
             <fieldset>
-              <legend>Feed main information</legend>
+              <legend><?php echo Intl::msg( 'Feed main information' );?></legend>
               <div class="control-group">
-                <label class="control-label" for="title">Feed title</label>
+                <label class="control-label" for="title"><?php echo Intl::msg( 'Feed title' );?></label>
                 <div class="controls">
-                  <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($feed['title']); ?>">
+                  <input type="text" id="title" name="title" value="<?php echo htmlspecialchars( $feed["title"] );?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Feed XML url</label>
+                <label class="control-label"><?php echo Intl::msg( 'Feed XML URL' );?></label>
                 <div class="controls">
-                  <input type="text" readonly="readonly" name="xmlUrl" value="<?php echo htmlspecialchars($feed['xmlUrl']); ?>">
+                  <input type="text" readonly="readonly" name="xmlUrl" value="<?php echo htmlspecialchars( $feed["xmlUrl"] );?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Feed main url</label>
+                <label class="control-label"><?php echo Intl::msg( 'Feed main URL' );?></label>
                 <div class="controls">
-                  <input type="text" readonly="readonly" name="htmlUrl" value="<?php echo htmlspecialchars($feed['htmlUrl']); ?>">
+                  <input type="text" name="htmlUrl" value="<?php echo htmlspecialchars( $feed["htmlUrl"] );?>">
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="description">Feed description</label>
+                <label class="control-label" for="description"><?php echo Intl::msg( 'Feed description' );?></label>
                 <div class="controls">
-                  <input type="text" id="description" name="description" value="<?php echo htmlspecialchars($feed['description']); ?>">
+                  <input type="text" id="description" name="description" value="<?php echo htmlspecialchars( $feed["description"] );?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Feed folders</legend>
-              <?php
-                 foreach ($folders as $hash => $folder) {
-              $checked = '';
-              if (in_array($hash, $feed['foldersHash'])) {
-              $checked = ' checked="checked"';
-              }
-              ?>
+              <legend><?php echo Intl::msg( 'Feed folders' );?></legend>
+              <?php $counter1=-1; if( isset($folders) && is_array($folders) && sizeof($folders) ) foreach( $folders as $key1 => $value1 ){ $counter1++; ?>
               <div class="control-group">
                 <div class="controls">
-                  <label for="folder-<?php echo $hash; ?>">
-                    <input type="checkbox" id="folder-<?php echo $hash; ?>" name="folders[]" <?php echo $checked; ?> value="<?php echo $hash; ?>"> <?php echo htmlspecialchars($folder['title']); ?>
+                  <label for="folder-<?php echo $key1;?>">
+                    <input type="checkbox" id="folder-<?php echo $key1;?>" name="folders[]" <?php if( in_array($key1, $feed["foldersHash"]) ){ ?> checked="checked"<?php } ?> value="<?php echo $key1;?>"> <?php echo htmlspecialchars( $value1["title"] );?>
                   </label>
                 </div>
               </div>
               <?php } ?>
               <div class="control-group">
-                <label class="control-label" for="newfolder">New folder</label>
+                <label class="control-label" for="newfolder"><?php echo Intl::msg( 'New folder' );?></label>
                 <div class="controls">
-                  <input type="text" name="newfolder" value="" placeholder="New folder">
+                  <input type="text" name="newfolder" value="" placeholder="<?php echo Intl::msg( 'New folder' );?>">
                 </div>
               </div>
             </fieldset>
             <fieldset>
-              <legend>Feed preferences</legend>
+              <legend><?php echo Intl::msg( 'Feed preferences' );?></legend>
               <div class="control-group">
-                <label class="control-label" for="timeUpdate">Time update </label>
+                <label class="control-label" for="timeUpdate"><?php echo Intl::msg( 'Time update' );?></label>
                 <div class="controls">
-                  <input type="text" id="timeUpdate" name="timeUpdate" value="<?php echo $feed['timeUpdate']; ?>">
-                  <span class="help-block">'auto', 'max' or a number of minutes less than 'max' define in <a href="?config">config</a></span>
+                  <input type="text" id="timeUpdate" name="timeUpdate" value="<?php echo $feed["timeUpdate"];?>">
+                  <span class="help-block"><?php echo Intl::msg( '"auto", "max" or a number of minutes less than "max" define in <a href="?config">configuration</a>' );?></span>
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label">Last update (<em>read only</em>)</label>
+                <label class="control-label"><?php echo Intl::msg( 'Last update' );?></label>
                 <div class="controls">
-                  <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate; ?>">
+                  <input type="text" readonly="readonly" name="lastUpdate" value="<?php echo $lastUpdate;?>">
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="save" value="Save" />
-                  <input class="btn" type="submit" name="cancel" value="Cancel"/>
-                  <input class="btn" type="submit" name="delete" value="Delete"/>
+                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
+                  <input class="btn" type="submit" name="delete" value="<?php echo Intl::msg( 'Delete feed' );?>"/>
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
                 </div>
               </div>
             </fieldset>
-            <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
-            <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
+            <input type="hidden" name="token" value="<?php echo $token;?>">
           </form><br>
         </div>
       </div>
     </div>
   </body>
 </html>
+
 <?php
     }
 
-    public static function updateTpl()
+
+    public static function edit_folderTpl()
     {
         extract(FeedPage::$var);
 ?>
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-    <div class="container-fluid full-height">
-      <div class="row-fluid full-height">
-        <div class="span12 full-height">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
-          <div class="container-fluid">
-            <div class="row-fluid">
-              <div class="span6 offset3">
-                <ul class="unstyled">
-                  <?php $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')?>
-                </ul>
-                <a class="btn" href="<?php echo htmlspecialchars($referer); ?>">Go back</a>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="edit-folder" class="span4 offset4">
+<?php FeedPage::navTpl(); ?>
+          <form class="form-horizontal" method="post" action="">
+            <fieldset>
+              <div class="control-group">
+                <label class="control-label" for="foldertitle"><?php echo Intl::msg( 'Folder title' );?></label>
+                <div class="controls">
+                  <input type="text" id="foldertitle" name="foldertitle" value="<?php echo $foldertitle;?>">
+                  <span class="help-block"><?php echo Intl::msg( 'Leave empty to delete' );?></span>
+                </div>
               </div>
+
+              <div class="control-group">
+                <div class="controls">
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>"/>
+                  <input class="btn" type="submit" name="save" value="<?php echo Intl::msg( 'Save modifications' );?>" />
+                </div>
+              </div>
+            </fieldset>
+
+            <input type="hidden" name="returnurl" value="<?php echo $referer;?>" />
+            <input type="hidden" name="token" value="<?php echo $token;?>">
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<?php
+    }
+
+
+    public static function helpTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+<?php FeedPage::includesTpl(); ?>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span6 offset3">
+          <div id="config">
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
+            <div id="section">
+              <h2><?php echo Intl::msg( 'Keyboard shortcuts' );?></h2>
+              <fieldset>
+                <legend><?php echo Intl::msg( 'Key legend' );?></legend>
+                <dl class="dl-horizontal">
+                  <dt>&#x23b5;</dt>
+                  <dd><?php echo Intl::msg( 'Space key' );?></dd>
+                  <dt>&#x21e7;</dt>
+                  <dd><?php echo Intl::msg( 'Shift key' );?></dd>
+                  <dt>&#x2192;</dt>
+                  <dd><?php echo Intl::msg( 'Right arrow key' );?></dd>
+                  <dt>&#x2190;</dt>
+                  <dd><?php echo Intl::msg( 'Left arrow key' );?></dd>
+                </dl>
+              </fieldset>
+              <fieldset>
+                <legend><?php echo Intl::msg( 'Items navigation' );?></legend>
+                <dl class="dl-horizontal">
+                  <dt>&#x23b5;, t</dt>
+                  <dd><?php echo Intl::msg( 'Toggle current item (open, close item in list view)' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>m</dt>
+                  <dd><?php echo Intl::msg( 'Mark current item as read if unread or unread if read' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + m</dt>
+                  <dd><?php echo Intl::msg( 'Mark current item as read if unread or unread if read and open current (useful in list view and unread filter)' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x2192;, n</dt>
+                  <dd><?php echo Intl::msg( 'Go to next item' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x2190;, p</dt>
+                  <dd><?php echo Intl::msg( 'Go to previous item' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + n</dt>
+                  <dd><?php echo Intl::msg( 'Go to next page' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + p</dt>
+                  <dd><?php echo Intl::msg( 'Go to previous page' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>j</dt>
+                  <dd><?php echo Intl::msg( 'Go to next item and open it (in list view)' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>k</dt>
+                  <dd><?php echo Intl::msg( 'Go to previous item and open it (in list view)' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>o</dt>
+                  <dd><?php echo Intl::msg( 'Open current item in new tab' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>&#x21e7; + o</dt>
+                  <dd><?php echo Intl::msg( 'Open current item in current window' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>s</dt>
+                  <dd><?php echo Intl::msg( 'Share current item' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>a</dt>
+                  <dd><?php echo Intl::msg( 'Mark all items, all items from current feed or all items from current folder as read' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>*</dt>
+                  <dd><?php echo Intl::msg( 'Star/Unstar current item' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>z</dt>
+                  <dd><?php echo Intl::msg( 'Open all unread items from current page in new tabs and mark items as read' );?></dd>
+                </dl>
+              </fieldset>
+              <fieldset>
+                <legend><?php echo Intl::msg( 'Menu navigation' );?></legend>
+                <dl class="dl-horizontal">
+                  <dt>h</dt>
+                  <dd><?php echo Intl::msg( 'Go to Home page' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>v</dt>
+                  <dd><?php echo Intl::msg( 'Change view as list or expanded' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>f</dt>
+                  <dd><?php echo Intl::msg( 'Show or hide list of feeds/folders' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>e</dt>
+                  <dd><?php echo Intl::msg( 'Edit current selection (all, folder or feed)' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>u</dt>
+                  <dd><?php echo Intl::msg( 'Update current selection (all, folder or feed)' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>r</dt>
+                  <dd><?php echo Intl::msg( 'Reload the page as the F5 key in most of browsers' );?></dd>
+                </dl>
+                <dl class="dl-horizontal">
+                  <dt>?, F1</dt>
+                  <dd><?php echo Intl::msg( 'Go to Help page (this page)' );?></dd>
+                </dl>
+              </fieldset>
+              <h2><?php echo Intl::msg( 'Configuration check' );?></h2>
+              <fieldset>
+                <legend><?php echo Intl::msg( 'PHP configuration' );?></legend>
+                <dl class="dl-horizontal">
+                  <dt>open_ssl</dt>
+                  <dd>
+                    <?php if( extension_loaded('openssl') ){ ?>
+                    <span class="text-success"><?php echo Intl::msg( 'You should be able to load https:// rss links.' );?></span>
+                    <?php }else{ ?>
+                    <span class="text-error"><?php echo Intl::msg( 'You may have problems using https:// rss links.' );?></span>
+                    <?php } ?>
+                  </dd>
+                </dl>
+              </fieldset>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <script type="text/javascript">
-      <?php /* include("inc/script.js"); */ ?>
-    </script>
   </body>
 </html>
+
 <?php
     }
+
 
     public static function importTpl()
     {
@@ -1844,22 +2872,22 @@ dl {
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
     <div class="container-fluid">
       <div class="row-fluid">
         <div class="span4 offset4">
-          <?php FeedPage::statusTpl(); ?>
-          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data">
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
+          <form class="form-horizontal" method="post" action="?import" enctype="multipart/form-data" name="importform">
             <fieldset>
-              <legend>Import Opml file</legend>
-              Import an opml file as exported by Google Reader, Tiny Tiny RSS, RSS lounge...
-              
+              <legend><?php echo Intl::msg( 'Import opml file' );?></legend>
               <div class="control-group">
-                <label class="control-label" for="filetoupload">File (Size max: <?php echo MyTool::humanBytes(MyTool::getMaxFileSize()); ?>)</label>
+                <label class="control-label" for="filetoupload"><?php echo Intl::msg( 'Opml file:' );?></label>
                 <div class="controls">
-                  <input class="btn" type="file" id="filetoupload" name="filetoupload">
+                  <input tabindex="1" class="btn" type="file" id="filetoupload" name="filetoupload">
+                  <span class="help-block"><?php echo Intl::msg( 'Size max:' );?> <?php echo $humanmaxsize;?></span>
                 </div>
               </div>
 
@@ -1867,21 +2895,21 @@ dl {
                 <div class="controls">
                   <label for="overwrite">
                     <input type="checkbox" name="overwrite" id="overwrite">
-                    Overwrite existing feeds
+                    <?php echo Intl::msg( 'Overwrite existing feeds' );?>
                   </label>
                 </div>
               </div>
 
               <div class="control-group">
                 <div class="controls">
-                  <input class="btn" type="submit" name="import" value="Import">
-                  <input class="btn" type="submit" name="cancel" value="Cancel">
+                  <input class="btn" type="submit" name="import" value="<?php echo Intl::msg( 'Import opml file' );?>">
+                  <input class="btn" type="submit" name="cancel" value="<?php echo Intl::msg( 'Cancel' );?>">
                 </div>
               </div>
 
-              <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MyTool::getMaxFileSize(); ?>">
-              <input type="hidden" name="returnurl" value="<?php echo $referer; ?>" />
-              <input type="hidden" name="token" value="<?php echo Session::getToken(); ?>">
+              <input type="hidden" name="MAX_FILE_SIZE" value="${maxsize}">
+              <input type="hidden" name="returnurl" value="<?php echo $referer;?>">
+              <input type="hidden" name="token" value="<?php echo $token;?>">
             </fieldset>
           </form>
         </div>
@@ -1889,223 +2917,37 @@ dl {
     </div>
   </body>
 </html> 
+
 <?php
     }
 
-    public static function listFeedsTpl()
+
+    public static function includesTpl()
     {
         extract(FeedPage::$var);
 ?>
-<div id="list-feeds">
-  <?php
-     if ($listFeeds == 'show') {
-     ?>
-  <ul class="unstyled">
-    <li id="all-subscriptions" class="folder">
-      <h4><a class="mark-as" href="<?php echo ($feedsView['all']['nbUnread']==0?'?currentHash=all&unread':$query.'read').'=all'; ?>" title="Mark all as <?php echo ($feedsView['all']['nbUnread']==0?'unread':'read');?>"><span class="label"><?php echo $feedsView['all']['nbUnread']; ?></span></a><a href="<?php echo '?currentHash=all'; ?>"><?php echo $feedsView['all']['title']; ?></a></h4>
-      <ul class="unstyled">
-        <?php
-           foreach ($feedsView['all']['feeds'] as $feedHash => $feed) {
-        $atitle = trim(htmlspecialchars($feed['description']));
-        if (empty($atitle) || $atitle == ' ') {
-        $atitle = trim(htmlspecialchars($feed['title']));
-        }
-        if (isset($feed['error'])) {
-        $atitle = $feed['error'];
-        }
-        ?>
-        
-        <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
-        <li id="<?php echo 'feed-'.$feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-          - <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
-          
-        </li>
-        <?php } ?>
+    <base href="<?php echo $base;;?>">
+    <title><?php echo $pagetitle;?></title>
+    <meta charset="utf-8">
+    <meta name="referrer" content="no-referrer">
+<?php if( is_file('inc/favicon.ico') ){ ?>
+    <link href="inc/favicon.ico" rel="icon" type="image/x-icon">
+<?php }else{ ?>
+    <link href="?file=favicon.ico" rel="icon" type="image/x-icon">
+<?php } ?>
+<?php if( is_file('inc/style.css') ){ ?>
+    <link type="text/css" rel="stylesheet" href="inc/style.css?version=<?php echo $version;?>" />
+<?php }else{ ?>
+    <link type="text/css" rel="stylesheet" href="?file=style.css&amp;version=<?php echo $version;?>" />
+<?php } ?>
+<?php if( is_file('inc/user.css') ){ ?>
+    <link type="text/css" rel="stylesheet" href="inc/user.css?version=<?php echo $version;?>" />
+<?php } ?>
+    <meta name="viewport" content="width=device-width">
 
-        <?php
-           }
-           foreach ($feedsView['folders'] as $hashFolder => $folder) {
-        $isOpen = $folder['isOpen'];
-        ?>
-        
-        <li id="folder-<?php echo $hashFolder; ?>" class="folder">
-          <h5>
-            <a class="mark-as" href="<?php echo $query.'read='.$hashFolder; ?>"><span class="label"><?php echo $folder['nbUnread']; ?></span></a>
-            <a class="folder-toggle" href="<?php echo $query.'toggleFolder='.$hashFolder; ?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $hashFolder; ?>">
-              <span class="ico">
-                <span class="ico-circle"></span>
-                <span class="ico-line-h"></span>
-                <span class="ico-line-v<?php echo ($isOpen?' folder-toggle-open':' folder-toggle-close'); ?>"></span>
-              </span>
-            </a>
-            <a href="<?php echo '?currentHash='.$hashFolder; ?>"><?php echo htmlspecialchars($folder['title']); ?></a>
-          </h5>
-          <ul id="folder-ul-<?php echo $hashFolder; ?>" class="collapse unstyled<?php echo $isOpen?' in':''; ?>">
-            <?php
-               foreach ($folder['feeds'] as $feedHash => $feed) {
-            $atitle = trim(htmlspecialchars($feed['description']));
-            if (empty($atitle) || $atitle == ' ') {
-            $atitle = trim(htmlspecialchars($feed['title']));
-            }
-            if (isset($feed['error'])) {
-            $atitle = $feed['error'];
-            }
-            ?>
-            <?php if (!$autohide or ($autohide and $feed['nbUnread']!== 0)) { ?>
-
-            <li id="folder-<?php echo $hashFolder; ?>-feed-<?php echo $feedHash; ?>" class="feed<?php if ($feed['nbUnread']!== 0) echo ' has-unread'?>">
-              - <a class="mark-as" href="<?php echo $query.'read='.$feedHash; ?>"><span class="label"><?php echo $feed['nbUnread']; ?></span></a><a class="feed<?php echo (isset($feed['error'])?' text-error':''); ?>" href="<?php echo '?currentHash='.$feedHash; ?>" title="<?php echo $atitle; ?>"><?php echo htmlspecialchars($feed['title']); ?></a>
-            </li>
-            <?php } ?>
-            <?php } ?>
-          </ul>
-        </li>
-        <?php
-           }
-           ?>
-      </ul>
-  </ul>
-  <?php
-     }
-     ?>
-
-</div>
 <?php
     }
 
-    public static function listItemsTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<ul id="list-items" class="unstyled">
-  <?php
-     foreach (array_keys($items) as $itemHash){
-     $item = $kf->getItem($itemHash);
-  ?>
-  <li id="item-<?php echo $itemHash; ?>" class="<?php echo ($view==='expanded'?'item-expanded':'item-list'); ?><?php echo ($item['read']==1?' read':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
-
-    <?php if ($view==='list') { ?>
-    <a id="item-toggle-<?php echo $itemHash; ?>" class="item-toggle item-toggle-plus" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
-      <span class="ico">
-        <span class="ico-circle"></span>
-        <span class="ico-line-h"></span>
-        <span class="ico-line-v<?php echo ((!isset($_GET['open']) or $currentItemHash != $itemHash)?' item-toggle-close':' item-toggle-open'); ?>"></span>
-      </span>
-    </a>
-    <dl class="dl-horizontal item">
-      <dt class="item-feed">
-        <span class="item-author">
-          <?php echo $item['author']; ?>
-        </span>
-      </dt>
-      <dd class="item-info">
-        <span class="item-title">
-          <?php if ($item['read'] == 1) { ?>
-          <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label">unread</span></a>
-          <?php } else { ?>
-          <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label">read</span></a>
-          <?php } ?>
-          <a class="item-link" href="<?php echo $redirector.$item['link']; ?>">
-            <?php echo $item['title']; ?>
-          </a>
-        </span>
-        <span class="item-description">
-          <a class="item-toggle muted" href="<?php echo $query.'current='.$itemHash.((!isset($_GET['open']) or $currentItemHash != $itemHash)?'&amp;open':''); ?>" data-toggle="collapse" data-target="#item-div-<?php echo $itemHash; ?>">
-            <?php echo $item['description']; ?>
-          </a>
-        </span>
-      </dd>
-    </dl>
-    <?php } ?>
-
-    <div id="item-div-<?php echo $itemHash; ?>" class="item collapse<?php echo (($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open'])))?' in well':''); ?><?php echo ($itemHash==$currentItemHash?' current':''); ?>">
-      <?php if ($view==='expanded' or ($currentItemHash == $itemHash and isset($_GET['open']))) { ?>
-      <div class="item-title">
-        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label">share</span></a>
-        <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label item-label-mark-as">unread</span></a>
-        <?php } else { ?>
-        <a class="item-mark-as" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label item-label-mark-as">read</span></a>
-        <?php } ?>
-        <a class="item-link" href="<?php echo $redirector.$item['link']; ?>"><?php echo $item['title']; ?></a>
-        <div class="item-info-end">
-          from <a class="item-via" href="<?php echo $redirector.$item['via']; ?>"><?php echo $item['author']; ?></a>
-          <a class="item-xml" href="<?php echo $redirector.$item['xmlUrl']; ?>">
-            <span class="ico">
-              <span class="ico-feed-dot"></span>
-              <span class="ico-feed-circle-1"></span>
-              <span class="ico-feed-circle-2"></span>
-            </span>
-          </a>
-        </div>
-      </div>
-      <div class="clear"></div>
-      <div class="item-content">
-        <?php echo $item['content']; ?>
-      </div>
-      <div class="item-info-end">
-        <a class="item-shaarli" href="<?php echo $query.'shaarli='.$itemHash; ?>"><span class="label label-expanded">share</span></a>
-        <?php if ($item['read'] == 1) { ?>
-        <a class="item-mark-as" class="link-mark" href="<?php echo $query.'unread='.$itemHash; ?>"><span class="label label-expanded">unread</span></a>
-        <?php } else { ?>
-        <a class="item-mark-as" class="link-mark" href="<?php echo $query.'read='.$itemHash; ?>"><span class="label label-expanded">read</span></a>
-        <?php } ?>
-      </div>
-      <div class="clear"></div>
-      <?php } ?>
-    </div>
-  </li>
-  <?php } ?>
-</ul>
-<?php
-    }
-
-    public static function pagingTpl()
-    {
-        extract(FeedPage::$var);
-?>
-<ul class="inline">
-  <?php foreach(array_keys($paging) as $pagingOpt) { ?>
-  <?php switch($pagingOpt) {
-        case 'pagingItem': ?>
-  <li>
-    <div class="btn-group">
-      <a class="btn btn-info previous-item" href="<?php echo $query.'previous='.$currentItemHash; ?>">Previous item</a>
-      <a class="btn btn-info next-item" href="<?php echo $query.'next='.$currentItemHash; ?>">Next item</a>
-    </div>
-  </li>
-  <?php break; ?>
-  <?php case 'pagingPage': ?>
-  <li>
-    <div class="btn-group">
-      <a class="btn btn-info previous-page<?php echo ($currentPage === 1)?' disabled':''; ?>" href="<?php echo $query.'previousPage='.$currentPage; ?>">Previous page</a>
-      <button class="btn disabled current-max-page"><?php echo $currentPage.' / '.$maxPage; ?></button>
-      <a class="btn btn-info next-page<?php echo ($currentPage === $maxPage)?' disabled':''; ?>" href="<?php echo $query.'nextPage='.$currentPage; ?>">Next page</a>
-    </div>
-  </li>
-  <?php break; ?>
-  <?php case 'pagingByPage': ?>
-  <li>
-    <form class="form-inline" action="<?php echo $kfurl; ?>" method="GET">
-      <div class="input-prepend input-append paging-by-page">
-        <a class="btn btn-info" href="<?php echo $query.'byPage=1'; ?>">1</a>
-        <a class="btn btn-info" href="<?php echo $query.'byPage=10'; ?>">10</a>
-        <a class="btn btn-info" href="<?php echo $query.'byPage=50'; ?>">50</a>
-        <input class="input-by-page input-mini" type="text" name="byPage">
-        <input type="hidden" name="currentHash" value="<?php echo $currentHash; ?>">
-        <button type="submit" class="btn">items per page</button>
-      </div>
-    </form>
-  </li>
-  <?php break; ?>
-  <?php default: ?>
-  <?php break; ?>
-  <?php } ?>
-  <?php } ?>
-</ul>
-<div class="clear"></div>
-<?php
-    }
 
     public static function indexTpl()
     {
@@ -2114,2818 +2956,1066 @@ dl {
 <!DOCTYPE html>
 <html>
   <head>
-    <?php FeedPage::includesTpl(); ?>
+<?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-    <div id="index" class="container-fluid full-height" data-view="<?php echo $view; ?>" data-list-feeds="<?php echo $listFeeds; ?>" data-filter="<?php echo $filter; ?>" data-order="<?php echo $order; ?>" data-by-page="<?php echo $byPage; ?>" data-autoread-item="<?php echo $autoreadItem; ?>" data-autoread-page="<?php echo $autoreadPage; ?>" data-autohide="<?php echo $autohide; ?>" data-current-hash="<?php echo $currentHash; ?>" data-current-page="<?php echo $currentPage; ?>" data-nb-items="<?php echo $nbItems; ?>" data-shaarli="<?php echo $shaarli; ?>" data-redirector="<?php echo $redirector; ?>" data-autoupdate="<?php echo $autoupdate; ?>" data-autofocus="<?php echo $autofocus; ?>">
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
       <div class="row-fluid full-height">
-        <?php if ($listFeeds == 'show') { ?>
+        <?php if( $listFeeds == 'show' ){ ?>
         <div id="main-container" class="span9 full-height">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
           <div id="paging-up">
-            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
+<?php FeedPage::pagingTpl(); ?>
           </div>
-          <?php FeedPage::listItemsTpl(); ?>
+<?php FeedPage::list_itemsTpl(); ?>
           <div id="paging-down">
-            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
+<?php FeedPage::pagingTpl(); ?>
           </div>
         </div>
         <div id="minor-container" class="span3 full-height minor-container">
-          <?php FeedPage::listFeedsTpl(); ?>
+<?php FeedPage::list_feedsTpl(); ?>
         </div>
-        <?php } else { ?>
+        <?php }else{ ?>
         <div id="main-container" class="span12 full-height">
-          <?php FeedPage::statusTpl(); ?>
-          <?php FeedPage::navTpl(); ?>
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
           <div id="paging-up">
-            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
+<?php FeedPage::pagingTpl(); ?>
           </div>
-          <?php FeedPage::listItemsTpl(); ?>
+<?php FeedPage::list_itemsTpl(); ?>
           <div id="paging-down">
-            <?php if (!empty($paging)) {FeedPage::pagingTpl();} ?>
+<?php FeedPage::pagingTpl(); ?>
           </div>
         </div>
         <?php } ?>
       </div>
     </div>
-    <?php if (is_file('inc/script.js')) { ?>
+    <?php if( is_file('inc/script.js') ){ ?>
     <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
-    <?php } else { ?>
-    <script type="text/javascript">
-(function () {
-
-  var view = '', // data-view
-      listFeeds = '', // data-list-feeds
-      filter = '', // data-filter
-      order = '', // data-order
-      autoreadItem = '', // data-autoread-item
-      autoreadPage = '', // data-autoread-page
-      autohide = '', // data-autohide
-      byPage = -1, // data-by-page
-      shaarli = '', // data-shaarli
-      redirector = '', // data-redirector
-      currentHash = '', // data-current-hash
-      currentPage = 1, // data-current-page
-      currentNbItems = 0, // data-nb-items
-      autoupdate = false, // data-autoupdate
-      autofocus = false, // data-autofocus
-      status = '',
-      listUpdateFeeds = [],
-      listItemsHash = [],
-      currentItemHash = '',
-      currentUnread = 0,
-      title = '',
-      cache = {};
-
-  if(!String.prototype.trim) {
-    String.prototype.trim = function () {
-      return this.replace(/^\s+|\s+$/g,'');
-    };
-  }
-
-  if (!window.JSON) {
-    window.JSON = {
-      parse: function (sJSON) { return eval("(" + sJSON + ")"); },
-      stringify: function (vContent) {
-        if (vContent instanceof Object) {
-          var sOutput = "";
-          if (vContent.constructor === Array) {
-            for (var nId = 0; nId < vContent.length; sOutput += this.stringify(vContent[nId]) + ",", nId++);
-            return "[" + sOutput.substr(0, sOutput.length - 1) + "]";
-          }
-          if (vContent.toString !== Object.prototype.toString) { return "\"" + vContent.toString().replace(/"/g, "\\$&") + "\""; }
-          for (var sProp in vContent) { sOutput += "\"" + sProp.replace(/"/g, "\\$&") + "\":" + this.stringify(vContent[sProp]) + ","; }
-          return "{" + sOutput.substr(0, sOutput.length - 1) + "}";
-        }
-        return typeof vContent === "string" ? "\"" + vContent.replace(/"/g, "\\$&") + "\"" : String(vContent);
-      }
-    };
-  }
-
-  function getXHR() {
-    var httpRequest = false;
-
-    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
-      httpRequest = new XMLHttpRequest();
-    } else if (window.ActiveXObject) { // IE
-      try {
-        httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
-      }
-      catch (e) {
-        try {
-          httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        catch (e) {}
-      }
-    }
-
-    return httpRequest;
-  }
-
-  // Constructor for generic HTTP client
-  function HTTPClient() {};
-  HTTPClient.prototype = {
-    url: null,
-    xhr: null,
-    callinprogress: false,
-    userhandler: null,
-    init: function(url) {
-      this.url = url;
-      this.xhr = new getXHR();
-    },
-    asyncGET: function (handler) {
-      // Prevent multiple calls
-      if (this.callinprogress) {
-        throw "Call in progress";
-      };
-      this.callinprogress = true;
-      this.userhandler = handler;
-      // Open an async request - third argument makes it async
-      this.xhr.open('GET', this.url, true);
-      var self = this;
-      // Assign a closure to the onreadystatechange callback
-      this.xhr.onreadystatechange = function() {
-        self.stateChangeCallback(self);
-      }
-      this.xhr.send(null);
-    },
-    stateChangeCallback: function(client) {
-      switch (client.xhr.readyState) {
-        // Request not yet made
-        case 1:
-        try { client.userhandler.onInit(); }
-        catch (e) { /* Handler method not defined */ }
-        break;
-        // Contact established with server but nothing downloaded yet
-        case 2:
-        try {
-          // Check for HTTP status 200
-          if ( client.xhr.status != 200 ) {
-            client.userhandler.onError(
-              client.xhr.status,
-              client.xhr.statusText
-            );
-            // Abort the request
-            client.xhr.abort();
-            // Call no longer in progress
-            client.callinprogress = false;
-          }
-        }
-        catch (e) { /* Handler method not defined */ }
-        break;
-        // Called multiple while downloading in progress
-        case 3:
-        // Notify user handler of download progress
-        try {
-          // Get the total content length
-          // -useful to work out how much has been downloaded
-          var contentLength;
-          try {
-            contentLength = client.xhr.getResponseHeader("Content-Length");
-          }
-          catch (e) { contentLength = NaN; }
-          // Call the progress handler with what we've got
-          client.userhandler.onProgress(
-            client.xhr.responseText,
-            contentLength
-          );
-        }
-        catch (e) { /* Handler method not defined */ }
-        break;
-        // Download complete
-        case 4:
-        try {
-          client.userhandler.onSuccess(client.xhr.responseText);
-        }
-        catch (e) { /* Handler method not defined */ }
-        finally { client.callinprogress = false; }
-        break;
-      }
-    }
-  }
-
-  var ajaxHandler = {
-    onInit: function() {},
-    onError: function(status, statusText) {},
-    onProgress: function(responseText, length) {},
-    onSuccess: function(responseText) {
-      var result = JSON.parse(responseText);
-
-      if (result['item']) {
-        cache['item-' + result['item']['itemHash']] = result['item'];
-        loadDivItem(result['item']['itemHash']);
-      }
-      if (result['page']) {
-        updateListItems(result['page']);
-        setCurrentItem();
-      }
-      if (result['read']) {
-        markAsRead(result['read']);
-      }
-      if (result['unread']) {
-        markAsUnread(result['unread']);
-      }
-      if (result['update']) {
-        updateNewItems(result['update']);
-      }
-    }
-  };
-
-  function getSelectionHtml() {
-    var html = '';
-    if (typeof window.getSelection != 'undefined') {
-      var sel = window.getSelection();
-      if (sel.rangeCount) {
-        var container = document.createElement('div');
-        for (var i = 0, len = sel.rangeCount; i < len; ++i) {
-          container.appendChild(sel.getRangeAt(i).cloneContents());
-        }
-        html = container.innerHTML;
-      }
-    } else if (typeof document.selection != 'undefined') {
-      if (document.selection.type == 'Text') {
-        html = document.selection.createRange().htmlText;
-      }
-    }
-    return html;
-  }
-
-  function removeChildren(elt) {
-    while (elt.hasChildNodes()) {
-      elt.removeChild(elt.firstChild);
-    }
-  }
-
-  function removeElement(elt) {
-    if (elt && elt.parentNode) {
-      elt.parentNode.removeChild(elt);
-    }
-  }
-
-  function addClass(elt, cls) {
-    if (elt) {
-      elt.className = (elt.className + ' ' + cls).trim();
-    }
-  }
-
-  function removeClass(elt, cls) {
-    if (elt) {
-      elt.className = (' ' + elt.className + ' ').replace(cls, ' ').trim();
-    }
-  }
-
-  function hasClass(elt, cls) {
-    if (elt && (' ' + elt.className + ' ').indexOf(' ' + cls + ' ') > -1) {
-      return true;
-    }
-    return false;
-  }
-
-  function anonymize(elt) {
-    if (redirector !== '') {
-      var domain, a_to_anon = elt.getElementsByTagName("a");
-      for (var i = 0; i < a_to_anon.length; i++) {
-        domain = a_to_anon[i].href.replace('http://','').replace('https://','').split(/[/?#]/)[0];
-        if (domain !== window.location.host) {
-          a_to_anon[i].href = redirector+a_to_anon[i].href;
-        }
-      }
-    }
-  }
-
-  function initAnonyme() {
-    if (redirector !== '') {
-      var i = 0, elements = document.getElementById('list-items');
-      elements = elements.getElementsByTagName('div');
-      for (i = 0; i < elements.length; i += 1) {
-        if (hasClass(elements[i], 'item-content')) {
-          anonymize(elements[i]);
-        }
-      }
-    }
-  }
-
-  function collapseElement(element) {
-    if (element !== null) {
-      var targetElement = document.getElementById(
-        element.getAttribute('data-target').substring(1)
-      );
-
-      if (hasClass(targetElement, 'in')) {
-        removeClass(targetElement, 'in');
-        targetElement.style.height = 0;
-      } else {
-        addClass(targetElement, 'in');
-        targetElement.style.height = 'auto';
-      }
-    }
-  }
-
-  function collapseClick() {
-    collapseElement(this);
-  }
-
-  function initCollapse (list) {
-    var i = 0;
-
-    for (i = 0; i < list.length; i += 1) {
-      if (list[i].hasAttribute('data-toggle') && list[i].hasAttribute('data-target')) {
-        addEvent(list[i], 'click', collapseClick);
-      }
-    }
-  }
-
-  function shaarliItem(itemHash) {
-    var domainUrl, url, domainVia, via, title, sel, element;
-
-   element = document.getElementById('item-div-'+itemHash);
-    if (element.childNodes.length > 1) {
-      title = getTitleItem(itemHash);
-      url = getUrlItem(itemHash).replace(redirector,'');
-      via = getViaItem(itemHash);
-      domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
-      domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
-      if (domainUrl !== domainVia) {
-        via = 'via ' + via;
-      } else {
-        via = '';
-      }
-      sel = getSelectionHtml();
-      if (sel != '') {
-        sel = '«' + sel + '»';
-      }
-
-      window.open(
-        shaarli
-        .replace('${url}', encodeURIComponent(url))
-        .replace('${title}', encodeURIComponent(title))
-        .replace('${via}', encodeURIComponent(via))
-        .replace('${sel}', encodeURIComponent(sel)),
-        '_blank',
-        'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no'
-      );
-    } else {
-      loadDivItem(itemHash);
-      alert('Sorry ! This item is not loaded, try again !');
-    }
-  }
-
-  function shaarliCurrentItem() {
-    shaarliItem(currentItemHash);
-  }
-
-  function shaarliClickItem() {
-    shaarliItem(getItemHash(this));
-
-    return false;
-  }
-
-  function getFolder(element) {
-    var folder = null
-
-    while (folder === null && element !== null) {
-      if (element.tagName === 'LI' && element.id.indexOf('folder-') === 0) {
-        folder = element;
-      }
-      element = element.parentNode;
-    }
-
-    return folder;
-  }
-
-  function getFolderHash(element) {
-    var folder = getFolder(element);
-
-    if (folder !== null) {
-      return folder.id.replace('folder-','');
-    }
-
-    return null;
-  }
-
-  function toggleFolder(folderHash) {
-    var i, listElements, url, client;
-
-    listElements = document.getElementById('folder-' + folderHash);
-    listElements = listElements.getElementsByTagName('h5');
-    if (listElements.length > 0) {
-      listElements = listElements[0].getElementsByTagName('span');
-
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'folder-toggle-open')) {
-          removeClass(listElements[i], 'folder-toggle-open');
-          addClass(listElements[i], 'folder-toggle-close');
-        } else if (hasClass(listElements[i], 'folder-toggle-close')) {
-          removeClass(listElements[i], 'folder-toggle-close');
-          addClass(listElements[i], 'folder-toggle-open');
-        }
-      }
-    }
-
-    url = '?toggleFolder=' + folderHash + '&ajax';
-    client = new HTTPClient();
-
-    client.init(url);
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function toggleClickFolder() {
-    toggleFolder(getFolderHash(this));
-
-    return false;
-  }
-
-  function initLinkFolders(listFolders) {
-    var i = 0;
-
-    for (i = 0; i < listFolders.length; i += 1) {
-      if (listFolders[i].hasAttribute('data-toggle') && listFolders[i].hasAttribute('data-target')) {
-        listFolders[i].onclick = toggleClickFolder;
-      }
-    }
-  }
-
-  function getListLinkFolders() {
-    var i = 0,
-        listFolders = [],
-        listElements = document.getElementById('list-feeds');
-
-    if (listElements) {
-      listElements = listElements.getElementsByTagName('a');
-
-      for (i = 0; i < listElements.length; i += 1) {
-        listFolders.push(listElements[i]);
-      }
-    }
-
-    return listFolders;
-  }
-
-  function toggleMarkAsLinkItem(itemHash) {
-    var i, item = getItem(itemHash), listLinks;
-
-    if (item !== null) {
-      listLinks = item.getElementsByTagName('a');
-
-      for (i = 0; i < listLinks.length; i += 1) {
-        if (hasClass(listLinks[i], 'item-mark-as')) {
-          if (listLinks[i].href.indexOf('unread=') > -1) {
-            listLinks[i].href = listLinks[i].href.replace('unread=','read=');
-            listLinks[i].firstChild.innerHTML = 'read';
-          } else {
-            listLinks[i].href = listLinks[i].href.replace('read=','unread=');
-            listLinks[i].firstChild.innerHTML = 'unread';
-          }
-        }
-      }
-    }
-  }
-
-  function markAsItem(itemHash) {
-    var item, url, client, indexItem;
-
-    item = getItem(itemHash);
-
-    if (item !== null) {
-      if (hasClass(item, 'read')) {
-        url = '?unread=' + itemHash;
-        removeClass(item, 'read');
-        toggleMarkAsLinkItem(itemHash);
-      } else {
-        url = '?read=' + itemHash;
-        addClass(item, 'read');
-        toggleMarkAsLinkItem(itemHash);
-        if (filter === 'unread') {
-          url += '&currentHash=' + currentHash
-               + '&page=' + currentPage
-               + '&last=' + listItemsHash[listItemsHash.length - 1];
-
-          removeElement(item);
-          indexItem = listItemsHash.indexOf(itemHash);
-          listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
-          if (listItemsHash.length <= byPage) {
-            appendItem(listItemsHash[listItemsHash.length - 1]);
-          }
-          setCurrentItem(listItemsHash[indexItem]);
-        }
-      }
-    } else {
-      url = '?currentHash=' + currentHash
-          + '&page=' + currentPage;
-    }
-
-    client = new HTTPClient();
-    client.init(url + '&ajax');
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function markAsCurrentItem() {
-    markAsItem(currentItemHash);
-  }
-
-  function markAsClickItem() {
-    markAsItem(getItemHash(this));
-
-    return false;
-  }
-
-  function markAsRead(itemHash) {
-    setNbUnread(currentUnread - 1);
-
-  }
-
-  function markAsUnread(itemHash) {
-    setNbUnread(currentUnread + 1);
-
-  }
-
-  function loadDivItem(itemHash) {
-    var element, url, client, cacheItem;
-
-    element = document.getElementById('item-div-'+itemHash);
-    if (element.childNodes.length <= 1) {
-      cacheItem = getCacheItem(itemHash);
-      if (cacheItem != null) {
-        setDivItem(element, cacheItem);
-        removeCacheItem(itemHash);
-      } else {
-        url = '?currentHash=' + currentHash
-            + '&current=' + itemHash
-            + '&ajax';
-        client = new HTTPClient();
-        client.init(url, element);
-        try {
-          client.asyncGET(ajaxHandler);
-        } catch (e) {
-          alert(e);
-        }
-      }
-    }
-  }
-
-  function toggleItem(itemHash) {
-    var i, listElements, element, targetElement;
-
-    if (view === 'expanded') {
-      return;
-    }
-
-    if (currentItemHash != itemHash) {
-      closeCurrentItem();
-    }
-
-    // looking for ico + or -
-    listElements = document.getElementById('item-toggle-' + itemHash);
-    listElements = listElements.getElementsByTagName('span');
-    for (i = 0; i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-toggle-open')) {
-        removeClass(listElements[i], 'item-toggle-open');
-        addClass(listElements[i], 'item-toggle-close');
-      } else if (hasClass(listElements[i], 'item-toggle-close')) {
-        removeClass(listElements[i], 'item-toggle-close');
-        addClass(listElements[i], 'item-toggle-open');
-      }
-    }
-
-    element = document.getElementById('item-toggle-'+itemHash);
-    targetElement = document.getElementById(
-      element.getAttribute('data-target').substring(1)
-    );
-    if (element.href.indexOf('&open') > -1) {
-      element.href = element.href.replace('&open','');
-      addClass(targetElement, 'well');
-      setCurrentItem(itemHash);
-      loadDivItem(itemHash);
-    } else {
-      element.href = element.href + '&open';
-      removeClass(targetElement, 'well');
-    }
-  }
-
-  function toggleCurrentItem() {
-    toggleItem(currentItemHash);
-    collapseElement(document.getElementById('item-toggle-' + currentItemHash));
-  }
-
-  function toggleClickItem() {
-    toggleItem(getItemHash(this));
-
-    return false;
-  }
-
-  function getItem(itemHash) {
-    return document.getElementById('item-' + itemHash);
-  }
-
-  function getTitleItem(itemHash) {
-    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), title = '';
-
-    for (i = 0; title === '' && i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-link')) {
-        title = listElements[i].innerHTML;
-      }
-    }
-
-    return title;
-  }
-
-  function getUrlItem(itemHash) {
-    var i = 0, element = document.getElementById('item-'+itemHash), listElements = element.getElementsByTagName('a'), url = '';
-
-    for (i = 0; url === '' && i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-link')) {
-        url = listElements[i].href;
-      }
-    }
-
-    return url;
-  }
-
-  function getViaItem(itemHash) {
-    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), via = '';
-
-    for (i = 0; via === '' && i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-via')) {
-        via = listElements[i].href;
-      }
-    }
-
-    return via;
-  }
-
-  function getLiItem(element) {
-    var item = null
-
-    while (item === null && element !== null) {
-      if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
-        item = element;
-      }
-      element = element.parentNode;
-    }
-
-    return item;
-  }
-
-  function getItemHash(element) {
-    var item = getLiItem(element);
-
-    if (item !== null) {
-      return item.id.replace('item-','');
-    }
-
-    return null;
-  }
-
-  function getCacheItem(itemHash) {
-    if (typeof cache['item-' + itemHash] !== 'undefined') {
-      return cache['item-' + itemHash];
-    }
-
-    return null;
-  }
-
-  function removeCacheItem(itemHash) {
-    if (typeof cache['item-' + itemHash] !== 'undefined') {
-      delete cache['item-' + itemHash];
-    }
-  }
-
-  function isCurrentUnread() {
-    var item = getItem(currentItemHash);
-
-    if (hasClass(item, 'read')) {
-      return false;
-    }
-
-    return true;
-  }
-
-  function setDivItem(div, item) {
-    var markAs = 'read';
-
-      if (item['read'] == 1) {
-        markAs = 'unread';
-      }
-
-    div.innerHTML = '<div class="item-title">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ' +
-      '<a class="item-link" href="' + item['link'] + '">' +
-      item['title'] +
-      '</a>' +
-      '</div>' +
-      '<div class="item-info-end">' +
-      'from <a class="item-via" href="' + item['via'] + '">' +
-      item['author'] +
-      '</a>' +
-      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
-      '<span class="ico">' +
-      '<span class="ico-feed-dot"></span>' +
-      '<span class="ico-feed-circle-1"></span>' +
-      '<span class="ico-feed-circle-2"></span>'+
-      '</span>' +
-      '</a>' +
-      '</div>' +
-      '<div class="clear"></div>' +
-      '<div class="item-content">' +
-      item['content'] +
-      '</div>' +
-      '<div class="item-info-end">' +
-      '<a class="item-shaarli" href="' + '?currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">share</span></a> ' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label label-expanded">' + markAs + '</span></a>' +
-      '</div>' +
-      '<div class="clear"></div>';
-
-    initLinkItems(div.getElementsByTagName('a'));
-
-    anonymize(div);
-  }
-
-  function setLiItem(li, item) {
-    var markAs = 'read';
-
-    if (item['read'] == 1) {
-      markAs = 'unread';
-    }
-
-    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle-plus" href="' + '?currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
-      '<span class="ico">' +
-      '<span class="ico-circle"></span>' +
-      '<span class="ico-line-h"></span>' +
-      '<span class="ico-line-v item-toggle-close"></span>' +
-      '</span>' +
-      '</a>' +
-      '<dl class="dl-horizontal item">' +
-      '<dt class="item-feed">' +
-      '<span class="item-author">' +
-      item['author'] +
-      '</span>' +
-      '</dt>' +
-      '<dd class="item-info">' +
-      '<span class="item-title">' +
-      '<a class="item-mark-as" href="' + '?currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ' +
-      '<a class="item-link" href="' + item['link'] + '">' +
-      item['title'] +
-      '</a> ' +
-      '</span>' +
-      '<span class="item-description">' +
-      item['description'] +
-      '</span>' +
-      '</dd>' +
-      '</dl>';
-
-    initCollapse(li.getElementsByTagName('a'));
-    initLinkItems(li.getElementsByTagName('a'));
-
-    anonymize(li);
-  }
-
-  function createLiItem(item) {
-    var li = document.createElement('li'),
-        div = document.createElement('div');
-
-    div.id = 'item-div-'+item['itemHash'];
-    div.className= 'item collapse'+(view === 'expanded' ? ' in well' : '');
-
-    li.id = 'item-'+item['itemHash'];
-    if (view === 'list') {
-      li.className = 'item-list';
-      setLiItem(li, item);
-    } else {
-      li.className = 'item-expanded';
-      setDivItem(div, item);
-    }
-    li.className += (item['read'] === 1)?' read':'';
-    li.appendChild(div);
-
-    return li;
-  }
-
-  function getListItems() {
-    return document.getElementById('list-items');
-  }
-
-  function updateListItems(itemsList) {
-    var i;
-
-    for (i = 0; i < itemsList.length; i++) {
-      if (listItemsHash.indexOf(itemsList[i]['itemHash']) === -1 && listItemsHash.length <= byPage) {
-        cache['item-' + itemsList[i]['itemHash']] = itemsList[i];
-        listItemsHash.push(itemsList[i]['itemHash']);
-        if (listItemsHash.length <= byPage) {
-          appendItem(itemsList[i]['itemHash']);
-        }
-      }
-    }
-  }
-
-  function appendItem(itemHash) {
-    var listItems = getListItems(),
-        item = getCacheItem(itemHash),
-        li;
-
-    if (item !== null) {
-      li = createLiItem(item);
-      listItems.appendChild(li);
-      removeCacheItem(itemHash);
-    }
-  }
-
-  function getListLinkItems() {
-    var i = 0,
-        listItems = [],
-        listElements = document.getElementById('list-items');
-
-    listElements = listElements.getElementsByTagName('a');
-
-    for (i = 0; i < listElements.length; i += 1) {
-      listItems.push(listElements[i]);
-    }
-
-    return listItems;
-  }
-
-  function initListItemsHash() {
-    var i,
-        listElements = document.getElementById('list-items');
-
-    listElements = listElements.getElementsByTagName('li');
-    for (i = 0; i < listElements.length; i += 1) {
-      if (hasClass(listElements[i], 'item-list') || hasClass(listElements[i], 'item-expanded')) {
-        if (hasClass(listElements[i], 'current')) {
-          currentItemHash = getItemHash(listElements[i]);
-        }
-        listItemsHash.push(listElements[i].id.replace('item-',''));
-      }
-    }
-  }
-
-  function initLinkItems(listItems) {
-    var i = 0;
-
-    for (i = 0; i < listItems.length; i += 1) {
-      if (hasClass(listItems[i], 'item-toggle')) {
-        listItems[i].onclick = toggleClickItem;
-      }
-      if (hasClass(listItems[i], 'item-mark-as')) {
-        listItems[i].onclick = markAsClickItem;
-      }
-      if (hasClass(listItems[i], 'item-shaarli')) {
-        listItems[i].onclick = shaarliClickItem;
-      }
-    }
-  }
-
-  function initListItems() {
-    var url, client;
-
-    url = '?currentHash=' + currentHash
-        + '&page=' + currentPage
-        + '&last=' + listItemsHash[listItemsHash.length -1]
-        + '&ajax';
-
-    client = new HTTPClient();
-    client.init(url);
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function setStatus(text) {
-    if (text === '') {
-      document.getElementById('status').innerHTML = status;
-    } else {
-      document.getElementById('status').innerHTML = text;
-    }
-  }
-
-  function getTimeMin() {
-    return Math.round((new Date().getTime()) / 1000 / 60);
-  }
-
-  function updateFeed(feedHashIndex) {
-    var i = 0, url, client, feedHash = '';
-
-    if (feedHashIndex !== '') {
-      setStatus('updating ' + listUpdateFeeds[feedHashIndex][1]);
-      feedHash = listUpdateFeeds[feedHashIndex][0];
-      listUpdateFeeds[feedHashIndex][2] = getTimeMin();
-    }
-
-    url = '?update'+(feedHash === ''?'':'='+feedHash)+'&ajax';
-
-    client = new HTTPClient();
-    client.init(url);
-    try {
-      client.asyncGET(ajaxHandler);
-    } catch (e) {
-      alert(e);
-    }
-  }
-
-  function updateNextFeed() {
-    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '', minFeedToUpdateIndex = '';
-    if (listUpdateFeeds.length !== 0) {
-      currentMin = getTimeMin();
-      for (i = 0; feedToUpdateIndex === '' && i < listUpdateFeeds.length; i++) {
-        diff = currentMin - listUpdateFeeds[i][2];
-        if (diff >= listUpdateFeeds[i][3]) {
-          //need update
-          feedToUpdateIndex = i;
-        } else {
-          if (minDiff === -1 || diff < minDiff) {
-            minDiff = diff;
-            minFeedToUpdateIndex = i;
-          }
-        }
-      }
-      if (feedToUpdateIndex === '') {
-        feedToUpdateIndex = minFeedToUpdateIndex;
-      }
-      updateFeed(feedToUpdateIndex);
-    } else {
-      updateFeed('');
-    }
-  }
-
-  function updateTimeout() {
-    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '';
-
-    if (listUpdateFeeds.length !== 0) {
-      currentMin = getTimeMin();
-      for (i = 0; minDiff !== 0 && i < listUpdateFeeds.length; i++) {
-        diff = currentMin - listUpdateFeeds[i][2];
-        if (diff >= listUpdateFeeds[i][3]) {
-          //need update
-          minDiff = 0;
-        } else {
-          if (minDiff === -1 || (listUpdateFeeds[i][3] - diff) < minDiff) {
-            minDiff = listUpdateFeeds[i][3] - diff;
-          }
-        }
-      }
-      window.setTimeout(updateNextFeed, minDiff * 1000 * 60 + 200);
-    }
-  }
-
-  function updateNewItems(result) {
-    var i = 0, list, currentMin;
-    setStatus('');
-    if (result !== false) {
-      if (result['feeds']) {
-        // init list of feeds information for update
-        listUpdateFeeds = result['feeds'];
-        currentMin = getTimeMin();
-        for (i = 0; i < listUpdateFeeds.length; i++) {
-          listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
-        }
-      }
-      if (result['newItems']) {
-        currentNbItems += result['newItems'].length;
-        setNbUnread(currentUnread + result['newItems'].length);
-      }
-      updateTimeout();
-    }
-  }
-
-  function initUpdate() {
-    window.setTimeout(updateNextFeed, 1000);
-  }
-
-  function setWindowLocation() {
-    if (currentItemHash != '' && autofocus) {
-      window.location = '#item-' + currentItemHash;
-    }
-  }
-
-  function previousClickPage() {
-    previousPage();
-
-    return false;
-  }
-
-  function nextClickPage() {
-    nextPage();
-
-    return false;
-  }
-
-  function nextPage() {
-    currentPage = currentPage + 1;
-    if (currentPage > Math.ceil(currentNbItems / byPage)) {
-      currentPage = Math.ceil(currentNbItems / byPage);
-    }
-    if (listItemsHash.length == 0) {
-      currentPage = 1;
-    }
-    listItemsHash = [];
-    initListItems();
-    removeChildren(getListItems());
-  }
-
-  function previousPage() {
-    currentPage = currentPage - 1;
-    if (currentPage < 1) {
-      currentPage = 1;
-    }
-    listItemsHash = [];
-    initListItems();
-    removeChildren(getListItems());
-  }
-
-  function previousClickItem() {
-    previousItem();
-
-    return false;
-  }
-
-  function nextClickItem() {
-    nextItem();
-
-    return false;
-  }
-
-  function nextItem() {
-    var nextItemIndex = listItemsHash.indexOf(currentItemHash) + 1, nextCurrentItemHash;
-
-    closeCurrentItem();
-    if (autoreadItem && isCurrentUnread()) {
-      markAsCurrentItem();
-      if (filter == 'unread') {
-        nextItemIndex -= 1;
-      }
-    }
-
-    if (nextItemIndex < 0) { nextItemIndex = 0; }
-
-    if (nextItemIndex < listItemsHash.length) {
-      nextCurrentItemHash = listItemsHash[nextItemIndex];
-    }
-
-    if (nextItemIndex >= byPage) {
-      nextPage();
-    } else {
-      setCurrentItem(nextCurrentItemHash);
-    }
-  }
-
-  function previousItem() {
-    var previousItemIndex = listItemsHash.indexOf(currentItemHash) - 1, previousCurrentItemHash;
-
-    if (previousItemIndex < listItemsHash.length && previousItemIndex >= 0) {
-      previousCurrentItemHash = listItemsHash[previousItemIndex];
-    }
-
-    closeCurrentItem();
-    if (previousItemIndex < 0) {
-      previousPage();
-    } else {
-      setCurrentItem(previousCurrentItemHash);
-    }
-  }
-
-  function closeCurrentItem() {
-    var element = document.getElementById('item-toggle-' + currentItemHash);
-
-    if (element && view === 'list') {
-      var targetElement = document.getElementById(
-            element.getAttribute('data-target').substring(1)
-          );
-
-      if (element.href.indexOf('&open') < 0) {
-        element.href = element.href + '&open';
-        removeClass(targetElement, 'well');
-        collapseElement(element);
-      }
-
-      var i = 0,
-          listElements = element.getElementsByTagName('span');
-
-      // looking for ico + or -
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'item-toggle-open')) {
-          removeClass(listElements[i], 'item-toggle-open');
-          addClass(listElements[i], 'item-toggle-close');
-        }
-      }
-    }
-  }
-
-  function setCurrentItem(itemHash) {
-    var currentItemIndex;
-
-    if (itemHash !== currentItemHash) {
-      removeClass(document.getElementById('item-'+currentItemHash), 'current');
-      removeClass(document.getElementById('item-div-'+currentItemHash), 'current');
-      if (typeof itemHash !== 'undefined') {
-        currentItemHash = itemHash;
-      }
-      currentItemIndex = listItemsHash.indexOf(currentItemHash);
-      if (currentItemIndex === -1) {
-        if (listItemsHash.length > 0) {
-          currentItemHash = listItemsHash[0];
-        } else {
-          currentItemHash = '';
-        }
-      } else {
-        if (currentItemIndex >= byPage) {
-          currentItemHash = listItemsHash[byPage - 1];
-        }
-      }
-
-      if (currentItemHash !== '') {
-        addClass(document.getElementById('item-'+currentItemHash), 'current');
-        addClass(document.getElementById('item-div-'+currentItemHash), 'current');
-        setWindowLocation();
-        updateItemButton();
-      }
-    }
-    updatePageButton();
-  }
-
-  function openCurrentItem(blank) {
-    var url;
-
-    url = getUrlItem(currentItemHash);
-    if (blank) {
-      window.location.href = url;
-    } else {
-      window.open(url);
-    }
-  }
-
-  // http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
-  function checkMove(e) {
-    // More than this horizontal displacement, and we will suppress scrolling.
-    var scrollSupressionThreshold = 10,
-    // More time than this, and it isn't a swipe.
-        durationThreshold = 500,
-    // Swipe horizontal displacement must be more than this.
-        horizontalDistanceThreshold = 30,
-    // Swipe vertical displacement must be less than this.
-        verticalDistanceThreshold = 75;
-
-    if (e.targetTouches.length == 1) {
-      var touch = e.targetTouches[0],
-      start = { time: ( new Date() ).getTime(),
-                coords: [ touch.pageX, touch.pageY ] },
-      stop;
-      function moveHandler( e ) {
-
-        if ( !start ) {
-          return;
-        }
-
-        if (e.targetTouches.length == 1) {
-          var touch = e.targetTouches[0];
-          stop = { time: ( new Date() ).getTime(),
-                   coords: [ touch.pageX, touch.pageY ] };
-
-          // prevent scrolling
-          if ( Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-                                        >  scrollSupressionThreshold
-             ) {
-            e.preventDefault();
-          }
-        }
-      }
-
-      addEvent(window, 'touchmove', moveHandler);
-      addEvent(window, 'touchend', function (e) {
-        removeEvent(window, 'touchmove', moveHandler);
-        if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold
-            && Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] )
-             > horizontalDistanceThreshold
-            && Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] )
-             < verticalDistanceThreshold
-             ) {
-            start.coords[0] > stop.coords[ 0 ]
-                ? nextItem()
-                : previousItem() ;
-          }
-          start = stop = undefined;
-        }
-      });
-    }
-  }
-
-  function checkKey(e) {
-      var code;
-      if (!e) e = window.event;
-      if (e.keyCode) code = e.keyCode;
-      else if (e.which) code = e.which;
-      switch(code) {
-        case 32: // 'space'
-        toggleCurrentItem();
-        break;
-        case 72: // 'H'
-        window.location.href = document.getElementById('nav-home').href;
-        break;
-        case 74: // 'J'
-        nextItem();
-        toggleCurrentItem();
-        break;
-        case 75: // 'K'
-        previousItem();
-        toggleCurrentItem();
-        break;
-        case 77: // 'M'
-        markAsCurrentItem();
-        break;
-        case 39: // right arrow
-        case 78: // 'N'
-        if (e.shiftKey) {
-          nextPage();
-        } else {
-          nextItem();
-        }
-        break;
-        case 79: // 'O'
-        case 86: // 'V' as in RSS lounge
-        if (e.shiftKey) {
-          openCurrentItem(true);
-        } else {
-          openCurrentItem(false);
-        }
-        break;
-        case 37: // left arrow
-        case 80 : // 'P'
-        if (e.shiftKey) {
-          previousPage();
-        } else {
-          previousItem();
-        }
-        break;
-        case 83: // 'S'
-        shaarliCurrentItem();
-        break;
-        case 84: // 'T'
-        toggleCurrentItem();
-        break;
-        default:
-        break;
-      }
-    // e.ctrlKey e.altKey e.shiftKey
-  }
-
-  function initPageButton() {
-    var i = 0, paging, listElements;
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].onclick = previousClickPage;
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].onclick = nextClickPage;
-        }
-      }
-    }
-
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].onclick = previousClickPage;
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].onclick = nextClickPage;
-        }
-      }
-    }
-  }
-
-  function updatePageButton() {
-    var i = 0, paging, listElements, maxPage;
-
-    if (filter == 'unread') {
-      currentNbItems = currentUnread;
-    }
-
-    if (currentNbItems < byPage) {
-      maxPage = 1;
-    } else {
-      maxPage = Math.ceil(currentNbItems / byPage);
-    }
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
-          if (currentPage === 1) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
-          if (currentPage === maxPage) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-      }
-      listElements = paging.getElementsByTagName('button');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'current-max-page')) {
-          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
-        }
-      }
-    }
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previousPage=' + currentPage;
-          if (currentPage === 1) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-        if (hasClass(listElements[i], 'next-page')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&nextPage=' + currentPage;
-          if (currentPage === maxPage) {
-            if (!hasClass(listElements[i], 'disabled')) {
-              addClass(listElements[i], 'disabled');
-            }
-          } else {
-            if (hasClass(listElements[i], 'disabled')) {
-              removeClass(listElements[i], 'disabled');
-            }
-          }
-        }
-      }
-      listElements = paging.getElementsByTagName('button');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'current-max-page')) {
-          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
-        }
-      }
-    }
-  }
-
-  function initItemButton() {
-    var i = 0, paging, listElements;
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].onclick = previousClickItem;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].onclick = nextClickItem;
-        }
-      }
-    }
-
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].onclick = previousClickItem;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].onclick = nextClickItem;
-        }
-      }
-    }
-  }
-
-  function updateItemButton() {
-    var i = 0, paging, listElements;
-
-    paging = document.getElementById('paging-up');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
-
-        }
-      }
-    }
-
-    paging = document.getElementById('paging-down');
-    if (paging) {
-      listElements = paging.getElementsByTagName('a');
-      for (i = 0; i < listElements.length; i += 1) {
-        if (hasClass(listElements[i], 'previous-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&previous=' + currentItemHash;
-        }
-        if (hasClass(listElements[i], 'next-item')) {
-          listElements[i].href = '?currentHash=' + currentHash
-                               + '&next=' + currentItemHash;
-
-        }
-      }
-    }
-  }
-
-  function initUnread() {
-    var element = document.getElementById('nb-unread');
-
-    currentUnread = parseInt(element.innerHTML, 10);
-
-    title = document.title;
-    setNbUnread(currentUnread);
-  }
-
-  function setNbUnread(nb) {
-    var element = document.getElementById('nb-unread');
-
-    if (nb < 0) {
-      nb = 0;
-    }
-
-    currentUnread = nb;
-    element.innerHTML = currentUnread;
-
-    document.title = title + ' (' + currentUnread + ')';
-  }
-
-  function initOptions() {
-    var elementIndex = document.getElementById('index');
-
-    if (elementIndex.hasAttribute('data-view')) {
-      view = elementIndex.getAttribute('data-view');
-    }
-    if (elementIndex.hasAttribute('data-list-feeds')) {
-      listFeeds = elementIndex.getAttribute('data-list-feeds');
-    }
-    if (elementIndex.hasAttribute('data-filter')) {
-      filter = elementIndex.getAttribute('data-filter');
-    }
-    if (elementIndex.hasAttribute('data-order')) {
-      order = elementIndex.getAttribute('data-order');
-    }
-    if (elementIndex.hasAttribute('data-autoread-item')) {
-      autoreadItem = parseInt(elementIndex.getAttribute('data-autoread-item'), 10);
-      autoreadItem = (autoreadItem === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autoread-page')) {
-      autoreadPage = parseInt(elementIndex.getAttribute('data-autoread-page'), 10);
-      autoreadPage = (autoreadPage === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autohide')) {
-      autohide = parseInt(elementIndex.getAttribute('data-autohide'), 10);
-      autohide = (autohide === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autofocus')) {
-      autofocus = parseInt(elementIndex.getAttribute('data-autofocus'), 10);
-      autofocus = (autofocus === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-autoupdate')) {
-      autoupdate = parseInt(elementIndex.getAttribute('data-autoupdate'), 10);
-      autoupdate = (autoupdate === 1)?true:false;
-    }
-    if (elementIndex.hasAttribute('data-by-page')) {
-      byPage = parseInt(elementIndex.getAttribute('data-by-page'), 10);
-    }
-    if (elementIndex.hasAttribute('data-shaarli')) {
-      shaarli = elementIndex.getAttribute('data-shaarli');
-    }
-    if (elementIndex.hasAttribute('data-redirector')) {
-      redirector = elementIndex.getAttribute('data-redirector');
-    }
-    if (elementIndex.hasAttribute('data-current-hash')) {
-      currentHash = elementIndex.getAttribute('data-current-hash');
-    }
-    if (elementIndex.hasAttribute('data-current-page')) {
-      currentPage = parseInt(elementIndex.getAttribute('data-current-page'), 10);
-    }
-    if (elementIndex.hasAttribute('data-nb-items')) {
-      currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
-    }
-
-    status = document.getElementById('status').innerHTML;
-  }
-
-  function initKF() {
-    var listLinkFolders = [],
-        listLinkItems = [];
-
-    initOptions();
-
-    listLinkFolders = getListLinkFolders();
-    listLinkItems = getListLinkItems();
-    if (!window.jQuery || (window.jQuery && !window.jQuery().collapse)) {
-      document.getElementById('menu-toggle'). onclick = collapseClick;
-      initCollapse(listLinkFolders);
-      initCollapse(listLinkItems);
-    }
-    initLinkFolders(listLinkFolders);
-    initLinkItems(listLinkItems);
-
-    initListItemsHash();
-    initListItems();
-    initUnread();
-
-    initItemButton();
-    initPageButton();
-
-    initAnonyme();
-
-    addEvent(window, 'keyup', checkKey);
-    addEvent(window, 'touchstart', checkMove);
-
-    if (autoupdate) {
-      initUpdate();
-    }
-  }
-
-  //http://scottandrew.com/weblog/articles/cbs-events
-  function addEvent(obj, evType, fn, useCapture) {
-    if (obj.addEventListener) {
-      obj.addEventListener(evType, fn, useCapture);
-    } else {
-      if (obj.attachEvent) {
-        obj.attachEvent('on' + evType, fn);
-      } else {
-        window.alert('Handler could not be attached');
-      }
-    }
-  }
-
-  function removeEvent(obj, evType, fn, useCapture) {
-    if (obj.removeEventListener) {
-      obj.removeEventListener(evType, fn, useCapture);
-    } else if (obj.detachEvent) {
-      obj.detachEvent("on"+evType, fn);
-    } else {
-      alert("Handler could not be removed");
-    }
-  }
-
-  function test() {
-    alert(JSON.stringify(listItemsHash));
-
-  }
-
-  // when document is loaded init KrISS feed
-  if (document.getElementById && document.createTextNode) {
-    addEvent(window, 'load', initKF);
-  }
-
-  window.checkKey = checkKey;
-  window.removeEvent = removeEvent;
-  window.addEvent = addEvent;
-  window.test = test;
-})();    </script>
+    <?php }else{ ?>
+    <script type="text/javascript" src="?file=script.js&amp;version=<?php echo $version;?>"></script>
     <?php } ?>
   </body>
 </html>
+
 <?php
     }
+
+
+    public static function installTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head>
+<?php FeedPage::includesTpl(); ?>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span4 offset4">
+          <div id="install">
+            <form class="form-horizontal" method="post" action="" name="installform">
+              <fieldset>
+                <legend><?php echo Intl::msg( 'KrISS feed installation' );?></legend>
+                <div class="text-center">
+                  <?php echo Intl::msg( 'Click on flag to select your language.' );?><br><?php $counter1=-1; if( isset($langs) && is_array($langs) && sizeof($langs) ) foreach( $langs as $key1 => $value1 ){ $counter1++; ?>
+                  <a href="?lang=<?php echo $key1;?>" title="<?php echo $value1["name"];?>" class="flag <?php echo $value1["class"];?>"></a><?php } ?>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="setlogin"><?php echo Intl::msg( 'Login' );?></label>
+                  <div class="controls">
+                    <input type="text" id="setlogin" name="setlogin" placeholder="<?php echo Intl::msg( 'Login' );?>">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="setlogin"><?php echo Intl::msg( 'Password' );?></label>
+                  <div class="controls">
+                    <input type="password" id="setpassword" name="setpassword" placeholder="<?php echo Intl::msg( 'Password' );?>">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <div class="controls">
+                    <button type="submit" class="btn"><?php echo Intl::msg( 'Install KrISS feed' );?></button>
+                  </div>
+                </div>
+                <input type="hidden" name="token" value="<?php echo $token;?>">
+              </fieldset>
+            </form>
+<?php FeedPage::statusTpl(); ?>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>document.installform.setlogin.focus();</script>
+  </body>
+</html>
+
+
+<?php
+    }
+
+
+    public static function list_feedsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<div id="list-feeds">
+<?php if( $listFeeds==='show' ){ ?>
+  <input type="text" id="Nbunread" style="display:none;" value="<?php echo $feedsView["all"]["nbUnread"];?>">
+  <ul class="unstyled">
+    <li id="all-subscriptions" class="folder <?php if( $currentHash==='all' ){ ?> current-folder<?php } ?>">
+      <?php if( isset($_GET['stars']) ){ ?>
+      <h4><a class="mark-as" href="?stars&currentHash=all"><span class="label"><?php echo $feedsView["all"]["nbAll"];?></span></a><a href="?stars&currentHash=all"><?php echo $feedsView["all"]["title"];?></a></h4>
+      <?php }else{ ?>
+      <h4><a class="mark-as" href="<?php echo $feedsView["all"]["nbUnread"]==0?'?currentHash=all&unread':$query.'read';?>=all" title="<?php echo $feedsView["all"]["nbUnread"]==0?Intl::msg('Mark all as unread'):Intl::msg('Mark all as read');?>"><span class="label"><?php echo $feedsView["all"]["nbUnread"];?></span></a><a href="?currentHash=all"><?php echo $feedsView["all"]["title"];?></a></h4>
+      <?php } ?>
+
+      <ul class="unstyled">
+        <?php $counter1=-1; if( isset($feedsView["all"]["feeds"]) && is_array($feedsView["all"]["feeds"]) && sizeof($feedsView["all"]["feeds"]) ) foreach( $feedsView["all"]["feeds"] as $key1 => $value1 ){ $counter1++; ?>
+          <?php $atitle=FeedPage::$var['atitle']=$value1["description"];?>
+          <?php if( empty($atitle) ){ ?>
+            <?php $atitle=FeedPage::$var['atitle']=$value1["title"];?>
+          <?php } ?>
+          <?php if( isset($value1["error"]) ){ ?>
+            <?php $atitle=FeedPage::$var['atitle']=$value1["error"];?>
+          <?php } ?>
+
+          <?php if( empty($value1["title"]) ){ ?>
+            <?php $value1["title"]=FeedPage::$var['value']["title"]=parse_url($value1["xmlUrl"], PHP_URL_HOST);?>
+          <?php } ?>
+
+        <li id="feed-<?php echo $key1;?>" class="feed<?php if( $value1["nbUnread"]!==0 ){ ?> has-unread<?php } ?><?php if( $currentHash==$key1 ){ ?> current-feed<?php } ?><?php if( $autohide&&$value1["nbUnread"]==0 ){ ?> autohide-feed<?php } ?>">
+          <?php if( $addFavicon ){ ?>
+          <span class="feed-favicon">
+            <img src="<?php echo $kf->getFaviconFeed($key1);?>" height="16" width="16" title="favicon" alt="favicon"/>
+          </span>
+          <?php } ?>
+          <?php if( isset($_GET['stars']) ){ ?>
+          <a class="mark-as" href="<?php echo $query;?>currentHash=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbAll"];?></span></a><a class="feed" href="?stars&currentHash=<?php echo $key1;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
+          <?php }else{ ?>
+          <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbUnread"];?></span></a><a class="feed<?php if( isset($value1["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key1;?>#feed-<?php echo $key1;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
+          <?php } ?>
+        </li>
+        <?php } ?>
+        <?php $counter1=-1; if( isset($feedsView["folders"]) && is_array($feedsView["folders"]) && sizeof($feedsView["folders"]) ) foreach( $feedsView["folders"] as $key1 => $value1 ){ $counter1++; ?>
+        <li id="folder-<?php echo $key1;?>" class="folder<?php if( $currentHash==$key1 ){ ?> current-folder<?php } ?><?php if( $autohide&&$value1["nbUnread"]==0 ){ ?> autohide-folder<?php } ?>">
+          <h5>
+            <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key1;?>"><span class="label"><?php echo $value1["nbUnread"];?></span></a>
+            <a class="folder-toggle" href="<?php echo $query;?>toggleFolder=<?php echo $key1;?>" data-toggle="collapse" data-target="#folder-ul-<?php echo $key1;?>">
+              <span class="ico">
+                <span class="ico-b-disc"></span>
+                <span class="ico-w-line-h"></span>
+                <span class="ico-w-line-v<?php echo $value1["isOpen"]?' folder-toggle-open':' folder-toggle-close';?>"></span>
+              </span>
+            </a>
+            <a href="?currentHash=<?php echo $key1;?>#folder-<?php echo $key1;?>"><?php echo htmlspecialchars( $value1["title"] );?></a>
+          </h5>
+          <ul id="folder-ul-<?php echo $key1;?>" class="collapse unstyled<?php echo $value1["isOpen"]?' in':'';?>">
+            <?php $counter2=-1; if( isset($value1["feeds"]) && is_array($value1["feeds"]) && sizeof($value1["feeds"]) ) foreach( $value1["feeds"] as $key2 => $value2 ){ $counter2++; ?>
+              <?php $atitle=FeedPage::$var['atitle']=$value2["description"];?>
+              <?php if( empty($atitle) ){ ?>
+                <?php $atitle=FeedPage::$var['atitle']=$value2["title"];?>
+              <?php } ?>
+              <?php if( isset($value2["error"]) ){ ?>
+                <?php $atitle=FeedPage::$var['atitle']=$value2["error"];?>
+              <?php } ?>
+            <li id="folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" class="feed<?php if( $value2["nbUnread"]!== 0 ){ ?> has-unread<?php } ?><?php if( $currentHash == $key2 ){ ?> current-feed<?php } ?><?php if( $autohide&&$value2["nbUnread"]== 0 ){ ?> autohide-feed<?php } ?>">
+              
+              <?php if( $addFavicon ){ ?>
+              <span class="feed-favicon">
+                <img src="<?php echo $kf->getFaviconFeed($key2);?>" height="16" width="16" title="favicon" alt="favicon"/>
+              </span>
+              <?php } ?>
+              <a class="mark-as" href="<?php echo $query;?>read=<?php echo $key2;?>"><span class="label"><?php echo $value2["nbUnread"];?></span></a><a class="feed<?php if( isset($value2["error"]) ){ ?> text-error<?php } ?>" href="?currentHash=<?php echo $key2;?>#folder-<?php echo $key1;?>-feed-<?php echo $key2;?>" title="<?php echo htmlspecialchars( $atitle );?>"><?php echo htmlspecialchars( $value2["title"] );?></a>
+            </li>
+            <?php } ?>
+          </ul>
+        </li>
+      <?php } ?>
+      </ul>
+  </ul>
+<?php } ?>
+</div>
+
+<?php
+    }
+
+
+    public static function list_itemsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<?php $unread=FeedPage::$var['unread']=Intl::msg('unread');?>
+<?php $read=FeedPage::$var['read']=Intl::msg('read');?>
+<?php $share=FeedPage::$var['share']=Intl::msg('share');?>
+<?php $star=FeedPage::$var['star']=Intl::msg('star');?>
+<?php $unstar=FeedPage::$var['unstar']=Intl::msg('unstar');?>
+<?php $top=FeedPage::$var['top']=Intl::msg('top');?>
+
+<ul id="list-items" class="unstyled">
+<?php $keys=FeedPage::$var['keys']=array_keys($items);?>
+<?php $counter1=-1; if( isset($keys) && is_array($keys) && sizeof($keys) ) foreach( $keys as $key1 => $value1 ){ $counter1++; ?>
+  <?php $item=FeedPage::$var['item']=$kf->getItem($value1);?>
+  <li id="item-<?php echo $value1;?>" class="<?php echo $view==='expanded'?'item-expanded':'item-list';?><?php if( $item["read"]==1 ){ ?> read<?php } ?><?php if( $value1==$currentItemHash ){ ?> current<?php } ?>">
+    <?php if( $view==='list' ){ ?>
+    <a id="item-toggle-<?php echo $value1;?>" class="item-toggle item-toggle-plus" href="<?php echo $query;?>current=<?php echo $value1;?><?php if( !isset($_GET['open'])||$currentItemHash!=$value1 ){ ?>&amp;open<?php } ?>" data-toggle="collapse" data-target="#item-div-<?php echo $value1;?>">
+      <span class="ico ico-toggle-item">
+        <span class="ico-b-disc"></span>
+        <span class="ico-w-line-h"></span>
+        <span class="ico-w-line-v<?php if( !isset($_GET['open'])||$currentItemHash!=$value1 ){ ?> item-toggle-close<?php }else{ ?> item-toggle-open<?php } ?>"></span>
+      </span>
+      <?php echo $item["time"]["list"];?>
+    </a>
+    <dl class="dl-horizontal item">
+      <dt class="item-feed">
+        <?php if( $addFavicon ){ ?>
+        <span class="item-favicon">
+          <img src="<?php echo $item["favicon"];?>" height="16" width="16" title="favicon" alt="favicon"/>
+        </span>
+        <?php } ?>
+        <span class="item-author">
+          <a class="item-feed" href="?currentHash=<?php echo ( substr( $value1, 0,6 ) );?>">
+            <?php echo $item["author"];?>
+          </a>
+        </span>
+      </dt>
+      <dd class="item-info">
+        <span class="item-title">
+          <?php if( !isset($_GET['stars']) ){ ?>
+            <?php if( $item["read"] == 1 ){ ?>
+          <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label"><?php echo $unread;?></span></a>
+            <?php }else{ ?>
+          <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label"><?php echo $read;?></span></a>
+            <?php } ?>
+          <?php } ?>
+          <a<?php if( $blank ){ ?> target="_blank"<?php } ?><?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> class="item-link" href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["link"];?>">
+            <?php echo $item["title"];?>
+          </a>
+        </span>
+        <span class="item-description">
+          <a class="item-toggle muted" href="<?php echo $query;?>current=<?php echo $value1;?><?php if( !isset($_GET['open']) || $currentItemHash != $value1 ){ ?>&amp;open<?php } ?>" data-toggle="collapse" data-target="#item-div-<?php echo $value1;?>">
+            <?php echo $item["description"];?>
+          </a>
+        </span>
+      </dd>
+    </dl>
+    <div class="clear"></div>
+    <?php } ?>
+
+    <div id="item-div-<?php echo $value1;?>" class="item collapse<?php if( $view==='expanded'||($currentItemHash==$value1&&isset($_GET['open'])) ){ ?> in well<?php } ?><?php if( $value1==$currentItemHash ){ ?> current<?php } ?>">
+      <?php if( $view==='expanded' or ($currentItemHash == $value1 and isset($_GET['open'])) ){ ?>
+      <div class="item-title">
+        <a class="item-shaarli" href="<?php echo $query;?>shaarli=<?php echo $value1;?>"><span class="label"><?php echo $share;?></span></a>
+        <?php if( (!isset($_GET['stars'])) ){ ?>
+          <?php if( ($item['read'] == 1) ){ ?>
+        <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label item-label-mark-as"><?php echo $unread;?></span></a>
+          <?php }else{ ?>
+        <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label item-label-mark-as"><?php echo $read;?></span></a>
+          <?php } ?>
+        <?php } ?>
+        <?php if( (isset($item['starred']) && $item['starred']===1) ){ ?>
+        <a class="item-starred" href="<?php echo $query;?>unstar=<?php echo $value1;?>"><span class="label"><?php echo $unstar;?></span></a>
+        <?php }else{ ?>
+        <a class="item-starred" href="<?php echo $query;?>star=<?php echo $value1;?>"><span class="label"><?php echo $star;?></span></a>
+        <?php } ?>
+        <a<?php if( $blank ){ ?> target="_blank"<?php } ?><?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> class="item-link" href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["link"];?>"><?php echo $item["title"];?></a>
+      </div>
+      <div class="clear"></div>
+      <div class="item-info-end item-info-time">
+        <?php echo $item["time"]["expanded"];?>
+      </div>
+      <div class="item-info-end item-info-author">
+        <a class="item-via"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["via"];?>"><?php echo $item["author"];?></a>
+        <a class="item-xml"<?php if( $redirector==='noreferrer' ){ ?> rel="noreferrer"<?php } ?> href="<?php if( $redirector!='noreferrer' ){ ?><?php echo $redirector;?><?php } ?><?php echo $item["xmlUrl"];?>">
+          <span class="ico">
+            <span class="ico-feed-dot"></span>
+            <span class="ico-feed-circle-1"></span>
+            <span class="ico-feed-circle-2"></span>
+          </span>
+        </a>
+      </div>
+      <div class="clear"></div>
+      <div class="item-content">
+        <article>
+          <?php echo $item["content"];?>
+        </article>
+      </div>
+      <div class="clear"></div>
+      <div class="item-info-end">
+        <a class="item-top" href="#status"><span class="label label-expanded"><?php echo $top;?></span></a> 
+        <a class="item-shaarli" href="<?php echo $query;?>shaarli=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $share;?></span></a>
+        <?php if( !isset($_GET['stars']) ){ ?>
+          <?php if( $item['read'] == 1 ){ ?>
+        <a class="item-mark-as" href="<?php echo $query;?>unread=<?php echo $value1;?>"><span class="label item-label-mark-as label-expanded"><?php echo $unread;?></span></a>
+          <?php }else{ ?>
+        <a class="item-mark-as" href="<?php echo $query;?>read=<?php echo $value1;?>"><span class="label item-label-mark-as label-expanded"><?php echo $read;?></span></a>
+          <?php } ?>
+        <?php } ?>
+        <?php if( isset($item["starred"]) && $item["starred"]===1 ){ ?>
+        <a class="item-starred" href="<?php echo $query;?>unstar=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $unstar;?></span></a>
+        <?php }else{ ?>
+        <a class="item-starred" href="<?php echo $query;?>star=<?php echo $value1;?>"><span class="label label-expanded"><?php echo $star;?></span></a>
+        <?php } ?>
+        <?php if( $view==='list' ){ ?>
+        <a id="item-toggle-<?php echo $value1;?>" class="item-toggle item-toggle-plus" href="<?php echo $query;?>current=<?php echo $value1;?><?php if( (!isset($_GET['open'])||$currentItemHash != $value1) ){ ?>&amp;open<?php } ?>" data-toggle="collapse" data-target="#item-div-<?php echo $value1;?>">
+          <span class="ico ico-toggle-item">
+            <span class="ico-b-disc"></span>
+            <span class="ico-w-line-h"></span>
+          </span>
+        </a>
+        <?php } ?>
+      </div>
+      <div class="clear"></div>
+      <?php } ?>
+    </div>
+  </li>
+<?php } ?>
+</ul>
+<div class="clear"></div>
+
+<?php
+    }
+
+
+    public static function loginTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+<?php FeedPage::includesTpl(); ?>
+  <body onload="document.loginform.login.focus();">
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span4 offset4">
+          <div id="login">
+            <form class="form-horizontal" method="post" action="?login" name="loginform">
+              <fieldset>
+                <legend><?php echo Intl::msg( 'Welcome to KrISS feed' );?></legend>
+                <div class="control-group">
+     <label class="control-label" for="login"><?php echo Intl::msg( 'Login' );?></label>
+                  <div class="controls">
+                    <input type="text" id="login" name="login" placeholder="<?php echo Intl::msg( 'Login' );?>" tabindex="1">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="password"><?php echo Intl::msg( 'Password' );?></label>
+                  <div class="controls">
+                    <input type="password" id="password" name="password" placeholder="<?php echo Intl::msg( 'Password' );?>" tabindex="2">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <div class="controls">
+                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;<?php echo Intl::msg( 'Stay signed in (do not check on public computers)' );?></label>
+                  </div>
+                </div>
+                
+                <div class="control-group">
+                  <div class="controls">
+                    <button type="submit" class="btn" tabindex="4"><?php echo Intl::msg( 'Sign in' );?></button>
+                  </div>
+                </div>
+              </fieldset>
+
+              <input type="hidden" name="returnurl" value="<?php echo htmlspecialchars( $referer );?>">
+              <input type="hidden" name="token" value="<?php echo $token;?>">
+            </form>
+<?php FeedPage::statusTpl(); ?>
+          </div>
+        </div>
+      </div>
+    </div>                                           
+  </body>
+</html> 
+
+<?php
+    }
+
+
+    public static function messageTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+<?php FeedPage::includesTpl(); ?>
+  <body onload="document.getElementById('again').focus();">
+    <div class="container-fluid full-height">
+      <div class="row-fluid full-height">
+        <div id="main-container" class="span12 full-height">
+<?php FeedPage::statusTpl(); ?>
+          <div class="text-center">
+            <?php echo Intl::msg( 'Click on flag to select your language.' );?><br><?php $counter1=-1; if( isset($langs) && is_array($langs) && sizeof($langs) ) foreach( $langs as $key1 => $value1 ){ $counter1++; ?>
+            <a href="?lang=<?php echo $key1;?>" title="<?php echo $value1["name"];?>" class="flag <?php echo $value1["class"];?>"></a><?php } ?>
+          </div>
+          <div class="<?php if( empty($class) ){ ?>text-error<?php }else{ ?><?php echo $class;?><?php } ?> text-center"><?php echo $message;?><br>
+     <a id="again" tabindex="1" class="btn" href="<?php echo $referer;?>"><?php if( empty($button) ){ ?><?php echo Intl::msg( 'Try again' );?><?php }else{ ?><?php echo $button;?><?php } ?></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+<?php
+    }
+
+
+    public static function navTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<div id="menu" class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a id="menu-toggle" class="btn btn-navbar" data-toggle="collapse" data-target="#menu-collapse" title="<?php echo Intl::msg( 'Menu' );?>"><?php echo Intl::msg( 'Menu' );?></a>
+      <a id="nav-home" class="brand ico-home" href="<?php echo $base;?>" title="<?php echo Intl::msg( 'Home' );?>"></a>
+      <?php if( isset($currentHashView) ){ ?><span class="brand"><?php echo $currentHashView;?></span><?php } ?>
+
+      <div id="menu-collapse" class="nav-collapse collapse">
+        <ul class="nav">
+<?php if( $template==='stars' || $template==='index' ){ ?>
+<?php $counter1=-1; if( isset($menu) && is_array($menu) && sizeof($menu) ) foreach( $menu as $key1 => $value1 ){ $counter1++; ?>
+  <?php if( $key1==='menuView' ){ ?>
+    <?php if( $view==='expanded' ){ ?>
+          <li><a href="<?php echo $query.'view=list';?>" title="<?php echo Intl::msg( 'View as list' );?>" class="menu-ico ico-list"><span class="menu-text menu-list"> <?php echo Intl::msg( 'View as list' );?></span></a></li>
+    <?php }else{ ?>
+          <li><a href="<?php echo $query.'view=expanded';?>" title="<?php echo Intl::msg( 'View as expanded' );?>" class="menu-ico ico-expanded"><span class="menu-text menu-expanded"> <?php echo Intl::msg( 'View as expanded' );?></span></a></li>
+    <?php } ?>
+  <?php }elseif( $key1==='menuListFeeds' ){ ?>
+    <?php if( $listFeeds==='show' ){ ?>
+          <li><a href="<?php echo $query.'listFeeds=hide';?>" title="<?php echo Intl::msg( 'Hide feeds list' );?>" class="menu-ico ico-list-feeds-hide"><span class="menu-text menu-list-feeds-hide"> <?php echo Intl::msg( 'Hide feeds list' );?></span></a></li>
+    <?php }else{ ?>
+          <li><a href="<?php echo $query.'listFeeds=show';?>" title="<?php echo Intl::msg( 'Show feeds list' );?>" class="menu-ico ico-list-feeds-show"><span class="menu-text menu-list-feeds-show"> <?php echo Intl::msg( 'Show feeds list' );?></span></a></li>
+    <?php } ?>
+  <?php }elseif( $key1==='menuFilter' ){ ?>
+    <?php if( $filter==='unread' ){ ?>
+          <li><a href="<?php echo $query.'filter=all';?>" title="<?php echo Intl::msg( 'Show all items' );?>" class="menu-ico ico-filter-all"><span class="menu-text menu-filter-all"> <?php echo Intl::msg( 'Show all items' );?></span></a></li>
+    <?php }else{ ?>
+          <li><a href="<?php echo $query.'filter=unread';?>" title="<?php echo Intl::msg( 'Show unread items' );?>" class="menu-ico ico-filter-unread"><span class="menu-text menu-filter-unread"> <?php echo Intl::msg( 'Show unread items' );?></span></a></li>
+     <?php } ?>
+  <?php }elseif( $key1==='menuOrder' ){ ?>
+     <?php if( $order==='newerFirst' ){ ?>
+          <li><a href="<?php echo $query.'order=olderFirst';?>" title="<?php echo Intl::msg( 'Show older first' );?>" class="menu-ico ico-order-older"><span class="menu-text menu-order"> <?php echo Intl::msg( 'Show older first' );?></span></a></li>
+     <?php }else{ ?>
+          <li><a href="<?php echo $query.'order=newerFirst';?>" title="<?php echo Intl::msg( 'Show newer first' );?>" class="menu-ico ico-order-newer"><span class="menu-text menu-order"> <?php echo Intl::msg( 'Show newer first' );?></span></a></li>
+     <?php } ?>
+  <?php }elseif( $key1==='menuUpdate' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update folder');?>
+     <?php }elseif( $currentHashType=='feed' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update feed');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Update all');?>
+     <?php } ?>
+          <li><a href="<?php echo $query.'update='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-update"><span class="menu-text menu-update"> <?php echo $intl;?></span></a></li>
+  <?php }elseif( $key1==='menuRead' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark folder as read');?>
+     <?php }elseif( $currentHashType=='feed' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as read');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as read');?>
+     <?php } ?>
+          <li><a href="<?php echo $query.'read='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-read"><span class="menu-text menu-mark-as-read"> <?php echo $intl;?></span></a></li>
+  <?php }elseif( $key1==='menuUnread' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark folder as unread');?>
+     <?php }elseif( $currentHashType=='feed' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark feed as unread');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Mark all as unread');?>
+     <?php } ?>
+          <li><a href="<?php echo $query.'unread='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-mark-as-unread"><span class="menu-text menu-mark-as-unread"> <?php echo $intl;?></span></a></li>
+  <?php }elseif( $key1==='menuEdit' ){ ?>
+     <?php if( $currentHashType=='folder' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit folder');?>
+     <?php }elseif( $currentHashType=='feed' ){ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit feed');?>
+     <?php }else{ ?>
+          <?php $intl=FeedPage::$var['intl']=Intl::msg('Edit all');?>
+     <?php } ?>
+          <li><a href="<?php echo $query.'edit='.$currentHash;?>" title="<?php echo $intl;?>" class="menu-ico ico-edit"><span class="menu-text menu-edit"> <?php echo $intl;?></span></a></li>
+  <?php }elseif( $key1==='menuAdd' ){ ?>
+          <li><a href="<?php echo $query.'add';?>" title="<?php echo Intl::msg( 'Add a new feed' );?>" class="menu-ico ico-add-feed"><span class="menu-text menu-add-feed"> <?php echo Intl::msg( 'Add a new feed' );?></span></a></li>
+  <?php }elseif( $key1==='menuHelp' ){ ?>
+          <li><a href="<?php echo $query.'help';?>" title="<?php echo Intl::msg( 'Help' );?>" class="menu-ico ico-help"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Help' );?></span></a></li>
+  <?php }elseif( $key1==='menuStars' ){ ?>
+    <?php if( $template==='index' ){ ?>
+          <li><a href="<?php echo $query.'stars';?>" title="<?php echo Intl::msg( 'Starred items' );?>" class="menu-ico ico-star"><span class="menu-text menu-help"> <?php echo Intl::msg( 'Starred items' );?></span></a></li>
+    <?php } ?>
+  <?php } ?>
+<?php } ?>
+<?php if( $kf->kfc->isLogged() ){ ?>
+          <li><a href="?config" title="<?php echo Intl::msg( 'Configuration' );?>" class="menu-ico ico-config"><span class="menu-text menu-config"> <?php echo Intl::msg( 'Configuration' );?></span></a></li>
+<?php } ?>
+<?php }elseif( $template==='config' ){ ?>
+          <li><a href="?password" title="<?php echo Intl::msg( 'Change password' );?>"> <?php echo Intl::msg( 'Change password' );?></a></li>
+          <li><a href="?import" title="<?php echo Intl::msg( 'Import opml file' );?>"> <?php echo Intl::msg( 'Import opml file' );?></a></li>
+          <li><a href="?export" title="<?php echo Intl::msg( 'Export opml file' );?>"> <?php echo Intl::msg( 'Export opml file' );?></a></li>
+          <li><a href="?plugins" title="<?php echo Intl::msg( 'Plugins management' );?>"> <?php echo Intl::msg( 'Plugins management' );?></a></li>
+<?php } ?>
+<?php if( Session::isLogged() ){ ?>
+          <li><a href="?logout" title="<?php echo Intl::msg( 'Sign out' );?>" class="menu-ico ico-logout"><span class="menu-text menu-logout"> <?php echo Intl::msg( 'Sign out' );?></span></a></li>
+<?php }else{ ?>
+          <li><a href="?login" title="<?php echo Intl::msg( 'Sign in' );?>" class="menu-ico ico-login"><span class="menu-text menu-login"> <?php echo Intl::msg( 'Sign in' );?></span></a></li>
+<?php } ?>
+        </ul>
+        <div class="clear"></div>
+      </div>
+      <div class="clear"></div>
+    </div>
+  </div>
+</div>
+
+<?php
+    }
+
+
+    public static function pagingTpl()
+    {
+        extract(FeedPage::$var);
+?>
+
+<ul class="inline">
+<?php $counter1=-1; if( isset($paging) && is_array($paging) && sizeof($paging) ) foreach( $paging as $key1 => $value1 ){ $counter1++; ?>
+  <?php if( $key1=='pagingItem' ){ ?>
+  <li>
+    <div class="btn-group">
+      <a class="btn btn2 btn-info previous-item" href="<?php echo $query;?>previous=<?php echo $currentItemHash;?>" title="<?php echo Intl::msg( 'Previous item' );?>"><?php echo Intl::msg( 'Previous item' );?></a>
+      <a class="btn btn2 btn-info next-item" href="<?php echo $query;?>next=<?php echo $currentItemHash;?>" title="<?php echo Intl::msg( 'Next item' );?>"><?php echo Intl::msg( 'Next item' );?></a>
+    </div>
+  </li>
+  <?php }elseif( $key1=='pagingMarkAs' ){ ?>
+  <li>
+    <div class="btn-group">
+      <a class="btn btn-info" href="<?php echo $query;?>read=<?php echo $currentHash;?>" title="<?php echo Intl::msg( 'Mark as read' );?>"><?php echo Intl::msg( 'Mark as read' );?></a>
+    </div>
+  </li>
+  <?php }elseif( $key1=='pagingPage' ){ ?>
+  <li>
+    <div class="btn-group">
+      <a class="btn btn3 btn-info previous-page<?php if( $currentPage===1 ){ ?> disabled<?php } ?>" href="<?php echo $query;?>previousPage=<?php echo $currentPage;?>" title="<?php echo Intl::msg( 'Previous page' );?>"><?php echo Intl::msg( 'Previous page' );?></a>
+      <button class="btn btn3 disabled current-max-page"><?php echo $currentPage;?> / <?php echo $maxPage;?></button>
+      <a class="btn btn3 btn-info next-page<?php if( $currentPage===$maxPage ){ ?> disabled<?php } ?>" href="<?php echo $query;?>nextPage=<?php echo $currentPage;?>" title="<?php echo Intl::msg( 'Next page' );?>"><?php echo Intl::msg( 'Next page' );?></a>
+    </div>
+  </li>
+  <?php }elseif( $key1=='pagingByPage' ){ ?>
+  <li>
+    <div class="btn-group">
+      <form class="form-inline" action="" method="GET">
+        <div class="input-prepend input-append paging-by-page">
+          <a class="btn btn3 btn-info" href="<?php echo $query;?>byPage=1">1</a>
+          <a class="btn btn3 btn-info" href="<?php echo $query;?>byPage=10">10</a>
+          <a class="btn btn3 btn-info" href="<?php echo $query;?>byPage=50">50</a>
+          <div class="btn-break"></div>
+          <input class="btn2 input-by-page input-mini" type="text" name="byPage">
+          <input type="hidden" name="currentHash" value="<?php echo $currentHash;?>">
+          <button type="submit" class="btn btn2"><?php echo Intl::msg( 'Items per page' );?></button>
+        </div>
+      </form>
+    </div>
+  </li>
+  <?php } ?>
+<?php } ?>
+</ul>
+<div class="clear"></div>
+
+<?php
+    }
+
+
+    public static function pluginsTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+<?php FeedPage::includesTpl(); ?>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span6 offset3">
+          <?php echo var_dump( $plugins );?>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<?php
+    }
+
+
+    public static function statusTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<div id="status" class="text-center">
+  <a href="http://github.com/tontof/kriss_feed">KrISS feed <?php echo $version;?></a>
+  <span class="hidden-phone"> - <?php echo Intl::msg( 'A simple and smart (or stupid) feed reader' );?></span>. <?php echo Intl::msg( 'By' );?> <a href="http://tontof.net">Tontof</a>
+  <span id="flags-sel">
+    <a id="hide-flags" href="<?php if( !empty($query_string) ){ ?>?<?php echo $query_string;?><?php } ?>#flags" class="flag <?php echo $lang["class"];?>" title="<?php echo $lang["name"];?>"></a>
+    <a id="show-flags" href="<?php if( !empty($query_string) ){ ?>?<?php echo $query_string;?><?php } ?>#flags-sel" class="flag <?php echo $lang["class"];?>" title="<?php echo $lang["name"];?>"></a>
+  </span>
+  <div id="flags"><?php $counter1=-1; if( isset($langs) && is_array($langs) && sizeof($langs) ) foreach( $langs as $key1 => $value1 ){ $counter1++; ?>
+    <a href="?lang=<?php echo $key1;?>" title="<?php echo $value1["name"];?>" class="flag <?php echo $value1["class"];?>"></a><?php } ?>
+  </div>
+</div>
+
+<?php
+    }
+
+
+    public static function updateTpl()
+    {
+        extract(FeedPage::$var);
+?>
+<!DOCTYPE html>
+<html>
+  <head>
+<?php FeedPage::includesTpl(); ?>
+  </head>
+  <body>
+    <div class="container-fluid full-height">
+      <div class="row-fluid full-height">
+        <div class="span12 full-height">
+<?php FeedPage::statusTpl(); ?>
+<?php FeedPage::navTpl(); ?>
+          <div class="container-fluid">
+            <div class="row-fluid">
+              <div class="span6 offset3">
+                <ul class="unstyled">
+                  <?php echo $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html');?>
+                </ul>
+                <a class="btn ico-home" href="<?php echo $base;?>" title="<?php echo Intl::msg( 'Home' );?>"></a>
+                <?php if( !empty($referer) ){ ?>
+                <a class="btn" href="<?php echo $referer;?>"><?php echo Intl::msg( 'Go back' );?></a>
+                <?php } ?>
+                <a class="btn" href="<?php echo $query;?>update=<?php echo $currentHash;?>&amp;force"><?php echo Intl::msg( 'Force update' );?></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <?php if( is_file('inc/script.js') ){ ?>
+    <script type="text/javascript" src="inc/script.js?version=<?php echo $version;?>"></script>
+    <?php }else{ ?>
+    <script type="text/javascript" src="?file=script.js&amp;version=<?php echo $version;?>"></script>
+    <?php } ?>
+  </body>
+</html>
+
+<?php
+    }
+
 }
 
-class Feed
+class Intl
 {
-    public $dataFile = '';
+    public static $lazy = false;
+    public static $lang = "en_US";
+    public static $dir = "po"; // po/messages/en_US.po
+    public static $domain = "messages";
+    public static $messages = array();
+    public static $langList = array();
 
-    public $cacheDir = '';
-
-    public $kfc;
-
-    private $_data = array();
-
-    public function __construct($dataFile, $cacheDir, $kfc)
+    public static function init()
     {
-        $this->kfc = $kfc;
-        $this->dataFile = $dataFile;
-        $this->cacheDir = $cacheDir;
-    }
-
-    public function getData()
-    {
-        return $this->_data;
-    }
-
-    public function setData($data)
-    {
-        $this->_data = $data;
-    }
-
-    public function loadData()
-    {
-        if (empty($this->_data)) {
-            if (file_exists($this->dataFile)) {
-                $this->_data = unserialize(
-                    gzinflate(
-                        base64_decode(
-                            substr(
-                                file_get_contents($this->dataFile),
-                                strlen(PHPPREFIX),
-                                -strlen(PHPSUFFIX)
-                                )
-                            )
-                        )
-                    );
-                return true;
-            } else {
-                $this->_data['feeds'] = array(
-                    MyTool::smallHash('http://tontof.net/?rss') => array(
-                        'title' => 'Tontof',
-                        'foldersHash' => array(),
-                        'timeUpdate' => 'auto',
-                        'lastUpdate' => 0,
-                        'nbUnread' => 0,
-                        'nbAll' => 0,
-                        'htmlUrl' => 'http://tontof.net',
-                        'xmlUrl' => 'http://tontof.net/?rss',
-                        'description' => 'A simple and smart (or stupid) blog'));
-                $this->_data['folders'] = array();
-                $this->_data['items'] = array();
-                $this->_data['newItems'] = array();
-
-                return false;
-            }
+        $lang = self::$lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+            $_SESSION['lang'] = $lang;
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
         }
-
-        // data already loaded
-        return true;
-    }
-
-    public function writeData()
-    {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
-            $write = @file_put_contents(
-                $this->dataFile,
-                PHPPREFIX
-                . base64_encode(gzdeflate(serialize($this->_data)))
-                . PHPSUFFIX
-                );
-            if (!$write) {
-                die("Can't write to " . $this->dataFile);
-            }
+         
+        if (in_array($lang, array_keys(self::$langList))) {
+            self::$lang = $lang;
+        } else {
+            unset($_SESSION['lang']);
         }
     }
 
-    public function getFeeds()
-    {
-        return $this->_data['feeds'];
-    }
-
-    public function sortFeeds()
-    {
-        uasort(
-            $this->_data['feeds'],
-            'Feed::sortByTitle'
-            );
-    }
-
-    public function getFeedsView()
-    {
-        $feedsView = array('all' => array('title' => 'All feeds', 'nbUnread' => 0, 'nbAll' => 0, 'feeds' => array()), 'folders' => array());
-        
-        foreach ($this->_data['feeds'] as $feedHash => $feed) {
-            if (isset($feed['error'])) {
-                $feed['error'] = $this->getError($feed['error']);
-            }
-            $feedsView['all']['nbUnread'] += $feed['nbUnread'];
-            $feedsView['all']['nbAll'] += $feed['nbAll'];
-            if (empty($feed['foldersHash'])) {
-                $feedsView['all']['feeds'][$feedHash] = $feed;
-            } else {
-                foreach ($feed['foldersHash'] as $folderHash ) {
-                    $folder = $this->getFolder($folderHash);
-                    if ($folder !== false) {
-                        if (!isset($feedsView['folders'][$folderHash]['title'])) {
-                            $feedsView['folders'][$folderHash]['title'] = $folder['title'];
-                            $feedsView['folders'][$folderHash]['isOpen'] = $folder['isOpen'];
-                            $feedsView['folders'][$folderHash]['nbUnread'] = 0;
-                            $feedsView['folders'][$folderHash]['nbAll'] = 0;
-                        }
-                        $feedsView['folders'][$folderHash]['feeds'][$feedHash] = $feed;
-                        $feedsView['folders'][$folderHash]['nbUnread'] += $feed['nbUnread'];
-                        $feedsView['folders'][$folderHash]['nbAll'] += $feed['nbAll'];
-                    }
-                }
-            }
-        }
-
-        return $feedsView;
-    }
-
-    public function getFeed($feedHash)
-    {
-        if (isset($this->_data['feeds'][$feedHash])) {
-            return $this->_data['feeds'][$feedHash];
-        }
-
-        return false;
-    }
-
-    public function getFeedHtmlUrl($feedHash)
-    {
-        if (isset($this->_data['feeds'][$feedHash]['htmlUrl'])) {
-            return $this->_data['feeds'][$feedHash]['htmlUrl'];
-        }
-
-        return false;
-    }
-
-    public function getFeedTitle($feedHash)
-    {
-        if (isset($this->_data['feeds'][$feedHash]['title'])) {
-            return $this->_data['feeds'][$feedHash]['title'];
-        }
-
-        return false;
-    }
-
-    public function loadFeed($feedHash)
-    {
-        if (!isset($this->_data['feeds'][$feedHash]['items'])) {
-            $this->_data['feeds'][$feedHash]['items'] = array();
-
-            if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
-                $items = unserialize(
-                    gzinflate(
-                        base64_decode(
-                            substr(
-                                file_get_contents($this->cacheDir.'/'.$feedHash.'.php'),
-                                strlen(PHPPREFIX),
-                                -strlen(PHPSUFFIX)
-                                )
-                            )
-                        )
-                    );
-
-                $this->_data['feeds'][$feedHash]['items'] = $items;
-            }
-        }
-    }
-
-    public function editFeed(
-        $feedHash,
-        $title,
-        $description,
-        $foldersHash,
-        $timeUpdate)
-    {
-        if (isset($this->_data['feeds'][$feedHash])) {
-            if (!empty($title)) {
-                $this->_data['feeds'][$feedHash]['title'] = $title;
-            }
-            if (!empty($description)) {
-                $this->_data['feeds'][$feedHash]['description'] = $description;
-            }
-            
-            $this->_data['feeds'][$feedHash]['foldersHash'] = $foldersHash;
-            $this->_data['feeds'][$feedHash]['timeUpdate'] = 'auto';
-            if (!empty($timeUpdate)) {
-                if ($timeUpdate == 'max') {
-                    $this->_data['feeds'][$feedHash]['timeUpdate'] = $timeUpdate;
-                } else {
-                    $this->_data['feeds'][$feedHash]['timeUpdate'] = (int) $timeUpdate;
-                    $maxUpdate = $this->kfc->maxUpdate;
-                    if ($this->_data['feeds'][$feedHash]['timeUpdate'] < MIN_TIME_UPDATE
-                        || $this->_data['feeds'][$feedHash]['timeUpdate'] > $maxUpdate
-                    ) {
-                        $this->_data['feeds'][$feedHash]['timeUpdate'] = 'auto';
-                    }
-                }
-            }
-        }
-    }
-
-    public function removeFeed($feedHash)
-    {
-        if (isset($this->_data['feeds'][$feedHash])) {
-            unset($this->_data['feeds'][$feedHash]);
-            unlink($this->cacheDir. '/' .$feedHash.'.php' );
-            foreach (array_keys($this->_data['items']) as $itemHash) {
-                if (substr($itemHash, 0, 6) === $feedHash) {
-                    unset($this->_data['items'][$itemHash]);
-                }
-            }
-            foreach (array_keys($this->_data['newItems']) as $itemHash) {
-                if (substr($itemHash, 0, 6) === $feedHash) {
-                    unset($this->_data['newItems'][$itemHash]);
-                }
-            }
-        }
-    }
-
-    public function writeFeed($feedHash, $feed)
-    {
-        if (Session::isLogged() || (isset($_GET['cron']) && $_GET['cron'] === sha1($this->kfc->salt.$this->kfc->hash))) {
-            if (!is_dir($this->cacheDir)) {
-                if (!@mkdir($this->cacheDir, 0755)) {
-                    die("Can not create cache dir: ".$this->cacheDir);
-                }
-                @chmod($this->cacheDir, 0755);
-                if (!is_file($this->cacheDir.'/.htaccess')) {
-                    if (!@file_put_contents(
-                            $this->cacheDir.'/.htaccess',
-                            "Allow from none\nDeny from all\n"
-                            )) {
-                        die("Can not protect cache dir: ".$this->cacheDir);
-                    }
-                }
-            }
-
-            $write = @file_put_contents(
-                $this->cacheDir.'/'.$feedHash.'.php',
-                PHPPREFIX
-                . base64_encode(gzdeflate(serialize($feed)))
-                . PHPSUFFIX
-                );
-
-            if (!$write) {
-                die("Can't write to " . $this->cacheDir.'/'.$feedHash.'.php');
-            }
-        }
-    }
-
-    public function orderFeedsForUpdate($feedsHash)
-    {
-        $newFeedsHash = array();
-        foreach(array_keys($this->_data['items']) as $itemHash) {
-            $feedHash = substr($itemHash, 0, 6);
-            if (in_array($feedHash, $feedsHash) and !in_array($feedHash, $newFeedsHash)) {
-                $newFeedsHash[] = $feedHash;
-            }
-        }
-        foreach($feedsHash as $feedHash) {
-            if (!in_array($feedHash, $newFeedsHash)) {
-                $newFeedsHash[] = $feedHash;
-            }
-        }
-
-        return $newFeedsHash;
-    }
-
-    public function getFeedsHashFromFolderHash($folderHash)
-    {
-        $list = array();
-        $folders = $this->getFolders();
-
-        if (isset($folders[$folderHash])) {
-            foreach ($this->_data['feeds'] as $feedHash => $feed) {
-                if (in_array($folderHash, $feed['foldersHash'])) {
-                    $list[] = $feedHash;
-                }
-            }
-        }
-
-        return $list;
-    }
-
-    public function getFolders()
-    {
-        return $this->_data['folders'];
-    }
-
-    public function getFolder($folderHash)
-    {
-        if (isset($this->_data['folders'][$folderHash])) {
-            return $this->_data['folders'][$folderHash];
-        }
-
-        return false;
-    }
-
-    public function addFolder($folderTitle, $newFolderHash = '')
-    {
-        if (empty($newFolderHash)) {
-            $newFolderHash = MyTool::smallHash($newFolderTitle);
-        }
-        $this->_data['folders'][$newFolderHash] = array(
-            'title' => $folderTitle,
-            'isOpen' => 1
+    public static function addLang($lang, $name, $class) {
+        self::$langList[$lang] = array(
+            'name' => $name,
+            'class' => $class
         );
     }
 
-    public function renameFolder($oldFolderHash, $newFolderTitle)
-    {
-        $newFolderHash = '';
-        if (!empty($newFolderTitle)) {
-            $newFolderHash = MyTool::smallHash($newFolderTitle);
-            $this->addFolder($newFolderTitle, $newFolderHash);
-            $this->_data['folders'][$newFolderHash]['isOpen'] = $this->_data['folders'][$oldFolderHash]['isOpen'];
-        }
-        unset($this->_data['folders'][$oldFolderHash]);
+    public static function load($lang) {
+        self::$lazy = true;
 
-        foreach ($this->_data['feeds'] as $feedHash => $feed) {
-            $i = array_search($oldFolderHash, $feed['foldersHash']);
-            if ($i !== false) {
-                unset($this->_data['feeds'][$feedHash]['foldersHash'][$i]);
-                if (!empty($newFolderTitle)) {
-                    $this->_data['feeds'][$feedHash]['foldersHash'][] = $newFolderHash;
-                }
-            }
-        }
-    }
-
-    public function toggleFolder($hash)
-    {
-        if ($this->_data['folders'][$hash]) {
-            $isOpen = $this->_data['folders'][$hash]['isOpen'];
-            if ($isOpen) {
-                $this->_data['folders'][$hash]['isOpen'] = 0;
-            } else {
-                $this->_data['folders'][$hash]['isOpen'] = 1;
-            }
-        }
-
-        return true;
-    }
-
-    public function getFolderTitle($folderHash)
-    {
-        if (isset($this->_data['folders'][$folderHash])) {
-            return $this->_data['folders'][$folderHash]['title'];
-        }
-
-        return false;
-    }
-
-    public function getItems($hash = 'all', $filter = 'all')
-    {
-        if (empty($hash) or $hash == 'all' and $filter == 'all') {
-            return $this->_data['items']+$this->_data['newItems'];
-        }
-
-        if (empty($hash) or $hash == 'all' and $filter == 'old') {
-            return $this->_data['items'];
-        }
-
-        if (empty($hash) or $hash == 'all' and $filter == 'new') {
-            return $this->_data['newItems'];
+        if (file_exists(self::$dir.'/'.self::$domain.'/'.$lang.'.po')) {
+            self::$messages[$lang] = self::compress(self::read(self::$dir.'/'.self::$domain.'/'.$lang.'.po'));
+        } else if (class_exists('Intl_'.$lang)) {
+            call_user_func_array(
+                array('Intl_'.$lang, 'init'),
+                array(&self::$messages)
+            );
         }
         
-        $list = array();
-        $isRead = 1;
-        if ($filter === 'unread') {
-            $isRead = 0;
-        }
-
-        if (empty($hash) || $hash == 'all') {
-            // all items
-            foreach ($this->_data['items'] as $itemHash => $item) {
-                if ($item[1] === $isRead) {
-                    $list[$itemHash] = $item;
-                }
-            }
-            foreach ($this->_data['newItems'] as $itemHash => $item) {
-                if ($item[1] === $isRead) {
-                    $list[$itemHash] = $item;
-                }
-            }
-        } else {
-            if (strlen($hash) === 12) {
-                // an item
-                if (isset($this->_data['items'][$hash])) {
-                    $list[$hash] = $this->_data['items'][$hash];
-                } else if (isset($this->_data['newItems'][$hash])) {
-                    $list[$hash] = $this->_data['newItems'][$hash];
-                }
-            } else {
-                $feedsHash = array();
-                if (isset($this->_data['feeds'][$hash])) {
-                    // a feed
-                    $feedsHash[] = $hash;
-                } else if (isset($this->_data['folders'][$hash])) {
-                    // a folder
-                    foreach ($this->_data['feeds'] as $feedHash => $feed) {
-                        if (in_array($hash, $feed['foldersHash'])) {
-                            $feedsHash[] = $feedHash;
-                        }
-                    }
-                }
-
-                // get items from a list of feeds
-                if (!empty($feedsHash)) {
-                    $flipFeedsHash = array_flip($feedsHash);
-                    foreach ($this->_data['items'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            if ($filter === 'all' or $item[1] === $isRead) {
-                                $list[$itemHash] = $item;
-                            }
-                        }
-                    }
-                    foreach ($this->_data['newItems'] as $itemHash => $item) {
-                        if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                            if ($filter === 'all' or $item[1] === $isRead) {
-                                $list[$itemHash] = $item;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $list;
+        return isset(self::$messages[$lang])?self::$messages[$lang]:array();
     }
 
-    public function loadItem($itemHash, $keep)
-    {
-        $feedHash = substr($itemHash, 0, 6);
-        $item = array();
-        if (isset($this->_data['feeds'][$feedHash]['items'])) {
-            if (isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
-                $item = $this->_data['feeds'][$feedHash]['items'][$itemHash];
-            }
-        } else {
-            $this->loadFeed($feedHash);
-
-            return $this->loadItem($itemHash, $keep);
+    public static function compress($hash) {
+        foreach ($hash as $hashId => $hashArray) {
+            $hash[$hashId] = $hashArray['msgstr'];
         }
 
-        if (!$keep) {
-            unset($this->_data['feeds'][$feedHash]['items']);
-        }
-
-        return $item;
+        return $hash;
     }
 
-    public function getItem($itemHash, $keep = true)
+    public static function msg($string, $context = "")
     {
-        $item = $this->loadItem($itemHash, $keep);
+        if (!self::$lazy) {
+            self::load(self::$lang);
+        }
 
-        if (!empty($item)) {
-            $item['itemHash'] = $itemHash;
-            if (isset($this->_data['items'][$itemHash])) {
-                $item['read'] = $this->_data['items'][$itemHash][1];
+        return self::n_msg($string, '', 0, $context);
+    }
 
-                return $item;
-            } else if (isset($this->_data['newItems'][$itemHash])) {
-                $item['read'] = $this->_data['newItems'][$itemHash][1];
+    public static function n_msg($string, $plural, $count, $context = "")
+    {
+        if (!self::$lazy) {
+            self::load(self::$lang);
+        }
 
-                $currentNewItemIndex = array_search($itemHash, array_keys($this->_data['newItems']));
-                if (isset($_SESSION['lastNewItemsHash'])) {
-                    $lastNewItemIndex = array_search($_SESSION['lastNewItemsHash'], array_keys($this->_data['newItems']));
+        // TODO extract Plural-Forms from po file
+        // https://www.gnu.org/savannah-checkouts/gnu/gettext/manual/html_node/Plural-forms.html
+        $count = $count > 1 ? 1 : 0;
 
-                    if ($lastNewItemIndex < $currentNewItemIndex) {
-                        $_SESSION['lastNewItemsHash'] = $itemHash;
-                    }
+        if (isset(self::$messages[self::$lang][$string][$count])) {
+            return self::$messages[self::$lang][$string][$count];
+        }
+
+        if ($count != 0) {
+            return $plural;
+        }
+
+        return $string;
+    }
+
+    public static function read($pofile)
+    {
+        $handle = fopen( $pofile, 'r' );
+        $hash = array();
+        $fuzzy = false;
+        $tcomment = $ccomment = $reference = null;
+        $entry = $entryTemp = array();
+        $state = null;
+        $just_new_entry = false; // A new entry has ben just inserted
+
+        while(!feof($handle)) {
+            $line = trim( fgets($handle) );
+
+            if($line==='') {
+                if($just_new_entry) {
+                    // Two consecutive blank lines
+                    continue;
+                }
+
+                // A new entry is found!
+                $hash[] = $entry;
+                $entry = array();
+                $state= null;
+                $just_new_entry = true;
+                continue;
+            }
+
+            $just_new_entry = false;
+
+            $split = preg_split('/\s/ ', $line, 2 );
+            $key = $split[0];
+            $data = isset($split[1])? $split[1]:null;
+                        
+            switch($key) {
+            case '#,':  //flag
+                $entry['fuzzy'] = in_array('fuzzy', preg_split('/,\s*/', $data) );
+                $entry['flags'] = $data;
+                break;
+
+            case '#':   //translation-comments
+                $entryTemp['tcomment'] = $data;
+                $entry['tcomment'] = $data;
+                break;
+
+            case '#.':  //extracted-comments
+                $entryTemp['ccomment'] = $data;
+                break;
+
+            case '#:':  //reference
+                $entryTemp['reference'][] = addslashes($data);
+                $entry['reference'][] = addslashes($data);
+                break;
+
+            case '#|':  //msgid previous-untranslated-string
+                // start a new entry
+                break;
+                                
+            case '#@':  // ignore #@ default
+                $entry['@'] = $data;
+                break;
+
+                // old entry
+            case '#~':
+                $key = explode(' ', $data );
+                $entry['obsolete'] = true;
+                switch( $key[0] )
+                {
+                case 'msgid': $entry['msgid'] = trim($data,'"');
+                    break;
+
+                case 'msgstr':  $entry['msgstr'][] = trim($data,'"');
+                    break;
+                default:        break;
+                }
+                                                        
+                continue;
+                break;
+
+            case 'msgctxt' :
+                // context
+            case 'msgid' :
+                // untranslated-string
+            case 'msgid_plural' :
+                // untranslated-string-plural
+                $state = $key;
+                $entry[$state] = $data;
+                break;
+                                
+            case 'msgstr' :
+                // translated-string
+                $state = 'msgstr';
+                $entry[$state][] = $data;
+                break;
+
+            default :
+
+                if( strpos($key, 'msgstr[') !== FALSE ) {
+                    // translated-string-case-n
+                    $state = 'msgstr';
+                    $entry[$state][] = $data;
                 } else {
-                    $_SESSION['lastNewItemsHash'] = $itemHash;
-                }
-
-                return $item;
-            } else {
-                // FIX: data may be corrupted
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    public function updateItems()
-    {
-        if (isset($this->_data['needSort']) or (isset($this->_data['order']) and $this->_data['order'] != $this->kfc->order)) {
-            unset($this->_data['needSort']);
-
-            $this->_data['items'] = $this->_data['items']+$this->_data['newItems'];
-            $this->_data['newItems'] = array();
-            // sort items
-            if ($this->kfc->order === 'newerFirst') {
-                arsort($this->_data['items']);
-            } else {
-                asort($this->_data['items']);
-            }
-            $this->_data['order'] = $this->kfc->order;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public function formatChannel($channel)
-    {
-        $newChannel = array();
-
-        // list of format for each info in order of importance
-        $formats = array('title' => array('title'),
-                         'description' => array('description', 'subtitle'),
-                         'htmlUrl' => array('link', 'id', 'guid'));
-
-        foreach ($formats as $format => $list) {
-            $newChannel[$format] = '';
-            $len = count($list);
-            for ($i = 0; $i < $len; $i++) {
-                if ($channel->hasChildNodes()) {
-                    $child = $channel->childNodes;
-                    for ($j = 0, $lenChannel = $child->length;
-                         $j<$lenChannel;
-                         $j++) {
-                        if (isset($child->item($j)->tagName)
-                            && $child->item($j)->tagName == $list[$i]
-                        ) {
-                            $newChannel[$format]
-                                = $child->item($j)->textContent;
+                    // continued lines
+                    //echo "O NDE ELSE:".$state.':'.$entry['msgid'];
+                    switch($state) {
+                    case 'msgctxt' :
+                    case 'msgid' :
+                    case 'msgid_plural' :
+                        //$entry[$state] .= "\n" . $line;
+                        if(is_string($entry[$state])) {
+                            // Convert it to array
+                            $entry[$state] = array( $entry[$state] );
                         }
-                    }
-                }
-            }
-        }
-
-        return $newChannel;
-    }
-
-    public function getChannelFromXml($xml)
-    {
-        $channel = array();
-
-        // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $channel = $feed->item(0);
-        } else {
-            $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $channel = $feed->item(0);
-            } else {
-                // unknown feed
-            }
-        }
-
-        if (!empty($channel)) {
-            $channel = $this->formatChannel($channel);
-        }
-
-        return $channel;
-    }
-
-    public function formatItems($items, $formats)
-    {
-        $newItems = array();
-
-        foreach ($items as $item) {
-            $tmpItem = array();
-            foreach ($formats as $format => $list) {
-                $tmpItem[$format] = '';
-                $len = count($list);
-                for ($i = 0; $i < $len; $i++) {
-                    if (is_array($list[$i])) {
-                        $tag = $item->getElementsByTagNameNS(
-                            $list[$i][0],
-                            $list[$i][1]
-                        );
-                    } else {
-                        $tag = $item->getElementsByTagName($list[$i]);
-                        // wrong detection : e.g. media:content for content
-                        if ($tag->length != 0 && $tag->item(0)->tagName != $list[$i]) {
-                            $tag = new DOMNodeList;
-                        }
-                    }
-                    if ($tag->length != 0) {
-                        // we find a correspondence for the current format
-                        // select first item (item(0)), (may not work)
-                        // stop to search for another one
-                        if ($format == 'link') {
-                            $tmpItem[$format]
-                                = $tag->item(0)->getAttribute('href');
-                        }
-                        if (empty($tmpItem[$format])) {
-                            $tmpItem[$format] = $tag->item(0)->textContent;
-                        }
-                        $i = $len;
-                    }
-                }
-            }
-            if (!empty($tmpItem['link'])) {
-                $hashUrl = MyTool::smallHash($tmpItem['link']);
-                $newItems[$hashUrl] = array();
-                $newItems[$hashUrl]['title'] = $tmpItem['title'];
-                $newItems[$hashUrl]['time']  = strtotime($tmpItem['time'])
-                    ? strtotime($tmpItem['time'])
-                    : time();
-                if (MyTool::isUrl($tmpItem['via'])
-                    && $tmpItem['via'] != $tmpItem['link']) {
-                    $newItems[$hashUrl]['via'] = $tmpItem['via'];
-                } else {
-                    $newItems[$hashUrl]['via'] = '';
-                }
-                $newItems[$hashUrl]['link'] = $tmpItem['link'];
-                $newItems[$hashUrl]['author'] = $tmpItem['author'];
-                mb_internal_encoding("UTF-8");
-                $newItems[$hashUrl]['description'] = mb_substr(
-                    strip_tags($tmpItem['description']), 0, 500
-                );
-                $newItems[$hashUrl]['content'] = $tmpItem['content'];
-            }
-        }
-
-        return $newItems;
-    }
-
-    public function getItemsFromXml ($xml)
-    {
-        $items = array();
-
-        // find feed type RSS, Atom
-        $feed = $xml->getElementsByTagName('channel');
-        if ($feed->item(0)) {
-            // RSS/rdf:RDF feed
-            $feed = $xml->getElementsByTagName('item');
-            $len = $feed->length;
-            for ($i = 0; $i < $len; $i++) {
-                $items[$i] = $feed->item($i);
-            }
-            $feed = $xml->getElementsByTagName('rss');
-            if (!$feed->item(0)) {
-                $feed = $xml->getElementsByTagNameNS(
-                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-                    'RDF'
-                );
-            }
-        } else {
-            $feed = $xml->getElementsByTagName('feed');
-            if ($feed->item(0)) {
-                // Atom feed
-                $feed = $xml->getElementsByTagName('entry');
-                $len = $feed->length;
-                for ($i = 0; $i < $len; $i++) {
-                    $items[$i] = $feed->item($i);
-                }
-                $feed = $xml->getElementsByTagName('feed');
-            }
-        }
-
-        // list of format for each info in order of importance
-        $formats = array(
-            'author'      => array('author', 'creator', 'dc:author',
-                                   'dc:creator'),
-            'content'     => array('content:encoded', 'content', 'description',
-                               'summary', 'subtitle'),
-            'description' => array('description', 'summary', 'subtitle',
-                                   'content', 'content:encoded'),
-            'via'        => array('guid', 'id'),
-            'link'        => array('feedburner:origLink', 'link', 'guid', 'id'),
-            'time'        => array('pubDate', 'updated', 'lastBuildDate',
-                                   'published', 'dc:date', 'date'),
-            'title'       => array('title'));
-
-        if ($feed->item(0)) {
-            $formats = $this->formatRDF($formats, $feed->item(0));
-        }
-
-        return $this->formatItems($items, $formats);
-    }
-
-    public function getAttributeNS ($feed, $name)
-    {
-        $res = '';
-        if ($feed->nodeName === $name) {
-            $ns = explode(':', $name);
-            $res = $feed->getAttribute('xmlns:'.$ns[0]);
-        } else {
-            if ($feed->hasChildNodes()) {
-                foreach ($feed->childNodes as $childNode) {
-                    if ($res === '') {
-                        $res = $this->getAttributeNS($childNode, $name);
-                    } else {
+                        $entry[$state][] = $line;
                         break;
-                    }
-                }
-            }
-        }
-
-        return $res;
-    }
-
-    public function formatRDF($formats, $feed)
-    {
-        foreach ($formats as $format => $list) {
-            for ($i = 0, $len = count($list); $i < $len; $i++) {
-                $name = explode(':', $list[$i]);
-                if (count($name)>1) {
-                    $res = $feed->getAttribute('xmlns:'.$name[0]);
-                    if (!empty($res)) {
-                        $ns = $res;
-                    } else {
-                        $ns = $this->getAttributeNS($feed, $list[$i]);
-                    }
-                    $formats[$format][$i] = array($ns, $name[1]);
-                }
-            }
-        }
-
-        return $formats;
-    }
-
-    public function loadXml($xmlUrl)
-    {
-        // set user agent
-        // http://php.net/manual/en/function.libxml-set-streams-context.php
-        $opts = array(
-            'http' => array(
-                'timeout' => 4,
-                'user_agent' => 'KrISS feed agent '.$this->kfc->version.' by Tontof.net http://github.com/tontof/kriss_feed',
-                )
-            );
-
-        $context = stream_context_create($opts);
-        libxml_set_streams_context($context);
-
-        // request a file through HTTP
-        $document = false;
-        set_error_handler(array('MyTool', 'silence_errors'));
-        $document = DOMDocument::load($xmlUrl);
-        restore_error_handler();
-
-        return $document;
-    }
-
-    public function addChannel($xmlUrl)
-    {
-        $feedHash = MyTool::smallHash($xmlUrl);
-        if (!isset($this->_data['feeds'][$feedHash])) {
-            $xml = $this->loadXml($xmlUrl);
-
-            if (!$xml) {
-                return false;
-            } else {
-                $channel = $this->getChannelFromXml($xml);
-                $items = $this->getItemsFromXml($xml);
-                foreach (array_keys($items) as $itemHash) {
-                    if (empty($items[$itemHash]['via'])) {
-                        $items[$itemHash]['via'] = $channel['htmlUrl'];
-                    }
-                    if (empty($items[$itemHash]['author'])) {
-                        $items[$itemHash]['author'] = $channel['title'];
-                    } else {
-                        $items[$itemHash]['author']
-                            = $channel['title'] . ' ('
-                            . $items[$itemHash]['author'] . ')';
-                    }
-                    $items[$itemHash]['xmlUrl'] = $xmlUrl;
-
-                    $this->_data['newItems'][$feedHash . $itemHash] = array(
-                        $items[$itemHash]['time'],
-                        0
-                    );
-                    $items[$feedHash . $itemHash] = $items[$itemHash];
-                    unset($items[$itemHash]);
-                }
-
-                $channel['xmlUrl'] = $xmlUrl;
-                $channel['foldersHash'] = array();
-                $channel['nbUnread'] = count($items);
-                $channel['nbAll'] = count($items);
-                $channel['timeUpdate'] = 'auto';
-                $channel['lastUpdate'] = time();
-
-                $this->_data['feeds'][$feedHash] = $channel;
-                $this->_data['needSort'] = true;
-
-                $this->writeFeed($feedHash, $items);
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function getTimeUpdate($feed)
-    {
-        $max = $feed['timeUpdate'];
-
-        if ($max == 'auto') {
-            $max = $this->kfc->maxUpdate;
-        } elseif ($max == 'max') {
-            $max = $this->kfc->maxUpdate;
-        } elseif ((int) $max < MIN_TIME_UPDATE
-                  || (int) $max > $this->kfc->maxUpdate) {
-            $max = $this->kfc->maxUpdate;
-        }
-
-        return (int) $max;
-    }
-
-    public function needUpdate($feed)
-    {
-        $diff = (int) (time()-$feed['lastUpdate']);
-        if ($diff > $this->getTimeUpdate($feed) * 60) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static function getError($error)
-    {
-        switch ($error) {
-        case ERROR_NO_XML:
-            return 'Feed is not in XML format';
-            break;
-        case ERROR_ITEMS_MISSED:
-            return 'Items may have been missed since last update';
-            break;
-        case ERROR_LAST_UPDATE:
-            return 'Problem with the last update';
-            break;
-        default:
-            return 'unknown error';
-            break;
-        }
-    }
-
-    public function updateChannel($feedHash)
-    {
-        $error = '';
-        $newItems = array();
-
-        if (!isset($this->_data['feeds'][$feedHash])) {
-            return array(
-                'error' => $error,
-                'newItems' => $newItems
-                );
-        }
-
-        unset($this->_data['feeds'][$feedHash]['error']);
-        $xmlUrl = $this->_data['feeds'][$feedHash]['xmlUrl'];
-        $xml = $this->loadXml($xmlUrl);
-
-        if (!$xml) {
-            if (file_exists($this->cacheDir.'/'.$feedHash.'.php')) {
-                $error = ERROR_LAST_UPDATE;
-            } else {
-                $error = ERROR_NO_XML;
-            }
-        } else {
-            // if feed description is empty try to update description
-            // (after opml import, description is often empty)
-            if (empty($this->_data['feeds'][$feedHash]['description'])) {
-                $channel = $this->getChannelFromXml($xml);
-                if (isset($channel['description'])) {
-                    $this->_data['feeds'][$feedHash]['description']
-                        = $channel['description'];
-                }
-                // Check description only the first time description is empty
-                if (empty($this->_data['feeds'][$feedHash]['description'])) {
-                    $this->_data['feeds'][$feedHash]['description'] = ' ';
-                }
-            }
-
-            $this->loadFeed($feedHash);
-            $oldItems = $this->_data['feeds'][$feedHash]['items'];
-
-            $rssItems = $this->getItemsFromXml($xml);
-            $rssItems = array_slice($rssItems, 0, $this->kfc->maxItems, true);
-            $rssItemsHash = array_keys($rssItems);
-
-            // Look for new items
-            foreach ($rssItemsHash as $itemHash) {
-                // itemHash is smallHash of link. To compare to item
-                // hashes into data, we need to concatenate to feedHash.
-                if (!isset($oldItems[$feedHash.$itemHash])) {
-                    if (empty($rssItems[$itemHash]['via'])) {
-                        $rssItems[$itemHash]['via']
-                            = $this->_data['feeds'][$feedHash]['htmlUrl'];
-                    }
-                    if (empty($rssItems[$itemHash]['author'])) {
-                        $rssItems[$itemHash]['author']
-                            = $this->_data['feeds'][$feedHash]['title'];
-                    } else {
-                        $rssItems[$itemHash]['author']
-                            = $this->_data['feeds'][$feedHash]['title'] . ' ('
-                            . $rssItems[$itemHash]['author'] . ')';
-                    }
-                    $rssItems[$itemHash]['xmlUrl'] = $xmlUrl;
-                    $newItems[$feedHash . $itemHash] = $rssItems[$itemHash];
-                }
-            }
-            $newItemsHash = array_keys($newItems);
-            $this->_data['feeds'][$feedHash]['items']
-                    = $newItems+$oldItems;
-
-            // Check if items may have been missed
-            if (count($oldItems) !== 0 and count($rssItemsHash) === count($newItemsHash)) {
-                $error = ERROR_ITEMS_MISSED;
-            }
-
-            // Remove useless items
-            foreach ($this->getItems($feedHash) as $itemHash => $item) {
-                $itemRssHash = substr($itemHash, 6, 6);
-                // Remove from cache already read items not any more in the feed
-                if (!isset($rssItems[$itemRssHash]) and $item[1] == 1) {
-                    unset($this->_data['feeds'][$feedHash]['items'][$itemHash]);
-                }
-                
-                if (!isset($this->_data['feeds'][$feedHash]['items'][$itemHash])) {
-                    // Remove items not any more in the cache
-                    unset($this->_data['items'][$itemHash]);
-                    unset($this->_data['newItems'][$itemHash]);
-                }
-            }
-
-            // Check if quota exceeded
-            $nbAll = count($this->_data['feeds'][$feedHash]['items']);
-            if ($nbAll > $this->kfc->maxItems) {
-                $this->_data['feeds'][$feedHash]['items']
-                    = array_slice(
-                        $this->_data['feeds'][$feedHash]['items'],
-                        0,
-                        $this->kfc->maxItems, true
-                        );
-                $nbAll = $this->kfc->maxItems;
-            }
-
-            // Update items list and feed information (nbUnread, nbAll)
-            $this->_data['feeds'][$feedHash]['nbAll'] = $nbAll;
-            $nbUnread = 0;
-            foreach ($this->_data['feeds'][$feedHash]['items'] as $itemHash => $item) {
-                if (isset($this->_data['items'][$itemHash])) {
-                    if ($this->_data['items'][$itemHash][1] === 0) {
-                        $nbUnread++;
-                    }
-                } else if (isset($this->_data['newItems'][$itemHash])) {
-                    if ($this->_data['newItems'][$itemHash][1] === 0) {
-                        $nbUnread++;
-                    }
-                } else {
-                    // TODO: Is appended at the end ??
-                    $this->_data['newItems'][$itemHash] = array(
-                        $item['time'],
-                        0                        
-                    );
-                    $nbUnread++;
-                }
-            }
-            $this->_data['feeds'][$feedHash]['nbUnread'] = $nbUnread;
-        }
-
-        // update feed information
-        $this->_data['feeds'][$feedHash]['lastUpdate'] = time();
-        if (!empty($error)) {
-            $this->_data['feeds'][$feedHash]['error'] = $error;
-        }
-
-        if (empty($newItems)) {
-            unset($this->_data['feeds'][$feedHash]['items']);
-            $this->writeData();
-        } else {
-            $this->writeFeed($feedHash, $this->_data['feeds'][$feedHash]['items']);
-            unset($this->_data['feeds'][$feedHash]['items']);
-            $this->_data['needSort'] = true;
-
-            if (isset($_SESSION['lastNewItemsHash'])) {
-                $lastNewItemIndex = array_search($_SESSION['lastNewItemsHash'], array_keys($this->_data['newItems']));
-                $this->_data['items'] = $this->_data['items']+array_slice($this->_data['newItems'], 0, $lastNewItemIndex + 1, true);
-                $this->_data['newItems'] = array_slice($this->_data['newItems'], $lastNewItemIndex + 1, count($this->_data['newItems']) - $lastNewItemIndex, true);
-                unset($_SESSION['lastNewItemsHash']);
-            }
-
-            if ($this->kfc->order === 'newerFirst') {
-                arsort($this->_data['newItems']);
-            } else {
-                asort($this->_data['newItems']);
-            }
-            $this->_data['order'] = $this->kfc->order;
-
-            $this->writeData();
-        }
-
-        return array(
-            'error' => $error,
-            'newItems' => $newItems
-            );
-    }
-
-    public function updateFeedsHash($feedsHash, $force, $format = '')
-    {
-        $i = 0;
-
-        $feedsHash = $this->orderFeedsForUpdate($feedsHash);
-
-        ob_end_flush();
-        $start = microtime(true);
-        foreach ($feedsHash as $feedHash) {
-            $i++;
-            $feed = $this->getFeed($feedHash);
-            $str = '<li>'.number_format(microtime(true)-$start,3).' seconds ('.$i.'/'.count($feedsHash).'): Updating: <span class="text-info">'.$feed['title'].'</span></li>';
-            echo ($format==='html'?$str:strip_tags($str)).str_pad('',4096)."\n";
-            ob_flush();
-            flush();
-            if ($force or $this->needUpdate($feed)) {
-                $info = $this->updateChannel($feedHash);
-                $str = '<li>'.number_format(microtime(true)-$start,3).' seconds: Updated: <span class="text-success">'.count($info['newItems']).' new item(s)</span>';
-                if (empty($info['error'])) {
-                    $str .= '</li>';
-                } else {
-                    $str .= ' <span class="text-error">('.$this->getError($info['error']).')</span></li>';
-                }
-            } else {
-                $str = '<li>'.number_format(microtime(true)-$start,3).' seconds: Already up-to-date: <span class="text-warning">'.$feed['title'].'</span></li>';
-
-            }
-            echo ($format==='html'?$str:strip_tags($str)).str_pad('',4096)."\n";
-            ob_flush();
-            flush();
-        }
-    }
-
-    public function markAll($read) {
-        $save = false;
-
-        foreach (array_keys($this->_data['items']) as $itemHash) {
-            if (!$save and $this->_data['items'][$itemHash][1] != $read) {
-                $save = true;
-            }
-            $this->_data['items'][$itemHash][1] = $read;
-        }
-        foreach (array_keys($this->_data['newItems']) as $itemHash) {
-            if (!$save and $this->_data['newItems'][$itemHash][1] != $read) {
-                $save = true;
-            }
-            $this->_data['newItems'][$itemHash][1] = $read;
-        }
-
-        if ($save) {
-            foreach ($this->_data['feeds'] as $feedHash => $feed) {
-                if ($read == 1) {
-                    $this->_data['feeds'][$feedHash]['nbUnread'] = 0;
-                } else {
-                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds'][$feedHash]['nbAll'];
-                }
-            }
-        }
-
-        return $save;
-    }
-
-    public function markItem($itemHash, $read) {
-        $save = false;
-
-        if (isset($this->_data['items'][$itemHash])) {
-            if ($this->_data['items'][$itemHash][1] != $read) {
-                $save = true;
-                $this->_data['items'][$itemHash][1] = $read;
-            }
-        } else if (isset($this->_data['newItems'][$itemHash])) {
-            if ($this->_data['newItems'][$itemHash][1] != $read) {
-                $save = true;
-                $this->_data['newItems'][$itemHash][1] = $read;
-            }
-        }
-
-        if ($save) {
-            $feedHash = substr($itemHash, 0, 6);
-            if ($read == 1) {
-                $this->_data['feeds'][$feedHash]['nbUnread']--;
-            } else {
-                $this->_data['feeds'][$feedHash]['nbUnread']++;
-            }
-        }
-
-        return $save;
-    }
-
-    public function markFeeds($feedsHash, $read) {
-        $save = false;
-
-        // get items from a list of feeds
-        $flipFeedsHash = array_flip($feedsHash);
-        foreach ($this->_data['items'] as $itemHash => $item) {
-            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                if ($this->_data['items'][$itemHash][1] != $read) {
-                    $save = true;
-                    $this->_data['items'][$itemHash][1] = $read;
-                }
-            }
-        }
-        foreach ($this->_data['newItems'] as $itemHash => $item) {
-            if (isset($flipFeedsHash[substr($itemHash, 0, 6)])) {
-                if ($this->_data['newItems'][$itemHash][1] != $read) {
-                    $save = true;
-                    $this->_data['newItems'][$itemHash][1] = $read;
-                }
-            }
-        }
-
-        if ($save) {
-            foreach (array_values($feedsHash) as $feedHash) {
-                if ($read == 1) {
-                    $this->_data['feeds'][$feedHash]['nbUnread'] = 0;
-                } else {
-                    $this->_data['feeds'][$feedHash]['nbUnread'] = $this->_data['feeds']['nbAll'];
-                }
-            }
-        }
-
-        return $save;
-    }
-        
-    public function mark($hash, $read)
-    {
-        if (empty($hash) || $hash == 'all') {
-            // all items
-            return $this->markAll($read);
-        } else {
-            if (strlen($hash) === 12) {
-                // an item
-                return $this->markItem($hash, $read);
-            } else {
-                $feedsHash = array();
-                if (isset($this->_data['feeds'][$hash])) {
-                    // a feed
-                    $feedsHash[] = $hash;
-                } else if (isset($this->_data['folders'][$hash])) {
-                    // a folder
-                    foreach ($this->_data['feeds'] as $feedHash => $feed) {
-                        if (in_array($hash, $feed['foldersHash'])) {
-                            $feedsHash[] = $feedHash;
+                                                                
+                    case 'msgstr' :
+                        //Special fix where msgid is ""
+                        if($entry['msgid']=="\"\"") {
+                            $entry['msgstr'][] = trim($line,'"');
+                        } else {
+                            //$entry['msgstr'][sizeof($entry['msgstr']) - 1] .= "\n" . $line;
+                            $entry['msgstr'][]= trim($line,'"');
                         }
+                        break;
+                                                                
+                    default :
+                        throw new Exception('Parse ERROR!');
+                        return FALSE;
                     }
                 }
-
-                return $this->markFeeds($feedsHash, $read);
+                break;
             }
         }
+        fclose($handle);
 
-        return false;
+        // add final entry
+        if($state == 'msgstr') {
+            $hash[] = $entry;
+        }
+
+        // Cleanup data, merge multiline entries, reindex hash for ksort
+        $temp = $hash;
+        $entries = array ();
+        foreach($temp as $entry) {
+            foreach($entry as & $v) {
+                $v = self::clean($v);
+                if($v === FALSE) {
+                    // parse error
+                    return FALSE;
+                }
+            }
+
+            $id = is_array($entry['msgid'])? implode('',$entry['msgid']):$entry['msgid'];
+                        
+            $entries[ $id ] = $entry;
+        }
+
+        return $entries;
     }
 
-    public function hashType($hash)
+    public static function clean($x)
     {
-        $type = '';
-        if (empty($hash) || $hash=='all') {
-            $type = 'all';
-        } else {
-            if (strlen($hash) === 12) {
-                // should be an item
-                $type = 'item';
-            } else {
-                if (isset($this->_data['folders'][$hash])) {
-                    // a folder
-                    $type = 'folder';
-                } else {
-                    if (isset($this->_data['feeds'][$hash])) {
-                        // a feed
-                        $type = 'feed';
-                    } else {
-                        $type = 'unknown';
-                    }
-                }
+        if(is_array($x)) {
+            foreach($x as $k => $v) {
+                $x[$k] = self::clean($v);
             }
+        } else {
+            // Remove " from start and end
+            if($x == '') {
+                return '';
+            }
+
+            if($x[0]=='"') {
+                $x = substr($x, 1, -1);
+            }
+
+            $x = stripcslashes( $x );
         }
 
-        return $type;
-    }
-
-    public static function sortByTitle($a, $b) {
-        return strnatcasecmp($a['title'], $b['title']);
+        return $x;
     }
 }
 
 
 class MyTool
 {
+    // http://php.net/manual/en/function.libxml-set-streams-context.php
+    static $opts = array();
+    static $redirects = 20;
+
+    const ERROR_UNKNOWN_CODE = 1;
+    const ERROR_LOCATION = 2;
+    const ERROR_TOO_MANY_REDIRECTS = 3;
+    const ERROR_NO_CURL = 4;
+
+    public static function loadUrl($url)
+    {
+        $redirects = self::$redirects;
+        $opts = self::$opts;
+        $header = '';
+        $code = '';
+        $data = '';
+        $error = '';
+
+        if (in_array('curl', get_loaded_extensions())) {
+            $ch = curl_init($url);
+
+            if (!empty($opts)) {
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
+                curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
+                curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                if (!empty($opts['http']['headers'])) {
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $opts['http']['headers']);
+                }
+            }
+            curl_setopt($ch, CURLOPT_ENCODING, '');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+
+            if ((!ini_get('open_basedir') && !ini_get('safe_mode')) || $redirects < 1) {
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $redirects > 0);
+                curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
+                $data = curl_exec($ch);
+            } else {
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+                curl_setopt($ch, CURLOPT_FORBID_REUSE, false);
+                do {
+                    $data = curl_exec($ch);
+                    if (curl_errno($ch)) {
+                        break;
+                    }
+                    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    if ($code != 301 && $code != 302 && $code!=303 && $code!=307) {
+                        break;
+                    }
+
+                    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+                    $header = substr($data, 0, $headerSize);
+                    if (!preg_match('/^(?:Location|URI): ([^\r\n]*)[\r\n]*$/im', $header, $matches)) {
+                        $error = self::ERROR_LOCATION;
+                        break;
+                    }
+                    curl_setopt($ch, CURLOPT_URL, $matches[1]);
+                } while (--$redirects);
+
+                if (!$redirects) {
+                    $error = self::ERROR_TOO_MANY_REDIRECTS;
+                }
+            }
+
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header = substr($data, 0, $headerSize);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $data = substr($data, $headerSize);
+            $error = curl_error($ch);
+
+            curl_close($ch);
+        } else {
+            $context = stream_context_create($opts);
+            if ($stream = fopen($url, 'r', false, $context)) {
+                $data = stream_get_contents($stream);
+                $status = $http_response_header[0];
+                $code = explode(' ', $status);
+                if (count($code)>1) {
+                    $code = $code[1];
+                } else {
+                    $code = '';
+                    $error = self::ERROR_UNKNOWN_CODE;
+                }
+                $header = implode("\r\n", $http_response_header);
+                fclose($stream);
+
+                if (substr($data,0,1) != '<') {
+                    $decoded = gzdecode($data);
+                    if (substr($decoded,0,1) == '<') {
+                        $data = $decoded;
+                    }
+                }
+            } else {
+                $error = self::ERROR_NO_CURL;
+            }
+        }
+
+        return array(
+            'header' => $header,
+            'code' => $code,
+            'data' => $data,
+            'error' => self::getError($error),
+        );
+    }
+
+    public static function getError($error)
+    {
+        switch ($error) {
+        case self::ERROR_UNKNOWN_CODE:
+            return Intl::msg('Http code not valid');
+            break;
+        case self::ERROR_LOCATION:
+            return Intl::msg('Location not found');
+            break;
+        case self::ERROR_TOO_MANY_REDIRECTS:
+            return Intl::msg('Too many redirects');
+            break;
+        case self::ERROR_NO_CURL:
+            return Intl::msg('Error when loading without curl');
+            break;
+        default:
+            return $error;
+            break;
+        }
+    }
+
     public static function initPhp()
     {
         define('START_TIME', microtime(true));
@@ -4935,6 +4025,7 @@ class MyTool
         }
 
         error_reporting(E_ALL);
+        ini_set('display_errors', 1);
 
         function stripslashesDeep($value) {
             return is_array($value)
@@ -4949,7 +4040,6 @@ class MyTool
         }
 
         ob_start();
-        register_shutdown_function('ob_end_flush');
     }
 
     public static function isUrl($url)
@@ -5045,19 +4135,29 @@ class MyTool
 
     public static function getUrl()
     {
+        $base =  isset($GLOBALS['BASE_URL'])?$GLOBALS['BASE_URL']:'';
+        if (!empty($base)) {
+            return $base;
+        }
+
         $https = (!empty($_SERVER['HTTPS'])
                   && (strtolower($_SERVER['HTTPS']) == 'on'))
-            || $_SERVER["SERVER_PORT"] == '443'; // HTTPS detection.
-        $serverport = ($_SERVER["SERVER_PORT"] == '80'
+            || (isset($_SERVER["SERVER_PORT"])
+                && $_SERVER["SERVER_PORT"] == '443'); // HTTPS detection.
+        $serverport = (!isset($_SERVER["SERVER_PORT"])
+                       || $_SERVER["SERVER_PORT"] == '80'
                        || ($https && $_SERVER["SERVER_PORT"] == '443')
                        ? ''
                        : ':' . $_SERVER["SERVER_PORT"]);
 
-        $scriptname = ($_SERVER["SCRIPT_NAME"] == 'index.php' ? '' : $_SERVER["SCRIPT_NAME"]);
+        $scriptname = str_replace('/index.php', '/', $_SERVER["SCRIPT_NAME"]);
+
+        if (!isset($_SERVER["SERVER_NAME"])) {
+            return $scriptname;
+        }
 
         return 'http' . ($https ? 's' : '') . '://'
             . $_SERVER["SERVER_NAME"] . $serverport . $scriptname;
-
     }
 
     public static function rrmdir($dir)
@@ -5126,12 +4226,30 @@ class MyTool
         echo json_encode($data);
         exit();
     }
+
+    public static function grabToLocal($url, $file, $force = false)
+    {
+        if ((!file_exists($file) || $force) && in_array('curl', get_loaded_extensions())){
+            $ch = curl_init ($url);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            $raw = curl_exec($ch);
+            if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
+                $fp = fopen($file, 'x');
+                fwrite($fp, $raw);
+                fclose($fp);
+            }
+            curl_close ($ch);
+        }
+    }
+
     public static function redirect($rurl = '')
     {
         if ($rurl === '') {
             // if (!empty($_SERVER['HTTP_REFERER']) && strcmp(parse_url($_SERVER['HTTP_REFERER'],PHP_URL_HOST),$_SERVER['SERVER_NAME'])==0)
             $rurl = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
-            if (!empty($_POST)) {
+            if (isset($_POST['returnurl'])) {
                 $rurl = $_POST['returnurl'];
             }
         }
@@ -5141,13 +4259,14 @@ class MyTool
             $rurl = MyTool::getUrl();
         }
 
+        if (substr($rurl, 0, 1) !== '?') {
+            $ref = MyTool::getUrl();
+            if (substr($rurl, 0, strlen($ref)) !== $ref) {
+                $rurl = $ref;
+            }
+        }
         header('Location: '.$rurl);
         exit();
-    }
-
-    public static function silence_errors($num, $str)
-    {
-	// No-op                                                       
     }
 }
 
@@ -5240,26 +4359,25 @@ class Opml
                 }
             }
 
-            echo '<script>alert("File '
-                . $filename . ' (' . MyTool::humanBytes($filesize)
-                . ') was successfully processed: ' . $importCount
-                . ' links imported.");document.location=\'?\';</script>';
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) was successfully processed: %d links imported'),htmlspecialchars($filename),MyTool::humanBytes($filesize), $importCount));
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl());
+
+            FeedPage::$pb->renderPage('message', false);
 
             $kfData['feeds'] = $feeds;
             $kfData['folders'] = $folders;
 
             return $kfData;
         } else {
-            echo '<script>alert("File ' . $filename . ' ('
-                . MyTool::humanBytes($filesize) . ') has an unknown'
-                . ' file format. Check encoding, try to remove accents'
-                . ' and try again. Nothing was imported.");'
-                . 'document.location=\'?\';</script>';
-            exit;
+            FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)));
+
+            FeedPage::$pb->renderPage('message');
         }
     }
 
-    public static function exportOpml($feeds, $folders)
+    public static function generateOpml($feeds, $folders)
     {
         $withoutFolder = array();
         $withFolder = array();
@@ -5275,12 +4393,6 @@ class Opml
             }
         }
 
-        // generate opml file
-        header('Content-Type: text/xml; charset=utf-8');
-        header(
-            'Content-disposition: attachment; filename=kriss_feed_'
-            . strval(date('Ymd_His')) . '.opml'
-        );
         $opmlData = new DOMDocument('1.0', 'UTF-8');
 
         // we want a nice output
@@ -5329,15 +4441,15 @@ class Opml
                 $feeds[$hashUrl]['htmlUrl']
             );
             $outline->appendChild($outlineHtmlUrl);
+            $outlineType = $opmlData->createAttribute('type');
+            $outlineType->value = 'rss';
+            $outline->appendChild($outlineType);
             $body->appendChild($outline);
         }
 
         // with folder outline node
         foreach ($withFolder as $folderHash => $arrayHashUrl) {
             $outline = $opmlData->createElement('outline');
-            $outlineTitle = $opmlData->createAttribute('title');
-            $outlineTitle->value = htmlspecialchars($folders[$folderHash]['title']);
-            $outline->appendChild($outlineTitle);
             $outlineText = $opmlData->createAttribute('text');
             $outlineText->value = htmlspecialchars($folders[$folderHash]['title']);
             $outline->appendChild($outlineText);
@@ -5368,6 +4480,9 @@ class Opml
                 $outlineHtmlUrl->value
                     = htmlspecialchars($feeds[$hashUrl]['htmlUrl']);
                 $outlineKF->appendChild($outlineHtmlUrl);
+                $outlineType = $opmlData->createAttribute('type');
+                $outlineType->value = 'rss';
+                $outlineKF->appendChild($outlineType);
                 $outline->appendChild($outlineKF);
             }
             $body->appendChild($outline);
@@ -5376,7 +4491,20 @@ class Opml
         $opml->appendChild($body);
         $opmlData->appendChild($opml);
 
-        echo $opmlData->saveXML();
+        return $opmlData->saveXML();
+    }
+
+    public static function exportOpml($feeds, $folders)
+    {
+
+        // generate opml file
+        header('Content-Type: text/xml; charset=utf-8');
+        header(
+            'Content-disposition: attachment; filename=kriss_feed_'
+            . strval(date('Ymd_His')) . '.opml'
+        );
+
+        echo self::generateOpml($feeds, $folders);
         exit();
     }
 
@@ -5463,31 +4591,16 @@ class Opml
 
 class PageBuilder
 {
-    private $tpl; // For lazy initialization
-
     private $pageClass;
-
     public $var = array();
 
     public function __construct($pageClass)
     {
-        $this->tpl = false;
         $this->pageClass = $pageClass;
     }
 
-    private function initialize()
-    {
-        $this->tpl = true;
-        $ref = empty($_SERVER['HTTP_REFERER']) ? '' : $_SERVER['HTTP_REFERER'];
-        $this->assign('referer', $ref);
-    }
-
-    // 
     public function assign($variable, $value = null)
     {
-        if ($this->tpl === false) {
-            $this->initialize(); // Lazy initialization
-        }
         if (is_array($variable)) {
             $this->var += $variable;
         } else {
@@ -5495,41 +4608,321 @@ class PageBuilder
         }
     }
 
-    public function renderPage($page)
+    public function renderPage($page, $exit = true)
     {
-        if ($this->tpl===false) {
-            $this->initialize(); // Lazy initialization
-        }
+        $this->assign('template', $page);
         $method = $page.'Tpl';
         if (method_exists($this->pageClass, $method)) {
-            $this->assign('template', $page);
             $classPage = new $this->pageClass;
             $classPage->init($this->var);
             ob_start();
             $classPage->$method();
             ob_end_flush();
         } else {
-            die("renderPage does not exist: ".$page);
+            $this->draw($page);
         }
+        if ($exit) {
+            exit();
+        }
+
+        return true;
+    }
+
+}
+
+class Plugin
+{
+    public static $dir = "plugins";
+    public static $hooks = array();
+
+    public static function init() {
+        $arrayPlugins = glob(self::$dir. '/*.php');
+      
+        if(is_array($arrayPlugins)) {  
+            foreach($arrayPlugins as $plugin) {  
+                include $plugin;  
+            }  
+        }
+    }
+
+    public static function listAll() {
+        $list = array();
+        self::callHook('Plugin_registry', array(&$list));
+        return $list;
+    }
+
+    public static function addHook($hookName, $functionName, $priority = 10) {
+        self::$hooks[$hookName][$priority][] = $functionName;
+    } 
+
+    public static function callHook($hookName, $hookArguments = array()) {
+	if(isset(self::$hooks[$hookName])) {
+            ksort(self::$hooks[$hookName]);
+            foreach (self::$hooks[$hookName] as $hooks) {
+                foreach($hooks as $functionName) {
+                    call_user_func_array($functionName, $hookArguments);
+                }    
+            }
+        } 
+    }
+}
+
+class Rss
+{
+    const UNKNOWN = 0;
+    const RSS = 1;
+    const ATOM = 2;
+
+    public static $feedFormat = array(
+       'title' => array('>title'),
+       'description' => array('>description', '>subtitle'),
+       'htmlUrl' => array('>link', '>link[rel=self][href]', '>link[href]', '>id')
+    );
+
+    public static $itemFormat = array(
+        'author' => array('>author>name', '>author', '>dc:creator', 'feed>author>name', '>dc:author', '>creator'),
+        'content' => array('>content:encoded', '>content', '>description', '>summary', '>subtitle', '>media:group>media:description'),
+        'description' => array('>description', '>summary', '>subtitle', '>content', '>content:encoded'),
+        'via' => array('>guid', '>id'),
+        'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
+        'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
+        'title' => array('>title'),
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
+    );
+
+    public static function isValidNodeAttrs($node, $attrs)
+    {
+        foreach ($attrs as $attr) {
+            $val = '';
+            if (strpos($attr, '=') !== false) {
+                list($attr, $val) = explode('=', $attr);
+            }
+            if (!$node->hasAttribute($attr)
+                || (!empty($val) && $node->getAttribute($attr) !== $val)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function filterNodeListByName($nodes, $name)
+    {
+        $res = array();
+
+        for ($i = 0; $i < $nodes->length; $i++) {
+            if ($nodes->item($i)->tagName === $name) {
+                $res[] = $nodes->item($i);
+            }
+        }
+
+        return $res;
+    }
+
+    public static function getNodesName($node, $name)
+    {
+        if (strpos($name, ':') !== false) {
+            list(, $localname) = explode(':', $name);
+            $nodes = $node->getElementsByTagNameNS('*', $localname);
+        } else {
+            $nodes = $node->getElementsByTagName($name);
+        }
+
+        return self::filterNodeListByName($nodes, $name);
+    }
+
+    public static function getElement($node, $selectors)
+    {
+        $res = '';
+        $selector = array_shift($selectors);
+        $attributes = explode('[', str_replace(']','',$selector));
+        $name = array_shift($attributes);
+        if (substr($name, -1) == "*") {
+            $name = substr($name, 0, -1);
+            $res = array();
+        }
+
+        $nodes = self::getNodesName($node, $name);
+        foreach ($nodes as $currentNode) {
+            if ($currentNode->parentNode->isSameNode($node)
+                && self::isValidNodeAttrs($currentNode, $attributes)) {
+                if (empty($selectors)) {
+                    $attr = end($attributes);
+                    if (empty($attr) || strpos($attr, '=') !== false) {
+                        if (is_array($res)) {
+                            $res[] = $currentNode->textContent;
+                        } else {
+                            $res = $currentNode->textContent;
+                        }
+                    } else {
+                        if (is_array($res)) {
+                            $res[] = $currentNode->getAttribute($attr);
+                        } else {
+                            $res = $currentNode->getAttribute($attr);
+                        }
+                    }
+                } else {
+                    return self::getElement($currentNode, $selectors);
+                }
+            }
+            if (!is_array($res) && !empty($res)) {
+                break;
+            }
+        }
+
+        return $res;
+    }
+
+    public static function formatElement($dom, $element, $formats)
+    {
+        $newElement = array();
+        foreach ($formats as $format => $list) {
+            $newElement[$format] = '';
+            for ($i = 0, $len = count($list);
+                 $i < $len && empty($newElement[$format]);
+                 $i++) {
+                $selectors = explode('>', $list[$i]);
+                $selector = array_shift($selectors);
+                if (empty($selector)) {
+                    $newElement[$format] = self::getElement($element, $selectors);
+                } else if (strpos($selector, '[') === 0) {
+                    $attributes = explode('[', str_replace(']','',$selector));
+                    if (self::isValidNodeAttrs($element, $attributes)) {
+                        $newElement[$format] = self::getElement($element, $selectors);
+                    }
+                } else {
+                    $attributes = explode('[', str_replace(']','',$selector));
+                    $name = array_shift($attributes);
+                    $nodes = self::getNodesName($dom, $name);
+                    foreach ($nodes as $node) {
+                        if (self::isValidNodeAttrs($node, $attributes)) {
+                            $newElement[$format] = self::getElement($node, $selectors);
+                        }
+                        if (!empty($newElement[$format])) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $newElement;
+    }
+
+    public static function getFeed($dom)
+    {
+        $feed = new DOMNodelist;
+
+        $type = self::getType($dom);
+        if ($type === self::RSS) {
+            $feed = $dom->getElementsByTagName('channel')->item(0);
+        } elseif ($type === self::ATOM) {
+            $feed = $dom->getElementsByTagName('feed')->item(0);
+        }
+
+        return self::formatElement($dom, $feed, self::$feedFormat);
+    }
+
+    public static function getItems($dom, $nb = -1)
+    {
+        $items = new DOMNodelist;
+
+        $type = self::getType($dom);
+        if ($type === self::RSS) {
+            $items = $dom->getElementsByTagName('item');
+        } elseif ($type === self::ATOM) {
+            $items = $dom->getElementsByTagName('entry');
+        }
+
+        $newItems = array();
+        $max = ($nb === -1 ? $items->length : min($nb, $items->length));
+        for ($i = 0; $i < $max; $i++) {
+            $newItems[] = self::formatElement($dom, $items->item($i), self::$itemFormat);
+        }
+
+        return $newItems;
+    }
+
+    public static function getType($dom)
+    {
+        $type = self::UNKNOWN;
+
+        $feed = $dom->getElementsByTagName('channel');
+        if ($feed->item(0)) {
+            $type = self::RSS;
+        } else {
+            $feed = $dom->getElementsByTagName('feed');
+            if ($feed->item(0)) {
+                $type = self::ATOM;
+            }
+        }
+
+        return $type;
+    }
+
+    public static function loadDom($data)
+    {
+        libxml_clear_errors();
+        set_error_handler(array('Rss', 'silenceErrors'));
+        $dom = new DOMDocument();
+        $dom->loadXML($data);
+        restore_error_handler();
+
+        return array(
+            'dom' => $dom,
+            'error' => self::getError(libxml_get_last_error())
+        );
+    }
+
+    public static function getError($error)
+    {
+        $return = '';
+
+        if ($error !== false) {
+            switch ($error->level) {
+            case LIBXML_ERR_WARNING:
+                $return = "Warning XML $error->code: ";
+                break;
+            case LIBXML_ERR_ERROR:
+                $return = "Error XML $error->code: ";
+                break;
+            case LIBXML_ERR_FATAL:
+                $return = "Fatal Error XML $error->code: ";
+                break;
+            }
+            $return .= $return.trim($error->message);
+        }
+
+        return $return;
+    }
+
+    public static function silenceErrors($num, $str)
+    {
+        // No-op                                                       
     }
 }
 
 class Session
 {
+    // Personnalize PHP session name
+    public static $sessionName = '';
+    // If the user does not access any page within this time,
+    // his/her session is considered expired (3600 sec. = 1 hour)
     public static $inactivityTimeout = 3600;
+    // If you get disconnected often or if your IP address changes often.
+    // Let you disable session cookie hijacking protection
+    public static $disableSessionProtection = false;
+    // Ban IP after this many failures.
+    public static $banAfter = 4;
+    // Ban duration for IP address after login failures (in seconds).
+    // (1800 sec. = 30 minutes)
+    public static $banDuration = 1800;
+    // File storage for failures and bans. If empty, no ban management.
+    public static $banFile = '';
 
-    private static $_instance;
-
-    private function __construct()
+    public static function init()
     {
-        // Force cookie path (but do not change lifetime)
-        $cookie=session_get_cookie_params();
-        // Default cookie expiration and path.
-        $cookiedir = '';
-        if(dirname($_SERVER['SCRIPT_NAME'])!='/') {
-            $cookiedir = dirname($_SERVER["SCRIPT_NAME"]).'/';
-        }
-        session_set_cookie_params($cookie['lifetime'], $cookiedir);
+        self::setCookie();
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -5537,31 +4930,47 @@ class Session
         if (!session_id()) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
-            session_name('kriss');
+            if (!empty(self::$sessionName)) {
+                session_name(self::$sessionName);
+            }
             session_start();
         }
     }
 
-    public static function init()
+    public static function setCookie($lifetime = null)
     {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new Session();
+        $cookie = session_get_cookie_params();
+        // Do not change lifetime
+        if ($lifetime === null) {
+            $lifetime = $cookie['lifetime'];
         }
+        // Force cookie path
+        $path = '';
+        if (dirname($_SERVER['SCRIPT_NAME']) !== '/') {
+            $path = dirname($_SERVER["SCRIPT_NAME"]).'/';
+        }
+        // Use default domain
+        $domain = $cookie['domain'];
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $domain = $_SERVER['HTTP_HOST'];
+        }
+        // remove port from domain : http://php.net/manual/en/function.setcookie.php#36202
+        $domain = parse_url($domain, PHP_URL_HOST);
+        // Check if secure
+        $secure = false;
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $secure = true;
+        }
+        session_set_cookie_params($lifetime, $path, $domain, $secure);
     }
 
-    private static function _allInfo()
+    private static function _allIPs()
     {
-        $infos = $_SERVER["REMOTE_ADDR"];
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $infos.=$_SERVER['HTTP_X_FORWARDED_FOR'];
-        }
-        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
-            $infos.='_'.$_SERVER['HTTP_CLIENT_IP'];
-        }
-        $infos.='_'.$_SERVER['HTTP_USER_AGENT'];
-        $infos.='_'.$_SERVER['HTTP_ACCEPT_LANGUAGE'];
+        $ip = $_SERVER["REMOTE_ADDR"];
+        $ip.= isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? '_'.$_SERVER['HTTP_X_FORWARDED_FOR'] : '';
+        $ip.= isset($_SERVER['HTTP_CLIENT_IP']) ? '_'.$_SERVER['HTTP_CLIENT_IP'] : '';
 
-        return sha1($infos);
+        return $ip;
     }
 
     public static function login (
@@ -5571,54 +4980,60 @@ class Session
         $passwordTest,
         $pValues = array())
     {
-        if ($login == $loginTest && $password==$passwordTest) {
-            // Generate unique random number to sign forms (HMAC)
-            $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
-            $_SESSION['info']=Session::_allInfo();
-            $_SESSION['username']=$login;
-            // Set session expiration.
-            $_SESSION['expires_on']=time()+Session::$inactivityTimeout;
+        self::banInit();
+        if (self::banCanLogin()) {
+            if ($login === $loginTest && $password === $passwordTest) {
+                self::banLoginOk();
+                // Generate unique random number to sign forms (HMAC)
+                $_SESSION['uid'] = sha1(uniqid('', true).'_'.mt_rand());
+                $_SESSION['ip'] = self::_allIPs();
+                $_SESSION['username'] = $login;
+                // Set session expiration.
+                $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
 
-            foreach ($pValues as $key => $value) {
-                $_SESSION[$key] = $value;
+                foreach ($pValues as $key => $value) {
+                    $_SESSION[$key] = $value;
+                }
+
+                return true;
             }
-
-            return true;
+            self::banLoginFailed();
         }
-        Session::logout();
 
         return false;
     }
 
     public static function logout()
     {
-        unset($_SESSION['uid'], $_SESSION['info'], $_SESSION['expires_on']);
+        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on']);
     }
 
     public static function isLogged()
     {
         if (!isset ($_SESSION['uid'])
-            || $_SESSION['info']!=Session::_allInfo()
-            || time()>=$_SESSION['expires_on']) {
-            Session::logout();
+            || (self::$disableSessionProtection === false
+                && $_SESSION['ip'] !== self::_allIPs())
+            || time() >= $_SESSION['expires_on']) {
+            self::logout();
 
             return false;
         }
         // User accessed a page : Update his/her session expiration date.
-        if (time()+Session::$inactivityTimeout > $_SESSION['expires_on']) {
-            $_SESSION['expires_on'] = time()+Session::$inactivityTimeout;
+        $_SESSION['expires_on'] = time() + self::$inactivityTimeout;
+        if (!empty($_SESSION['longlastingsession'])) {
+                $_SESSION['expires_on'] += $_SESSION['longlastingsession'];
         }
 
         return true;
     }
 
-    public static function getToken()
+    public static function getToken($salt = '')
     {
         if (!isset($_SESSION['tokens'])) {
             $_SESSION['tokens']=array();
         }
         // We generate a random string and store it on the server side.
-        $rnd = sha1(uniqid('', true).'_'.mt_rand());
+        $rnd = sha1(uniqid('', true).'_'.mt_rand().$salt);
         $_SESSION['tokens'][$rnd]=1;
 
         return $rnd;
@@ -5634,23 +5049,3457 @@ class Session
 
         return false; // Wrong token, or already used.
     }
-}//end class
+
+    public static function banLoginFailed()
+    {
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+
+            if (!isset($gb['FAILURES'][$ip])) {
+                $gb['FAILURES'][$ip] = 0;
+            }
+            $gb['FAILURES'][$ip]++;
+            if ($gb['FAILURES'][$ip] > (self::$banAfter - 1)) {
+                $gb['BANS'][$ip]= time() + self::$banDuration;
+            }
+
+            $GLOBALS['IPBANS'] = $gb;
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+        }
+    }
+
+    public static function banLoginOk()
+    {
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+            unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
+            $GLOBALS['IPBANS'] = $gb;
+            file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+        }
+    }
+
+    public static function banInit()
+    {
+        if (self::$banFile !== '') {
+            if (!is_file(self::$banFile)) {
+                file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export(array('FAILURES'=>array(), 'BANS'=>array()), true).";\n?>");
+            }
+            include self::$banFile;
+        }
+    }
+
+    public static function banCanLogin()
+    {
+        if (self::$banFile !== '') {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            $gb = $GLOBALS['IPBANS'];
+            if (isset($gb['BANS'][$ip])) {
+                // User is banned. Check if the ban has expired:
+                if ($gb['BANS'][$ip] <= time()) {
+                    // Ban expired, user can try to login again.
+                    unset($gb['FAILURES'][$ip]);
+                    unset($gb['BANS'][$ip]);
+                    file_put_contents(self::$banFile, "<?php\n\$GLOBALS['IPBANS']=".var_export($gb, true).";\n?>");
+
+                    return true; // Ban has expired, user can login.
+                }
+
+                return false; // User is banned.
+            }
+        }
+
+        return true; // User is not banned.
+    }
+}
+
+class Star extends Feed
+{
+    public $starItemFile;
+
+    public function __construct($starFile, $starItemFile, $kfc)
+    {
+        parent::__construct($starFile, '', $kfc);
+
+        $this->starItemFile = $starItemFile;
+        if (is_file($this->starItemFile)) {
+            include_once $this->starItemFile;
+        }
+    }
+
+
+    public function initData()
+    {
+        $data = array();
+        
+        $data['feeds'] = array();
+        $data['items'] = array();
+        $GLOBALS['starredItems'] = array();
+
+        $this->setData($data);
+    }
+
+    public function markItem($itemHash, $starred, $feed = false, $item = false) {
+        $save = false;
+        $feeds = $this->getFeeds();
+        $feedHash = substr($itemHash, 0, 6);
+        $items = $this->getItems();
+
+        if (isset($items[$itemHash]) && $starred === 0) {
+            $save = true;
+            unset($items[$itemHash]);
+            unset($GLOBALS['starredItems'][$itemHash]);
+            if (isset($feeds[$feedHash])){
+                unset($feeds[$feedHash]['items'][$itemHash]);
+                $feeds[$feedHash]['nbAll']--;
+                if ($feeds[$feedHash]['nbAll'] <= 0) {
+                    unset($feeds[$feedHash]);
+                }
+            }
+        } else if (!isset($items[$itemHash]) && $starred === 1) {
+            // didn't exists, want to star it
+            $save = true;
+
+            $items[$itemHash] = time();
+
+            if (!isset($feeds[$feedHash])){
+                $feed['nbAll'] = 0;
+                $feed['items'] = array();
+                // remove useless feed information
+                unset($feed['timeUpdate']);
+                unset($feed['nbUnread']);
+                unset($feed['lastUpdate']);
+                unset($feed['foldersHash']);
+                unset($feed['error']);
+                $feeds[$feedHash] = $feed;
+            }
+            
+            $feeds[$feedHash]['items'][$itemHash] = $item;
+            $feeds[$feedHash]['nbAll']++;
+
+            $GLOBALS['starredItems'][$itemHash] = 1;
+        }
+
+        if ($save) {
+            arsort($items);
+            $this->setItems($items);
+            $this->setFeeds($feeds);
+        }
+
+        return $save;
+    }
+    
+    public function writeStarredItems()
+    {
+        if ($this->kfc->isLogged()) {
+            $data = array('starredItems');
+
+            $out = '<?php '."\n";
+            foreach ($data as $key) {
+                $out .= '$GLOBALS[\''.$key.'\'] = '.var_export($GLOBALS[$key],true).';'."\n";
+            }
+            
+            
+            if (!@file_put_contents($this->starItemFile, $out)) {
+                die("Can't write to ".$this->starItemFile." check permissions");
+            }
+        }
+    }
+
+    public function writeData()
+    {
+        parent::writeData();
+        $this->writeStarredItems();
+    }
+}
+
+MyTool::$opts = array(
+    'http' => array(
+        'timeout' => 4,
+        'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
+    )
+);
+
+Plugin::init();
+
+
+if (!class_exists('Intl_de')) {
+    class Intl_de {
+        public static function init(&$messages) {
+            $messages['de'] = unserialize(gzinflate(base64_decode("
+vVxLcxtHkr7vr6hhzExIMQRJ8E3IHgdlkhbHpMQVKXs8sREbBaAAtNHoxlZXkyIduu1v2Otc9Bt00g1/bPPLevSblBw7e5AC7K5HVlZW5pePajnY3jka/JYNtgZray/koL8z+C0abL1wD6JBn37u9AdrVzr9VY1M73zc+0npLEqTgfhRn19fi4lS439D021qur0zWHurlqk2vctsGo17L/Np1rtJB4Kb7FCTXYz25qb3vVbS0Di9E2nUQGxv9Xd6/a3e1p7obw129v+ytb21xZ120WkLnXpv1W2UVfoc9Lb6ve0d0T8YbB38Zavv+uxRn/7hYO1CZqZ3o2WSxdKk2pGxj7f7eJtMczlVvRslF+7dget5eX55Wiy1v2HHPXS0fJ8mRiU09P2S6DDqvdlcxjJKXojRTOpMmW/f3Zz1DrnPEVi4XeoDciZK906TUTqOkulAHA4jw237YP32wWDt770fVKK0JfoqVePIEBH7G31LRx/7skvMvopzLePeWaoX2UAkS/4z+3b7hbA/v32WiD98K/rPX9h+24ExdukDcaJyk41m9PoDDUlc+V4mIkmNGGGDlPhTJsaRpr1P9f06LU+N5mKp9CLKwJqMpcYLzT4t80eZJIIY96Ci0SyJMgyQ0E8jZBKrqUrWxUtF481MNM0T+lusPg+VXurV54lKmAoM46lY6tTQ5BUyxF1kZmJjZuRopLKsg6rtFlE+OHyMwAUxOYwqiCmrz+bhSwjuk0z/rNNkKkw6x7MST/q7g7Uz2hOiMRM39jW60OZdpNMoERMZxWr8h0qn7b3B2nGyUPGYZqQjNounikaIaceSP3D/PZryXGQyGg/E6zcb4pc0F1IrMaTVqbGYpFqYmRKLdEEytyF+SIW8k/cblVn2aJbz0YxGmdJGvz49f70hTnIxjDIjooW45L5iqjAmjYHTMJrdRclYbTANJKfX0TQRUXXFh552t9RtHJgZCZwS92muxVJm2V2qx1U2keRd2RdGrD7SHNr2Jva9UvGySjg9i+KJstIyWHu3HJOoVscj/h7PTS5j0hi0fY7rh3xkiO2ZWMiE2IklVju6Jr0owfm/k7GhPQh7Rqd4QnKgWXc1Zvyx+hZ9cJpvaCcmtMtYP++S0fcRS4vIl3Eqx4LEkCR9KIfxPfF/OlXYPjoCdzNp6Be9vlPDTOlbejGi55DRpRHP/pQ93xBXsZKZCkMlIlvIOEbLWZ7MM970NsV+QBSfREpAm0brdL6UGOeCpsjy0YxkYJaOZg95LMc4AxCKOzmDCKgoienAiKlefVr9k+Yh8RbeBOzTemkkolX8HEhWOpb50NP7MjIkb0TnPKahsDniRhF7Ep6R59vwW3u+gDWpapni6Qd7vo7HYyFFou7YGlVPEm3nKU1C2kTl9P8ZNRCzKHnIJ6vP09JhzIzUmt5FRi2qWu0IB/g21fSmaH795c2JwFPS31VhoW14qaQeqtBshwWPd3LkxMgdmGwGmYmjZE5SpLPqSLs0vGXo3PWCuIuHnLbRiLHitVv29i5oCCeVg7U8IQXftgCc13d0WmPaxEQJ4p7Rq49Td9poul+YqGixJImWyRjiRof2GamczOTLaPyct0FgeNp7kt0kvSvWNN7o1M4kOidEsKB/E0lypkWO4SETtByaAeON88VC6ee8k4QI3BxG/KrMgykzwVghOrSmN0py1dgCspuGrPWD11Q4wgHVkISSUMRx86iHdj0m4rzS7gOLwHEc8yBZY056o5j4zG4FLfp0sTT3Is3NMqctk0Y2NNKFwqYe59lUDhWUnZNE0oQndO6jET0aN6Ufh+MkXS5VbIhLZ/z6g1W275I5bUvCfWYym1UX2EeDoZpD87uevVfc6oMVuXOIDenQezGTt2R2FEkZrC9RkUXJiMSVoBeppIZiPqChr0nqBfYtxp5Rz5KmhsGbrz5h3qSQPWgl2A3SQWQ56E2monC6zurLDs/sXrwmxdAUc/DmNemEmoDT05tooerj/UNFxuskOvsmz+o6yT91Fu86ZxgxyWNS6ZYPNc0EvaAnaTzVQCJCFjwwwVgdxzhFGKBn0l6DmdBu16NZSgYhnxBHF6zlMrCOyEnGnuKblAR00BBFElzCFXJhBhZTDNZa1VmDQWhV3VTXSE49z93yVdZox0tWAUDYdnVm2laWDVBHHcsnNXb86MJPtU51Y/QzAlRK+zVzm0ea9Gk5r4xZkgobKwalt7RPtc08woEhY7n6SAgU5vvVzc1Vz8oE+oUdvUhHrCh4oEmaJ+PGyfv3XEFHWFA6VRNqU8IvN2kK7HJP+tUi4qwhVv8gKx6R/iYLTFulycoaRq7WzvTdkglcELuAGYBFgKlJA4lRruPqgAeeG3TKCRZewD6LdEamYfTu7YXlItF1BoBDWBo2npACAejyCSB0w/JAcPVPY7ZlGWFMWPHasYCBYUBSjJXTiScIURwVUgbOdBoe7qI0XHF8oBwrRJGaI3tFNsVpPrwjoLyQBG6/ZxdCOZdsHQgN8EyrRUrqDXArMRlbO7yRU3L2NsTrlKAZeCeLxbB1222xbvv79YUB28Hc5UHTZhaLeaKsXR/T6N5XDDALtrLsh6wTQCS/ZrH6NGVsdjwno0ad6T/yNYEBYErxi/bYQTyCWeI0c/z1/jlEjCWvzNBgSRk+8a5XAT8bCC8N0EqAZBmJ4IjtUkrOgM7A0IaJgjsNu6buVh9nZKbEGz0mTEgAZtEO1o4snGoxdnuOvmEVWMHalRAi01LpuLNVxYiOggZK3Lbj/H6cuUO44R3hu2GazgkzEfw14Inshq97Vv2Kl6Ue4MyrYmSIEAlOMW2G/SVp8ErjiOg+IdVs/QiGkTQpI0tPCLYmjYdSrwvSCzqazkxvRHI0J7vJQk82JiXCPRniBkPh2G1sdLsX0ESRIt+H/YGE2ztDRSSLC3rITrhKSEOR7haM71gOlHgLjzubMxEQXS/4CKWsweEodS8zmgj6j7Bdb+Jxh7sJryHGgfNOZ+gDtNDZB4Ch1seGTEYqrpvN4+EQYQMvPTB2gEpJ1/jbjfFFtuQFOlcYmrgETxekgwijWmXRgKgHFYj6SuZLU2nrDkZpPBOZuAaR9yuD3NCRii0l/UpPROWGURyZ+8dg8jW0CsnY3EMpsOQqH9IWl2KJDZas/mdC+s3EzAhRjGdVEngGNZ0ZHY2wsg1xnNynME6k6hekNCf3wffgpa8LlmBSqoX/s+4QmoXsj8k0OMLSS6eSHBOCRcmcbeuG+JuC+EKRsytdiQX4kMZ6CdKWvWZERZ3HxeRxyGLdHWdZjmMwcQ5jXtngGO1AF/9oB35QLpJlmuzrb3GwJvDLhb4mdtrEcUcMyWakCVlxxC/+JXzdp/NS4h+UhF07jn7BsoccCIDNHflBWiQ5/EHuA2c3UoV9PKxFY7p24Ou4ztEhHd1iTR08B1x0TZr8Bph9U+ZkB8fx61/L8QP6/brCvieZzs///1kOh3EmpY6jBvIovQvog6h4s8T02aCuke1zlQyC+vnjbwR3PwyYd2waG5EQ38L5N1nsYyj2JStNP0BTg+IAFo38GCYoUgapf/ztNpIYgyxjylo9nYg/x+YF5vrz1LxgccCDaR6N7QMNq0qKUSNEawdApEX9Vw4Om3QgvoHb8Vd6Uen5zSY/7jyHOwU5DCixwSeWqFva0QpVeZ2qDMgzBAJ3EGMyykYMQwzR0TqNYdmepBL7ySQRliSSviE1nybTv/IRkrcyiuUwVt9susc2MfArvchGOloaP3wAosjUPMEBaPj6dDgnhKkAMMh+FdMhYfA3mu26MpssoVkd2AFRvSlP78yoei85kMakZ1aWBw2X8CUBpCW5dDzldWjFkOWoYou9V5giXgY2IRXA/hapC3onWXY4wUNHhPaFOqyHlbIYj2ymCvIkkzS5X0QPymqjGn8DJ54/hgEtcQwBKv6oeAZdQkzV1oFbF5dEH+mFO8UhHuv/krEdqoeUE0dB0xBM8xT7MxUlMwn3wXdGooHYX2yPXwsHWMqUc0R3qxhxRr7+YHPTNt8w6eZ3ZQGLaQ9kNufsCnz8/3x7enb69vTteqHS4ywVOaFlP2CSakUnVauS6Bjb5NXN5cUenGOi1aKnrkD9l1GnxwKrLwgjypheq1KR3glMJLEKmp/O7WPUQqcwqb3TiHaCTrScmJqbscvZhAwHkjw/zsORJKU0M8HzX+VoDvfVpfPqaHUXLooi9R/dcvT6OjIPJCGZ7d87idQwM3KGLFpuHmzs6ABZJTjt7NaQ7gT/pwo2ifoliT3x6QQxIToCtoEW51fwtzSM7oiTUplt020o6Xz9bH0S9mOEtSLO4SZTOFt9zMnoYW7iMZ2bOwTprTPDGtG6O+dXvWOet7CYcDdocmcnTQEx2FFgkx/ZaFHW0Air/0Yfm5CsuQnbFYWw5O1U5KE0A0UldA48S1YprgaKLuX7aEH+ZpIvgLfILjlEeN8EPju0I69Wn5A6kskD7RZbjGD6E2x+EYPeZVeL6HN4hQ7EkP6XcwWnhv7y6qnp2yD+XIsYkz6DKEZTwj8L3ic67g95WTz3i9WMVSzvaTrqo2wE3FPxLEIYO8nJM3xeDUvtue6S5ADZ49WnqZ364S7K2AllNlbpoqcY8ZJHTKyu2UY4IufYkkQw4b2x4CFdNha655rCZ8McgsA8Q6e13qXFTiBgDO9/9RF89yFz0od2Czn+z9q+AhU58hembsTfyNqIU62dc90+vk/qt+E5y/Att06eeZRrhirdFHS5BSfUEMAQMdEwPamswJYuTOnPJxRiKFAhGW2sRSi71sx0bdBSEnRt26CdL9sgXWIgkh/qC3cH81Z3p9/cncbg/2db46dvVYt7Nnnst8ZN/TX7Qr095YVK3LPpIVXbFHhVr1PUJRBYQtKezuy9Ms0ASkoT2/WHpkVI2O/sjBRL235CsZb2ExaO1F5QiJy9u5P3GQG19M4nCZ3zRofeNPQhhwEjJCzRcOxTaRcc7iINpSI/+O52MfVIImTORPIcvCNbopSxrQrFYQfVjtdztj+5T+mWs2qpJhvI+bTIJU3gFTGPJukoz9qYdGQbTNK5S3ftHQQ5lpUV/JovllDsXsJYz/FiCMU661vND8EptcJbWg8Cnk0NkC11lBSL9MbW2VLL04M6Tz1FQG8VqpZpFrXCkuMvJqRI2o3HYiJvI7Jgbfzr2woBfl2PEO8VKkGWRuHT6KLnhMRZ1mCMWfI2m0k7VPb4KexhSNSQlYULqj8ljAfVVXzt/JDIMP9TM2+6JiWkUCEGSvZnqRMulTtH4nhJZj0DHQ4ME/JylG7I5TJbpmZjlC42G6oao+QY5RVJyZRYPGSI8tQoTmMiChYZ6wKMUJ5QbHLiCjW42qURwOdQFbI4niWM00MgfEGqk6tkPJKgU+EAXVHicqUVV/e0yBPx+qdUc9lM8CqdDC1dL96havHXDhdAkoaZ+3BmoROILzOYLvLVPCY9KEjw54aNooWDtKlDQvhTjXzmhs0OTFE/SEdOkWOGggBaE4oDyHuwwSHWA+T3YF9d+gODcVZN8UaTg5S5PAUpKfY9Fymqp1AZldBoECeL+8d2vawf6aDz+S7o68zJHRw6JsAWFSyAgBbn3JqjiJMuxJGpRtyjxiVxIse5LkU/4DV4V7RSZECD5xzMRl1LorhOa6pWnyaTRNkiu6GGP0aYQM20eEkrH2qmwGfoWKRiYLJPBoDX21Nv9ePybFxg5ZYQEyx2TsZ2obKxBTYrFCW8C0YOG3aMUzfOrNqM08JlnG6IDZb6JICaqs59cgJ4ji43VOjaJ6bZ9mbKAfdaZKIlxVjCJeUwYy2IUwdm8kvn2G+zXE/OVE/pqCTvdtiOKg7bpUpWn1XDa+N40C8uFIFaGc0pPZvHVhYQ8YHl8lCab4Okg6gOFhDNYwUHVHFZUvWE3cnEcFc3FOcvl0sldWXMTtQIuQvR41MH5bjaFMvBZiNOgwRsYj3okMBmOh+sRIsrT2w4byRD3D6W5NmzslXxmBaidAlxIpPu6PYY0U08kzBB0O3+iJAM/BSpu3r9yrE1TSFdiDaAzg34Z8t3kCVtmFfgUN9PvV8CgdXyNj4pPo+JuaZmDy2srFn88NCVhb3y6LGFNABlVPMaNZpb3VeY4zDAtYe4bQNscUXUtLXzPpddGNWsqXFPnUnjCaCs20sQ7fhVdVZkUtG3u4Jx33fPu+oYaYFvdL0QADHatyoiw1TUKGGveDauG2gpwNwJtK4+Yn2qkjpROjPVcUgDto6Dc2vHgcbrHGbLlzuDNS0CF6uq1gkVq65XS/0DuO1qHlq69ouujVSXrwhp6baNeEnh1DbdrE7vtL/vu5JstHbf9wvtHuPIjWGX2z7MYbHs7oEO/EC8zg5qLBO6B9ktmGGFtpEkAjsKD63W/bDKkLYhDkss6Rpnu99gSstQO1sVtnQSdVRjTAdVgTVdAx26ep6GOO+5JdXLefq+AKgpydgtR3ut185uNSgqp4Cdj9rbnWqA9N1iGK8+GpzwhtF1BbGP1UQChJxbU2ptaCqmKea+jdLcJnw7AnK4XOIMGBxQ+OxKwxpYA9kMZ3mH1JkzT+FVPZjkQy1fRV8jJAU4WtCnH6HPotA26qCfzn1guTFDv1yDylHkEtl7DbJdqrwlZN0Mp20VtMOSHdu4NchumRCBFZfSLhO/t90gwVZ0VYJ65D2a1IW2rfR1lsFvF0TZ8v0iqvhjki4n7EMTtYVETvJkznAIlfO2KqzMXZTAa07HdF5ecU16zRssu4cFnuSsFucv/zxJ9Ui5ZCaHBvC3Q8rdFf77ZfjXNlLIKflAfr02/IGYoslT5pqboNZuAkhXNMK9mJHXWM2iIpvxbiEys/qcjNn/opEqdmsQIjBuN0fuDhpWfTdVxqb4UPOOGtDlDBXBiwVOBnk3qjodIiB+E9HX4c2wPMeD9VCLyWu9enVFO8Bjpg+4s2FpOjpimsJhzNI456xQQOWpnoeaVXdxD9tldwOUcrErCx/uF5Tu0iHZKyMOrjyWxP3ZFQMQKy5djemctatbmJdAF+MNq2K0bsteE0nqtnRRCHdQCgIJiYOyXvlm3sJq+Sk4thDnnOHlvA5fJBwED+pmxjcCcN/AxgtGmqMsZlbdFFRZ/Vi+JTPmYi17yFj8TyIFyaSJB3VPkMR0aus1H78EuXvE4HpK7yxv7M2q2h1CEr7mNcI9wE/rs7mS2YYedNat7CdZQh+puS2eNdwGFGmcQWEwjeXKhaQoxOUMSvWdrdfh6KVVEoyc2cf8Wgpgzp2P100EwnQdVAQDclEOSjbuOtQ9HFzRYKq6gQdNZotRC0j7Lsk6Oh24wsCk3o3DcdTJqMfYYOMZpTJoy+F49SkLJaTQxCdcuQuTgtCKtzdjOz7wYXWO7xr5xEtkaI1C7VaOQOScdaF0621ssSfgu7CWs6drT12rjqpTtxlt9aZ+n4pKUzCdW//98qJZ/uVe9uhlqP+CKBQ0NrrslmkrOnkQP1Y2uNMwkC6Z03uJckqCgMNwK9RT2HpkPSusHAcGvG6vRLf1x7jrVm7vaesCqt4Na8nhc9VRtFBtN7HYC6sa12UsvUI5OkSddW7StXWxtpDv1xAXkiVU5dLkIkYpBYdkbbOxmkDnE++/kYI4Nfl27TsLPNb+WgEg32zK7jq0o8bsHAzCyA6kuaS6v0Rqy2nRdJ1EPzNwNqamUmDrUg+BLE/Vj02qHOsuOi6xgXUXfHetBk9CT3fimy6zl87KyWYZsk5Zy6noe7Vf1A1aAoogXdABDaWCm4McFHOQitR5dWpUbar7YSr1GGlNbUZ57UoRaL6RgPDz1WeyznEQY+oo2BY3F2k72JfKX9y4XsoRMg7VOvEjS6WRXjmj5SyamEZLjmMsUH4Um6I5203cWRBS6/Su2QvJiwnBKYIgpOvYDmfBMb9Qk86O+5WOXEUXjqT1VxJ5G03b8bRzx3qvS00+2Jv7N+l0GtcykM8QJ18XoxgXLfhJ5BJtt5G6e94JqQ/tKa7mJHPHJBSg+GdO/NkGJjLJGLe5mPomLtlGavVPX6WCdNlluTqAKQqlxhMffEt1CMNNQmykq67S1USotnqOInji4rUhXrBuz34lhrBeqaHi9u5NUWf9u8i3ldfIWPiezwj+T/K4shvcynWccFTzeWeK6V+0bptgKta9zuW4djtFNKN9T1D0z9a9decXfAd3IcJV755PMB34UO3zcLx+SKFi2gMUHABFjVhnICIEjOwwwY9pDtW3Q5ViCO1jVUlq+PUIPP0j7449dBHUHOjIDlQiqGUk1AnUOFTIEbH5WeMkF/D36Cnm8b5iQ91R5dEa2/k8FLm18PhLiTnYepL9X0MNB1jLR8lrtdYk4G6bHnsq2bjXMYP/G18rSas5HPCoZaJyZccZnEBaU3kqLsvkDzGU52qkVZojG/72gg117pYCue66RvgpJjpdhMFtpYXufN0Ia7fp3MOtsu6pZFLW64liVPmVOQDw7/RPpV24h0cGotrHYpSsrNKsGOzaz2VsvsN3EnQ3/xBIa/KPAEv4nka5XmYzZAZtPfCuEwVwrJwZqjLOFgUEEbSBTQ7UuYs3j3MUWhcX0hLHz7aiqtbqgaSQYHu/xgfBK5VvWaQa7MPzS8Spu6CGfb/6nFRxRqEjX6UL1aLatqxqw9aYjKmcKo8KoYjdN3tuSwlOSGRrwhJBj2NnWEJBrM18YrGylMssoEmIsNj8mrYVb9XaojanCn6wHRthARbVTSt8ReWQk908G8alGmD3KZYgDdZZRuD0GW3nuj9WRApmf94pnfgSxx2ckCLLwCPQsXIBi9QXORWK2WXRftfcey1zV4sLHp/+COEZrt4JlTEy499ne4C9ENBFahk/JCicOZ63Is5dW/lpJZvv6y3c9zzO9nqM+y3ioOd8rzcRL+2QfAgg3PwJAVseE4J4TlZVvLT0PeO6fvys8mJn18otfwGqJLfimQ1PMlnPg4WvfLDJhu4aQbWKA5i5Ni75d/Xq6rG4uW3RFjbft2FzcqnyGHfSBd+MoCXyNqDmLBtsbgqd2TvZtfIsfFHhJEekN+Zgjbey4Ay+fbIeRui9vb7u2S8gwLcrvp6EIr5fXMCaP9KCL0zFUHJ5huTXkyTs2GC9/RiLjYq2zXplhyVR0JEKUfl++EwTIY9FzAHoqv7B/eyry4uejQ6Hjw14tYc0pO9Y+3RJv9xzEFxGXFNayPe1xuzIvN8QP9ivVQ2CTXqDYLzmUuP3JKYRf2mtHpfb4YJrEuIZ1Iizixy5dWEgr8YGayatfqUMTjAe2WoD/ohTvSLipsAGRFAjf3oQLgX7woqWJOsRnpab7dqPWdVHcka0GKnRCK4UqgFFuSmNBgNaX9ltWsSdv+dL+nS6JrGcFuFeG4qP3ZcGN5poD/dNqQdJNF/zdwGK66Xm4krS3Q+5C6RueC7yJ/MaRL8k82geSL/IhfI55au2K/bF8yIz5r7e9NgV6iIL7L8JVU2q/6ziEWwsLf2Ri+w/R3E8TxcLG/2v3QyGhiZLfC+yaJrYMtlnLrlj0w3E3qW9K09TLXPcq6x5EmBpgi/akR0xgo4khJPsArEZQNbfoU/E926AJHyYca5V/uBdf6Lkxn/jpBEOOa19QcTLCBBKPbnMqMQ3AAhpBHsL7OG3jT8omOamvm3Hw9IXBQFtHDr5uo8J8gref7lSUu9rSmmHy2A7vNe+rcS1rpMW5ew/f4WqzXmGAXntfL9ql8pczZz4XmmuUj7cT9TssFtMVGrfD9/ywm3Jr0u9AxB98XfgGljq9Hd86M2eODrw93V99JPTRxZIoBi5rv8IM6w+j4rv352VEtatblwpLh4yztT7w/8C")));
+        }
+    }
+    Intl::addLang('de', 'Deutsch', 'flag-de');
+}
+
+
+if (!class_exists('Intl_fr')) {
+    class Intl_fr {
+        public static function init(&$messages) {
+            $messages['fr'] = unserialize(gzinflate(base64_decode("
+vVxLc9xIcr77V9QyZoZUBNlkk2w+WpoZa/UYaVeUGCKl8Zwc1ejqbohoAFsASFETivDV/8I3j/bgk/8B/5jzy3oABaBJSl77IjWBqqyszKx8F+R4d+94/Hsx3hmvrT2U4+Fw/Hs83nloH8TjIf3cG47XTnX2QUXl1svp1nulizhLx+Kv+uXZmZgpNf0nDN2lobs07fTN+dYTrWRJg7aeylKNBb/fo/fDY7zfeqsu46L1ep9e79NKr2RRbp1rmRaJLDM9FudZWmYz8ajk//95ppUazPRPPGkEmAeYlM4rOVdb50ouLcADi497NxbPCerNf8q44PeHmHs0Xjt5efKs3tRwsMNvj4AOzX5Cq6qUMLrOCUKpPpbbeSLj9KGIFlIXqvyxKmdbRzznGMTabczBLmZKbz1Lo2wap/OxOJrEJY8dgsj7NPg0qbRMtp5nelmMRZrzn8WPuw+F+fnjRip+EsMHD2naZ5pCu30iU5FmpYhAZSW+L8Q01sSdTF9vEloquhC50su4wJYK5qtj64imv1zmGb2aJEpMFQG5+aK0wB94Sj+/LzbF5c0XHc9i9YleEHidxWXB6x/s1uvnOitp2QABcRWXCzFYlDKKVFHchc/RqI0PgN58mbdREvJSRaJKxSyOFnjUWGIlsiTOa7/qLJ2LMrtQabDyLrH+L4qECosWN1+iSse0sIjTS5nEU2UA7JH8ZPOYlpVxoqZ/CkHsj9du/h0bBIxEiihLU/WRNin+xNNHtP5LUch4Ohav3wzEb1klpFZiImncVMwyLcqFEstsSeIyEL9kQl7J60GwCM7E+6xiAnwSN1+AI+bHA0HHSKX0kASlEKXU0wGvejheO4vnKe0kAHTMgmnw43E4HE8WdDqUuM4qLXJZFFeZnoZ73HODmCFLYjuYREMNhYgEL1SShyiP1x47CpK8vcunJKbBiCFJ0UlcKHHzH+IDrW2IfcSngahdiKVM6ciCLOE82sQvqoBqITQK7BzDPa9og7N4Tsem5E02Z3bfYs4uEeucWDAj7oIKzJ5SX8csM6LKk0xORVxALCdyklyLSTwHLUqiibhayJJ+0esrNSmUvqQXET2HYOal2Pi+eDAQp4mStFMHKhXFUiYJRi6q9KIIuT0c0YF4pbyU/61S4hLcJ0GX1/Rguq7Sywy/iAyEaZbT+6RaxqmqPhJftNAyzzNdgrSRYgC0NUYOPFZVadEjEAbBZwz6E/hKumBa0VGGMJck8VZF4F+dEj4Dx1OcWR3y5sg9VZadEIPpVEiRqis2Ex3Beky8Bx4V9El1qWQlZkn10bOzIKHWdFDiUi2LjiBIXcYRTjwdO+zv5kstCGe3zny8YiZh/Gwah9s6xBmnh3ZXeyykzNHIipM9PsUCspPE6QVxTxdl9xSrChT9VE/UxLuSJ6nUHCtdkthb0RyvVSlp+N5NHDS2n9JhIA1gWENb+I2xiZc5cU+mU8gbicMGKZuirPJ4+oCZIQCaMIgB4KrGaRoK5OEe1A+QtBBVKYqK1PlEEcjKglQPSMiiEhJG2wAPWTwn2JeDfPPFSM+RMZBxWqk2oc+q+FLiyH828lF7GHRuSBiSpHuwdyGNjZdAoJ7HoMDxJOG/i45SOMfpAhlrySNMni3z8lqQdOZ0Xkh9yXAeUfkp6VKynIW4pO1bwaOz+5TOeRyRvpv2iDwp3OegzfTmywc6njnRpFB2v2Dpu/SCeJHyzIUsFh2dybPjFHamMhJLmLyEeJDGvBYLshFioojoMLaEQkFjcZiJF1VXCx8QYZ7SDrwkkXYgi0Kq4+9gOOngv1XEDjKpKq9ITkgpsB64+QNv2+qbMHne3vG+Qdlx4TUpgh5hJnq/Nsf/o8fFgTyPly2kQWP4LE4V0VEvq5aXgzNLj72ZO6vYVZhVCWlwQ4kWa4ahQYImrOB7eMv0OMGBweytMtvqWjSIhGFrkygHEDCSzXFb1PmpGBs3YbzWpcpRfcIdLTCoDceOcRS2G1VF92hF0c0fhXcQzLjbRg13YLp7Nwud+G/BJp9pnekOOHpKKqFwm+RBbWaaMWZF2sCLssxJZdAhhofJrljIqEOoD5gq8t2ITy/Oz09ZAza9tiN4bZFRBwAzy6q0BYbI+VYZr9WMSmFMq0snWIBxnmU4BNe0lhlZdI7zOQwwY+Nhme0iaOL9kpNA5xG2Hz4FvGPSKoK8zSQABrtiSEGnMJ3SsYPZRoxh3CDyIsktMtNATRr+HD4Lecaw4uJKFqSXG1JODgtLArme30/ZLBUiNvY5JMXhUeBxOIDS+ppRprExg0SpJTvJFqYilDLoCx5poHsrDG0YoEgajewRGXur5PCOXOClJNf3CUcJysZJm3DB4H9ptcxIpcFhgR6CNcMbOacIbCBeZ+R7gaiy3lrLnTo47N1cqsy+ijwjkOTN4tAiuGB02IbZGXb7A/G+DjLWGU8y1OyDRlLLqIROpFCETGOuSWWZUMThTTYTGsu4cOS3wyzKFtW8cYQSFe/evgo3QuJEz8S04SEhgoGDVSi2vYgnEtLPBQjXsT1wQB4XRRbFxt8i042wIcb5dGEWIdwAf2ycoS6o4ci7RJDR2m4eBA4fI9Mx1T0un13dez2A8U0u4x69f0c6fJJlF+TzXCREd6KFXO2Ejmi5d2WckObnvTRn5lAv8pbljmnyUy3nJgJgx49WY1/QwQEvsmQi9aYgTaDj+aLcisg/uCAzyNIcLbKMMP6zHS/OAeoVgRoMQkk+Jmb/ksCqa/jjxmOESjAe5ATuLqLsAiEe/HZi8Eze/FdJYkjIY1ETGQs25bQYIoMcQlxUHqTnwZtk2h8PsvucRli+EwtiIkx8fyC54618d6ZJakQqaVuQx+ToJE42YKDg4aSr1tiDkSGfeR4XpTYcTVctCUPS8C+XpFHIszIKoO1jQjm/rN8hGiTHKs4l5xs6/iYOQgN0GZeJ6hDxPAbfupPhiTQmI1E2IQEtr0Nq0k7fu1ekRXqQoP2dVhPwvfmm5Xc1Vsp5sNFC++AVaV8iY8xGbSAep9cZ1KYE46fx7No79kyTTcHyS5q0Dlk2ratlPO+2RA9hgx9XUZWqcKXX61aZU/Aam4iVV4TmMkmW1rIkyVDUy6VCHGQ0r3Wd6L0qQWjn1zlPn7Gx3uGpyWMRDVZQCoOalDIpqpsv1k+CHq6pY7JSZs98xpkWYkLbyFIyzMgy/AOpeEDy0kMxwoJieaILnGoTkJW1o0/STu6CoqPFZp0zDDlOyqf7kLpJ4Jrud5Ka8zuaIrxS3VckabSjMtzRN036raAzfv2f0JmU21kvxW4nNeLl/29Ck0icLaTUSdx1JPatI6GQsMAQ53e8yVm3hZHKsX9uYxVw6LvfyQ39PGaysd3rWHkzgtxEl9lI1puBCs7Td7+zXnRgukoS7k09qHTqMoTEXuZ3v1/GEoBm5EuwIs9m4oekfAjcfpiXD1ko8GBexVPzAMDi2UxpsMUAQCpEUcSbwGqPxSNEIT/Ri2Dmo21+3NJkwxqJIjZmZwlkDTqMd4APCUWATgEvGviQk8keo8XoUtJRvhMV8G8PGJAnSBg8Il2apfOf+LTISxkncpKoR9v2scnQf6AXRaTjvHTgvRuJIkffNuHvtNdonAjZWoYT9t1lAJ0T7okJl9KbL82NgJTqo+RUEyNqpTQUy91djFImxYV1nLhbId09DvSIi87IB9tg3YDMO4dEOEtToivkgUsqJOkURtKETb9Hls/I1HQgI5KCxetl/EkZPdMipyfAg5bTfFRHnIjyNmqtkLtDzBHVJv9ckkqJ4bUa2UCIYnAjCaEQq8YuURa3iqORWu8UpcOUiN3QQS2+NPHl5CmdTQd7QcH4eHvbgBmU2fbPTSlKElJUxQWXMBCG/+vbZ8+fvX32drNW0UmRiYr8WwcwzbSiM0e+WQ2oNENenJ+8GsG0khPbcnaGo/374UToQG9KnMAQo6biJdMtLS2sIr0NPWZO5WMEySjq2ARvjLRJz9ABfBoXOAJEa650EV+yi1iJRfxBRhcIVG3BrO1eHuxw7qigMDK+9IvYkcxdzUn8yyzhdLwBO/ULmaQOEiMcRXM4QroQXJgr6JWCC1N8uLMZiQqCETNAi5enCJA0TGnEdZ7CjAnN3xFXj6KFNVdIf5OiY6re/B0xRpGZ1CHJp12MNoQghIdhA5IXUVjQLOTm1N4Be/fGLprsTSvhctx274v26M9GNwQ+hGItH7VyYvD/T+koGZUb9TrySOKcyI/xslqKtFpOaE2yLNafu+66L3vsNy8nnDw106brdXZV6jp43OdYifCzTgedggn9Ky8UwhD6y2mibjQyIlF7TWQG82km/OdmMtZIrEnhkqCSJoAMLfNS+QKy29NUJfKa1i2vkDOeNdDZiJFDTin2LUI9BjVGsprI2G9RGfmUIRZT65SIDdUE9dmmASrO7khE+h9L4wJkefdkjJz/waafpArlFjKKGSIxRLDIUMPhM5EdVvcOAgW2dTlhj1P2rOMD14+zcx6HMPw8AIvqULl2wRprRLRXJOvuiwd6CnjzjEVUaXZA7oENKuUnBpXG/lmLdbHxiN4XrR6ecG6gjyf738AT6VINvKS6J0tyLoY1XZCd1SxpGj9TjuclLUnujdV9GdTBbbizs5JD/cHp/wZNpBBeE+W4KIc16Oxeq7DoiHzZqSw4rUoswtCbLxjrYirH9AUpmj5WQ0fWrI4k6f/m1gwXQa/kSl6TDVhkV65aZ+MyspqtQiiBPDEWrcwqaIq6+mYSWrRdzFJeg3h9+dguHUkkuBlpXo2ZsiMa1dJQYNFswJ5B9+S4leU1jk1paoHAyfOImDbwkQ9Ta5ZFNOxOcplhbXKNDr3Qy2A7H6plDivgJI5VIu8sLp1lDtUTF9TIB4DNzRMZmQPR3mJw5ENtVdf17QKG0odtSjvU4OgF6OUZWaA2FfZhyBtI3Qehuso2nYqZvIzJ+vVRGMLW0D3rnJ41gmIm2VpTrVlkAyCfW5scxwmDmMGgs6hud0twbADMGoa2SWMh7q+4+W+TfLtVfrfDOt5huMuvRmrHJcH/IejAmfhVkhCgO+0laInyE8o6wnra5ELaRQYyz4s8KwekzrbDI4bqQokACawZO3/ZdZ7EJAZ3QbOqF2kyEniOLozC8eKQ2j4L7rMJnRJanlNaAUVoIEKnosyiCzijyHMbV9R2w/g2lVOtuDmn70wH1g4V+7om5wNWK2u5BcNMG3QE93VzvpengBvDo8MaG3fUWPkbp5P06oRiiblGQXNgqgVzdAHSKVXpAil0UeSQpIIiSVMAZR1CURVYbOsgAMblM8U8p/CrsHULUgsczy5hMLjHKSVo0OgmnpianbKiJd3AKqHGb9AyP8fGxbY7vsv0DcQThWdKLxG1rEuKgZM40ybm0DKPpy7X3aiLsjpBIKHZD5muu1JN4hYzOyWpjAD+UtbR3ETJilbPTQfdlBvzbJGAbbELcVJURwp02snCGYnevQx8acGKBOhuSkNxyqQv5STUlnDmgb+uRcIUVvn01puhYDRRtS8baug7l8Exf8OL9JnAuxbcdabPRgetlEdnQyeq9HFAez1OP/yF5p7ZuaEnKO+5zMh6gqp05dt7r9au/CB1sipKREWpFSVWZkZPxQXx6W829ZFpZIRR9DMlbGW8ND7C3PNJMAbiDJlib0YxPFGIgRW3H4Vn7oo9lIUHxaXNPFcUVTZhdqsD7xu5D0IL0bnmyNzWqk0gTWfNOIdWEBKH48t0GptsdANTsu5FjJo2AFEwyHVJdEKZ6JO7Dtc9SJGuE6ZS8zjmV7CE6295H6urkPr0rKpri3gPT7zjVCLkf5/FGqFuafwbZaye93PdXPUxxxnvlh14vu0JRDbNd60877SNNbuakH9+4TzRPtT2Udp0iZMexxYAzpzj3Adg5BzmVRAOuM+iVJ3WGjzVyls5XgVKu+tUNBfp6Le6+AoAK3sSka/3iDbVY7M/EfG8bvcFmIe6ZhYvxP0DPa2Ue6PWOlyNti4PCQAd5aVvJ3DASCf2AzsIgaWuD60X2o5rZgYZuxVd+KJhacb3o9ppfU0RI9aXYT0n7IkY1vM7lcndvtm1cHHoU8fWnSbSk1b11FPNzCJh6ZsJn8fstnf6sZ1udtsP4bBeu9HnH8I5dHCgpnuh7AdQmGchiP16/0ZwO3XdkAJGVn040qRC3/xRLx0aQLivMKRFDxyTZ1xBjSZKxy2K9OF0tIomDUBHtrenI8Z7bkO2OOkF0LQCdcWXUfKVzFBwYdabmVg5hwt6q73dPwrtbdPc8vxVPb62D7bTP9KoFSK8eGlMqrGlmZhnwOQy5vsV6XRF6g0ZrzPrChZZtZA0olX2rZO88Hfx3PZ92aSN7+E8baeN/LOvwLCTezrYuxNDzAnQU038nJbfc+3Ek+ueDNdho3Ue2ezcIz7qIG7L7j1p8w5cXErqYr9sSFVqkuqtZLpfHm1creVN01eQV6TQEtd9OLtuZDFkxHEfFuQPT+hAIB8H5dqv8NDSrrM0LON3NGZw/QSCHWlbu4HUO8eRy2VcD/1hlulI2eIopwjwt3WOQz8PndxNN89HOH2QeCP8RLez9gOvtM69F64otLoWC3ob1mA5umOahPanRG7CeBALCrKV6xxAUsYyKbIXyLDXq7kqTcUQHezo7swXOdMX4k4xjQqXRR78rI7L7IbhU/pNG5DuxgyHAOw5zU0l3sJWvJCTf4vk8TEj6Y9ckSWVaX9wXnimL3x7qr2AB64ZpgAi97WykOHeQONmHBxLGXOmpdsIdRYzxer1wpOawndITcHc5ASKeof1Lb7G/bgGRs7ZdnaF8TJuLk7L2EdF50gVFAqXBUw+ABLKYViL9XsoxBHpysYtmE/csIwJTPFxO7IjiZubhszbrwSyM99zo8/eqYO//FaZ8Mo2vIbUROO2jq0/5zpbDTK3NMzWzzruPsqzvnW2CTTsYijq/p/wuTniQ6DNoeBXLj/iqmeiLu9Y3af9elbne4zNxGKnJ+hVT2SCixOMV9dPOLJ+QmOtRgfvu7Ton+cdR8SPnamcSqOJpbqNHhC+syB0XUnzIxY+6BY6qMiTOOswNavAswtX+jnkPMeFVaI+bbG+uaQI1jTj1+uvU+yhlubyai8q4me/ued3d5ruBJ2mjUbToPUbrHm+ord0z/eWVmEgwBP+5eTVvZrLAaZGtzPj2M/gGnQw88DOJHpw0qVzFdNcO3Lv+vHsPdq4++Okv02O1/0951AXr/sazR2WK/sDhj2Zn3rFobma1HetCmmgc7XMC1cZR5tCjBxrMypEQ/ca0lVrm2JtKT+uIfsjG/6SrZljemFSsWbYVM3QUkZceSTFgrD/ce1no4TXfgockEfbstWnttNdszIZP+NeKb8oySdUMBqVCGm7MBEjtl3n3aXbXYxmdUuqVytuoEHXP119pWxYK4TeVtGmGmjJkAm3eo7HQeN4NAUC/H7VSL55LdGJW1910l1eHXh38K/qepJJPUVNVJdRVXaN1Ftyz2lyFBciSuRlM8lAs2lHc9W+tISvGeBuPJwXaBtytciWFu66xlmOetuFuu4qBB5IDgNG+OGLeFZ2hx/44Uv5oSqiyrVawvDiBgMFOzq76kyEF2MnzpKbP/A/0ITtrnNQr9Ts6+bPJZ74I2uCk5TINe9xsomqr/0r5/a0ElkjNkHzedKqZW4gh75JrMB9DH4S22IcseYqbII5HKHmXZLgsgVoV1c3kM6P9SYJrV4GI5wvellZBkIS60LcSbPlgHHwHcozl3jLtE/BzboZEXayU3IVbLOa7ZRIyAndRqUEd7tNu2F/CXa4841YmL5rlCHczA3y7mdVEpCRR9mJM85Ztrok93d9D8UtXS1FbJMZ0F/2F/puK0S0ppbSwxXEB44FfOO/1C4pgnk0Ywbn2d3rMrx54GX/lww6oT9DwO0zfKl/ZYcNf7qAQfjgogPG9FJ0wDRCgT5sOvH07qgJZlX3SAuZLpTjHijNqMT3ZbQoU4tCXHIj2YpTdDC6jWjmnhKX9ugsiY3+o/PA97T10PbeiBzfRfavQWaXe+kbB8Epk97y34Gpy8V9euSWCuBoxRru76s4nWZhMQXe8O1L0YZmKjWdg6YXte7M5I8bNFfryP+p+XjBKtVytN9Ip9oLF/6nmOls6cGbVgi98vXqtDJ7OFZ/dOoYm32l28plSA0dSJ/0DqpTsqEqMhzfNx+c2H6H7xDo1WQC256YT04ovZ3hwtVKeh3uWxaDCs2iS0gMU3z3wmWShJz2stdheqh05IvB3b3aYk2zPs+yASk3AshpQ3OJiOnse9u8bjpBwnaVjd7rs9Gc423pthfZUvVopYMerTRdJ1+qUnHiu3btd20uGxVDSFRv9W9/t1H9MyeZq5r9jfU+rWGKVNr0oYVdO33BC77U4CpNnALrrwluBxmLfftFEs9uE62CchskF5vuLBAaWPlBxxfw93RlIyqtmw03kKzb9NKdmdNQK1VbdvqW1VF5blemvgGJY6RNuB3Gt5qgB4N+Px/BhYTsLzND/Am5lUWb7gd878I0jOhGzwkLrbQuNIA5FZgnFb7DwhyxQuw/YgD330qnSnIDaoP77fEzJMDeCkmFuGxERBnlJlmDHOaHOUnWSXzYxFjkyyDtsMtXzk5fnN6Sjx4ettej8Z7tyEVT4FIlUzSl850G2jJzAW1cxXh7W+jC3HluNf1gOmeip4pMDTKzZLxwuBwHfJbEQfJdcb/ZHDB/xQTfW0qgwKoCRaO7lj1wy+oYjZ6fQGhelr8SBVg3fywV98KbNDEbvV5Uhv7zRuQ7LBPO53YCFfelo2bG9c3pySsfwr1xU1u5XvQONMa7tDMSwJ/41sC4w6dz8yEmbrdHImjsjc4bMiNXGgkY9ZG0CAjVzZft8heMIi2LZrqMJ/jCFElWmXU+4rWQVemq9vx1o9CKjNfs94r89186loaeIeRwbQo95UogZ+ISBwQmNGz6Hq9FzmjWkDrDCJK1qA4SDGVIivGa/UQIUsFP+CI+if4skfM6CWsy34n9amBLuo95GktYYSv1WuZILnFUFS2yuIj9Z50Aw/aEjeyH5DrcfY2bgutWKEvXlXjEnds91+8RH3Xu3R/5TyDddoPZDiEp6Lly/qtKIhhcIsMqEETRP8eKgsu0Mh8NaJdgj9kNuqZQbJ6aJvANWzUxGX/kM82NdNxHwXcV2pdLDqGri5IdLXuJSGykrtOfLSYWrri/CsVg/l4Kw3zgDtK5+0BIyzMk0P4bHE5CTtjtCAX2xLki+LRd1vr6ECqgDVfjyH5qL6vKDpue2ptQ/nt7cG2sX/JNn9qDYnr28Q7FZAYoboXqKqY97i5dEX02vozWCTm517wv8sWmHveFu82leivJp73xpFuoO2XPTgkDWf/9q1zpr6pY4z7Bvb+S1lEC79Kv/B6aOWh0gsKkF2/KiKNxLdDe2+EKf+jRtLdJrTlZ2sh01kXhTm71eW+Vl+Z+/h8=")));
+        }
+    }
+    Intl::addLang('fr', 'Français', 'flag-fr');
+}
+
+
 
 // Check if php version is correct
 MyTool::initPHP();
 // Initialize Session
+Session::$sessionName = 'kriss';
+Session::$banFile = BAN_FILE;
 Session::init();
-// XSRF protection with token
-if (!empty($_POST)) {
-    if (!Session::isToken($_POST['token'])) {
-        die('Wrong token.');
+
+// Initialize internationalization
+Intl::addLang('en_GB', 'English (Great Britain)', 'flag-gb');
+Intl::addLang('en_US', 'English (America)', 'flag-us');
+Intl::init();
+
+
+$ref = MyTool::getUrl();
+$referer = (empty($_SERVER['HTTP_REFERER'])?'?':$_SERVER['HTTP_REFERER']);
+if (substr($referer, 0, strlen($ref)) !== $ref) {
+    $referer = $ref;
+}
+
+if (isset($_GET['file'])) {
+    $gmtTime = gmdate('D, d M Y H:i:s', filemtime(__FILE__)) . ' GMT';
+    $etag = '"'.md5($gmtTime).'"';
+
+    header("Cache-Control:");
+    header("Pragma:");
+
+    header("Last-Modified: $gmtTime");
+    header("ETag: $etag");
+
+    $if_modified_since = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? $_SERVER['HTTP_IF_MODIFIED_SINCE'] : false;
+    $if_none_match = isset($_SERVER['HTTP_IF_NONE_MATCH']) ? $_SERVER['HTTP_IF_NONE_MATCH'] : false;
+    if (($if_none_match && $if_none_match == $etag) ||
+        ($if_modified_since && $if_modified_since == $gmtTime)) {
+        header('HTTP/1.1 304 Not Modified');
+        exit();
     }
+    
+    if ($_GET['file'] == 'favicon.ico') {
+        header('Content-Type: image/vnd.microsoft.icon');
+        $favicon = '
+AAABAAIAEBAAAAEACABoBQAAJgAAABAQAgABAAEAsAAAAI4FAAAoAAAAEAAAACAAAAABAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACZd2wAoXtsAK2DbAClh3QApZd8AK2ffAC1y5AAudOUALHTmAC525gAueegAL3rpADh86AAvfusAMn/rAE5/5ABYgeIAMILtADKC7QAzg+0AN4XtADGG7wAyiPAANYnwAEaJ7AA0i/EAUozqAECO8AA1j/QANpDzAD2Q8QA2kPQAN5D0ADWS9QA2k/UARZPxAFKT7gAylPYANZX3ADWX+AA4l/cAQ5f0ADmY9wA3mPgAOJn4ADmZ+ABzmOgAPpn3ADma+QA4m/kAOZv5ADmc+QA6nPkAOZz6AE6d9ABOnfUARp73AGug7gBGovoAZKPyAFGm+QBUpvgAWqn4AFeq+gBtq/QAXK36AG2u9gBlr/kAabD5AGiz+gBws/gAhLT0AIi29ACatu8AnLrxAJS89ACFvfkAi8H5AK/D8gCNxPsApcX1AI3G/ACnyvcAncz7ALnQ9gCv1/wAttj8ALvb/AC+2/sAw9z6ALzd/QDI4/4A1Of8ANXn/ADT6P0A4ez8AODv/gDi8P4A5/H9AOfz/gDz+f8A9Pn/APj7/wD7/P8A/P3/AP3+/wD+//8A////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMSkdFxMAAAAABgQBAgMAADE2P0MAAAAAAAAQLxEDAAAsQGFpAAAAAAAAS2xPAwAAJ0RmbFcAAAAADVVsSgQAACMwUFZCPgAASRlgAAAFAAAeIiYoQFxsXSRIAAAAAAAAGipHVGJsZEU4AAAAAAAAABZBZ2xqX0Y7WAAAAAAAAAASPF5ZTTk9W2tmAAAAAAAADxUcHzdOAABlUisAABQAAAwlU1pjAAAAADUyKSAYAAAJOmhsAAAAAAAAMzQpIQAABxtRTAAAAAAAAC0zNikAAAgICgsOAAAAADEpLjExAAAAAAAAAAAAAAAAAAAAAAABgAAAAYAAAAPAAAADwAAAAYAAAAAAAAAADAAAAB8AAAAfAAAADAAAAAAAAAGAAAADwAAAA8AAAAGAAAABgAAAKAAAABAAAAAgAAAAAQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAA=
+';
+        echo base64_decode($favicon);
+    } else if ($_GET['file'] == 'style.css') {
+        header('Content-type: text/css');
+?>
+article,
+footer,
+header,
+nav,
+section {
+  display: block;
+}
+
+html, button {
+  font-size: 100%;
+}
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+html, body, .full-height {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  border: 0;
+}
+
+a {
+  color: #666;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+small {
+  font-size: 85%;
+}
+
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
+cite {
+  font-style: normal;
+}
+
+code {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: #333333;
+  border-radius: 3px;
+  padding: 2px 4px;
+  color: #d14;
+  background-color: #f7f7f9;
+  border: 1px solid #e1e1e8;
+}
+
+.table {
+  width: 100%;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  line-height: 20px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid #dddddd;
+}
+
+.table th {
+  font-weight: bold;
+}
+
+.table-striped tbody > tr:nth-child(odd) > td,
+.table-striped tbody > tr:nth-child(odd) > th {
+  background-color: #f9f9f9;
+}
+
+.muted {
+  color: #999999;
+}
+
+.text-warning {
+  color: #c09853;
+}
+
+.text-error {
+  color: #b94a48;
+}
+
+.text-info {
+  color: #3a87ad;
+}
+
+.text-success {
+  color: #468847;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.collapse {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+}
+
+.collapse.in {
+  height: auto;
+}
+
+.row-fluid .span12 {
+  width: 99%;
+}
+
+.row-fluid .span9 {
+  width: 75%;
+}
+
+.row-fluid .span6 {
+  width: 49%;
+}
+
+.row-fluid .span4 {
+  width: 33%;
+}
+
+.row-fluid .span3 {
+  width: 24%;
+}
+
+.row-fluid .offset4 {
+  margin-left: 33%;
+}
+
+.row-fluid .offset3 {
+  margin-left: 24%;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
+}
+
+.well {
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/**
+ * Form
+ */
+.form-horizontal .control-label {
+  display: block;
+  float: left;
+  width: 20%;
+  padding-top: 5px;
+  text-align: right;
+}
+
+.form-horizontal .controls {
+  margin-left: 22%;
+  width: 78%;
+}
+
+label {
+  display: block;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 90%;
+  position: relative;
+  display: inline-block;
+  line-height: 20px;
+  height: 20px;
+  padding: 5px;
+  margin-left: -1px;
+  border: 1px solid #444;
+  vertical-align: middle;
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+input[readonly="readonly"]{
+  opacity: 0.4;
+}
+
+
+.input-mini {
+  width: 24px !important;
+}
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+.control-group {
+  clear: both;
+  margin-bottom: 10px;
+}
+
+.help-block {
+  color: #666;
+  display: block;
+  font-size: 90%;
+  margin-bottom: 10px;
+}
+
+/**
+ * Menu
+ */
+.navbar {
+  background-color: #fafafa;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.nav-collapse.collapse {
+  height: auto;
+  overflow: visible;
+  float: left;
+}
+
+.navbar .brand {
+  padding: 5px;
+  font-size: 18px;
+  display: block;
+  float: left;
+}
+
+.navbar .btn-navbar {
+  padding: 5px !important;
+  margin: 5px !important;
+  font-size: 18px;
+  display: none;
+  float: right;
+}
+
+.navbar .nav {
+  display: block;
+  float: left;
+}
+
+ul.nav {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.navbar .nav > li {
+  float: left;
+}
+
+.navbar .nav > li > a {
+  display: block;
+  padding: 10px 15px;
+}
+
+.menu-ico {
+  display: none;
+}
+
+/**
+ * Paging
+ */
+#paging-up,
+#paging-down {
+  margin: 10px;
+}
+
+#paging-up ul, 
+#paging-down ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.input-append,
+.input-prepend,
+.btn-group {
+  position: relative;
+  display: inline-block;
+  font-size: 0;
+  white-space: nowrap;
+}
+
+.btn, button {
+  display: inline-block;
+  line-height: 20px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #444;
+  background-color: #ddd;
+  vertical-align: middle;
+  padding: 5px;
+  margin: 0;
+  margin-left: -1px;
+  min-width: 20px;
+  border-radius: 0;
+}
+
+.btn-break {
+  display: none;
+}
+
+ul.inline > li,
+ol.inline > li {
+  float: left;
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+/**
+ * List of feeds
+ */
+#list-feeds ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+li.feed {
+  margin-left: 4px;
+}
+
+li.feed:hover {
+  background-color: #eee;
+}
+
+li.feed.has-unread {
+  font-weight: bold;
+}
+
+.item-favicon {
+  float: left;
+  margin-right: 2px;
+}
+
+li.folder > h4 {
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px;
+  margin: 0;
+}
+
+li.folder > h5 {
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px;
+  margin: 2px 0;
+}
+
+li.folder > h4:hover,
+li.folder > h5:hover {
+  background-color: #eee;
+}
+
+.mark-as {
+  float: right;
+}
+
+/**
+ * List of items
+ */
+#list-items {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+li.item-list {
+  border-bottom: 1px solid #ddd;
+}
+
+.current, .current-feed, .current-folder > h5, .current-folder > h4 {
+  background-color: #eee;
+}
+
+.current .item-title {
+  font-weight: bold;
+}
+
+dl {
+  margin: 0 !important;
+}
+
+dt,
+dd {
+  line-height: 20px;
+}
+
+.dl-horizontal dt {
+  float: left;
+  width: 18%;
+  overflow: hidden;
+  clear: left;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-horizontal dd {
+  margin-left: 20%;
+}
+
+.item-info {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-link {
+  color: #000;
+}
+
+.read {
+  opacity: 0.4;
+}
+
+.autohide-feed,.autohide-folder {
+  display: none;
+}
+
+#main-container {
+  float: right;
+}
+
+#minor-container {
+  margin-left: 0;
+}
+
+.clear {
+  clear: both;
+}
+
+#menu-toggle {
+  color: #000 !important;
+}
+
+#status {
+  font-size: 85%;
+}
+
+.item-toggle-plus {
+  float: right;
+}
+
+.item-content {
+  margin: 10px 0;
+}
+
+.item-info-end {
+  float: right;
+}
+
+.folder-toggle:focus, .folder-toggle:hover, .folder-toggle:active, .item-toggle:focus, .item-toggle:hover, .item-toggle:active, .mark-as:hover, .mark-as:active {
+  text-decoration: none;
+}
+
+.folder-toggle-open, .item-toggle-open, .item-close {
+  display: none;
+}
+
+.folder-toggle-close, .item-toggle-close, .item-open {
+  display: block;
+}
+
+.label,
+.badge {
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #999999;
+  border-radius: 3px;
+}
+
+.label-expanded {
+  padding: 6px;
+}
+
+/* Large desktop */
+@media (min-width: 1200px) {
+
+}
+
+/* Portrait tablet to landscape and desktop */
+@media (min-width: 768px) and (max-width: 979px) {
+
+  .hidden-desktop {
+    display: inherit !important;
+  }
+  .visible-desktop {
+    display: none !important ;
+  }
+  .visible-tablet {
+    display: inherit !important;
+  }
+  .hidden-tablet {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .nav-collapse.collapse {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+/* Landscape phone to portrait tablet */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="password"] {
+    padding: 10px 0 !important;
+  }
+
+  .btn {
+    padding: 10px !important;
+  }
+
+  .label {
+    border-radius: 10px !important;
+    padding: 5px;
+  }
+
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-starred > .label,
+  .item-mark-as > .label {
+    display: block;
+    float: left;
+    margin: 0 5px;
+    padding: 0px 24px;
+    line-height: 44px;
+  }
+
+  .item-title {
+      line-height: 44px;
+  }
+
+  .item-link {
+    clear: both;
+  }
+
+  li.feed, li.folder > h4,  li.folder > h5{
+    padding: 10px 0;
+  }
+  .row-fluid .span12,
+  .row-fluid .span9,
+  .row-fluid .span6,
+  .row-fluid .span4,
+  .row-fluid .span3 {
+    width: 99%;
+  }
+  .row-fluid .offset4,
+  .row-fluid .offset3 {
+    margin-left: 0;
+  }
+
+  #main-container {
+    float: none;
+    margin: auto;
+  }
+
+  #minor-container {
+    margin: auto;
+  }
+
+  .hidden-desktop {
+    display: inherit !important;
+  }
+  .visible-desktop {
+    display: none !important;
+  }
+  .visible-phone {
+    display: inherit !important;
+  }
+  .hidden-phone {
+    display: none !important;
+  }
+  html, body, .full-height {
+    height: auto;
+  }
+
+  .navbar .container {
+    width: auto;
+  }
+
+  .nav-collapse.collapse {
+    float: none;
+    clear: both;
+  }
+
+  .nav-collapse .nav,
+  .nav-collapse .nav > li {
+    float: none;
+  }
+
+  .nav-collapse .nav > li > a {
+    display: block;
+    padding: 10px;
+  }
+  .nav-collapse .btn {
+    font-weight: normal;
+  }
+  .nav-collapse .nav > li > a:hover,
+  .nav-collapse .nav > li > a:focus {
+    background-color: #f2f2f2;
+  }
+
+  .nav-collapse.collapse {
+    height: 0;
+    overflow: hidden;
+  }
+  .navbar .btn-navbar {
+    display: block;
+  }
+
+  .dl-horizontal dt {
+    float: none;
+    width: auto;
+    clear: none;
+    text-align: left;
+    padding: 10px;
+  }
+
+  .dl-horizontal dd {
+    clear: both;
+    padding: 10px;
+    margin-left: 0;
+  }
+}
+
+/* Landscape phones and down */
+@media (max-width: 480px) {
+  ul.inline {
+    width: 100%;
+  }
+
+  ul.inline > li {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .btn-group {
+    width: 100%;
+    margin: 5px auto;
+  }
+
+  .btn-group .btn {
+    width: 100%;
+    padding: 10px 0 !important;
+    margin: auto;
+  }
+
+  .btn-break {
+    display: block;
+  }
+
+  .btn2 {
+    width: 50% !important;
+  }
+
+  .btn3 {
+    width: 33.333% !important;
+  }
+
+  .paging-by-page {
+    width: 100%;
+  }
+
+  .paging-by-page > input {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .item-toggle-plus {
+    padding: 10px;
+  }
+
+  .item-info {
+    white-space: normal;
+  }
+
+  .item-description {
+    display: none;
+  }
+
+  .form-horizontal .control-label {
+      float: none;
+      width: auto;
+      text-align: center;
+  }
+
+  .form-horizontal .controls {
+      margin: auto;
+  }
+
+  .form-horizontal {
+      text-align: center;
+  }
+
+  .item-top > .label,
+  .item-shaarli > .label,
+  .item-starred > .label,
+  .item-mark-as > .label {
+      display: inline-block;
+      float: none;
+      margin: 2px 5px;
+      padding: 0px 24px;
+      line-height: 44px;
+      text-align: center;
+  }
+  .item-info-end {
+      float: none;
+      height: 60px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+  }
+}
+
+/* feed icon inspired from peculiar by Lucian Marin - lucianmarin.com */
+/* https://github.com/lucianmarin/peculiar */
+.ico {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  margin-right: 4px;
+  margin-left: 4px;
+}
+.ico-feed-dot {
+  background-color: #000;
+  width: 4px;
+  height: 4px;
+  border-radius: 3px;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+}
+.ico-feed-circle-1 {
+  border: #000 2px solid;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  width: 6px;
+  height: 6px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+.ico-feed-circle-2 {
+  border: #000 2px solid;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  width: 9px;
+  height: 9px;
+  border-radius: 4px 7px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+.ico-b-disc {
+  background-color: #000;
+  border-radius:8px;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top:0;
+  left:0;
+}
+.ico-w-line-h {
+  background-color: #fff;
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  position: absolute;
+  top:7px;
+  left: 4px;
+}
+.ico-w-line-v {
+  background-color: #fff;
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+  position: absolute;
+  top: 4px;
+  left: 7px;
+}
+.ico-w-circle {
+  border: #fff 2px solid;
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+}
+
+.ico-toggle-item {
+  float: right;
+}
+
+.menu-ico {
+  text-decoration: none !important;
+}
+
+.menu-ico:before {
+  content: "";
+  speak: none;
+  display: none;
+  text-decoration: none !important;
+}
+
+.ico-star:before {
+  content: "\2605";
+}
+
+.ico-unstar:before {
+  content: "\2606";
+}
+
+.ico-update:before {
+  content: "\21BA";
+}
+
+.ico-add-feed:before {
+  content: "\271A";
+}
+
+.ico-home:before {
+  content: "\23CF";
+}
+
+.ico-help:before {
+  content: "\2048";
+}
+
+.ico-edit:before {
+  content: "\2318";
+}
+
+.ico-config:before {
+  content: "\273F";
+}
+
+.ico-order-older:before {
+  content: "\25BC";
+}
+
+.ico-order-newer:before {
+  content: "\25B2";
+}
+
+.ico-login:before {
+  content: "\2611";
+}
+
+.ico-logout:before {
+  content: "\2612";
+}
+
+.ico-list-feeds-hide:before {
+  content: "\25FB";
+}
+
+.ico-list-feeds-show:before {
+  content: "\25E7";
+}
+
+.ico-list:before {
+  content: "\2630 ";
+}
+
+.ico-expanded:before {
+  content: "\2B12";
+}
+
+.ico-mark-as-read:before {
+  content: "\25C9";
+}
+
+.ico-mark-as-unread:before {
+  content: "\25CE";
+}
+
+.ico-filter-all:before {
+  content: "\26C3";
+}
+
+.ico-filter-unread:before {
+  content: "\26C0";
+}
+
+/**
+ * flags
+ * http://flag-sprites.com/en_US/
+ * http://famfamfam.com/lab/icons/flags/
+ */
+#flags-sel + #flags {
+  display: none;
+}
+
+#flags-sel:target + #flags {
+  display: block;
+}
+
+#flags-sel:target #hide-flags, #flags-sel #show-flags {
+  display: inline-block;
+}
+
+#flags-sel:target #show-flags, #flags-sel #hide-flags {
+  display: none;
+}
+.flag {
+  display: inline-block;
+  width: 16px;
+  height: 11px;
+  background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAWCAYAAAChWZ5EAAAGdElEQVR4nIWVe4yWxRXGf++3H6YUCrJQYYsLwbhUa6VRoBfLRYEFtbRqotyEtlKrMSW1AetKmxYChrYa0VBSwiVAUxAbiBUtJFW60qUpYA2gSAUCoaUIbIW67uX75nbO6R/vt7tA/3CSkzkz77zzzPOcOWeyqVMnGlIGVagqEpISYsI0AsontVHTNl021qT88Ft9EBG894gIKSWyLOO6Sbeg7ZA8pMruxRjLLFjQkP+siqoikhDp7BMpVSxGkiRSisQYefnlrQDcN+5zAJgaqkZNzWcws3zODFXFzOjx9HIsRTQELEYuPrWEYqFQAGDf/ndzgJSIMRJCIPiADx7vu805h3eOe+6d0E3boK0UEcnBOjo6MLMu8CzLEBH6nD2DBo8FD/0HkIBiLXC1KrUV8BQCKUai90TvCSEQnSN4h/eeWHb44BmUYkXznLmIIaqIGIVCoUv2QqHQpawGh/qAJU8WQh6CGdEzUoSRMWIVaSwEzHvMe9R51LuK77CyR4OjR0wUgb8lrQDn4EkFs/wQpoqqdYVDfc5eQyQLgQAULQZMBELAQsS8w0LIF3eCeo96j5bLXYeyGDAghISqIaJEVSQZVVVVOWOgWADVjCzL8j1jQEMgSyn/bgCSLmcdAuYc6lz3QcplLHjE+XytRAQISUliRFGSKClpV/w7TSRXxYJHKkQLnQrE24DhhlUpJopGRaN0+Zas0oNEwxJoNGxUhtsDLiREc+AoSorSFfNO8K7sCiEPQYyQYkWBEWDXKtZPUM3NVFBJlRimfAMRVKwyB9Y/Q+vBtaUcPCkpCTFp96W70rzP0zBGsiR5FhDAUoQet1IgkKlgGsg0gUVMBdOIacJMMEuYJQiJQgeUQiAl5dM9q5AEKRW6bn9ny7L8DlQNrEFTIpOESUUBdxF2rV+BBrAq8OW8QlkfKDhQgVAFEnK/RwHUAVVQClAqJZZtPIxzgZJLtLvA4J413ekrQggB5xwjfr0BpbsKAmQrVjfa8DEj2NN0nOYLAIKo8NTsm3lv2UpMhJt/9jg/Wr4fiwU6So7aup5MOLSTU1Oncf4tu7w2q4ImIOQVisCaobuwUgcXPjxPqIB3HqRY3bc3U040MvnRBzj57w72HjyHWEbdsGqG39ILgseGVXPXl2uJSRhzU39GN62Gbc+wYsf7nKedtau+xqYmY+Z45cU3C8waa/y2KWPOmMSG3UXkjjsxg6tNLynRys6dWyk2nigzqH4SE7e8xPXXXsP190zgF6v+QZYB75yE6MgyOH3RWDzgBFV73iD78VI2bD3Mr57Zx90jv8imJmNLk7JpN4gq63YZYrD29QyXEg+//lP4bwu0fgztbVAqkc26ixvf/isFgA/OfcSiCyM4LdchSxez8LEv5HKW26BcBuDZU6voNXkMx+6by4S7X+K9o60474GIKbzSYHiFVxsiYrDjyRIuGUcyKC1aRPvzz9G6dg0tmzeT7R5Cec482h9pIDt28qLVDavOGV/Zpk0D72H79v/7ZAYHjv6HVc8fY9zM29jQqIjmzFMEb8YRPKn0d9K5lVAqQXs75hyEQGHuvew7coDi4adfYPitveCdExAjhNDdq2Lek26/PS/PMX9KEaF4w2D+9HY7TPo5s8Ya63YZf2xw1C/9FDsaWhm0LPDP+UrtPE/rhvWXFSdVpWXgNXy0c+snKDBuHOIjVfv3Vm50lm+C5Qocu8Ca5Qf56ox61r8heDM0wmFrRvxR+JfAaSH1WZYz9x68x5yj8IPpvHbyKNn4b79q3xxXy4G3mvnJ41/hpkFCeHIBV63biI0cjYhQPHQAUM5OnMTx6U8wc8kHjKn/LNte28Xpg/OpqRlCjPEyhlf6l47L5TLDesDKVzZRdC4xsP9VbF49hfYli/i4Z2/m9XuU33U+n6pgxtfv2MKbuxvpu3Y9h+qbWDN6Ptu2JwZvfIHszvsp7GjEmpuhpQXa23NzDiuV8pf2Uj9G9Inv0vfMKYqz59Tx4DduwP1yIe+O/x7bdp+lurdgBtmNg8k0YmbUfr6a2d/Zxtzvj2Xy3Ad57OEHaH5oOidnfImhQ4fTNmosvYPDLM/xK19EMyOliHPVwBlElPtXLKZ47sOL/GbyI/yhbjwHNv+FmMokER6aVsfOvS1YSkx5/wK/3/5nUGHrjiYGDOnHwmef4fjCVfRqfZFmyytba6W6cUmlc0AbUKpYrMx1rvsfJPpcjvlk6OMAAAAASUVORK5CYII=') no-repeat
+}
+
+.flag.flag-fr {background-position: -16px 0}
+.flag.flag-gb {background-position: 0 -11px}
+.flag.flag-de {background-position: 0 0}
+.flag.flag-us {background-position: -16px -11px}
+
+<?php        
+    } else if ($_GET['file'] == 'script.js') {
+        header('Content-type: text/javascript');
+?>
+/*jshint sub:true, evil:true */
+
+(function () {
+  "use strict";
+  var view = '', // data-view
+      listFeeds = '', // data-list-feeds
+      filter = '', // data-filter
+      order = '', // data-order
+      autoreadItem = '', // data-autoread-item
+      autoreadPage = '', // data-autoread-page
+      autohide = '', // data-autohide
+      byPage = -1, // data-by-page
+      shaarli = '', // data-shaarli
+      redirector = '', // data-redirector
+      currentHash = '', // data-current-hash
+      currentPage = 1, // data-current-page
+      currentNbItems = 0, // data-nb-items
+      autoupdate = false, // data-autoupdate
+      autofocus = false, // data-autofocus
+      addFavicon = false, // data-add-favicon
+      preload = false, // data-preload
+      stars = false, // data-stars
+      isLogged = false, // data-is-logged
+      blank = false, // data-blank
+      status = '',
+      listUpdateFeeds = [],
+      listItemsHash = [],
+      currentItemHash = '',
+      currentUnread = 0,
+      title = '',
+      cache = {},
+      intlTop = 'top',
+      intlShare = 'share',
+      intlRead = 'read',
+      intlUnread = 'unread',
+      intlStar = 'star',
+      intlUnstar = 'unstar',
+      intlFrom = 'from';
+
+  /**
+   * trim function
+   * https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/String/Trim
+   */
+  if(!String.prototype.trim) {
+    String.prototype.trim = function () {
+      return this.replace(/^\s+|\s+$/g,'');
+    };
+  }
+  /**
+   * http://javascript.info/tutorial/bubbling-and-capturing
+   */
+  function stopBubbling(event) {
+    if(event.stopPropagation) {
+      event.stopPropagation();
+    }
+    else {
+      event.cancelBubble = true;
+    }
+  }
+
+  /**
+   * JSON Object
+   * https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/JSON
+   */
+  if (!window.JSON) {
+    window.JSON = {
+      parse: function (sJSON) { return eval("(" + sJSON + ")"); },
+      stringify: function (vContent) {
+        if (vContent instanceof Object) {
+          var sOutput = "";
+          if (vContent.constructor === Array) {
+            for (var nId = 0; nId < vContent.length; sOutput += this.stringify(vContent[nId]) + ",", nId++);
+            return "[" + sOutput.substr(0, sOutput.length - 1) + "]";
+          }
+          if (vContent.toString !== Object.prototype.toString) { return "\"" + vContent.toString().replace(/"/g, "\\$&") + "\""; }
+          for (var sProp in vContent) { sOutput += "\"" + sProp.replace(/"/g, "\\$&") + "\":" + this.stringify(vContent[sProp]) + ","; }
+          return "{" + sOutput.substr(0, sOutput.length - 1) + "}";
+        }
+        return typeof vContent === "string" ? "\"" + vContent.replace(/"/g, "\\$&") + "\"" : String(vContent);
+      }
+    };
+  }
+
+  /**
+   * https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started
+   */
+  function getXHR() {
+    var httpRequest = false;
+
+    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+      httpRequest = new XMLHttpRequest();
+    } else if (window.ActiveXObject) { // IE
+      try {
+        httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+      }
+      catch (e) {
+        try {
+          httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        catch (e2) {}
+      }
+    }
+
+    return httpRequest;
+  }
+
+  /**
+   * http://www.sitepoint.com/xhrrequest-and-javascript-closures/
+   */
+  // Constructor for generic HTTP client
+  function HTTPClient() {}
+  HTTPClient.prototype = {
+    url: null,
+    xhr: null,
+    callinprogress: false,
+    userhandler: null,
+    init: function(url, obj) {
+      this.url = url;
+      this.obj = obj;
+      this.xhr = new getXHR();
+    },
+    asyncGET: function (handler) {
+      // Prevent multiple calls
+      if (this.callinprogress) {
+        throw "Call in progress";
+      }
+      this.callinprogress = true;
+      this.userhandler = handler;
+      // Open an async request - third argument makes it async
+      this.xhr.open('GET', this.url, true);
+      var self = this;
+      // Assign a closure to the onreadystatechange callback
+      this.xhr.onreadystatechange = function() {
+        self.stateChangeCallback(self);
+      };
+      this.xhr.send(null);
+    },
+    stateChangeCallback: function(client) {
+      switch (client.xhr.readyState) {
+        // Request not yet made
+        case 1:
+        try { client.userhandler.onInit(); }
+        catch (e) { /* Handler method not defined */ }
+        break;
+        // Contact established with server but nothing downloaded yet
+        case 2:
+        try {
+          // Check for HTTP status 200
+          if ( client.xhr.status != 200 ) {
+            client.userhandler.onError(
+              client.xhr.status,
+              client.xhr.statusText
+            );
+            // Abort the request
+            client.xhr.abort();
+            // Call no longer in progress
+            client.callinprogress = false;
+          }
+        }
+        catch (e) { /* Handler method not defined */ }
+        break;
+        // Called multiple while downloading in progress
+        case 3:
+        // Notify user handler of download progress
+        try {
+          // Get the total content length
+          // -useful to work out how much has been downloaded
+          var contentLength;
+          try {
+            contentLength = client.xhr.getResponseHeader("Content-Length");
+          }
+          catch (e) { contentLength = NaN; }
+          // Call the progress handler with what we've got
+          client.userhandler.onProgress(
+            client.xhr.responseText,
+            contentLength
+          );
+        }
+        catch (e) { /* Handler method not defined */ }
+        break;
+        // Download complete
+        case 4:
+        try {
+          client.userhandler.onSuccess(client.xhr.responseText, client.obj);
+        }
+        catch (e) { /* Handler method not defined */ }
+        finally { client.callinprogress = false; }
+        break;
+      }
+    }
+  };
+
+  /**
+   * Handler
+   */
+  var ajaxHandler = {
+    onInit: function() {},
+    onError: function(status, statusText) {},
+    onProgress: function(responseText, length) {},
+    onSuccess: function(responseText, noFocus) {
+      var result = JSON.parse(responseText);
+
+      if (result['logout'] && isLogged) {
+        alert('You have been disconnected');
+      }
+      if (result['item']) {
+        cache['item-' + result['item']['itemHash']] = result['item'];
+        loadDivItem(result['item']['itemHash'], noFocus);
+      }
+      if (result['page']) {
+        updateListItems(result['page']);
+        setCurrentItem();
+        if (preload) {
+          preloadItems();
+        }
+      }
+      if (result['read']) {
+        markAsRead(result['read']);
+      }
+      if (result['unread']) {
+        markAsUnread(result['unread']);
+      }
+      if (result['update']) {
+        updateNewItems(result['update']);
+      }
+    }
+  };
+
+  /**
+   * http://stackoverflow.com/questions/4652734/return-html-from-a-user-selection/4652824#4652824
+   */
+  function getSelectionHtml() {
+    var html = '';
+    if (typeof window.getSelection != 'undefined') {
+      var sel = window.getSelection();
+      if (sel.rangeCount) {
+        var container = document.createElement('div');
+        for (var i = 0, len = sel.rangeCount; i < len; ++i) {
+          container.appendChild(sel.getRangeAt(i).cloneContents());
+        }
+        html = container.innerHTML;
+      }
+    } else if (typeof document.selection != 'undefined') {
+      if (document.selection.type == 'Text') {
+        html = document.selection.createRange().htmlText;
+      }
+    }
+    return html;
+  }
+
+  /**
+   * Some javascript snippets
+   */
+  function removeChildren(elt) {
+    while (elt.hasChildNodes()) {
+      elt.removeChild(elt.firstChild);
+    }
+  }
+
+  function removeElement(elt) {
+    if (elt && elt.parentNode) {
+      elt.parentNode.removeChild(elt);
+    }
+  }
+
+  function addClass(elt, cls) {
+    if (elt) {
+      elt.className = (elt.className + ' ' + cls).trim();
+    }
+  }
+
+  function removeClass(elt, cls) {
+    if (elt) {
+      elt.className = (' ' + elt.className + ' ').replace(cls, ' ').trim();
+    }
+  }
+
+  function hasClass(elt, cls) {
+    if (elt && (' ' + elt.className + ' ').indexOf(' ' + cls + ' ') > -1) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Add redirector to link
+   */
+  function anonymize(elt) {
+    if (redirector !== '') {
+      var domain, a_to_anon = elt.getElementsByTagName("a");
+      for (var i = 0; i < a_to_anon.length; i++) {
+        domain = a_to_anon[i].href.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+        if (domain !== window.location.host) {
+          if (redirector !== 'noreferrer') {
+            a_to_anon[i].href = redirector+a_to_anon[i].href;
+          } else {
+            a_to_anon[i].setAttribute('rel', 'noreferrer');
+          }
+        }
+      }
+    }
+  }
+
+  function initAnonyme() {
+    if (redirector !== '') {
+      var i = 0, elements = document.getElementById('list-items');
+      elements = elements.getElementsByTagName('div');
+      for (i = 0; i < elements.length; i += 1) {
+        if (hasClass(elements[i], 'item-content')) {
+          anonymize(elements[i]);
+        }
+      }
+    }
+  }
+
+  /**
+   * Replace collapse bootstrap function
+   */
+  function collapseElement(element) {
+    if (element !== null) {
+      var targetElement = document.getElementById(
+        element.getAttribute('data-target').substring(1)
+      );
+
+      if (hasClass(targetElement, 'in')) {
+        removeClass(targetElement, 'in');
+        targetElement.style.height = 0;
+      } else {
+        addClass(targetElement, 'in');
+        targetElement.style.height = 'auto';
+      }
+    }
+  }
+
+  function collapseClick(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    collapseElement(this);
+  }
+
+  function initCollapse(list) {
+    var i = 0;
+
+    for (i = 0; i < list.length; i += 1) {
+      if (list[i].hasAttribute('data-toggle') && list[i].hasAttribute('data-target')) {
+        addEvent(list[i], 'click', collapseClick);
+      }
+    }
+  }
+
+  /**
+   * Shaarli functions
+   */
+  function htmlspecialchars_decode(string) {
+    return string
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&quot;/g, '"')
+           .replace(/&amp;/g, '&')
+           .replace(/&#0*39;/g, "'")
+           .replace(/&nbsp;/g, " ");
+  }
+
+  function shaarliItem(itemHash) {
+    var domainUrl, url, domainVia, via, title, sel, element;
+
+   element = document.getElementById('item-div-'+itemHash);
+    if (element.childNodes.length > 1) {
+      title = getTitleItem(itemHash);
+      url = getUrlItem(itemHash);
+      via = getViaItem(itemHash);
+      if (redirector != 'noreferrer') {
+        url = url.replace(redirector,'');
+        via = via.replace(redirector,'');
+      }
+      domainUrl = url.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+      domainVia = via.replace('http://','').replace('https://','').split(/[/?#]/)[0];
+      if (domainUrl !== domainVia) {
+        via = 'via ' + via;
+      } else {
+        via = '';
+      }
+      sel = getSelectionHtml();
+      if (sel !== '') {
+        sel = '«' + sel + '»';
+      }
+
+      if (shaarli !== '') {
+        window.open(
+          shaarli
+          .replace('${url}', encodeURIComponent(htmlspecialchars_decode(url)))
+          .replace('${title}', encodeURIComponent(htmlspecialchars_decode(title)))
+          .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
+          .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
+          '_blank',
+          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no, dialog=1'
+        );
+      } else {
+        alert('Please configure your share link first');
+      }
+    } else {
+      loadDivItem(itemHash);
+      alert('Sorry ! This item is not loaded, try again !');
+    }
+  }
+
+  function shaarliCurrentItem() {
+    shaarliItem(currentItemHash);
+  }
+
+  function shaarliClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    shaarliItem(getItemHash(this));
+
+    return false;
+  }
+
+  /**
+   * Folder functions
+   */
+  function getFolder(element) {
+    var folder = null;
+
+    while (folder === null && element !== null) {
+      if (element.tagName === 'LI' && element.id.indexOf('folder-') === 0) {
+        folder = element;
+      }
+      element = element.parentNode;
+    }
+
+    return folder;
+  }
+
+  function getLiParentByClassName(element, classname) {
+    var li = null;
+
+    while (li === null && element !== null) {
+      if (element.tagName === 'LI' && hasClass(element, classname)) {
+        li = element;
+      }
+      element = element.parentNode;
+    }
+
+    if (classname === 'folder' && li.id === 'all-subscriptions') {
+      li = null;
+    }
+
+    return li;
+  }
+
+  function getFolderHash(element) {
+    var folder = getFolder(element);
+
+    if (folder !== null) {
+      return folder.id.replace('folder-','');
+    }
+
+    return null;
+  }
+
+  function toggleFolder(folderHash) {
+    var i, listElements, url, client;
+
+    listElements = document.getElementById('folder-' + folderHash);
+    listElements = listElements.getElementsByTagName('h5');
+    if (listElements.length > 0) {
+      listElements = listElements[0].getElementsByTagName('span');
+
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'folder-toggle-open')) {
+          removeClass(listElements[i], 'folder-toggle-open');
+          addClass(listElements[i], 'folder-toggle-close');
+        } else if (hasClass(listElements[i], 'folder-toggle-close')) {
+          removeClass(listElements[i], 'folder-toggle-close');
+          addClass(listElements[i], 'folder-toggle-open');
+        }
+      }
+    }
+
+    url = '?toggleFolder=' + folderHash + '&ajax';
+    client = new HTTPClient();
+
+    client.init(url);
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function toggleClickFolder(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    toggleFolder(getFolderHash(this));
+
+    return false;
+  }
+
+  function initLinkFolders(listFolders) {
+    var i = 0;
+
+    for (i = 0; i < listFolders.length; i += 1) {
+      if (listFolders[i].hasAttribute('data-toggle') && listFolders[i].hasAttribute('data-target')) {
+        listFolders[i].onclick = toggleClickFolder;
+      }
+    }
+  }
+
+  function getListLinkFolders() {
+    var i = 0,
+        listFolders = [],
+        listElements = document.getElementById('list-feeds');
+
+    if (listElements) {
+      listElements = listElements.getElementsByTagName('a');
+
+      for (i = 0; i < listElements.length; i += 1) {
+        listFolders.push(listElements[i]);
+      }
+    }
+
+    return listFolders;
+  }
+
+  /**
+   * MarkAs functions
+   */
+  function toggleMarkAsLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks;
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-mark-as')) {
+          if (listLinks[i].href.indexOf('unread=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unread=','read=');
+            listLinks[i].firstChild.innerHTML = intlRead;
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('read=','unread=');
+            listLinks[i].firstChild.innerHTML = intlUnread;
+          }
+        }
+      }
+    }
+  }
+
+  function getUnreadLabelItems(itemHash) {
+    var i, listLinks, regex = new RegExp('read=' + itemHash.substr(0,6)), items = [];
+    listLinks = getListLinkFolders();
+    for (i = 0; i < listLinks.length; i += 1) {
+      if (regex.test(listLinks[i].href)) {
+        items.push(listLinks[i].children[0]);
+      }
+    }
+    return items;
+  }
+
+  function addToUnreadLabel(unreadLabelItem, value) {
+      var unreadLabel = -1;
+      if (unreadLabelItem !== null) {
+        unreadLabel = parseInt(unreadLabelItem.innerHTML, 10) + value;
+        unreadLabelItem.innerHTML = unreadLabel;
+      }
+      return unreadLabel;
+  }
+
+  function getUnreadLabel(folder) {
+    var element = null;
+    if (folder !== null) {
+      element = folder.getElementsByClassName('label')[0];
+    }
+    return element;
+  }
+
+  function markAsItem(itemHash) {
+    var item, url, client, indexItem, i, unreadLabelItems, nb, feed, folder, addRead = 1;
+
+    item = getItem(itemHash);
+
+    if (item !== null) {
+      unreadLabelItems = getUnreadLabelItems(itemHash);
+      if (!hasClass(item, 'read')) {
+        addRead = -1;
+      }
+      for (i = 0; i < unreadLabelItems.length; i += 1) {
+        nb = addToUnreadLabel(unreadLabelItems[i], addRead);
+        if (nb === 0) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          removeClass(feed, 'has-unread');
+          if (autohide) {
+            addClass(feed, 'autohide-feed');
+          }
+        }
+        folder = getLiParentByClassName(unreadLabelItems[i], 'folder');
+        nb = addToUnreadLabel(getUnreadLabel(folder), addRead);
+        if (nb === 0 && autohide) {
+          addClass(folder, 'autohide-folder');
+        }
+      }
+      addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), addRead);
+
+      if (hasClass(item, 'read')) {
+        url = '?unread=' + itemHash;
+        removeClass(item, 'read');
+        toggleMarkAsLinkItem(itemHash);
+      } else {
+        url = '?read=' + itemHash;
+        addClass(item, 'read');
+        toggleMarkAsLinkItem(itemHash);
+        if (filter === 'unread') {
+          url += '&currentHash=' + currentHash +
+            '&page=' + currentPage +
+            '&last=' + listItemsHash[listItemsHash.length - 1];
+
+          removeElement(item);
+          indexItem = listItemsHash.indexOf(itemHash);
+          listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+          if (listItemsHash.length <= byPage) {
+            appendItem(listItemsHash[listItemsHash.length - 1]);
+          }
+          setCurrentItem(listItemsHash[indexItem]);
+        }
+      }
+    } else {
+      url = '?currentHash=' + currentHash +
+        '&page=' + currentPage;
+    }
+
+    client = new HTTPClient();
+    client.init(url + '&ajax');
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function markAsCurrentItem() {
+    markAsItem(currentItemHash);
+  }
+
+  function markAsClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsItem(getItemHash(this));
+
+    return false;
+  }
+
+  function toggleMarkAsStarredLinkItem(itemHash) {
+    var i, item = getItem(itemHash), listLinks, url = '';
+
+    if (item !== null) {
+      listLinks = item.getElementsByTagName('a');
+
+      for (i = 0; i < listLinks.length; i += 1) {
+        if (hasClass(listLinks[i], 'item-starred')) {
+          url = listLinks[i].href;
+          if (listLinks[i].href.indexOf('unstar=') > -1) {
+            listLinks[i].href = listLinks[i].href.replace('unstar=','star=');
+            listLinks[i].firstChild.innerHTML = intlStar;
+          } else {
+            listLinks[i].href = listLinks[i].href.replace('star=','unstar=');
+            listLinks[i].firstChild.innerHTML = intlUnstar;
+          }
+        }
+      }
+    }
+
+    return url;
+  }
+
+  function markAsStarredCurrentItem() {
+    markAsStarredItem(currentItemHash);
+  }
+
+  function markAsStarredItem(itemHash) {
+    var url, client, indexItem;
+
+    url = toggleMarkAsStarredLinkItem(itemHash);
+    if (url.indexOf('unstar=') > -1 && stars) {
+      removeElement(getItem(itemHash));
+      indexItem = listItemsHash.indexOf(itemHash);
+      listItemsHash.splice(listItemsHash.indexOf(itemHash), 1);
+      if (listItemsHash.length <= byPage) {
+        appendItem(listItemsHash[listItemsHash.length - 1]);
+      }
+      setCurrentItem(listItemsHash[indexItem]);
+
+      url += '&page=' + currentPage;
+    }
+    if (url !== '') {
+      client = new HTTPClient();
+      client.init(url + '&ajax');
+      try {
+        client.asyncGET(ajaxHandler);
+      } catch (e) {
+        alert(e);
+      }
+    }
+  }
+
+  function markAsStarredClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    markAsStarredItem(getItemHash(this));
+
+    return false;
+  }
+
+  function markAsRead(itemHash) {
+    setNbUnread(currentUnread - 1);
+  }
+
+  function markAsUnread(itemHash) {
+    setNbUnread(currentUnread + 1);
+  }
+
+  /**
+   * Div item functions
+   */
+  function loadDivItem(itemHash, noFocus) {
+    var element, url, client, cacheItem;
+    element = document.getElementById('item-div-'+itemHash);
+    if (element.childNodes.length <= 1) {
+      cacheItem = getCacheItem(itemHash);
+      if (cacheItem !== null) {
+        setDivItem(element, cacheItem);
+        if(!noFocus) {
+          setItemFocus(element);
+        }
+        removeCacheItem(itemHash);
+      } else {
+        url = '?'+(stars?'stars&':'')+'currentHash=' + currentHash +
+          '&current=' + itemHash +
+          '&ajax';
+        client = new HTTPClient();
+        client.init(url, noFocus);
+        try {
+          client.asyncGET(ajaxHandler);
+        } catch (e) {
+          alert(e);
+        }
+      }
+    }
+  }
+
+  function toggleItem(itemHash) {
+    var i, listElements, element, targetElement;
+
+    if (view === 'expanded') {
+      return;
+    }
+
+    if (currentItemHash != itemHash) {
+      closeCurrentItem();
+    }
+
+    // looking for ico + or -
+    listElements = document.getElementById('item-toggle-' + itemHash);
+    listElements = listElements.getElementsByTagName('span');
+    for (i = 0; i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-toggle-open')) {
+        removeClass(listElements[i], 'item-toggle-open');
+        addClass(listElements[i], 'item-toggle-close');
+      } else if (hasClass(listElements[i], 'item-toggle-close')) {
+        removeClass(listElements[i], 'item-toggle-close');
+        addClass(listElements[i], 'item-toggle-open');
+      }
+    }
+
+    element = document.getElementById('item-toggle-'+itemHash);
+    targetElement = document.getElementById(
+      element.getAttribute('data-target').substring(1)
+    );
+    if (element.href.indexOf('&open') > -1) {
+      element.href = element.href.replace('&open','');
+      addClass(targetElement, 'well');
+      setCurrentItem(itemHash);
+      loadDivItem(itemHash);
+    } else {
+      element.href = element.href + '&open';
+      removeClass(targetElement, 'well');
+    }
+  }
+
+  function toggleCurrentItem() {
+    toggleItem(currentItemHash);
+    collapseElement(document.getElementById('item-toggle-' + currentItemHash));
+  }
+
+  function toggleClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    toggleItem(getItemHash(this));
+
+    return false;
+  }
+
+  /**
+   * Item management functions
+   */
+  function getItem(itemHash) {
+    return document.getElementById('item-' + itemHash);
+  }
+
+  function getTitleItem(itemHash) {
+    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), title = '';
+
+    for (i = 0; title === '' && i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-link')) {
+        title = listElements[i].innerHTML;
+      }
+    }
+
+    return title;
+  }
+
+  function getUrlItem(itemHash) {
+    var i = 0, element = document.getElementById('item-'+itemHash), listElements = element.getElementsByTagName('a'), url = '';
+
+    for (i = 0; url === '' && i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-link')) {
+        url = listElements[i].href;
+      }
+    }
+
+    return url;
+  }
+
+  function getViaItem(itemHash) {
+    var i = 0, element = document.getElementById('item-div-'+itemHash), listElements = element.getElementsByTagName('a'), via = '';
+
+    for (i = 0; via === '' && i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-via')) {
+        via = listElements[i].href;
+      }
+    }
+
+    return via;
+  }
+
+  function getLiItem(element) {
+    var item = null;
+
+    while (item === null && element !== null) {
+      if (element.tagName === 'LI' && element.id.indexOf('item-') === 0) {
+        item = element;
+      }
+      element = element.parentNode;
+    }
+
+    return item;
+  }
+
+  function getItemHash(element) {
+    var item = getLiItem(element);
+
+    if (item !== null) {
+      return item.id.replace('item-','');
+    }
+
+    return null;
+  }
+
+  function getCacheItem(itemHash) {
+    if (typeof cache['item-' + itemHash] !== 'undefined') {
+      return cache['item-' + itemHash];
+    }
+
+    return null;
+  }
+
+  function removeCacheItem(itemHash) {
+    if (typeof cache['item-' + itemHash] !== 'undefined') {
+      delete cache['item-' + itemHash];
+    }
+  }
+
+  function isCurrentUnread() {
+    var item = getItem(currentItemHash);
+
+    if (hasClass(item, 'read')) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function setDivItem(div, item) {
+    var markAs = intlRead, starred = intlStar, target = ' target="_blank"', linkMarkAs = 'read', linkStarred = 'star';
+
+    if (item['read'] == 1) {
+      markAs = intlUnread;
+      linkMarkAs = 'unread';
+    }
+
+    if (item['starred'] == 1) {
+      starred = intlUnstar;
+      linkStarred = 'unstar';
+    }
+
+    if (!blank) {
+      target = '';
+    }
+
+    div.innerHTML = '<div class="item-title">' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label">' + intlShare + '</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkMarkAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkStarred + '=' + item['itemHash'] + '"><span class="label item-label-starred">' + starred + '</span></a> ' +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
+      item['title'] +
+      '</a>' +
+      '</div>' +
+      '<div class="clear"></div>' +
+      '<div class="item-info-end item-info-time">' +
+      item['time']['expanded'] +
+      '</div>' +
+      '<div class="item-info-end item-info-authors">' +
+      intlFrom + ' <a class="item-via" href="' + item['via'] + '">' +
+      item['author'] +
+      '</a> ' +
+      '<a class="item-xml" href="' + item['xmlUrl'] + '">' +
+      '<span class="ico">' +
+      '<span class="ico-feed-dot"></span>' +
+      '<span class="ico-feed-circle-1"></span>' +
+      '<span class="ico-feed-circle-2"></span>'+
+      '</span>' +
+      '</a>' +
+      '</div>' +
+      '<div class="clear"></div>' +
+      '<div class="item-content"><article>' +
+      item['content'] +
+      '</article></div>' +
+      '<div class="clear"></div>' +
+      '<div class="item-info-end">' +
+      '<a class="item-top" href="#status"><span class="label label-expanded">' + intlTop + '</span></a> ' +
+      '<a class="item-shaarli" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&shaarli=' + item['itemHash'] + '"><span class="label label-expanded">' + intlShare + '</span></a> ' +
+      (stars?'':
+      '<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkMarkAs + '=' + item['itemHash'] + '"><span class="label item-label-mark-as label-expanded">' + markAs + '</span></a> ') +
+      '<a class="item-starred" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + linkStarred + '=' + item['itemHash'] + '"><span class="label label-expanded">' + starred + '</span></a>' +
+      (view=='list'?
+      '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '</span>' +
+      '</a>':'') +
+      '</div>' +
+      '<div class="clear"></div>';
+
+    initLinkItems(div.getElementsByTagName('a'));
+    initCollapse(div.getElementsByTagName('a'));
+    anonymize(div);
+  }
+
+  function setLiItem(li, item) {
+    var markAs = intlRead, target = ' target="_blank"';
+
+    if (item['read'] == 1) {
+      markAs = intlUnread;
+    }
+
+    if (!blank) {
+      target = '';
+    }
+
+    li.innerHTML = '<a id="item-toggle-'+ item['itemHash'] +'" class="item-toggle item-toggle-plus" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] +'&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '"> ' +
+      '<span class="ico ico-toggle-item">' +
+      '<span class="ico-b-disc"></span>' +
+      '<span class="ico-w-line-h"></span>' +
+      '<span class="ico-w-line-v item-toggle-close"></span>' +
+      '</span>' +
+      item['time']['list'] +
+      '</a>' +
+      '<dl class="dl-horizontal item">' +
+      '<dt class="item-feed">' +
+      (addFavicon?
+      '<span class="item-favicon">' +
+      '<img src="' + item['favicon'] + '" height="16" width="16" title="favicon" alt="favicon"/>' +
+      '</span>':'' ) +
+      '<span class="item-author">' +
+      '<a class="item-feed" href="?'+(stars?'stars&':'')+'currentHash=' + item['itemHash'].substring(0, 6) + '">' +
+      item['author'] +
+      '</a>' +
+      '</span>' +
+      '</dt>' +
+      '<dd class="item-info">' +
+      '<span class="item-title">' +
+      (stars?'':'<a class="item-mark-as" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&' + markAs + '=' + item['itemHash'] + '"><span class="label">' + markAs + '</span></a> ') +
+      '<a' + target + ' class="item-link" href="' + item['link'] + '">' +
+      item['title'] +
+      '</a> ' +
+      '</span>' +
+      '<span class="item-description">' +
+      '<a class="item-toggle muted" href="' + '?'+(stars?'stars&':'')+'currentHash=' + currentHash + '&current=' + item['itemHash'] + '&open" data-toggle="collapse" data-target="#item-div-'+ item['itemHash'] + '">' +
+      item['description'] +
+      '</a> ' +
+      '</span>' +
+      '</dd>' +
+      '</dl>' +
+      '<div class="clear"></div>';
+
+    initCollapse(li.getElementsByTagName('a'));
+    initLinkItems(li.getElementsByTagName('a'));
+
+    anonymize(li);
+  }
+
+  function createLiItem(item) {
+    var li = document.createElement('li'),
+        div = document.createElement('div');
+
+    div.id = 'item-div-'+item['itemHash'];
+    div.className= 'item collapse'+(view === 'expanded' ? ' in well' : '');
+
+    li.id = 'item-'+item['itemHash'];
+    if (view === 'list') {
+      li.className = 'item-list';
+      setLiItem(li, item);
+    } else {
+      li.className = 'item-expanded';
+      setDivItem(div, item);
+    }
+    li.className += (item['read'] === 1)?' read':'';
+    li.appendChild(div);
+
+    return li;
+  }
+
+  /**
+   * List items management functions
+   */
+  function getListItems() {
+    return document.getElementById('list-items');
+  }
+
+  function updateListItems(itemsList) {
+    var i;
+
+    for (i = 0; i < itemsList.length; i++) {
+      if (listItemsHash.indexOf(itemsList[i]['itemHash']) === -1 && listItemsHash.length <= byPage) {
+        cache['item-' + itemsList[i]['itemHash']] = itemsList[i];
+        listItemsHash.push(itemsList[i]['itemHash']);
+        if (listItemsHash.length <= byPage) {
+          appendItem(itemsList[i]['itemHash']);
+        }
+      }
+    }
+  }
+
+  function appendItem(itemHash) {
+    var listItems = getListItems(),
+        item = getCacheItem(itemHash),
+        li;
+
+    if (item !== null) {
+      li = createLiItem(item);
+      listItems.appendChild(li);
+      removeCacheItem(itemHash);
+    }
+  }
+
+  function getListLinkItems() {
+    var i = 0,
+        listItems = [],
+        listElements = document.getElementById('list-items');
+
+    listElements = listElements.getElementsByTagName('a');
+
+    for (i = 0; i < listElements.length; i += 1) {
+      listItems.push(listElements[i]);
+    }
+
+    return listItems;
+  }
+
+  function initListItemsHash() {
+    var i,
+        listElements = document.getElementById('list-items');
+
+    listElements = listElements.getElementsByTagName('li');
+    for (i = 0; i < listElements.length; i += 1) {
+      if (hasClass(listElements[i], 'item-list') || hasClass(listElements[i], 'item-expanded')) {
+        if (hasClass(listElements[i], 'current')) {
+          currentItemHash = getItemHash(listElements[i]);
+        }
+        listItemsHash.push(listElements[i].id.replace('item-',''));
+      }
+    }
+  }
+
+  function initLinkItems(listItems) {
+    var i = 0;
+
+    for (i = 0; i < listItems.length; i += 1) {
+      if (hasClass(listItems[i], 'item-toggle')) {
+        listItems[i].onclick = toggleClickItem;
+      }
+      if (hasClass(listItems[i], 'item-mark-as')) {
+        listItems[i].onclick = markAsClickItem;
+      }
+      if (hasClass(listItems[i], 'item-starred')) {
+        listItems[i].onclick = markAsStarredClickItem;
+      }
+      if (hasClass(listItems[i], 'item-shaarli')) {
+        listItems[i].onclick = shaarliClickItem;
+      }
+    }
+  }
+
+  function initListItems() {
+    var url, client;
+
+    url = '?currentHash=' + currentHash +
+      '&page=' + currentPage +
+      '&last=' + listItemsHash[listItemsHash.length -1] +
+      '&ajax' +
+      (stars?'&stars':'');
+
+    client = new HTTPClient();
+    client.init(url);
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function preloadItems()
+  {
+    // Pre-fetch items from top to bottom
+    for(var i = 0, len = listItemsHash.length; i < len; ++i)
+    {
+      loadDivItem(listItemsHash[i], true);
+    }
+  }
+
+  /**
+   * Update
+   */
+  function setStatus(text) {
+    if (text === '') {
+      document.getElementById('status').innerHTML = status;
+    } else {
+      document.getElementById('status').innerHTML = text;
+    }
+  }
+
+  function getTimeMin() {
+    return Math.round((new Date().getTime()) / 1000 / 60);
+  }
+
+  function updateFeed(feedHashIndex) {
+    var i = 0, url, client, feedHash = '';
+
+    if (feedHashIndex !== '') {
+      setStatus('updating ' + listUpdateFeeds[feedHashIndex][1]);
+      feedHash = listUpdateFeeds[feedHashIndex][0];
+      listUpdateFeeds[feedHashIndex][2] = getTimeMin();
+    }
+
+    url = '?update'+(feedHash === ''?'':'='+feedHash)+'&ajax';
+
+    client = new HTTPClient();
+    client.init(url);
+    try {
+      client.asyncGET(ajaxHandler);
+    } catch (e) {
+      alert(e);
+    }
+  }
+
+  function updateNextFeed() {
+    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '', minFeedToUpdateIndex = '';
+    if (listUpdateFeeds.length !== 0) {
+      currentMin = getTimeMin();
+      for (i = 0; feedToUpdateIndex === '' && i < listUpdateFeeds.length; i++) {
+        diff = currentMin - listUpdateFeeds[i][2];
+        if (diff >= listUpdateFeeds[i][3]) {
+          //need update
+          feedToUpdateIndex = i;
+        } else {
+          if (minDiff === -1 || diff < minDiff) {
+            minDiff = diff;
+            minFeedToUpdateIndex = i;
+          }
+        }
+      }
+      if (feedToUpdateIndex === '') {
+        feedToUpdateIndex = minFeedToUpdateIndex;
+      }
+      updateFeed(feedToUpdateIndex);
+    } else {
+      updateFeed('');
+    }
+  }
+
+  function updateTimeout() {
+    var i = 0, nextTimeUpdate = 0, currentMin, diff, minDiff = -1, feedToUpdateIndex = '';
+
+    if (listUpdateFeeds.length !== 0) {
+      currentMin = getTimeMin();
+      for (i = 0; minDiff !== 0 && i < listUpdateFeeds.length; i++) {
+        diff = currentMin - listUpdateFeeds[i][2];
+        if (diff >= listUpdateFeeds[i][3]) {
+          //need update
+          minDiff = 0;
+        } else {
+          if (minDiff === -1 || (listUpdateFeeds[i][3] - diff) < minDiff) {
+            minDiff = listUpdateFeeds[i][3] - diff;
+          }
+        }
+      }
+      window.setTimeout(updateNextFeed, minDiff * 1000 * 60 + 200);
+    }
+  }
+
+  function updateNewItems(result) {
+    var i = 0, list, currentMin, folder, feed, unreadLabelItems, nbItems;
+    setStatus('');
+    if (result !== false) {
+      if (result['feeds']) {
+        // init list of feeds information for update
+        listUpdateFeeds = result['feeds'];
+        currentMin = getTimeMin();
+        for (i = 0; i < listUpdateFeeds.length; i++) {
+          listUpdateFeeds[i][2] = currentMin - listUpdateFeeds[i][2];
+        }
+      }
+      if (result.newItems && result.newItems.length > 0) {
+        nbItems = result.newItems.length;
+        currentNbItems += nbItems;
+        setNbUnread(currentUnread + nbItems);
+        addToUnreadLabel(getUnreadLabel(document.getElementById('all-subscriptions')), nbItems);
+        unreadLabelItems = getUnreadLabelItems(result.newItems[0].substr(0,6));
+        for (i = 0; i < unreadLabelItems.length; i += 1) {
+          feed = getLiParentByClassName(unreadLabelItems[i], 'feed');
+          folder = getLiParentByClassName(feed, 'folder');
+          addClass(feed, 'has-unread');
+          if (autohide) {
+            removeClass(feed, 'autohide-feed');
+            removeClass(folder, 'autohide-folder');
+          }
+          addToUnreadLabel(getUnreadLabel(feed), nbItems);
+          addToUnreadLabel(getUnreadLabel(folder), nbItems);
+        }
+      }
+      updateTimeout();
+    }
+  }
+
+  function initUpdate() {
+    window.setTimeout(updateNextFeed, 1000);
+  }
+
+  /**
+   * Navigation
+   */
+  function setItemFocus(item) {
+    if(autofocus) {
+      // First, let the browser do some rendering
+      // Indeed, the div might not be visible yet, so there is no scroll
+      setTimeout(function()
+      {
+        // Dummy implementation
+        var container = document.getElementById('main-container'),
+          scrollPos = container.scrollTop,
+          itemPos = item.offsetTop,
+          temp = item;
+        while(temp.offsetParent != document.body) {
+          temp = temp.offsetParent;
+          itemPos += temp.offsetTop;
+        }
+        var current = itemPos - scrollPos;
+        // Scroll only if necessary
+        // current < 0: Happens when asking for previous item and displayed item is filling the screen
+        // Or check if item bottom is outside screen
+        if(current < 0 || current + item.offsetHeight > container.clientHeight) {
+          container.scrollTop = itemPos;
+        }
+      }, 0);
+      
+      window.location.hash = '#item-' + currentItemHash;
+    }
+  }
+
+  function previousClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    previousPage();
+
+    return false;
+  }
+
+  function nextClickPage(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    nextPage();
+
+    return false;
+  }
+
+  function nextPage() {
+    currentPage = currentPage + 1;
+    if (currentPage > Math.ceil(currentNbItems / byPage)) {
+      currentPage = Math.ceil(currentNbItems / byPage);
+    }
+    if (listItemsHash.length === 0) {
+      currentPage = 1;
+    }
+    listItemsHash = [];
+    initListItems();
+    removeChildren(getListItems());
+  }
+
+  function previousPage() {
+    currentPage = currentPage - 1;
+    if (currentPage < 1) {
+      currentPage = 1;
+    }
+    listItemsHash = [];
+    initListItems();
+    removeChildren(getListItems());
+  }
+
+  function previousClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    previousItem();
+
+    return false;
+  }
+
+  function nextClickItem(event) {
+    event = event || window.event;
+    stopBubbling(event);
+
+    nextItem();
+
+    return false;
+  }
+
+  function nextItem() {
+    var nextItemIndex = listItemsHash.indexOf(currentItemHash) + 1, nextCurrentItemHash;
+
+    closeCurrentItem();
+    if (autoreadItem && isCurrentUnread()) {
+      markAsCurrentItem();
+      if (filter == 'unread') {
+        nextItemIndex -= 1;
+      }
+    }
+
+    if (nextItemIndex < 0) { nextItemIndex = 0; }
+
+    if (nextItemIndex < listItemsHash.length) {
+      nextCurrentItemHash = listItemsHash[nextItemIndex];
+    }
+
+    if (nextItemIndex >= byPage) {
+      nextPage();
+    } else {
+      setCurrentItem(nextCurrentItemHash);
+    }
+  }
+
+  function previousItem() {
+    var previousItemIndex = listItemsHash.indexOf(currentItemHash) - 1, previousCurrentItemHash;
+
+    if (previousItemIndex < listItemsHash.length && previousItemIndex >= 0) {
+      previousCurrentItemHash = listItemsHash[previousItemIndex];
+    }
+
+    closeCurrentItem();
+    if (previousItemIndex < 0) {
+      previousPage();
+    } else {
+      setCurrentItem(previousCurrentItemHash);
+    }
+  }
+
+  function closeCurrentItem() {
+    var element = document.getElementById('item-toggle-' + currentItemHash);
+
+    if (element && view === 'list') {
+      var targetElement = document.getElementById(
+            element.getAttribute('data-target').substring(1)
+          );
+
+      if (element.href.indexOf('&open') < 0) {
+        element.href = element.href + '&open';
+        removeClass(targetElement, 'well');
+        collapseElement(element);
+      }
+
+      var i = 0,
+          listElements = element.getElementsByTagName('span');
+
+      // looking for ico + or -
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'item-toggle-open')) {
+          removeClass(listElements[i], 'item-toggle-open');
+          addClass(listElements[i], 'item-toggle-close');
+        }
+      }
+    }
+  }
+
+  function setCurrentItem(itemHash) {
+    var currentItemIndex;
+
+    if (itemHash !== currentItemHash) {
+      removeClass(document.getElementById('item-'+currentItemHash), 'current');
+      removeClass(document.getElementById('item-div-'+currentItemHash), 'current');
+      if (typeof itemHash !== 'undefined') {
+        currentItemHash = itemHash;
+      }
+      currentItemIndex = listItemsHash.indexOf(currentItemHash);
+      if (currentItemIndex === -1) {
+        if (listItemsHash.length > 0) {
+          currentItemHash = listItemsHash[0];
+        } else {
+          currentItemHash = '';
+        }
+      } else {
+        if (currentItemIndex >= byPage) {
+          currentItemHash = listItemsHash[byPage - 1];
+        }
+      }
+
+      if (currentItemHash !== '') {
+        var item = document.getElementById('item-'+currentItemHash),
+          itemDiv = document.getElementById('item-div-'+currentItemHash);
+        addClass(item, 'current');
+        addClass(itemDiv, 'current');
+        setItemFocus(itemDiv);
+        updateItemButton();
+      }
+    }
+    updatePageButton();
+  }
+
+  function openCurrentItem(blank) {
+    var url;
+
+    url = getUrlItem(currentItemHash);
+    if (blank) {
+      window.location.href = url;
+    } else {
+      window.open(url);
+    }
+  }
+
+  // http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js (swipe)
+  function checkMove(e) {
+    // More than this horizontal displacement, and we will suppress scrolling.
+    var scrollSupressionThreshold = 10,
+    // More time than this, and it isn't a swipe.
+        durationThreshold = 500,
+    // Swipe horizontal displacement must be more than this.
+        horizontalDistanceThreshold = 30,
+    // Swipe vertical displacement must be less than this.
+        verticalDistanceThreshold = 75;
+
+    if (e.targetTouches.length == 1) {
+      var touch = e.targetTouches[0],
+      start = { time: ( new Date() ).getTime(),
+                coords: [ touch.pageX, touch.pageY ] },
+      stop;
+      var moveHandler = function ( e ) {
+
+        if ( !start ) {
+          return;
+        }
+
+        if (e.targetTouches.length == 1) {
+          var touch = e.targetTouches[0];
+          stop = { time: ( new Date() ).getTime(),
+                   coords: [ touch.pageX, touch.pageY ] };
+        }
+      };
+
+      addEvent(window, 'touchmove', moveHandler);
+      addEvent(window, 'touchend', function (e) {
+        removeEvent(window, 'touchmove', moveHandler);
+        if ( start && stop ) {
+          if ( stop.time - start.time < durationThreshold &&
+            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
+             ) {
+            if ( start.coords[0] > stop.coords[ 0 ] ) {
+              nextItem();
+            }
+            else {
+              previousItem();
+            }
+          }
+          start = stop = undefined;
+        }
+      });
+    }
+  }
+
+  function checkKey(e) {
+    var code;
+    if (!e) e = window.event;
+    if (e.keyCode) code = e.keyCode;
+    else if (e.which) code = e.which;
+
+    if (!e.ctrlKey && !e.altKey) {
+      switch(code) {
+        case 32: // 'space'
+        toggleCurrentItem();
+        break;
+        case 65: // 'A'
+        if (window.confirm('Mark all current as read ?')) {
+          window.location.href = '?read=' + currentHash;
+        }
+		break;
+        case 67: // 'C'
+        window.location.href = '?config';
+        break;
+        case 69: // 'E'
+        window.location.href = (currentHash===''?'?edit':'?edit='+currentHash);
+        break;
+        case 70: // 'F'
+        if (listFeeds =='show') {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=hide';
+        } else {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'listFeeds=show';
+        }
+        break;
+        case 72: // 'H'
+        window.location.href = document.getElementById('nav-home').href;
+        break;
+        case 74: // 'J'
+        nextItem();
+        toggleCurrentItem();
+        break;
+        case 75: // 'K'
+        previousItem();
+        toggleCurrentItem();
+        break;
+        case 77: // 'M'
+        if (e.shiftKey) {
+          markAsCurrentItem();
+          toggleCurrentItem();
+        } else {
+          markAsCurrentItem();
+        }
+        break;
+        case 39: // right arrow
+        case 78: // 'N'
+        if (e.shiftKey) {
+          nextPage();
+        } else {
+          nextItem();
+        }
+        break;
+        case 79: // 'O'
+        if (e.shiftKey) {
+          openCurrentItem(true);
+        } else {
+          openCurrentItem(false);
+        }
+        break;
+        case 37: // left arrow
+        case 80 : // 'P'
+        if (e.shiftKey) {
+          previousPage();
+        } else {
+          previousItem();
+        }
+        break;
+        case 82: // 'R'
+        window.location.reload(true);
+        break;
+        case 83: // 'S'
+        shaarliCurrentItem();
+        break;
+        case 84: // 'T'
+        toggleCurrentItem();
+        break;
+        case 85: // 'U'
+        window.location.href = (currentHash===''?'?update':'?currentHash=' + currentHash + '&update='+currentHash);
+        break;
+        case 86: // 'V'
+        if (view == 'list') {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=expanded';
+        } else {
+          window.location.href = (currentHash===''?'?':'?currentHash='+currentHash+'&')+'view=list';
+        }
+        break;
+        case 90: // 'z'
+          for (var i=0;i<listItemsHash.length;i++){
+	      if (!hasClass(getItem(listItemsHash[i]), 'read')){
+		  window.open(getUrlItem(currentItemHash),'_blank');
+		  markAsCurrentItem();
+	      }
+	      nextItem();
+          }
+        break;
+        case 170: // '*'
+          markAsStarredCurrentItem();
+          break;
+        case 112: // 'F1'
+        case 188: // '?'
+        case 191: // '?'
+        window.location.href = '?help';
+        break;
+        default:
+        break;
+      }
+    }
+    // e.ctrlKey e.altKey e.shiftKey
+  }
+
+  function initPageButton() {
+    var i = 0, paging, listElements;
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].onclick = previousClickPage;
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].onclick = nextClickPage;
+        }
+      }
+    }
+
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].onclick = previousClickPage;
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].onclick = nextClickPage;
+        }
+      }
+    }
+  }
+
+  function updatePageButton() {
+    var i = 0, paging, listElements, maxPage;
+
+    if (filter == 'unread') {
+      currentNbItems = currentUnread;
+    }
+
+    if (currentNbItems < byPage) {
+      maxPage = 1;
+    } else {
+      maxPage = Math.ceil(currentNbItems / byPage);
+    }
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
+          if (currentPage === 1) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
+          if (currentPage === maxPage) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+      }
+      listElements = paging.getElementsByTagName('button');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'current-max-page')) {
+          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
+        }
+      }
+    }
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previousPage=' + currentPage;
+          if (currentPage === 1) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+        if (hasClass(listElements[i], 'next-page')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&nextPage=' + currentPage;
+          if (currentPage === maxPage) {
+            if (!hasClass(listElements[i], 'disabled')) {
+              addClass(listElements[i], 'disabled');
+            }
+          } else {
+            if (hasClass(listElements[i], 'disabled')) {
+              removeClass(listElements[i], 'disabled');
+            }
+          }
+        }
+      }
+      listElements = paging.getElementsByTagName('button');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'current-max-page')) {
+          listElements[i].innerHTML = currentPage + ' / ' + maxPage;
+        }
+      }
+    }
+  }
+
+  function initItemButton() {
+    var i = 0, paging, listElements;
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].onclick = previousClickItem;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].onclick = nextClickItem;
+        }
+      }
+    }
+
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].onclick = previousClickItem;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].onclick = nextClickItem;
+        }
+      }
+    }
+  }
+
+  function updateItemButton() {
+    var i = 0, paging, listElements;
+
+    paging = document.getElementById('paging-up');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
+
+        }
+      }
+    }
+
+    paging = document.getElementById('paging-down');
+    if (paging) {
+      listElements = paging.getElementsByTagName('a');
+      for (i = 0; i < listElements.length; i += 1) {
+        if (hasClass(listElements[i], 'previous-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&previous=' + currentItemHash;
+        }
+        if (hasClass(listElements[i], 'next-item')) {
+          listElements[i].href = '?currentHash=' + currentHash + '&next=' + currentItemHash;
+        }
+      }
+    }
+  }
+
+  /**
+   * init KrISS feed javascript
+   */
+  function initUnread() {
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
+
+    currentUnread = parseInt(element.innerHTML, 10);
+
+    title = document.title;
+    setNbUnread(currentUnread);
+  }
+
+  function setNbUnread(nb) {
+    var element = document.getElementById((stars?'nb-starred':'nb-unread'));
+
+    if (nb < 0) {
+      nb = 0;
+    }
+
+    currentUnread = nb;
+    element.innerHTML = currentUnread;
+    document.title = title + ' (' + currentUnread + ')';
+  }
+
+  function initOptions() {
+    var elementIndex = document.getElementById('index');
+
+    if (elementIndex.hasAttribute('data-view')) {
+      view = elementIndex.getAttribute('data-view');
+    }
+    if (elementIndex.hasAttribute('data-list-feeds')) {
+      listFeeds = elementIndex.getAttribute('data-list-feeds');
+    }
+    if (elementIndex.hasAttribute('data-filter')) {
+      filter = elementIndex.getAttribute('data-filter');
+    }
+    if (elementIndex.hasAttribute('data-order')) {
+      order = elementIndex.getAttribute('data-order');
+    }
+    if (elementIndex.hasAttribute('data-autoread-item')) {
+      autoreadItem = parseInt(elementIndex.getAttribute('data-autoread-item'), 10);
+      autoreadItem = (autoreadItem === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autoread-page')) {
+      autoreadPage = parseInt(elementIndex.getAttribute('data-autoread-page'), 10);
+      autoreadPage = (autoreadPage === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autohide')) {
+      autohide = parseInt(elementIndex.getAttribute('data-autohide'), 10);
+      autohide = (autohide === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autofocus')) {
+      autofocus = parseInt(elementIndex.getAttribute('data-autofocus'), 10);
+      autofocus = (autofocus === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-autoupdate')) {
+      autoupdate = parseInt(elementIndex.getAttribute('data-autoupdate'), 10);
+      autoupdate = (autoupdate === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-by-page')) {
+      byPage = parseInt(elementIndex.getAttribute('data-by-page'), 10);
+    }
+    if (elementIndex.hasAttribute('data-shaarli')) {
+      shaarli = elementIndex.getAttribute('data-shaarli');
+    }
+    if (elementIndex.hasAttribute('data-redirector')) {
+      redirector = elementIndex.getAttribute('data-redirector');
+    }
+    if (elementIndex.hasAttribute('data-current-hash')) {
+      currentHash = elementIndex.getAttribute('data-current-hash');
+    }
+    if (elementIndex.hasAttribute('data-current-page')) {
+      currentPage = parseInt(elementIndex.getAttribute('data-current-page'), 10);
+    }
+    if (elementIndex.hasAttribute('data-nb-items')) {
+      currentNbItems = parseInt(elementIndex.getAttribute('data-nb-items'), 10);
+    }
+    if (elementIndex.hasAttribute('data-add-favicon')) {
+      addFavicon = parseInt(elementIndex.getAttribute('data-add-favicon'), 10);
+      addFavicon = (addFavicon === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-preload')) {
+      preload = parseInt(elementIndex.getAttribute('data-preload'), 10);
+      preload = (preload === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-stars')) {
+      stars = parseInt(elementIndex.getAttribute('data-stars'), 10);
+      stars = (stars === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-blank')) {
+      blank = parseInt(elementIndex.getAttribute('data-blank'), 10);
+      blank = (blank === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-is-logged')) {
+      isLogged = parseInt(elementIndex.getAttribute('data-is-logged'), 10);
+      isLogged = (isLogged === 1)?true:false;
+    }
+    if (elementIndex.hasAttribute('data-intl-top')) {
+      intlTop = elementIndex.getAttribute('data-intl-top');
+    }
+    if (elementIndex.hasAttribute('data-intl-share')) {
+      intlShare = elementIndex.getAttribute('data-intl-share');
+    }
+    if (elementIndex.hasAttribute('data-intl-read')) {
+      intlRead = elementIndex.getAttribute('data-intl-read');
+    }
+    if (elementIndex.hasAttribute('data-intl-unread')) {
+      intlUnread = elementIndex.getAttribute('data-intl-unread');
+    }
+    if (elementIndex.hasAttribute('data-intl-star')) {
+      intlStar = elementIndex.getAttribute('data-intl-star');
+    }
+    if (elementIndex.hasAttribute('data-intl-unstar')) {
+      intlUnstar = elementIndex.getAttribute('data-intl-unstar');
+    }
+    if (elementIndex.hasAttribute('data-intl-from')) {
+      intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
+
+    status = document.getElementById('status').innerHTML;
+  }
+
+  function initKF() {
+    var listItems,
+        listLinkFolders = [],
+        listLinkItems = [];
+
+    initOptions();
+
+    listLinkFolders = getListLinkFolders();
+    listLinkItems = getListLinkItems();
+    if (!window.jQuery || (window.jQuery && !window.jQuery().collapse)) {
+      document.getElementById('menu-toggle'). onclick = collapseClick;
+      initCollapse(listLinkFolders);
+      initCollapse(listLinkItems);
+    }
+    initLinkFolders(listLinkFolders);
+    initLinkItems(listLinkItems);
+
+    initListItemsHash();
+    initListItems();
+
+    initUnread();
+
+    initItemButton();
+    initPageButton();
+
+    initAnonyme();
+
+    addEvent(window, 'keydown', checkKey);
+    addEvent(window, 'touchstart', checkMove);
+
+    if (autoupdate && !stars) {
+      initUpdate();
+    }
+
+    listItems = getListItems();
+    listItems.focus();
+  }
+
+  //http://scottandrew.com/weblog/articles/cbs-events
+  function addEvent(obj, evType, fn, useCapture) {
+    if (obj.addEventListener) {
+      obj.addEventListener(evType, fn, useCapture);
+    } else {
+      if (obj.attachEvent) {
+        obj.attachEvent('on' + evType, fn);
+      } else {
+        window.alert('Handler could not be attached');
+      }
+    }
+  }
+
+  function removeEvent(obj, evType, fn, useCapture) {
+    if (obj.removeEventListener) {
+      obj.removeEventListener(evType, fn, useCapture);
+    } else if (obj.detachEvent) {
+      obj.detachEvent("on"+evType, fn);
+    } else {
+      alert("Handler could not be removed");
+    }
+  }
+
+  // when document is loaded init KrISS feed
+  if (document.getElementById && document.createTextNode) {
+    addEvent(window, 'load', initKF);
+  }
+
+  window.checkKey = checkKey;
+  window.removeEvent = removeEvent;
+  window.addEvent = addEvent;
+})();
+
+// unread count for favicon part
+if(typeof GM_getValue == 'undefined') {
+	GM_getValue = function(name, fallback) {
+		return fallback;
+	};
+}
+
+// Register GM Commands and Methods
+if(typeof GM_registerMenuCommand !== 'undefined') {
+  var setOriginalFavicon = function(val) { GM_setValue('originalFavicon', val); };
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Current Favicon', function() { setOriginalFavicon(false); } );
+	GM_registerMenuCommand( 'GReader Favicon Alerts > Use Original Favicon', function() { setOriginalFavicon(true); } );
+}
+
+(function FaviconAlerts() {
+	var self = this;
+
+	this.construct = function() {
+		this.head = document.getElementsByTagName('head')[0];
+		this.pixelMaps = {numbers: {0:[[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],1:[[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],2:[[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],3:[[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],4:[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[0,0,1]],5:[[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],6:[[0,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],7:[[1,1,1],[0,0,1],[0,0,1],[0,1,0],[0,1,0]],8:[[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],9:[[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,0]],'+':[[0,0,0],[0,1,0],[1,1,1],[0,1,0],[0,0,0]],'k':[[1,0,1],[1,1,0],[1,1,0],[1,0,1],[1,0,1]]}};
+
+		this.timer = setInterval(this.poll, 500);
+		this.poll();
+
+		return true;
+	};
+
+	this.drawUnreadCount = function(unread, callback) {
+		if(!self.textedCanvas) {
+			self.textedCanvas = [];
+		}
+
+		if(!self.textedCanvas[unread]) {
+			self.getUnreadCanvas(function(iconCanvas) {
+				var textedCanvas = document.createElement('canvas');
+				textedCanvas.height = textedCanvas.width = iconCanvas.width;
+				var ctx = textedCanvas.getContext('2d');
+				ctx.drawImage(iconCanvas, 0, 0);
+
+				ctx.fillStyle = '#b7bfc9';
+				ctx.strokeStyle = '#7792ba';
+				ctx.strokeWidth = 1;
+
+				var count = unread.length;
+
+				if(count > 4) {
+					unread = '1k+';
+					count = unread.length;
+				}
+
+				var bgHeight = self.pixelMaps.numbers[0].length;
+				var bgWidth = 0;
+				var padding = count < 4 ? 1 : 0;
+				var topMargin = 0;
+
+				for(var index = 0; index < count; index++) {
+					bgWidth += self.pixelMaps.numbers[unread[index]][0].length;
+					if(index < count-1) {
+						bgWidth += padding;
+					}
+				}
+				bgWidth = bgWidth > textedCanvas.width-4 ? textedCanvas.width-4 : bgWidth;
+
+				ctx.fillRect(textedCanvas.width-bgWidth-4,topMargin,bgWidth+4,bgHeight+4);
+
+				var digit;
+				var digitsWidth = bgWidth;
+				for(index = 0; index < count; index++) {
+					digit = unread[index];
+
+					if (self.pixelMaps.numbers[digit]) {
+						var map = self.pixelMaps.numbers[digit];
+						var height = map.length;
+						var width = map[0].length;
+
+						ctx.fillStyle = '#2c3323';
+
+						for (var y = 0; y < height; y++) {
+							for (var x = 0; x < width; x++) {
+								if(map[y][x]) {
+									ctx.fillRect(14- digitsWidth + x, y+topMargin+2, 1, 1);
+								}
+							}
+						}
+
+						digitsWidth -= width + padding;
+					}
+				}
+
+				ctx.strokeRect(textedCanvas.width-bgWidth-3.5,topMargin+0.5,bgWidth+3,bgHeight+3);
+
+				self.textedCanvas[unread] = textedCanvas;
+
+				callback(self.textedCanvas[unread]);
+			});
+      callback(self.textedCanvas[unread]);
+		}
+	};
+	this.getIcon = function(callback) {
+		self.getUnreadCanvas(function(canvas) {
+			callback(canvas.toDataURL('image/png'));
+		});
+	};
+  this.getIconSrc = function() {
+    var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].rel === 'icon') {
+        return links[i].href;
+      }
+    }
+    return false;
+  };
+	this.getUnreadCanvas = function(callback) {
+		if(!self.unreadCanvas) {
+			self.unreadCanvas = document.createElement('canvas');
+			self.unreadCanvas.height = self.unreadCanvas.width = 16;
+
+			var ctx = self.unreadCanvas.getContext('2d');
+			var img = new Image();
+
+			img.addEventListener('load', function() {
+				ctx.drawImage(img, 0, 0);
+				callback(self.unreadCanvas);
+			}, true);
+
+		//	if(GM_getValue('originalFavicon', false)) {
+		//		img.src = self.icons.original;
+		//	} else {
+		//		img.src = self.icons.current;
+		//	}
+		// img.src = 'inc/favicon.ico';
+                  img.src = self.getIconSrc();
+		} else {
+			callback(self.unreadCanvas);
+		}
+	};
+	this.getUnreadCount = function() {
+		matches = self.getSearchText().match(/\((.*)\)/);
+		return matches ? matches[1] : false;
+	};
+	this.getUnreadCountIcon = function(callback) {
+		var unread = self.getUnreadCount();
+    self.drawUnreadCount(unread, function(icon) {
+      if(icon) {
+        callback(icon.toDataURL('image/png'));
+      }
+    });
+	};
+	this.getSearchText = function() {
+                var elt = document.getElementById('nb-unread');
+                
+                if (!elt) {
+		  elt = document.getElementById('nb-starred');
+                }
+
+		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+	};
+	this.poll = function() {
+		if(self.getUnreadCount() != "0") {
+			self.getUnreadCountIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		} else {
+			self.getIcon(function(icon) {
+				self.setIcon(icon);
+			});
+		}
+	};
+
+	this.setIcon = function(icon) {
+		var links = self.head.getElementsByTagName('link');
+		for (var i = 0; i < links.length; i++)
+			if ((links[i].rel == 'shortcut icon' || links[i].rel=='icon') &&
+        links[i].href != icon)
+				self.head.removeChild(links[i]);
+			else if(links[i].href == icon)
+				return;
+
+		var newIcon = document.createElement('link');
+		newIcon.type = 'image/png';
+		newIcon.rel = 'shortcut icon';
+		newIcon.href = icon;
+		self.head.appendChild(newIcon);
+
+		// Chrome hack for updating the favicon
+		//var shim = document.createElement('iframe');
+		//shim.width = shim.height = 0;
+		//document.body.appendChild(shim);
+		//shim.src = 'icon';
+		//document.body.removeChild(shim);
+	};
+
+	this.toString = function() { return '[object FaviconAlerts]'; };
+
+	return this.construct();
+}());
+
+<?php
+    }
+    exit();
 }
 
 $pb = new PageBuilder('FeedPage');
-$kfp = new FeedPage(STYLE_FILE);
+FeedPage::$pb = $pb;
+$pb->assign('base', MyTool::getUrl());
+$pb->assign('version', FEED_VERSION);
+$pb->assign('pagetitle', 'KrISS feed');
+$pb->assign('referer', $referer);
+$pb->assign('langs', Intl::$langList);
+$pb->assign('lang', Intl::$langList[Intl::$lang]);
+$pb->assign('query_string', isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
+
+if (!is_dir(DATA_DIR)) {
+    if (!@mkdir(DATA_DIR, 0755)) {
+        $pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), DATA_DIR));
+        $pb->renderPage('message');
+    }
+    @chmod(DATA_DIR, 0755);
+    if (!is_file(DATA_DIR.'/.htaccess')) {
+        if (!@file_put_contents(
+            DATA_DIR.'/.htaccess',
+            "Allow from none\nDeny from all\n"
+        )) {
+            $pb->assign('message', sprintf(Intl::msg('Can not protect %s directory with .htaccess, check permissions'), DATA_DIR));
+            $pb->renderPage('message');
+        }
+    }
+}
+
+// XSRF protection with token
+if (!empty($_POST)) {
+    if (!Session::isToken($_POST['token'])) {
+        $pb->assign('message', Intl::msg('Wrong token'));
+        $pb->renderPage('message');
+    }
+    unset($_SESSION['tokens']);
+}
+
 $kfc = new FeedConf(CONFIG_FILE, FEED_VERSION);
 $kf = new Feed(DATA_FILE, CACHE_DIR, $kfc);
+$ks = new Star(STAR_FILE, ITEM_FILE, $kfc);
+
+// autosave opml
+if (Session::isLogged()) {
+    if (!is_file(OPML_FILE)) {
+        $kf->loadData();
+        file_put_contents(OPML_FILE, Opml::generateOpml($kf->getFeeds(), $kf->getFolders()));
+    } else {
+        if (filemtime(OPML_FILE) < time() - UPDATECHECK_INTERVAL) {
+            $kf->loadData();
+            rename(OPML_FILE, OPML_FILE_SAVE);
+            file_put_contents(OPML_FILE, Opml::generateOpml($kf->getFeeds(), $kf->getFolders()));
+        }
+    }   
+}
 
 // List or Expanded ?
 $view = $kfc->view;
@@ -5661,13 +8510,16 @@ $filter =  $kfc->filter;
 // newerFirst or olderFirst
 $order =  $kfc->order;
 // number of item by page
-$byPage = $kfc->getByPage();
+$byPage = $kfc->byPage;
 // Hash : 'all', feed hash or folder hash
 $currentHash = $kfc->getCurrentHash();
 // Query
 $query = '?';
+if (isset($_GET['stars'])) {
+    $query .= 'stars&';
+}
 if (!empty($currentHash) and $currentHash !== 'all') {
-    $query = '?currentHash='.$currentHash.'&';
+    $query .= 'currentHash='.$currentHash.'&';
 }
 
 $pb->assign('view', $view);
@@ -5676,7 +8528,7 @@ $pb->assign('filter', $filter);
 $pb->assign('order', $order);
 $pb->assign('byPage', $byPage);
 $pb->assign('currentHash', $currentHash);
-$pb->assign('query', $query);
+$pb->assign('query', htmlspecialchars($query));
 $pb->assign('redirector', $kfc->redirector);
 $pb->assign('shaarli', htmlspecialchars($kfc->shaarli));
 $pb->assign('autoreadItem', $kfc->autoreadItem);
@@ -5684,8 +8536,12 @@ $pb->assign('autoreadPage', $kfc->autoreadPage);
 $pb->assign('autohide', $kfc->autohide);
 $pb->assign('autofocus', $kfc->autofocus);
 $pb->assign('autoupdate', $kfc->autoUpdate);
-$pb->assign('version', FEED_VERSION);
-$pb->assign('kfurl', MyTool::getUrl());
+$pb->assign('addFavicon', $kfc->addFavicon);
+$pb->assign('preload', $kfc->preload);
+$pb->assign('blank', $kfc->blank);
+$pb->assign('kf', $kf);
+$pb->assign('isLogged', $kfc->isLogged());
+$pb->assign('pagetitle', strip_tags($kfc->title));
 
 if (isset($_GET['login'])) {
     // Login
@@ -5703,41 +8559,88 @@ if (isset($_GET['login'])) {
                 $_SESSION['longlastingsession'] = 31536000;
                 $_SESSION['expires_on'] =
                     time() + $_SESSION['longlastingsession'];
-                session_set_cookie_params($_SESSION['longlastingsession']);
+                Session::setCookie($_SESSION['longlastingsession']);
             } else {
-                session_set_cookie_params(0); // when browser closes
+                // when browser closes
+                Session::setCookie(0);
             }
             session_regenerate_id(true);
-
             MyTool::redirect();
         }
-        die("Login failed !");
+        if (Session::banCanLogin()) {
+            $pb->assign('message', Intl::msg('Login failed!'));
+        } else {
+            $pb->assign('message', Intl::msg('I said: NO. You are banned for the moment. Go away.'));
+        }
+        $pb->renderPage('message');
     } else {
-        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
+        $pb->assign('token', Session::getToken());
         $pb->renderPage('login');
     }
 } elseif (isset($_GET['logout'])) {
     //Logout
     Session::logout();
     MyTool::redirect();
+} elseif (isset($_GET['password']) && $kfc->isLogged()) {
+    if (isset($_POST['save'])) {
+        if ($kfc->hash === sha1($_POST['oldpassword'].$kfc->login.$kfc->salt)) {
+            $kfc->setHash($_POST['newpassword']);
+            $kfc->write();
+            MyTool::redirect();
+        }
+    } elseif (isset($_POST['cancel'])) {
+        MyTool::redirect();
+    }
+    $pb->assign('pagetitle', Intl::msg('Change your password').' - '.strip_tags($kfc->title));
+    $pb->assign('token', Session::getToken());
+    $pb->renderPage('change_password');
 } elseif (isset($_GET['ajax'])) {
+    if (isset($_GET['stars'])) {
+        $filter = 'all';
+        $kf = $ks;
+    }
     $kf->loadData();
     $needSave = false;
+    $needStarSave = false;
     $result = array();
+    if (!$kfc->isLogged()) {
+        $result['logout'] = true;
+    }
     if (isset($_GET['current'])) {
         $result['item'] = $kf->getItem($_GET['current'], false);
         $result['item']['itemHash'] = $_GET['current'];
     }
     if (isset($_GET['read'])) {
         $needSave = $kf->mark($_GET['read'], 1);
-        if ($needSave) {
+        if ($needSave && $kfc->isLogged()) {
             $result['read'] = $_GET['read'];
         }
     }
     if (isset($_GET['unread'])) {
         $needSave = $kf->mark($_GET['unread'], 0);
-        if ($needSave) {
+        if ($needSave && $kfc->isLogged()) {
             $result['unread'] = $_GET['unread'];
+        }
+    }
+    if (isset($_GET['star']) && !isset($_GET['stars'])) {
+        $hash = $_GET['star'];
+        $item = $kf->loadItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+
+        $ks->loadData();
+        $needStarSave = $ks->markItem($_GET['star'], 1, $feed, $item);
+        if ($needStarSave) {
+            $result['star'] = $hash;
+        }
+    }
+    if (isset($_GET['unstar'])) {
+        $hash = $_GET['unstar'];
+
+        $ks->loadData();
+        $needStarSave = $ks->markItem($hash, 0);
+        if ($needStarSave) {
+            $result['unstar'] = $hash;
         }
     }
     if (isset($_GET['toggleFolder'])) {
@@ -5757,14 +8660,18 @@ if (isset($_GET['login'])) {
             }
         }
         $i = 0;
-        foreach(array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
-            $result['page'][$i] = $kf->getItem($itemHash, false);
-            $result['page'][$i]['read'] = $item[1];
+        foreach (array_slice($results, $firstIndex + 1, count($results) - $firstIndex - 1, true) as $itemHash => $item) {
+            if (isset($_GET['stars'])) {
+                $result['page'][$i] = $kf->getItem($itemHash);
+            } else {
+                $result['page'][$i] = $kf->getItem($itemHash, false);
+                $result['page'][$i]['read'] = $item[1];
+            }
             $i++;
         }
     }
     if (isset($_GET['update'])) {
-        if (Session::isLogged()) {
+        if ($kfc->isLogged()) {
             if (empty($_GET['update'])) {
                 $result['update']['feeds'] = array();
                 $feedsHash = $kf->orderFeedsForUpdate(array_keys($kf->getFeeds()));
@@ -5777,8 +8684,6 @@ if (isset($_GET['login'])) {
                 $info = $kf->updateChannel($_GET['update']);
                 if (empty($info['error'])) {
                     $info['error'] = $feed['description'];
-                } else {
-                    $info['error'] = $kf->getError($info['error']);
                 }
                 $info['newItems'] = array_keys($info['newItems']);
                 $result['update'] = $info;
@@ -5790,14 +8695,21 @@ if (isset($_GET['login'])) {
     if ($needSave) {
         $kf->writeData();
     }
+    if ($needStarSave) {
+        $ks->writeData();
+    }
     MyTool::renderJson($result);
-} elseif (isset($_GET['help'])) {
-    $pb->assign('pagetitle', 'Help for KrISS feed');
+} elseif (isset($_GET['help']) && ($kfc->isLogged() || $kfc->visibility === 'protected')) {
+    $pb->assign('pagetitle', Intl::msg('Help').' - '.strip_tags($kfc->title));
     $pb->renderPage('help');
-} elseif (isset($_GET['update'])
-          && (Session::isLogged()
+} elseif ((isset($_GET['update'])
+          && ($kfc->isLogged()
               || (isset($_GET['cron'])
-                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash)))) {
+                  && $_GET['cron'] === sha1($kfc->salt.$kfc->hash))))
+          || (isset($argv)
+              && count($argv) >= 3
+              && $argv[1] == 'update'
+              && $argv[2] == sha1($kfc->salt.$kfc->hash))) {
     // Update
     $kf->loadData();
     $forceUpdate = false;
@@ -5805,7 +8717,10 @@ if (isset($_GET['login'])) {
         $forceUpdate = true;
     }
     $feedsHash = array();
-    $hash = $_GET['update'];
+    $hash = 'all';
+    if (isset($_GET['update'])) {
+        $hash = $_GET['update'];
+    }
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     switch($type) {
@@ -5823,18 +8738,28 @@ if (isset($_GET['login'])) {
     default:
         break;
     }
-    if (isset($_GET['cron'])) {
+
+    $pb->assign('currentHash', $hash);
+    if (isset($_GET['cron']) || isset($argv) && count($argv) >= 3) {
         $kf->updateFeedsHash($feedsHash, $forceUpdate);
     } else {
-        $pb->assign('kf', $kf);
         $pb->assign('feedsHash', $feedsHash);
         $pb->assign('forceUpdate', $forceUpdate);
-        $pb->assign('pagetitle', 'Update');
+        $pb->assign('pagetitle', Intl::msg('Update').' - '.strip_tags($kfc->title));
         $pb->renderPage('update');
     }
-} elseif (isset($_GET['config']) && Session::isLogged()) {
+} elseif (isset($_GET['plugins']) && $kfc->isLogged()) {
+    $pb->assign('pagetitle', Intl::msg('Plugins management').' - '.strip_tags($kfc->title));
+    $pb->assign('plugins', Plugin::listAll());
+    $pb->renderPage('plugins');
+} elseif (isset($_GET['config']) && $kfc->isLogged()) {
     // Config
     if (isset($_POST['save'])) {
+        if (isset($_POST['disableSessionProtection'])) {
+            $_POST['disableSessionProtection'] = '1';
+        } else {
+            $_POST['disableSessionProtection'] = '0';
+        }
         $kfc->hydrate($_POST);
         MyTool::redirect();
     } elseif (isset($_POST['cancel'])) {
@@ -5844,27 +8769,32 @@ if (isset($_GET['login'])) {
         $paging = $kfc->getPaging();
 
         $pb->assign('page', 'config');
-        $pb->assign('pagetitle', 'Config - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Configuration').' - '.strip_tags($kfc->title));
         $pb->assign('kfctitle', htmlspecialchars($kfc->title));
         $pb->assign('kfcredirector', htmlspecialchars($kfc->redirector));
         $pb->assign('kfcshaarli', htmlspecialchars($kfc->shaarli));
         $pb->assign('kfclocale', htmlspecialchars($kfc->locale));
         $pb->assign('kfcmaxitems', htmlspecialchars($kfc->maxItems));
         $pb->assign('kfcmaxupdate', htmlspecialchars($kfc->maxUpdate));
-        $pb->assign('kfcpublic', (int) $kfc->public);
+        $pb->assign('kfcvisibility', htmlspecialchars($kfc->visibility));
         $pb->assign('kfccron', sha1($kfc->salt.$kfc->hash));
         $pb->assign('kfcautoreaditem', (int) $kfc->autoreadItem);
         $pb->assign('kfcautoreadpage', (int) $kfc->autoreadPage);
         $pb->assign('kfcautoupdate', (int) $kfc->autoUpdate);
         $pb->assign('kfcautohide', (int) $kfc->autohide);
         $pb->assign('kfcautofocus', (int) $kfc->autofocus);
-
+        $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
+        $pb->assign('kfcpreload', (int) $kfc->preload);
+        $pb->assign('kfcblank', (int) $kfc->blank);
+        $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
+        $pb->assign('token', Session::getToken());
+        $pb->assign('scriptfilename', $_SERVER["SCRIPT_FILENAME"]);
 
         $pb->renderPage('config');
     }
-} elseif (isset($_GET['import']) && Session::isLogged()) {
+} elseif (isset($_GET['import']) && $kfc->isLogged()) {
     // Import
     if (isset($_POST['import'])) {
         // If file is too big, some form field may be missing.
@@ -5875,15 +8805,12 @@ if (isset($_GET['login'])) {
             $rurl = empty($_SERVER['HTTP_REFERER'])
                 ? '?'
                 : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("The file you are trying to upload'
-                . ' is probably bigger than what this webserver can accept '
-                . '(' . MyTool::humanBytes(MyTool::getMaxFileSize())
-                . ' bytes). Please upload in smaller chunks.");'
-                . 'document.location=\'' . htmlspecialchars($rurl)
-                . '\';</script>';
-            exit;
+
+            $pb->assign('message', sprintf(Intl::msg('The file you are trying to upload is probably bigger than what this webserver can accept (%s). Please upload in smaller chunks.'), MyTool::humanBytes(MyTool::getMaxFileSize())));
+            $pb->assign('referer', $rurl);
+            $pb->renderPage('message');
         }
-        
+
         $kf->loadData();
         $kf->setData(Opml::importOpml($kf->getData()));
         $kf->sortFeeds();
@@ -5892,19 +8819,23 @@ if (isset($_GET['login'])) {
     } else if (isset($_POST['cancel'])) {
         MyTool::redirect();
     } else {
-        $pb->assign('pagetitle', 'Import');
+        $pb->assign('pagetitle', Intl::msg('Import').' - '.strip_tags($kfc->title));
+        $pb->assign('maxsize', MyTool::getMaxFileSize());
+        $pb->assign('humanmaxsize', MyTool::humanBytes(MyTool::getMaxFileSize()));
+        $pb->assign('token', Session::getToken());
         $pb->renderPage('import');
     }
-} elseif (isset($_GET['export']) && Session::isLogged()) {
+} elseif (isset($_GET['export']) && $kfc->isLogged()) {
     // Export
     $kf->loadData();
     Opml::exportOpml($kf->getFeeds(), $kf->getFolders());
-} elseif (isset($_GET['add']) && Session::isLogged()) {
+} elseif (isset($_GET['add']) && $kfc->isLogged()) {
     // Add feed
     $kf->loadData();
 
     if (isset($_POST['newfeed']) && !empty($_POST['newfeed'])) {
-        if ($kf->addChannel($_POST['newfeed'])) {
+        $addc = $kf->addChannel($_POST['newfeed']);
+        if (empty($addc['error'])) {
             // Add success
             $folders = array();
             if (!empty($_POST['folders'])) {
@@ -5918,20 +8849,14 @@ if (isset($_GET['login'])) {
                 $folders[] = $newFolderHash;
             }
             $hash = MyTool::smallHash($_POST['newfeed']);
-            $kf->editFeed($hash, '', '', $folders, '');
+            $kf->editFeed($hash, '', '', $folders, '', '');
             $kf->sortFeeds();
             $kf->writeData();
             MyTool::redirect('?currentHash='.$hash);
         } else {
             // Add fail
-            $returnurl = empty($_SERVER['HTTP_REFERER'])
-                ? MyTool::getUrl()
-                : $_SERVER['HTTP_REFERER'];
-            echo '<script>alert("The feed you are trying to add already exists'
-                . ' or is wrong. Check your feed or try again later.");'
-                . 'document.location=\'' . htmlspecialchars($returnurl)
-                . '\';</script>';
-            exit;
+            $pb->assign('message', $addc['error']);
+            $pb->renderPage('message');
         }
     }
 
@@ -5940,21 +8865,21 @@ if (isset($_GET['login'])) {
         $newfeed = htmlspecialchars($_GET['newfeed']);
     }
     $pb->assign('page', 'add');
-    $pb->assign('pagetitle', 'Add a new feed');
+    $pb->assign('pagetitle', Intl::msg('Add a new feed').' - '.strip_tags($kfc->title));
     $pb->assign('newfeed', $newfeed);
     $pb->assign('folders', $kf->getFolders());
+    $pb->assign('token', Session::getToken());
     
-    $pb->renderPage('addFeed');
-} elseif (isset($_GET['toggleFolder']) && Session::isLogged()) {
+    $pb->renderPage('add_feed');
+} elseif (isset($_GET['toggleFolder']) && $kfc->isLogged()) {
     $kf->loadData();
-    if (isset($_GET['toggleFolder'])) {
-        $kf->toggleFolder($_GET['toggleFolder']);
-    }
+    $kf->toggleFolder($_GET['toggleFolder']);
     $kf->writeData();
-    MyTool::redirect();
+
+    MyTool::redirect($query);
 } elseif ((isset($_GET['read'])
            || isset($_GET['unread']))
-          && Session::isLogged()) {
+          && $kfc->isLogged()) {
     // mark all as read : item, feed, folder, all
     $kf->loadData();
 
@@ -5975,25 +8900,149 @@ if (isset($_GET['login'])) {
     // type : 'feed', 'folder', 'all', 'item'
     $type = $kf->hashType($hash);
     if ($type === 'item') {
-        MyTool::redirect($query.'current='.$hash);
+        $query .= 'current='.$hash;
     } else {
-        MyTool::redirect($query);
+        if ($filter === 'unread' && $read === 1) {
+            $query = '?';
+        }
     }
-} elseif (isset($_GET['edit']) && Session::isLogged()) {
+    MyTool::redirect($query);
+} elseif ((isset($_GET['star'])
+           || isset($_GET['unstar']))
+          && $kfc->isLogged()) {
+    // mark all as starred : item, feed, folder, all
+    $kf->loadData();
+    $ks->loadData();
+
+    $starred = 1;
+    if (isset($_GET['star'])) {
+        $hash = $_GET['star'];
+        $starred = 1;
+
+        $item = $kf->loadItem($hash, false);
+        $feed = $kf->getFeed(substr($hash, 0, 6));
+
+        $needSave = $ks->markItem($hash, $starred, $feed, $item);
+    } else {
+        $hash = $_GET['unstar'];
+        $starred = 0;
+
+        $needSave = $ks->markItem($hash, $starred);
+    }
+    if ($needSave) {
+        $ks->writeData();
+    }
+
+    // type : 'feed', 'folder', 'all', 'item'
+    $type = $kf->hashType($hash);
+
+    if ($type === 'item') {
+        $query .= 'current='.$hash;
+    }
+    MyTool::redirect($query);
+} elseif (isset($_GET['stars']) && $kfc->isLogged()) {
+    $ks->loadData();
+    $listItems = $ks->getItems($currentHash, 'all');
+    $listHash = array_keys($listItems);
+    $currentItemHash = '';
+    if (isset($_GET['current']) && !empty($_GET['current'])) {
+        $currentItemHash = $_GET['current'];
+    }
+    if (isset($_GET['next']) && !empty($_GET['next'])) {
+        $currentItemHash = $_GET['next'];
+    }
+    if (isset($_GET['previous']) && !empty($_GET['previous'])) {
+        $currentItemHash = $_GET['previous'];
+    }
+    if (empty($currentItemHash)) {
+        $currentPage = $kfc->getCurrentPage();
+        $index = ($currentPage - 1) * $byPage;
+    } else {
+        $index = array_search($currentItemHash, $listHash);
+        if (isset($_GET['next'])) {
+            if ($index < count($listHash)-1) {
+                $index++;
+            }
+        }
+
+        if (isset($_GET['previous'])) {
+            if ($index > 0) {
+                $index--;
+            }
+        }
+    }
+
+    if ($index < count($listHash)) {
+        $currentItemHash = $listHash[$index];
+    } else {
+        $index = count($listHash) - 1;
+    }
+
+    // pagination
+    $currentPage = (int) ($index/$byPage)+1;
+    if ($currentPage <= 0) {
+        $currentPage = 1;
+    }
+    $begin = ($currentPage - 1) * $byPage;
+    $maxPage = (count($listItems) <= $byPage) ? '1' : ceil(count($listItems) / $byPage);
+    $nbItems = count($listItems);
+
+    // list items
+    $listItems = array_slice($listItems, $begin, $byPage, true);
+
+    // type : 'feed', 'folder', 'all', 'item'
+    $currentHashType = $kf->hashType($currentHash);
+    $hashView = '';
+    switch($currentHashType){
+    case 'all':
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
+        break;
+    case 'feed':
+        $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
+        break;
+    case 'folder':
+        $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
+        break;
+    default:
+        $hashView = '<span id="nb-starred">'.$nbItems.'</span><span class="hidden-phone"> '.Intl::msg('starred items').'</span>';
+        break;
+    }
+
+    $menu = $kfc->getMenu();
+    $paging = $kfc->getPaging();
+
+    $pb->assign('menu', $menu);
+    $pb->assign('paging', $paging);
+    $pb->assign('currentHashType', $currentHashType);
+    $pb->assign('currentHashView', $hashView);
+    $pb->assign('currentPage', (int) $currentPage);
+    $pb->assign('maxPage', (int) $maxPage);
+    $pb->assign('currentItemHash', $currentItemHash);
+    $pb->assign('nbItems', $nbItems);
+    $pb->assign('items', $listItems);
+    if ($listFeeds == 'show') {
+        $pb->assign('feedsView', $ks->getFeedsView());
+    }
+    $pb->assign('kf', $ks);
+    $pb->assign('pagetitle', Intl::msg('Starred items').' - '.strip_tags($kfc->title));
+    $pb->renderPage('index');
+} elseif (isset($_GET['edit']) && $kfc->isLogged()) {
     // Edit feed, folder, all
     $kf->loadData();
     $pb->assign('page', 'edit');
-    $pb->assign('pagetitle', 'edit');
-    
+    $pb->assign('pagetitle', Intl::msg('Edit').' - '.strip_tags($kfc->title));
+    $pb->assign('token', Session::getToken()); 
+
     $hash = substr(trim($_GET['edit'], '/'), 0, 6);
-// type : 'feed', 'folder', 'all', 'item'
-$type = $kf->hashType($currentHash);
+    // type : 'feed', 'folder', 'all', 'item'
+    $type = $kf->hashType($currentHash);
     $type = $kf->hashType($hash);
     switch($type) {
     case 'feed':
         if (isset($_POST['save'])) {
             $title = $_POST['title'];
             $description = $_POST['description'];
+            $htmlUrl = $_POST['htmlUrl'];
             $folders = array();
             if (!empty($_POST['folders'])) {
                 foreach ($_POST['folders'] as $hashFolder) {
@@ -6007,7 +9056,7 @@ $type = $kf->hashType($currentHash);
             }
             $timeUpdate = $_POST['timeUpdate'];
 
-            $kf->editFeed($hash, $title, $description, $folders, $timeUpdate);
+            $kf->editFeed($hash, $title, $description, $folders, $timeUpdate, $htmlUrl);
             $kf->writeData();
 
             MyTool::redirect();
@@ -6015,7 +9064,7 @@ $type = $kf->hashType($currentHash);
             $kf->removeFeed($hash);
             $kf->writeData();
 
-            MyTool::redirect();
+            MyTool::redirect('?');
         } elseif (isset($_POST['cancel'])) {
             MyTool::redirect();
         } else {
@@ -6031,7 +9080,7 @@ $type = $kf->hashType($currentHash);
                 $pb->assign('feed', $feed);
                 $pb->assign('folders', $kf->getFolders());
                 $pb->assign('lastUpdate', $lastUpdate);
-                $pb->renderPage('editFeed');
+                $pb->renderPage('edit_feed');
             } else {
                 MyTool::redirect();
             }
@@ -6056,15 +9105,24 @@ $type = $kf->hashType($currentHash);
         } else {
             $folderTitle = $kf->getFolderTitle($hash);
             $pb->assign('foldertitle', htmlspecialchars($folderTitle));
-            $pb->renderPage('editFolder');
+            $pb->renderPage('edit_folder');
         }
         break;
     case 'all':
         if (isset($_POST['save'])) {
 
+            foreach (array_keys($_POST) as $key) {
+                if (strpos($key, 'order-folder-') !== false) {
+                    $folderHash = str_replace('order-folder-', '', $key);
+                    $kf->orderFolder($folderHash, (int) $_POST[$key]);
+                }
+            }
+
             $feedsHash = array();
-            foreach ($_POST['feeds'] as $feedHash) {
-                $feedsHash[] = $feedHash;
+            if (isset($_POST['feeds'])) {
+                foreach ($_POST['feeds'] as $feedHash) {
+                    $feedsHash[] = $feedHash;
+                }
             }
 
             foreach ($feedsHash as $feedHash) {
@@ -6090,14 +9148,9 @@ $type = $kf->hashType($currentHash);
                 }
                 $addFoldersHash = array_diff($addFoldersHash, $removeFoldersHash);
 
-                $kf->editFeed(
-                    $feedHash,
-                    '',
-                    '',
-                    $addFoldersHash,
-                    ''
-                );
+                $kf->editFeed($feedHash, '', '', $addFoldersHash, '', '');
             }
+            $kf->sortFolders();
             $kf->writeData();
 
             MyTool::redirect();
@@ -6115,7 +9168,7 @@ $type = $kf->hashType($currentHash);
             $listFeeds = $kf->getFeeds();
             $pb->assign('folders', $folders);
             $pb->assign('listFeeds', $listFeeds);
-            $pb->renderPage('editAll');
+            $pb->renderPage('edit_all');
         }
         break;
     case 'item':
@@ -6127,26 +9180,31 @@ $type = $kf->hashType($currentHash);
     $kf->loadData();
     $item = $kf->getItem($_GET['shaarli'], false);
     $shaarli = $kfc->shaarli;
-    // remove sel used with javascript
-    $shaarli = str_replace('${sel}', '', $shaarli);
+    if (!empty($shaarli)) {
+        // remove sel used with javascript
+        $shaarli = str_replace('${sel}', '', $shaarli);
 
-    $url = $item['link'];
-    $via = $item['via'];
-    $title = $item['title'];
+        $url = htmlspecialchars_decode($item['link']);
+        $via = htmlspecialchars_decode($item['via']);
+        $title = htmlspecialchars_decode($item['title']);
 
-    if (parse_url($url, PHP_URL_HOST) !== parse_url($via, PHP_URL_HOST)) {
-        $via = 'via '.$via;
+        if (parse_url($url, PHP_URL_HOST) !== parse_url($via, PHP_URL_HOST)) {
+            $via = 'via '.$via;
+        } else {
+            $via = '';
+        }
+
+        $shaarli = str_replace('${url}', urlencode($url), $shaarli);
+        $shaarli = str_replace('${title}', urlencode($title), $shaarli);
+        $shaarli = str_replace('${via}', urlencode($via), $shaarli);
+
+        header('Location: '.$shaarli);
     } else {
-        $via = '';
+        $pb->assign('message', Intl::msg('Please configure your share link first'));
+        $pb->renderPage('message');
     }
-
-    $shaarli = str_replace('${url}', $url, $shaarli);
-    $shaarli = str_replace('${title}', $title, $shaarli);
-    $shaarli = str_replace('${via}', $via, $shaarli);
-
-    MyTool::redirect($shaarli);
 } else {
-    if (Session::isLogged() || $kfc->public) {
+    if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
         $kf->loadData();
         if ($kf->updateItems()) {
             $kf->writeData();
@@ -6181,7 +9239,7 @@ $type = $kf->hashType($currentHash);
             if (isset($_GET['next'])) {
                 if ($index < count($listHash)-1) {
                     $index++;
-                } 
+                }
             }
 
             if (isset($_GET['previous'])) {
@@ -6220,26 +9278,26 @@ $type = $kf->hashType($currentHash);
         $hashView = '';
         switch($currentHashType){
         case 'all':
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         case 'feed':
-            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Feed (<a href="'.$kf->getFeedHtmlUrl($currentHash).'" title="">'.$kf->getFeedTitle($currentHash).'</a>): '.'<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         case 'folder':
-            $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> unread items</span>';
+            $hashView = 'Folder ('.$kf->getFolderTitle($currentHash).'): <span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         default:
-            $hashView = '<span id="nb-unread">'.$unread.'</span><span> unread items';
+            $hashView = '<span id="nb-unread">'.$unread.'</span><span class="hidden-phone"> '.Intl::msg('unread items').'</span>';
             break;
         }
 
         $menu = $kfc->getMenu();
         $paging = $kfc->getPaging();
-        $pb->assign('menu',  $menu);
-        $pb->assign('paging',  $paging);
+        $pb->assign('menu', $menu);
+        $pb->assign('paging', $paging);
         $pb->assign('currentHashType', $currentHashType);
         $pb->assign('currentHashView', $hashView);
-        $pb->assign('currentPage',  (int) $currentPage);
+        $pb->assign('currentPage', (int) $currentPage);
         $pb->assign('maxPage', (int) $maxPage);
         $pb->assign('currentItemHash', $currentItemHash);
         $pb->assign('nbItems', $nbItems);
@@ -6247,16 +9305,16 @@ $type = $kf->hashType($currentHash);
         if ($listFeeds == 'show') {
             $pb->assign('feedsView', $kf->getFeedsView());
         }
-        $pb->assign('kf',  $kf);
         $pb->assign('pagetitle', strip_tags($kfc->title));
 
         $pb->renderPage('index');
     } else {
-        $pb->assign('pagetitle', 'Login - '.strip_tags($kfc->title));
+        $pb->assign('pagetitle', Intl::msg('Sign in').' - '.strip_tags($kfc->title));
         if (!empty($_SERVER['QUERY_STRING'])) {
             $pb->assign('referer', MyTool::getUrl().'?'.$_SERVER['QUERY_STRING']);
         }
+        $pb->assign('token', Session::getToken()); 
         $pb->renderPage('login');
     }
 }
-//print(number_format(microtime(true)-START_TIME,3).' secondes');
+

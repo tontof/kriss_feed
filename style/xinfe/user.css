@@ -1,0 +1,263 @@
+/*
+
+KriSS Feed theme: Pastel
+By Xinfe
+Version 0.8
+
+*/
+
+
+/* Global background and font size */
+html{
+	background: rgb(238, 238, 238);
+	font-size: 11.2pt;
+}
+
+
+/* Layout without quirks, added paddings to lighten display */
+/* (border-box discovered in http://mourner.github.io/dead-simple-grid/ */
+@media (min-width: 768px) {
+#main-container{
+        padding: 0 7pt;
+        -webkit-box-sizing: border-box;
+           -moz-box-sizing: border-box;
+                box-sizing: border-box;
+}
+#minor-container{
+        width: 25%;
+        -webkit-box-sizing: border-box;
+           -moz-box-sizing: border-box;
+                box-sizing: border-box;
+}
+}
+
+
+/* Feed list styling */
+#minor-container{
+	line-height: 1.3em;
+}
+li.feed{
+	/* Force single line for feed name */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding-left: 4pt;
+}
+.mark-as{
+	/* Put counter on the left */
+	float: none;
+	margin-right: 4pt;
+}
+.folder-toggle{
+	/* Open/close folder using button on the right */
+	float: right;
+	margin-top: 1pt;
+	height: 0;
+}
+li.folder > h5, li.folder > h4{
+	/* Margins for folder distinctions */
+	border: none;
+}
+li.folder > h5{
+	margin: 9px 1px 2px;
+}
+li.feed:nth-child(odd){
+	/* Feed background colored */
+	background: rgba(0, 255, 0, 0.06);
+}
+li.feed:nth-child(even){
+        /* Feed background colored */
+	background: rgba(0, 0, 255, 0.06);
+}
+.current-folder > h4, .current-folder > h5, .current-feed{
+	background: rgba(255, 255, 0, 0.3) !important;
+}
+li > ul >.folder{
+	/* Indent sub-folders */
+	margin-left: 7pt;
+}
+.feed-favicon > img{
+	/* Favicon customising */
+	font-size: 0;
+	overflow: hidden;
+	display: inline-block;
+}
+.mark-as > .label{
+	width: 2em;
+	display: inline-block;
+	text-align: center;
+	padding: 0;
+}
+
+/* Main content styling */
+
+
+
+/* Header */
+#menu{
+	/* Appearance of header block */
+	margin: 3mm 7mm;
+	border: none;
+	border-bottom: thin #aaa solid;
+}
+#nav-home{
+	/* Home icon margins */
+	padding: 0 0.8em;
+	margin-left: 1em;
+}
+#nav-home + span{
+	/* Align text with Home icon */
+	padding: 0 5px;
+}
+.brand{
+	/* Center Home icon and title when in Mobile view */
+	margin-top: 3px;
+	margin-bottom: -3px;
+}
+#menu-collapse{
+	/* Put list of links below title, even when no title */
+	width: 100%;
+}
+.navbar .nav > li > a {
+	/* Edit list of links distance with title */
+	padding: 10px 15px 0;
+}
+#menu-toggle{
+	/* Remove margin to fit button in the bar, aligned with the title */
+	margin: -5px !important;
+}
+
+
+/*List of items  */
+.well{
+	/* Remove round border and margins for items in list */
+	border: none;
+        margin-bottom: 0;
+}
+.item-expanded
+	/* Separator for items */{
+	border-top: thin #aaa solid;
+}
+.item-info-end{
+	/* Source and date */
+	font-size: 10pt;
+	color: #555;
+	font-style: italic;
+}
+item-xml > .ico{
+	/* RSS icon aligned with text */
+	height: 0;
+}
+li.current{
+	/* Add nice lateral borders for current item */
+	border: 3px rgb(0, 143, 255) solid;
+	border-top: 0;
+	border-bottom: 0;
+}
+.current{
+	/* Highlight current item */
+	background: #fff;
+}
+.label-expanded{
+	/* Reshape share/read buttons */
+	padding: 6px;font-style:
+	normal;padding: 2px 4px;
+}
+
+
+/* The expand/collapse button is dim */
+.ico-b-disc {
+	opacity: 0.2;
+}
+
+
+/* Buttons styling */
+/* Colors */
+.btn, .btn2{
+	border: 1px #aaa solid !important;
+}
+.btn, button{
+	background: rgb(226, 255, 216);
+	background: rgb(226, 255, 216) linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(226, 255, 216) -moz-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(226, 255, 216) -webkit-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	color: #000;
+}
+.disabled{
+	background: rgb(240, 240, 240);
+        background: rgb(240, 240, 240) linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+        background: rgb(240, 240, 240) -moz-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(240, 240, 240) -webkit-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	cursor: not-allowed;
+}
+.disabled:hover{
+	color: #aaa;
+}
+.btn.btn-info[href="?read=all"]{
+	background: rgb(255, 217, 134);
+        background: rgb(255, 217, 134) linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+        background: rgb(255, 217, 134) -moz-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+	background: rgb(255, 217, 134) -webkit-linear-gradient(top,
+					hsla(0, 100%, 100%, 0) 1%,
+					hsla(0, 100%, 100%, 0) 30%,
+					hsla(0, 0%, 0%, 0.01) 70%,
+					hsla(0, 0%, 0%, 0.15) 100%);
+}
+
+/* Shape */
+* > .btn:first-child{
+	border-top-left-radius: 5px;
+}
+* > .btn:last-child{
+	border-bottom-right-radius: 5px;
+}
+.btn-navbar, .controls > input{
+	border-top-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+}
+
+
+
+/* Ad */
+#main-container:after{
+	content: "Design by Xinfe — Theme Pastel";
+	text-align: center;
+	display: block;
+	margin: 1cm 0;
+	font-family: monospace;
+	font-style: italic;
+	font-variant: small-caps;
+}
+

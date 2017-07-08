@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>{include="includes"}</head>
+  <body onload="document.loginform.login.focus();">
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span4 offset4">
+          <div id="login">
+            <form class="form-horizontal" method="post" action="?login" name="loginform">
+              <fieldset>
+                <legend>{'Welcome to KrISS feed'|Intl::msg}</legend>
+                <div class="control-group">
+     <label class="control-label" for="login">{'Login'|Intl::msg}</label>
+                  <div class="controls">
+                    <input type="text" id="login" name="login" placeholder="{'Login'|Intl::msg}" tabindex="1">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label class="control-label" for="password">{'Password'|Intl::msg}</label>
+                  <div class="controls">
+                    <input type="password" id="password" name="password" placeholder="{'Password'|Intl::msg}" tabindex="2">
+                  </div>
+                </div>
+                <div class="control-group">
+                  <div class="controls">
+                    <label><input type="checkbox" name="longlastingsession" tabindex="3">&nbsp;{'Stay signed in (do not check on public computers)'|Intl::msg}</label>
+                  </div>
+                </div>
+                
+                <div class="control-group">
+                  <div class="controls">
+                    <button type="submit" class="btn" tabindex="4">{'Sign in'|Intl::msg}</button>
+                  </div>
+                </div>
+              </fieldset>
+
+              <input type="hidden" name="returnurl" value="{$referer|htmlspecialchars}">
+              <input type="hidden" name="token" value="{$token}">
+            </form>
+            {include="status"}
+          </div>
+        </div>
+      </div>
+    </div>                                           
+  </body>
+</html> 

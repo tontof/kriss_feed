@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>{include="includes"}</head>
+  <body onload="document.getElementById('again').focus();">
+    <div class="container-fluid full-height">
+      <div class="row-fluid full-height">
+        <div id="main-container" class="span12 full-height">
+          {include="status"}
+          <div class="text-center">
+            {'Click on flag to select your language.'|Intl::msg}<br>{loop="$langs"}
+            <a href="?lang={$key}" title="{$value.name}" class="flag {$value.class}"></a>{/loop}
+          </div>
+          <div class="{if="empty($class)"}text-error{else}{$class}{/if} text-center">{$message}<br>
+     <a id="again" tabindex="1" class="btn" href="{$referer}">{if="empty($button)"}{'Try again'|Intl::msg}{else}{$button}{/if}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

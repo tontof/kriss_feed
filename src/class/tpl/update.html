@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {include="includes"}
+  </head>
+  <body>
+    <div class="container-fluid full-height">
+      <div class="row-fluid full-height">
+        <div class="span12 full-height">
+          {include="status"}
+          {include="nav"}
+          <div class="container-fluid">
+            <div class="row-fluid">
+              <div class="span6 offset3">
+                <ul class="unstyled">
+                  {$kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')}
+                </ul>
+                <a class="btn ico-home" href="{$base}" title="{'Home'|Intl::msg}"></a>
+                {if="!empty($referer)"}
+                <a class="btn" href="{$referer}">{'Go back'|Intl::msg}</a>
+                {/if}
+                <a class="btn" href="{$query}update={$currentHash}&amp;force">{'Force update'|Intl::msg}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {if="is_file('inc/script.js')"}
+    <script type="text/javascript" src="inc/script.js?version={$version}"></script>
+    {else}
+    <script type="text/javascript" src="?file=script.js&amp;version={$version}"></script>
+    {/if}
+  </body>
+</html>

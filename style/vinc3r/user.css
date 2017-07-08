@@ -10,6 +10,7 @@ body{background-color: #595959; /* gris */}
 	font-size: 1em;
 	text-shadow:none;
 }
+.menu-text:before{content: "/ ";}
 #menu a:hover, li.folder > h5:hover, li.folder > h4:hover, #minor-container li a:hover, li.feed:hover{
 	background-color: #ff6c00; /* orange */
 	color: #fff;
@@ -66,6 +67,7 @@ ul.nav{border-top: 1px solid #595959; /* gris */}
 	margin:0;
 	border:2px solid #ff6c00;
 	color: #000;
+	padding: 0.5%;
 	}
-	.well a{color: #000;}
+	.well a{color: #ff6c00;}
 .item-title{border-bottom: 1px solid #ff6c00;}

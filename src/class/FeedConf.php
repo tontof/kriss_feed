@@ -96,9 +96,19 @@ class FeedConf
     public $addFavicon = false;
 
     /**
-     * Public/private feed reader
+     * Preload feed items
      */
-    public $public = false;
+    public $preload = false;
+
+    /**
+     * Target _blank
+     */
+    public $blank = false;
+
+    /**
+     * Visibility public/protected/private feed reader
+     */
+    public $visibility = 'private';
 
     /**
      * Kriss_feed version
@@ -136,6 +146,11 @@ class FeedConf
     public $currentPage = 1;
 
     /**
+     * language (en_GB, fr_FR, etc.)
+     */
+    public $lang = '';
+
+    /**
      * menu personnalization
      */
     public $menuView = 1;
@@ -148,6 +163,7 @@ class FeedConf
     public $menuEdit = 8;
     public $menuAdd = 9;
     public $menuHelp = 10;
+    public $menuStars = 11;
 
     /**
      * paging personnalization
@@ -160,13 +176,14 @@ class FeedConf
     /**
      * Constructor
      *
-     * @param string    $configFile Configuration file
-     * @param string    $version    Kriss feed version
+     * @param string $configFile Configuration file
+     * @param string $version    Kriss feed version
      */
     public function __construct($configFile, $version)
     {
         $this->_file = $configFile;
         $this->version = $version;
+        $this->lang = Intl::$lang;
 
         // Loading user config
         if (file_exists($this->_file)) {
@@ -181,22 +198,25 @@ class FeedConf
             /* favicon dir */
             if (!is_dir(INC_DIR)) {
                 if (!@mkdir(INC_DIR, 0755)) {
-                    die("Can not create inc dir: ".INC_DIR);
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), INC_DIR));
+                    FeedPage::$pb->renderPage('message');
                 }
             }
             if (!is_dir(FAVICON_DIR)) {
                 if (!@mkdir(FAVICON_DIR, 0755)) {
-                    die("Can not create inc dir: ".FAVICON_DIR);
+                    FeedPage::$pb->assign('message', sprintf(Intl::msg('Can not create %s directory, check permissions'), FAVICON_DIR));
+                    FeedPage::$pb->renderPage('message');
                 }
             }
         }
 
-        if (Session::isLogged()) {
+        if ($this->isLogged()) {
             unset($_SESSION['view']);
             unset($_SESSION['listFeeds']);
             unset($_SESSION['filter']);
             unset($_SESSION['order']);
             unset($_SESSION['byPage']);
+            unset($_SESSION['lang']);
         }
 
         $view = $this->getView();
@@ -204,31 +224,35 @@ class FeedConf
         $filter = $this->getFilter();
         $order = $this->getOrder();
         $byPage = $this->getByPage();
+        $lang = $this->getLang();
 
         if ($this->view != $view
             || $this->listFeeds != $listFeeds
             || $this->filter != $filter
             || $this->order != $order
             || $this->byPage != $byPage
+            || $this->lang != $lang
         ) {
             $this->view = $view;
             $this->listFeeds = $listFeeds;
             $this->filter = $filter;
             $this->order = $order;
             $this->byPage = $byPage;
+            $this->lang = $lang;
 
-            if (Session::isLogged()) {
-                $this->write();
-            }
+            $this->write();
         }
 
-        if (!Session::isLogged()) {
+        if (!$this->isLogged()) {
             $_SESSION['view'] = $view;
             $_SESSION['listFeeds'] = $listFeeds;
             $_SESSION['filter'] = $filter;
             $_SESSION['order'] = $order;
             $_SESSION['byPage'] = $byPage;
+            $_SESSION['lang'] = $lang;
         }
+
+        Intl::$lang = $this->lang;
     }
 
     /**
@@ -241,55 +265,18 @@ class FeedConf
             $this->setLogin($_POST['setlogin']);
             $this->setHash($_POST['setpassword']);
 
-            if (!is_dir(DATA_DIR)) {
-                if (!@mkdir(DATA_DIR, 0755)) {
-                    echo '
-<script>
- alert("Error: can not create '.DATA_DIR.' directory, check permissions");
- document.location=window.location.href;
-</script>';
-                    exit();
-                }
-                @chmod(DATA_DIR, 0755);
-                if (!is_file(DATA_DIR.'/.htaccess')) {
-                    if (!@file_put_contents(
-                        DATA_DIR.'/.htaccess',
-                        "Allow from none\nDeny from all\n"
-                    )) {
-                        echo '
-<script>
- alert("Can not protect '.DATA_DIR.'");
- document.location=window.location.href;
-</script>';
-                        exit();
-                    }
-                }
-            }
+            $this->write();
 
-            if ($this->write()) {
-                echo '
-<script>
- alert("Your simple and smart (or stupid) feed reader is now configured.");
- document.location="'.MyTool::getUrl().'?import'.'";
-</script>';
-                    exit();
-            } else {
-                echo '
-<script>
- alert("Error: can not write config and data files.");
- document.location=window.location.href;
-</script>';
-                    exit();
-            }
-            Session::logout();
+            FeedPage::$pb->assign('pagetitle', 'KrISS feed installation');
+            FeedPage::$pb->assign('class', 'text-success');
+            FeedPage::$pb->assign('message', Intl::msg('Your simple and smart (or stupid) feed reader is now configured.'));
+            FeedPage::$pb->assign('referer', MyTool::getUrl().'?import');
+            FeedPage::$pb->assign('button', Intl::msg('Continue'));
+            FeedPage::$pb->renderPage('message');
         } else {
-            FeedPage::init(
-                array(
-                    'version' => $this->version,
-                    'pagetitle' => 'KrISS feed installation'
-                )
-            );
-            FeedPage::installTpl();
+            FeedPage::$pb->assign('pagetitle', Intl::msg('KrISS feed installation'));
+            FeedPage::$pb->assign('token', Session::getToken());
+            FeedPage::$pb->renderPage('install');
         }
         exit();
     }
@@ -311,9 +298,28 @@ class FeedConf
             }
         }
 
-        if (!$this->write()) {
-            die("Can't write to ".CONFIG_FILE);
+        $this->write();
+    }
+
+    /**
+     * Get lang
+     *
+     * @return string 
+     */
+    public function getLang()
+    {
+        $lang = $this->lang;
+        if (isset($_GET['lang'])) {
+            $lang = $_GET['lang'];
+        } else if (isset($_SESSION['lang'])) {
+            $lang = $_SESSION['lang'];
         }
+
+        if (!in_array($lang, array_keys(Intl::$langList))) {
+            $lang = $this->lang;
+        }
+
+        return $lang;
     }
 
     /**
@@ -430,7 +436,7 @@ class FeedConf
     {
         $currentHash = $this->currentHash;
         if (isset($_GET['currentHash'])) {
-            $currentHash = substr(trim($_GET['currentHash'], '/'), 0, 6);
+            $currentHash = preg_replace('/[^a-zA-Z0-9-_@]/', '', substr(trim($_GET['currentHash'], '/'), 0, 6));
         }
 
         if (empty($currentHash)) {
@@ -449,14 +455,14 @@ class FeedConf
     {
         $currentPage = $this->currentPage;
         if (isset($_GET['page']) && !empty($_GET['page'])) {
-            $currentPage = (int)$_GET['page'];
+            $currentPage = (int) $_GET['page'];
         } else if (isset($_GET['previousPage']) && !empty($_GET['previousPage'])) {
-            $currentPage = (int)$_GET['previousPage'] - 1;
+            $currentPage = (int) $_GET['previousPage'] - 1;
             if ($currentPage < 1) {
                 $currentPage = 1;
             }
         } else if (isset($_GET['nextPage']) && !empty($_GET['nextPage'])) {
-            $currentPage = (int)$_GET['nextPage'] + 1;
+            $currentPage = (int) $_GET['nextPage'] + 1;
         }
 
         return $currentPage;
@@ -483,13 +489,13 @@ class FeedConf
     }
 
     /**
-     * Public setter
+     * Visibility setter
      *
-     * @param string $public New public
+     * @param string $visibility New visibility
      */
-    public function setPublic($public)
+    public function setVisibility($visibility)
     {
-        $this->public = $public;
+        $this->visibility = $visibility;
     }
 
     /**
@@ -603,6 +609,16 @@ class FeedConf
     }
 
     /**
+     * Add preload setter
+     *
+     * @param bool $preload
+     */
+    public function setPreload($preload)
+    {
+        $this->preload = $preload;
+    }
+
+    /**
      * Shaarli setter
      *
      * @param string $url New shaarli
@@ -642,6 +658,21 @@ class FeedConf
         $this->order = $order;
     }
 
+    /**
+     * Blank setter
+     *
+     * @param string $blank New blank
+     */
+    public function setBlank($blank)
+    {
+        $this->blank = $blank;
+    }
+
+    /**
+     * Get menu
+     *
+     * @return array of menu sorted elements
+     */
     public function getMenu()
     {
         $menu = array();
@@ -675,6 +706,10 @@ class FeedConf
         }
         if ($this->menuHelp != 0) {
             $menu['menuHelp'] = $this->menuHelp;
+        }
+
+        if ($this->menuStars != 0) {
+            $menu['menuStars'] = $this->menuStars;
         }
 
         asort($menu);
@@ -754,6 +789,11 @@ class FeedConf
         $this->menuHelp = $menuHelp;
     }
 
+    public function setMenuStars($menuStars)
+    {
+        $this->menuStars = $menuStars;
+    }
+
     public function setPagingItem($pagingItem)
     {
         $this->pagingItem = $pagingItem;
@@ -774,6 +814,25 @@ class FeedConf
         $this->pagingMarkAs = $pagingMarkAs;
     }
 
+    public function isLogged()
+    {
+        global $argv;
+
+        if (Session::isLogged()
+            || $this->visibility === 'public'
+            || (isset($_GET['cron'])
+                && $_GET['cron'] === sha1($this->salt.$this->hash))
+            || (isset($argv)
+                && count($argv) >= 3
+                && $argv[1] == 'update'
+                && $argv[2] == sha1($this->salt.$this->hash))) {
+
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Write configuration file
      *
@@ -781,28 +840,25 @@ class FeedConf
      */
     public function write()
     {
-        $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
-                      'byPage', 'order', 'public', 'filter', 'view','locale',
-                      'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
-                      'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
-                      'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
-                      'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp',
-                      'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon',
-                      'pagingMarkAs', 'disableSessionProtection');
-        $out = '<?php';
-        $out .= "\n";
+        if ($this->isLogged() || !is_file($this->_file)) {
+            $data = array('login', 'hash', 'salt', 'title', 'redirector', 'shaarli',
+                          'byPage', 'order', 'visibility', 'filter', 'view','locale',
+                          'maxItems',  'autoreadItem', 'autoreadPage', 'maxUpdate',
+                          'autohide', 'autofocus', 'listFeeds', 'autoUpdate', 'menuView',
+                          'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
+                          'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
+                          'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
+            $out = '<?php';
+            $out .= "\n";
+            foreach ($data as $key) {
+                $out .= '$this->'.$key.' = '.var_export($this->$key, true).";\n";
+            }
+            $out .= '?>';
 
-        foreach ($data as $key) {
-            $value = strtr($this->$key, array('$' => '\\$', '"' => '\\"'));
-            $out .= '$this->'.$key.' = "'.$value."\";\n";
+            if (!@file_put_contents($this->_file, $out)) {
+                die("Can't write to ".CONFIG_FILE." check permissions");
+            }
         }
-
-        $out .= '?>';
-
-        if (!@file_put_contents($this->_file, $out)) {
-            return false;
-        }
-
-        return true;
     }
 }

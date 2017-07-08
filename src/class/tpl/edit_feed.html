@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {include="includes"}
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="edit-feed" class="span6 offset3">
+          {include="status"}
+          {include="nav"}
+          <form class="form-horizontal" method="post" action="">
+            <fieldset>
+              <legend>{'Feed main information'|Intl::msg}</legend>
+              <div class="control-group">
+                <label class="control-label" for="title">{'Feed title'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" id="title" name="title" value="{$feed.title|htmlspecialchars}">
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label">{'Feed XML URL'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" readonly="readonly" name="xmlUrl" value="{$feed.xmlUrl|htmlspecialchars}">
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label">{'Feed main URL'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" name="htmlUrl" value="{$feed.htmlUrl|htmlspecialchars}">
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="description">{'Feed description'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" id="description" name="description" value="{$feed.description|htmlspecialchars}">
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>{'Feed folders'|Intl::msg}</legend>
+              {loop="$folders"}
+              <div class="control-group">
+                <div class="controls">
+                  <label for="folder-{$key}">
+                    <input type="checkbox" id="folder-{$key}" name="folders[]" {if="in_array($key, $feed.foldersHash)"} checked="checked"{/if} value="{$key}"> {$value.title|htmlspecialchars}
+                  </label>
+                </div>
+              </div>
+              {/loop}
+              <div class="control-group">
+                <label class="control-label" for="newfolder">{'New folder'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" name="newfolder" value="" placeholder="{'New folder'|Intl::msg}">
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>{'Feed preferences'|Intl::msg}</legend>
+              <div class="control-group">
+                <label class="control-label" for="timeUpdate">{'Time update'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" id="timeUpdate" name="timeUpdate" value="{$feed.timeUpdate}">
+                  <span class="help-block">{'"auto", "max" or a number of minutes less than "max" define in <a href="?config">configuration</a>'|Intl::msg}</span>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label">{'Last update'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" readonly="readonly" name="lastUpdate" value="{$lastUpdate}">
+                </div>
+              </div>
+
+              <div class="control-group">
+                <div class="controls">
+                  <input class="btn" type="submit" name="save" value="{'Save modifications'|Intl::msg}" />
+                  <input class="btn" type="submit" name="delete" value="{'Delete feed'|Intl::msg}"/>
+                  <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}"/>
+                </div>
+              </div>
+            </fieldset>
+            <input type="hidden" name="returnurl" value="{$referer}" />
+            <input type="hidden" name="token" value="{$token}">
+          </form><br>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

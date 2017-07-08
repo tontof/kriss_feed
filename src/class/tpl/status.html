@@ -1,0 +1,11 @@
+<div id="status" class="text-center">
+  <a href="http://github.com/tontof/kriss_feed">KrISS feed {$version}</a>
+  <span class="hidden-phone"> - {'A simple and smart (or stupid) feed reader'|Intl::msg}</span>. {'By'|Intl::msg} <a href="http://tontof.net">Tontof</a>
+  <span id="flags-sel">
+    <a id="hide-flags" href="{if="!empty($query_string)"}?{$query_string}{/if}#flags" class="flag {$lang.class}" title="{$lang.name}"></a>
+    <a id="show-flags" href="{if="!empty($query_string)"}?{$query_string}{/if}#flags-sel" class="flag {$lang.class}" title="{$lang.name}"></a>
+  </span>
+  <div id="flags">{loop="$langs"}
+    <a href="?lang={$key}" title="{$value.name}" class="flag {$value.class}"></a>{/loop}
+  </div>
+</div>

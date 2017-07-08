@@ -1,14 +1,100 @@
 /* Custom P3ter 
+ * Version 2.1
+ * 
+ * KrISS Feed 7 is needed
+ * https://github.com/tontof/kriss_feed/blob/master/index.php
+ * 
  * http://p3ter.fr (CC-BY-V3)
  */
 
+/*--- GLOBAL ---*/
+.row-fluid .span3 {
+	width: 22%;
+}
+
+.container-fluid {
+	padding: 0;
+}
+
+.menu-ico:before {
+  display: inline-block;
+}
+
+.menu-text {
+  display: none;
+}
+
+.ico {
+	margin-left: 8px;
+  margin-right: 0px;
+	vertical-align: top;
+}
+
+.ico-b-disc {
+	background-color: #444;
+	border-radius: 0px !important;
+}
+
+.ico-b-disc:hover {
+	background-color: #AAA;
+}
+
+#paging-up, #paging-down {
+	margin-left: 1px;
+}
+
+ul.inline > li, ol.inline > li {
+	padding: 0 10px 7px 0;
+}
+
+.btn-group > .btn:first-child,
+.btn .btn-info .previous-item,
+.btn .btn-info .next-item,
+.btn-group > .btn:last-child, .btn-group > .dropdown-toggle,
+.btn-group > .btn, .btn-group > .dropdown-menu, .btn-group > .popover,
+input-append .add-on, .input-append .btn, .input-append .btn-group,
+input-prepend.input-append .add-on:first-child, .input-prepend.input-append .btn:first-child,
+input-prepend.input-append .add-on:last-child, .input-prepend.input-append .btn:last-child,
+input[type="text"], input[type="password"] {
+	font-size: 11px;
+	text-align: center;
+	text-shadow: none;
+	font-weight: bold;
+	border: 1px solid #DCDCDC;
+	border-radius: 2px 2px 2px 2px;
+	color: #444 !important;
+	background-color: #F5F5F5;
+	background-image: none;
+}
+
+input[type="text"], input[type="password"] {
+	background-color: #fff;
+}
+.btn:hover, .btn-group {
+	color: #000;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.067)
+}
+
 /*--- SUBSCRIPTIONS LIST ----*/
-#minor-container{
-	padding-right: 20px;
+#list-feeds {
+	padding: 20px;
 }
 
 ul {
 	list-style-type: none !important;
+}
+
+
+h5 {
+	padding: 2px;
+	background: none repeat scroll 0 0 #EFEFEF;
+	border-radius: 4px 4px 4px 4px;
+	margin-left: -10px;
+	border: 1px solid #444;
+}
+
+h5 a {
+	margin-left: 2px;
 }
 
 .feed {
@@ -20,12 +106,37 @@ ul {
 	padding-right: 20px;
 }
 
+form {
+	margin: 0;
+}
+
 li.item-list {
-	border: none !important;
+    border-top: 1px solid #DDD !important;
+}
+
+li.item-list {
+    border-bottom: none;
 }
 
 .dl-horizontal {
-	background-color: #ECECEC;
+	/*background-color: #ECECEC;*/
+}
+
+.dl-horizontal dt {
+	text-align: left;
+}
+
+.item-title {
+	margin-bottom: 0px;
+}
+
+.item-info-end {
+	float: left;
+	width: 100%;
+}
+
+.item-info-end .ico {
+	margin-left: 0px;
 }
 
 .current {
@@ -34,4 +145,12 @@ li.item-list {
 
 .well {
 	background-color: #FFF;
+	border: 0px;
+	border-radius: 0px;
+	box-shadow: 0 0 0 !important;
+	margin-bottom: 0px;
+}
+
+.item-content {
+	margin-bottom: 20px;
 }

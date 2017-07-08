@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {include="includes"}
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="edit-all" class="span6 offset3">
+          {include="status"}
+          {include="nav"}
+          <form class="form-horizontal" action="?add" method="POST">
+            <fieldset>
+              <legend>{'Add a new feed'|Intl::msg}</legend>
+              <div class="control-group">
+                <label class="control-label" >{'Feed URL'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" id="newfeed" name="newfeed" value="{$newfeed}">
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>{'Add selected folders to feed'|Intl::msg}</legend>
+              <div class="control-group">
+                <div class="controls">
+                  {loop="$folders"}
+                  <label for="add-folder-{$key}">
+                    <input type="checkbox" id="add-folder-{$key}" name="folders[]" value="{$key}"> {$value.title|htmlspecialchars} (<a href="?edit={$key}">{'Edit feed'|Intl::msg}</a>)
+                  </label>
+                  {/loop}
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label">{'Add a new folder'|Intl::msg}</label>
+                <div class="controls">
+                  <input type="text" name="newfolder" value="">
+                </div>
+              </div>
+              <div class="control-group">
+                <div class="controls">
+                  <input class="btn" type="submit" name="add" value="{'Add new feed'|Intl::msg}"/>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>{'Use bookmarklet to add a new feed'|Intl::msg}</legend>
+              <div id="add-feed-bookmarklet" class="text-center">
+                <a onclick="alert('{'Drag this link to your bookmarks toolbar, or right-click it and choose Bookmark This Link...'|Intl::msg}');return false;" href="javascript:(function(){var%20url%20=%20location.href;window.open('{$base}?add&amp;newfeed='+encodeURIComponent(url),'_blank','menubar=no,height=390,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1');})();"><b>KF+</b></a>
+              </div>
+            </fieldset>
+            <input type="hidden" name="token" value="{$token}">
+            <input type="hidden" name="returnurl" value="{$referer}" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

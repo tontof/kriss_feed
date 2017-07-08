@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+{include="includes"}
+  </head>
+  <body>
+<div id="index" class="container-fluid full-height" data-view="{$view}" data-list-feeds="{$listFeeds}" data-filter="{$filter}" data-order="{$order}" data-by-page="{$byPage}" data-autoread-item="{$autoreadItem}" data-autoread-page="{$autoreadPage}" data-autohide="{$autohide}" data-current-hash="{$currentHash}" data-current-page="{$currentPage}" data-nb-items="{$nbItems}" data-shaarli="{$shaarli}" data-redirector="{$redirector}" data-autoupdate="{$autoupdate}" data-autofocus="{$autofocus}" data-add-favicon="{$addFavicon}" data-preload="{$preload}" data-is-logged="{$isLogged}" data-blank="{$blank}" data-intl-top="{'top'|Intl::msg}" data-intl-share="{'share'|Intl::msg}" data-intl-read="{'read'|Intl::msg}" data-intl-unread="{'unread'|Intl::msg}" data-intl-star="{'star'|Intl::msg}" data-intl-unstar="{'unstar'|Intl::msg}" data-intl-from="{'from'|Intl::msg}"{if="isset($_GET['stars']) && $kf->kfc->isLogged()"} data-stars="1"{/if}>
+      <div class="row-fluid full-height">
+        {if="$listFeeds == 'show'"}
+        <div id="main-container" class="span9 full-height">
+          {include="status"}
+          {include="nav"}
+          <div id="paging-up">
+            {if="!empty($paging)"}{include="paging"}{/if}
+          </div>
+            {include="list_items"}
+          <div id="paging-down">
+            {if="!empty($paging)"}{include="paging"}{/if}
+          </div>
+        </div>
+        <div id="minor-container" class="span3 full-height minor-container">
+          {include="list_feeds"}
+        </div>
+        {else}
+        <div id="main-container" class="span12 full-height">
+          {include="status"}
+          {include="nav"}
+          <div id="paging-up">
+            {if="!empty($paging)"}{include="paging"}{/if}
+          </div>
+            {include="list_items"}
+          <div id="paging-down">
+            {if="!empty($paging)"}{include="paging"}{/if}
+          </div>
+        </div>
+        {/if}
+      </div>
+    </div>
+    {if="is_file('inc/script.js')"}
+    <script type="text/javascript" src="inc/script.js?version={$version}"></script>
+    {else}
+    <script type="text/javascript" src="?file=script.js&amp;version={$version}"></script>
+    {/if}
+  </body>
+</html>

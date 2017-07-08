@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {include="includes"}
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="edit-all" class="span6 offset3">
+          {include="status"}
+          {include="nav"}
+          <form class="form-horizontal" method="post" action="">
+            <fieldset>
+              <legend>{'Reorder folders'|Intl::msg}</legend>
+              <div class="control-group">
+                <div class="controls">
+                  {loop="$folders"}
+                  <label for="order-folder-{$key}">
+                    {$value.title|htmlspecialchars} (<a href="?edit={$key}">{'Edit folder'|Intl::msg}</a>) <br>
+                    <input type="text" id="order-folder-{$key}" name="order-folder-{$key}" value="{$counter}">
+                  </label>
+                  {/loop}
+                </div>
+              </div>
+            </fieldset>
+
+            <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}"/>
+            <input class="btn" type="submit" name="save" value="{'Save modifications'|Intl::msg}" />
+
+            <fieldset>
+              <legend>{'Add selected folders to selected feeds'|Intl::msg}</legend>
+              <div class="control-group">
+                <div class="controls">
+                  {loop="$folders"}
+                  <label for="add-folder-{$key}">
+                    <input type="checkbox" id="add-folder-{$key}" name="addfolders[]" value="{$key}"> {$value.title|htmlspecialchars} (<a href="?edit={$key}">{'Edit folder'|Intl::msg}</a>)
+                  </label>
+                  {/loop}
+                </div>
+                <div class="controls">
+                  <input type="text" name="addnewfolder" value="" placeholder="New folder">
+                </div>
+              </div>
+            </fieldset>
+
+            <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}"/>
+            <input class="btn" type="submit" name="save" value="{'Save modifications'|Intl::msg}" />
+
+            <fieldset>
+              <legend>{'Remove selected folders to selected feeds'|Intl::msg}</legend>
+              <div class="control-group">
+                <div class="controls">
+                  {loop="$folders"}
+                  <label for="remove-folder-{$key}">
+                    <input type="checkbox" id="remove-folder-{$key}" name="removefolders[]" value="{$key}"> {$value.title|htmlspecialchars} (<a href="?edit={$key}">{'Edit folder'|Intl::msg}</a>)
+                  </label>
+                  {/loop}
+                </div>
+              </div>
+            </fieldset>
+
+            <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}"/>
+            <input class="btn" type="submit" name="save" value="{'Save modifications'|Intl::msg}" />
+
+            <fieldset>
+              <legend>{'List of feeds'|Intl::msg}</legend>
+
+              <input class="btn" type="button" onclick="{noparse}var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = true; }{/noparse}" value="{'Select all'|Intl::msg}">
+              <input class="btn" type="button" onclick="{noparse}var feeds = document.getElementsByName('feeds[]'); for (var i = 0; i < feeds.length; i++) { feeds[i].checked = false; }{/noparse}" value="{'Unselect all'|Intl::msg}">
+
+              <ul class="unstyled">
+                {loop="$listFeeds"}
+                <li>
+                  <label for="feed-{$key}">
+                    <input type="checkbox" id="feed-{$key}" name="feeds[]" value="{$key}">
+                    {$value.title|htmlspecialchars} (<a href="?edit={$key}">{'Edit feed'|Intl::msg}</a>)
+                  </label>
+                </li>
+                {/loop}
+              </ul>
+            </fieldset>
+
+            <input type="hidden" name="returnurl" value="{$referer}" />
+            <input type="hidden" name="token" value="{$token}">
+            <input class="btn" type="submit" name="cancel" value="{'Cancel'|Intl::msg}"/>
+            <input class="btn" type="submit" name="delete" value="{'Delete selected feeds'|Intl::msg}" onclick="return confirm('{'Do you really want to delete all selected feeds?'|Intl::msg}');"/>
+            <input class="btn" type="submit" name="save" value="{'Save modifications'|Intl::msg}" />
+          </form>
+        </div>
+      </div>
+  </body>
+</html>

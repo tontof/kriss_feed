@@ -1,0 +1,77 @@
+<div id="list-feeds">
+{if="$listFeeds==='show'"}
+  <input type="text" id="Nbunread" style="display:none;" value="{$feedsView.all.nbUnread}">
+  <ul class="unstyled">
+    <li id="all-subscriptions" class="folder {if="$currentHash==='all'"} current-folder{/if}">
+      {if="isset($_GET['stars'])"}
+      <h4><a class="mark-as" href="?stars&currentHash=all"><span class="label">{$feedsView.all.nbAll}</span></a><a href="?stars&currentHash=all">{$feedsView.all.title}</a></h4>
+      {else}
+      <h4><a class="mark-as" href="{$feedsView.all.nbUnread==0?'?currentHash=all&unread':$query.'read'}=all" title="{$feedsView.all.nbUnread==0?Intl::msg('Mark all as unread'):Intl::msg('Mark all as read')}"><span class="label">{$feedsView.all.nbUnread}</span></a><a href="?currentHash=all">{$feedsView.all.title}</a></h4>
+      {/if}
+
+      <ul class="unstyled">
+        {loop="$feedsView.all.feeds"}
+          {$atitle=$value.description}
+          {if="empty($atitle)"}
+            {$atitle=$value.title}
+          {/if}
+          {if="isset($value.error)"}
+            {$atitle=$value.error}
+          {/if}
+
+          {if="empty($value.title)"}
+            {$value.title=parse_url($value.xmlUrl, PHP_URL_HOST)}
+          {/if}
+
+        <li id="feed-{$key}" class="feed{if="$value.nbUnread!==0"} has-unread{/if}{if="$currentHash==$key"} current-feed{/if}{if="$autohide&&$value.nbUnread==0"} autohide-feed{/if}">
+          {if="$addFavicon"}
+          <span class="feed-favicon">
+            <img src="{$kf->getFaviconFeed($key)}" height="16" width="16" title="favicon" alt="favicon"/>
+          </span>
+          {/if}
+          {if="isset($_GET['stars'])"}
+          <a class="mark-as" href="{$query}currentHash={$key}"><span class="label">{$value.nbAll}</span></a><a class="feed" href="?stars&currentHash={$key}" title="{$atitle|htmlspecialchars}">{$value.title|htmlspecialchars}</a>
+          {else}
+          <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a><a class="feed{if="isset($value.error)"} text-error{/if}" href="?currentHash={$key}#feed-{$key}" title="{$atitle|htmlspecialchars}">{$value.title|htmlspecialchars}</a>
+          {/if}
+        </li>
+        {/loop}
+        {loop="$feedsView.folders"}
+        <li id="folder-{$key}" class="folder{if="$currentHash==$key"} current-folder{/if}{if="$autohide&&$value.nbUnread==0"} autohide-folder{/if}">
+          <h5>
+            <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a>
+            <a class="folder-toggle" href="{$query}toggleFolder={$key}" data-toggle="collapse" data-target="#folder-ul-{$key}">
+              <span class="ico">
+                <span class="ico-b-disc"></span>
+                <span class="ico-w-line-h"></span>
+                <span class="ico-w-line-v{$value.isOpen?' folder-toggle-open':' folder-toggle-close'}"></span>
+              </span>
+            </a>
+            <a href="?currentHash={$key}#folder-{$key}">{$value.title|htmlspecialchars}</a>
+          </h5>
+          <ul id="folder-ul-{$key}" class="collapse unstyled{$value.isOpen?' in':''}">
+            {loop="$value.feeds"}
+              {$atitle=$value.description}
+              {if="empty($atitle)"}
+                {$atitle=$value.title}
+              {/if}
+              {if="isset($value.error)"}
+                {$atitle=$value.error}
+              {/if}
+            <li id="folder-{$key1}-feed-{$key}" class="feed{if="$value.nbUnread!== 0"} has-unread{/if}{if="$currentHash == $key"} current-feed{/if}{if="$autohide&&$value.nbUnread== 0"} autohide-feed{/if}">
+              
+              {if="$addFavicon"}
+              <span class="feed-favicon">
+                <img src="{$kf->getFaviconFeed($key)}" height="16" width="16" title="favicon" alt="favicon"/>
+              </span>
+              {/if}
+              <a class="mark-as" href="{$query}read={$key}"><span class="label">{$value.nbUnread}</span></a><a class="feed{if="isset($value.error)"} text-error{/if}" href="?currentHash={$key}#folder-{$key1}-feed-{$key}" title="{$atitle|htmlspecialchars}">{$value.title|htmlspecialchars}</a>
+            </li>
+            {/loop}
+          </ul>
+        </li>
+      {/loop}
+      </ul>
+  </ul>
+{/if}
+</div>
