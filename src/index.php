@@ -3589,6 +3589,11 @@ class FeedPage
           <div class="container-fluid">
             <div class="row-fluid">
               <div class="span6 offset3">
+                <a class="btn ico-home" href="<?php echo $base;?>" title="<?php echo Intl::msg( 'Home' );?>"></a>
+                <?php if( !empty($referer) ){ ?>
+                <a class="btn" href="<?php echo $referer;?>"><?php echo Intl::msg( 'Go back' );?></a>
+                <?php } ?>
+                <a class="btn" href="<?php echo $query;?>update=<?php echo $currentHash;?>&amp;force"><?php echo Intl::msg( 'Force update' );?></a>
                 <ul class="unstyled">
                   <?php echo $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html');?>
                 </ul>

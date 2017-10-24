@@ -12,6 +12,11 @@
           <div class="container-fluid">
             <div class="row-fluid">
               <div class="span6 offset3">
+                <a class="btn ico-home" href="{$base}" title="{'Home'|Intl::msg}"></a>
+                {if="!empty($referer)"}
+                <a class="btn" href="{$referer}">{'Go back'|Intl::msg}</a>
+                {/if}
+                <a class="btn" href="{$query}update={$currentHash}&amp;force">{'Force update'|Intl::msg}</a>
                 <ul class="unstyled">
                   {$kf->updateFeedsHash($feedsHash, $forceUpdate, 'html')}
                 </ul>
