@@ -4302,9 +4302,6 @@ class Opml
                 } else if (isset($arrayInfo['text'])) {
                     $title = $arrayInfo['text'];
                 }
-                if (empty($title)) {
-                    $title = '-';
-                }
                 $foldersHash = array();
                 if (isset($arrayInfo['folders'])) {
                     foreach ($arrayInfo['folders'] as $folder) {
@@ -4333,6 +4330,10 @@ class Opml
                 $description = '';
                 if (isset($arrayInfo['description'])) {
                     $description = $arrayInfo['description'];
+                }
+                if (empty($title)) {
+                    $host = parse_url($xmlUrl)['host'];
+                    $title = empty($host) ? '-' : $host;
                 }
                 // create new feed
                 if (!empty($xmlUrl)) {
