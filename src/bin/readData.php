@@ -9,6 +9,7 @@ if (php_sapi_name() === 'cli') {
     }
     $file = $argv[1];
     $type = $argv[2];
+    $save = (int)$argv[3];
 } else {
     if (isset($_GET['type'])) {
         $type = $_GET['type'];
