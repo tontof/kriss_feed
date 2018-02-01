@@ -5642,6 +5642,7 @@ ol.inline > li {
 
 li.feed {
   margin-left: 4px;
+  padding: 1px 0;
 }
 
 li.feed:hover {
