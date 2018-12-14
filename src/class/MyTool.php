@@ -356,9 +356,7 @@ class MyTool
     {
         if (is_dir($dir) && ($d = @opendir($dir))) {
             while (($file = @readdir($d)) !== false) {
-                if ( $file == '.' || $file == '..' ) {
-                    continue;
-                } else {
+                if ( $file != '.' && $file != '..' ) {
                     unlink($dir . '/' . $file);
                 }
             }

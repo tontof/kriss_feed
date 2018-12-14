@@ -3657,9 +3657,7 @@ class Intl
     public static function load($lang) {
         self::$lazy = true;
 
-        if (file_exists(self::$dir.'/'.self::$domain.'/'.$lang.'.po')) {
-            self::$messages[$lang] = self::compress(self::read(self::$dir.'/'.self::$domain.'/'.$lang.'.po'));
-        } else if (class_exists('Intl_'.$lang)) {
+        if (class_exists('Intl_'.$lang)) {
             call_user_func_array(
                 array('Intl_'.$lang, 'init'),
                 array(&self::$messages)
@@ -3705,166 +3703,6 @@ class Intl
         }
 
         return $string;
-    }
-
-    public static function read($pofile)
-    {
-        $handle = fopen( $pofile, 'r' );
-        $hash = array();
-        $fuzzy = false;
-        $tcomment = $ccomment = $reference = null;
-        $entry = $entryTemp = array();
-        $state = null;
-        $just_new_entry = false; // A new entry has ben just inserted
-
-        while(!feof($handle)) {
-            $line = trim( fgets($handle) );
-
-            if($line==='') {
-                if($just_new_entry) {
-                    // Two consecutive blank lines
-                    continue;
-                }
-
-                // A new entry is found!
-                $hash[] = $entry;
-                $entry = array();
-                $state= null;
-                $just_new_entry = true;
-                continue;
-            }
-
-            $just_new_entry = false;
-
-            $split = preg_split('/\s/ ', $line, 2 );
-            $key = $split[0];
-            $data = isset($split[1])? $split[1]:null;
-                        
-            switch($key) {
-            case '#,':  //flag
-                $entry['fuzzy'] = in_array('fuzzy', preg_split('/,\s*/', $data) );
-                $entry['flags'] = $data;
-                break;
-
-            case '#':   //translation-comments
-                $entryTemp['tcomment'] = $data;
-                $entry['tcomment'] = $data;
-                break;
-
-            case '#.':  //extracted-comments
-                $entryTemp['ccomment'] = $data;
-                break;
-
-            case '#:':  //reference
-                $entryTemp['reference'][] = addslashes($data);
-                $entry['reference'][] = addslashes($data);
-                break;
-
-            case '#|':  //msgid previous-untranslated-string
-                // start a new entry
-                break;
-                                
-            case '#@':  // ignore #@ default
-                $entry['@'] = $data;
-                break;
-
-                // old entry
-            case '#~':
-                $key = explode(' ', $data );
-                $entry['obsolete'] = true;
-                switch( $key[0] )
-                {
-                case 'msgid': $entry['msgid'] = trim($data,'"');
-                    break;
-
-                case 'msgstr':  $entry['msgstr'][] = trim($data,'"');
-                    break;
-                default:        break;
-                }
-                                                        
-                continue;
-                break;
-
-            case 'msgctxt' :
-                // context
-            case 'msgid' :
-                // untranslated-string
-            case 'msgid_plural' :
-                // untranslated-string-plural
-                $state = $key;
-                $entry[$state] = $data;
-                break;
-                                
-            case 'msgstr' :
-                // translated-string
-                $state = 'msgstr';
-                $entry[$state][] = $data;
-                break;
-
-            default :
-
-                if( strpos($key, 'msgstr[') !== FALSE ) {
-                    // translated-string-case-n
-                    $state = 'msgstr';
-                    $entry[$state][] = $data;
-                } else {
-                    // continued lines
-                    //echo "O NDE ELSE:".$state.':'.$entry['msgid'];
-                    switch($state) {
-                    case 'msgctxt' :
-                    case 'msgid' :
-                    case 'msgid_plural' :
-                        //$entry[$state] .= "\n" . $line;
-                        if(is_string($entry[$state])) {
-                            // Convert it to array
-                            $entry[$state] = array( $entry[$state] );
-                        }
-                        $entry[$state][] = $line;
-                        break;
-                                                                
-                    case 'msgstr' :
-                        //Special fix where msgid is ""
-                        if($entry['msgid']=="\"\"") {
-                            $entry['msgstr'][] = trim($line,'"');
-                        } else {
-                            //$entry['msgstr'][sizeof($entry['msgstr']) - 1] .= "\n" . $line;
-                            $entry['msgstr'][]= trim($line,'"');
-                        }
-                        break;
-                                                                
-                    default :
-                        throw new Exception('Parse ERROR!');
-                        return FALSE;
-                    }
-                }
-                break;
-            }
-        }
-        fclose($handle);
-
-        // add final entry
-        if($state == 'msgstr') {
-            $hash[] = $entry;
-        }
-
-        // Cleanup data, merge multiline entries, reindex hash for ksort
-        $temp = $hash;
-        $entries = array ();
-        foreach($temp as $entry) {
-            foreach($entry as & $v) {
-                $v = self::clean($v);
-                if($v === FALSE) {
-                    // parse error
-                    return FALSE;
-                }
-            }
-
-            $id = is_array($entry['msgid'])? implode('',$entry['msgid']):$entry['msgid'];
-                        
-            $entries[ $id ] = $entry;
-        }
-
-        return $entries;
     }
 
     public static function clean($x)
@@ -4169,9 +4007,7 @@ class MyTool
     {
         if (is_dir($dir) && ($d = @opendir($dir))) {
             while (($file = @readdir($d)) !== false) {
-                if ( $file == '.' || $file == '..' ) {
-                    continue;
-                } else {
+                if ( $file != '.' && $file != '..' ) {
                     unlink($dir . '/' . $file);
                 }
             }
