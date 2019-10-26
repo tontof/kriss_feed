@@ -392,14 +392,15 @@ class MyTool
     {
         $val  = trim($val);
         $last = strtolower($val[strlen($val)-1]);
+        $value = intval($val);
         switch($last)
         {
-        case 'g': $val *= 1024;
-        case 'm': $val *= 1024;
-        case 'k': $val *= 1024;
+        case 'g': $value *= 1024;
+        case 'm': $value *= 1024;
+        case 'k': $value *= 1024;
         }
 
-        return $val;
+        return $value;
     }
 
     /**
