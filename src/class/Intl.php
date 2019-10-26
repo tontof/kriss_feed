@@ -207,7 +207,7 @@ class Intl
                 default:        break;
                 }
                                                         
-                continue;
+                continue 2;
                 break;
 
             case 'msgctxt' :
