@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <head>
+    <title>KrISS Feed</title>
+  </head>
+  <body>
+    <outline title="Tontof" text="Tontof" description="A simple and smart (or stupid) blog" xmlUrl="http://tontof.net/?rss" htmlUrl="http://tontof.net" type="rss"/>
+    <outline text="Image/Vidéo">
+      <outline title="dailygeekshow" text="dailygeekshow" description="Les plus belles découvertes" xmlUrl="http://dailygeekshow.com/feed/" htmlUrl="http://soocurious.com/fr" type="rss"/>
+      <outline title="Darth's Blog" text="Darth's Blog" description="Le couteau Suisse de la photo" xmlUrl="http://blog.darth.ch/feed/" htmlUrl="http://blog.darth.ch/" type="rss"/>
+      <outline title="Fubiz Media" text="Fubiz Media" description="The latest creative news from Fubiz about art, design and pop-culture." xmlUrl="http://feeds.feedburner.com/fubiz" htmlUrl="http://www.fubiz.net/" type="rss"/>
+      <outline title="Imppao's Weblog" text="Imppao's Weblog" description="Un autre weblog sur les logiciels libres" xmlUrl="https://imppao.wordpress.com/feed/" htmlUrl="https://imppao.wordpress.com" type="rss"/>
+      <outline title="Lucas Janin » Français" text="Lucas Janin » Français" description="Effects vs Photographer" xmlUrl="http://www.lucasjanin.com/feed/" htmlUrl="http://www.lucasjanin.com/" type="rss"/>
+    </outline>
+    <outline text="Micro-Blog">
+      <outline title="hacking-social.com" text="hacking-social.com" description=" Hacking Social : ici nous décortiquons manipulations et formatages, sous l'angle des sciences humaines, avec articles et vidéos." xmlUrl="http://hacking-social.com/feed/" htmlUrl="http://hacking-social.com" type="rss"/>
+      <outline title="Korben" text="Korben" description="Upgrade your mind" xmlUrl="http://feeds.feedburner.com/KorbensBlog-UpgradeYourMind" htmlUrl="http://korben.info/" type="rss"/>
+      <outline title="le hollandais volant" text="le hollandais volant" description=" " xmlUrl="http://lehollandaisvolant.net/rss.php?mode=links" htmlUrl="http://lehollandaisvolant.net/?mode=links" type="rss"/>
+      <outline title="Les petits liens d'Alda" text="Les petits liens d'Alda" description="Shared links" xmlUrl="http://tools.aldarone.fr/share/?do=rss" htmlUrl="http://tools.aldarone.fr/share/" type="rss"/>
+      <outline title="Liens en vrac de sebsauvage" text="Liens en vrac de sebsauvage" description="Shared links" xmlUrl="http://sebsauvage.net/links/index.php?do=rss" htmlUrl="http://sebsauvage.net/links/" type="rss"/>
+      <outline title="Liens vrac de Galsungen" text="Liens vrac de Galsungen" description="Shared links" xmlUrl="http://shaarli.galsungen.net/?do=rss" htmlUrl="http://shaarli.galsungen.net/" type="rss"/>
+      <outline title="LinuxFr.org : les dépêches" text="LinuxFr.org : les dépêches" description=" " xmlUrl="http://linuxfr.org/news.atom" htmlUrl="http://linuxfr.org/news" type="rss"/>
+      <outline title="Sam &amp; Max" text="Sam &amp; Max" description="Du code, du cul" xmlUrl="http://sametmax.com/feed/" htmlUrl="http://sametmax.com/" type="rss"/>
+      <outline title="Zythom" text="Zythom" description="&lt;b&gt;Blog d'un informaticien expert judiciaire&lt;br&gt;&lt;br&gt;&#10;&lt;i&gt;&quot;Je jure d'apporter mon concours à la Justice, d'accomplir ma mission, de faire mon rapport,&lt;br&gt; et de donner mon avis en mon honneur et en ma conscience.&quot;&lt;/i&gt;&lt;br&gt;Serment prêté en Cour d'appel par l'expert judiciaire.&lt;/b&gt;" xmlUrl="http://zythom.blogspot.com/feeds/posts/default" htmlUrl="http://zythom.blogspot.com/" type="rss"/>
+      <outline title="{niKo[piK]}" text="{niKo[piK]}" description="Le magazine indépendant de l’actualité High Tech et Geek" xmlUrl="http://feeds.feedburner.com/Nikopik" htmlUrl="http://www.nikopik.com/" type="rss"/>
+    </outline>
+    <outline text="Informations">
+      <outline title="Journal d'un avocat" text="Journal d'un avocat" description=" " xmlUrl="http://www.maitre-eolas.fr/feed/rss2" htmlUrl="http://www.maitre-eolas.fr/" type="rss"/>
+    </outline>
+    <outline text="Ciné/Fantastique">
+      <outline title="Les dernières actualités de scifi-universe.com" text="Les dernières actualités de scifi-universe.com" description="Flux RSS des 30 dernières actualités parues sur scifi-universe.com " xmlUrl="http://www.scifi-universe.com/actualites/rss" htmlUrl=" " type="rss"/>
+    </outline>
+    <outline text="Divers">
+      <outline title="OpenELEC Mediacenter - News" text="OpenELEC Mediacenter - News" description="Open Embedded Linux Entertainment Center, or OpenELEC for short, is a small Linux distribution. Built from the ground up as a small platform to run software like XBMC. This is done to leave a small footprint as possible. And increase the quality of your experience in total." xmlUrl="http://openelec.tv/news?format=feed&amp;type=rss" htmlUrl="http://openelec.tv/news" type="rss"/>
+    </outline>
+  </body>
+</opml>

@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.7);
+define('FEED_VERSION', 8.8);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -745,7 +745,7 @@ class Feed
         switch(strtolower($ext)) {
         case '':
             if (strpos($enclosure, 'https://www.youtube.com') === 0) {
-                $link = '<iframe src="'.$enclosure.'" width="640" height="360" allowfullscreen></iframe>';
+                $link = '<iframe src="'.str_replace('/v/','/embed/', $enclosure).'" width="640" height="360" allowfullscreen></iframe>';
             }
             break;
         case 'jpg':
@@ -3589,6 +3589,11 @@ class FeedPage
           <div class="container-fluid">
             <div class="row-fluid">
               <div class="span6 offset3">
+                <a class="btn ico-home" href="<?php echo $base;?>" title="<?php echo Intl::msg( 'Home' );?>"></a>
+                <?php if( !empty($referer) ){ ?>
+                <a class="btn" href="<?php echo $referer;?>"><?php echo Intl::msg( 'Go back' );?></a>
+                <?php } ?>
+                <a class="btn" href="<?php echo $query;?>update=<?php echo $currentHash;?>&amp;force"><?php echo Intl::msg( 'Force update' );?></a>
                 <ul class="unstyled">
                   <?php echo $kf->updateFeedsHash($feedsHash, $forceUpdate, 'html');?>
                 </ul>
@@ -3777,7 +3782,7 @@ class Intl
                 default:        break;
                 }
                                                         
-                continue;
+                continue 2;
                 break;
 
             case 'msgctxt' :
@@ -4164,9 +4169,7 @@ class MyTool
     {
         if (is_dir($dir) && ($d = @opendir($dir))) {
             while (($file = @readdir($d)) !== false) {
-                if ( $file == '.' || $file == '..' ) {
-                    continue;
-                } else {
+                if ( $file != '.' && $file != '..' ) {
                     unlink($dir . '/' . $file);
                 }
             }
@@ -4187,14 +4190,15 @@ class MyTool
     {
         $val  = trim($val);
         $last = strtolower($val[strlen($val)-1]);
+        $value = intval($val);
         switch($last)
         {
-        case 'g': $val *= 1024;
-        case 'm': $val *= 1024;
-        case 'k': $val *= 1024;
+        case 'g': $value *= 1024;
+        case 'm': $value *= 1024;
+        case 'k': $value *= 1024;
         }
 
-        return $val;
+        return $value;
     }
 
     public static function getMaxFileSize()
@@ -4325,6 +4329,10 @@ class Opml
                 $description = '';
                 if (isset($arrayInfo['description'])) {
                     $description = $arrayInfo['description'];
+                }
+                if (empty($title)) {
+                    $host = parse_url($xmlUrl)['host'];
+                    $title = empty($host) ? '-' : $host;
                 }
                 // create new feed
                 if (!empty($xmlUrl)) {
@@ -5633,6 +5641,7 @@ ol.inline > li {
 
 li.feed {
   margin-left: 4px;
+  padding: 1px 0;
 }
 
 li.feed:hover {
@@ -6640,7 +6649,7 @@ dd {
           .replace('${via}', encodeURIComponent(htmlspecialchars_decode(via)))
           .replace('${sel}', encodeURIComponent(htmlspecialchars_decode(sel))),
           '_blank',
-          'height=390, width=600, menubar=no, toolbar=no, scrollbars=no, status=no, dialog=1'
+          'height=390, width=600, menubar=no, toolbar=no, scrollbars=yes, status=no, dialog=1'
         );
       } else {
         alert('Please configure your share link first');
