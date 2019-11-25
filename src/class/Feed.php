@@ -955,8 +955,11 @@ class Feed
                 );
                 if(!empty($item['enclosure'])) {
                     foreach($item['enclosure'] as $enclosure) {
-                        $item['content'] .= '<br>'.$this->showEnclosure($enclosure);
+                        $item['content'] .= '<br><br>'.$this->showEnclosure($enclosure);
                     }
+                }
+                if(!empty($item['thumbnail'])) {
+                        $item['content'] .= '<br>'.$this->showEnclosure($item['thumbnail']);
                 }
                 $newItems[$hashUrl]['content'] = $item['content'];
             }

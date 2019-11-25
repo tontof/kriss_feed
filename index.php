@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.8);
+define('FEED_VERSION', 8.9);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -796,8 +796,11 @@ class Feed
                 );
                 if(!empty($item['enclosure'])) {
                     foreach($item['enclosure'] as $enclosure) {
-                        $item['content'] .= '<br>'.$this->showEnclosure($enclosure);
+                        $item['content'] .= '<br><br>'.$this->showEnclosure($enclosure);
                     }
+                }
+                if(!empty($item['thumbnail'])) {
+                        $item['content'] .= '<br>'.$this->showEnclosure($item['thumbnail']);
                 }
                 $newItems[$hashUrl]['content'] = $item['content'];
             }
@@ -4695,7 +4698,8 @@ class Rss
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
         'title' => array('>title'),
-        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]'),
+        'thumbnail' => array('>media:thumbnail[url]'),
     );
 
     public static function isValidNodeAttrs($node, $attrs)
@@ -4776,6 +4780,10 @@ class Rss
             if (!is_array($res) && !empty($res)) {
                 break;
             }
+        }
+
+        if ($name == "media:description") {
+            $res = nl2br($res);
         }
 
         return $res;

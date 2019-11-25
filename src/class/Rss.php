@@ -32,7 +32,8 @@ class Rss
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
         'title' => array('>title'),
-        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]'),
+        'thumbnail' => array('>media:thumbnail[url]'),
     );
 
     /**
@@ -145,6 +146,10 @@ class Rss
             if (!is_array($res) && !empty($res)) {
                 break;
             }
+        }
+
+        if ($name == "media:description") {
+            $res = nl2br($res);
         }
 
         return $res;
