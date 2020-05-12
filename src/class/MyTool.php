@@ -181,12 +181,14 @@ class MyTool
                 ? array_map('stripslashesDeep', $value)
                 : stripslashes($value);
         }
-
-        if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
-            $_POST = array_map('stripslashesDeep', $_POST);
-            $_GET = array_map('stripslashesDeep', $_GET);
-            $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
-        }
+            
+            if (version_compare(PHP_VERSION, '7.4', '<')) {
+                if (get_magic_quotes_gpc()) {
+                    $_POST = array_map('stripslashesDeep', $_POST);
+                    $_GET = array_map('stripslashesDeep', $_GET);
+                    $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
+                }
+            }
 
         ob_start();
     }
