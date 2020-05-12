@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.7);
+define('FEED_VERSION', 8.9);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -796,8 +796,11 @@ class Feed
                 );
                 if(!empty($item['enclosure'])) {
                     foreach($item['enclosure'] as $enclosure) {
-                        $item['content'] .= '<br>'.$this->showEnclosure($enclosure);
+                        $item['content'] .= '<br><br>'.$this->showEnclosure($enclosure);
                     }
+                }
+                if(!empty($item['thumbnail'])) {
+                        $item['content'] .= '<br>'.$this->showEnclosure($item['thumbnail']);
                 }
                 $newItems[$hashUrl]['content'] = $item['content'];
             }
@@ -3657,7 +3660,9 @@ class Intl
     public static function load($lang) {
         self::$lazy = true;
 
-        if (class_exists('Intl_'.$lang)) {
+        if (file_exists(self::$dir.'/'.self::$domain.'/'.$lang.'.po')) {
+            self::$messages[$lang] = self::compress(self::read(self::$dir.'/'.self::$domain.'/'.$lang.'.po'));
+        } else if (class_exists('Intl_'.$lang)) {
             call_user_func_array(
                 array('Intl_'.$lang, 'init'),
                 array(&self::$messages)
@@ -3703,6 +3708,166 @@ class Intl
         }
 
         return $string;
+    }
+
+    public static function read($pofile)
+    {
+        $handle = fopen( $pofile, 'r' );
+        $hash = array();
+        $fuzzy = false;
+        $tcomment = $ccomment = $reference = null;
+        $entry = $entryTemp = array();
+        $state = null;
+        $just_new_entry = false; // A new entry has ben just inserted
+
+        while(!feof($handle)) {
+            $line = trim( fgets($handle) );
+
+            if($line==='') {
+                if($just_new_entry) {
+                    // Two consecutive blank lines
+                    continue;
+                }
+
+                // A new entry is found!
+                $hash[] = $entry;
+                $entry = array();
+                $state= null;
+                $just_new_entry = true;
+                continue;
+            }
+
+            $just_new_entry = false;
+
+            $split = preg_split('/\s/ ', $line, 2 );
+            $key = $split[0];
+            $data = isset($split[1])? $split[1]:null;
+                        
+            switch($key) {
+            case '#,':  //flag
+                $entry['fuzzy'] = in_array('fuzzy', preg_split('/,\s*/', $data) );
+                $entry['flags'] = $data;
+                break;
+
+            case '#':   //translation-comments
+                $entryTemp['tcomment'] = $data;
+                $entry['tcomment'] = $data;
+                break;
+
+            case '#.':  //extracted-comments
+                $entryTemp['ccomment'] = $data;
+                break;
+
+            case '#:':  //reference
+                $entryTemp['reference'][] = addslashes($data);
+                $entry['reference'][] = addslashes($data);
+                break;
+
+            case '#|':  //msgid previous-untranslated-string
+                // start a new entry
+                break;
+                                
+            case '#@':  // ignore #@ default
+                $entry['@'] = $data;
+                break;
+
+                // old entry
+            case '#~':
+                $key = explode(' ', $data );
+                $entry['obsolete'] = true;
+                switch( $key[0] )
+                {
+                case 'msgid': $entry['msgid'] = trim($data,'"');
+                    break;
+
+                case 'msgstr':  $entry['msgstr'][] = trim($data,'"');
+                    break;
+                default:        break;
+                }
+                                                        
+                continue 2;
+                break;
+
+            case 'msgctxt' :
+                // context
+            case 'msgid' :
+                // untranslated-string
+            case 'msgid_plural' :
+                // untranslated-string-plural
+                $state = $key;
+                $entry[$state] = $data;
+                break;
+                                
+            case 'msgstr' :
+                // translated-string
+                $state = 'msgstr';
+                $entry[$state][] = $data;
+                break;
+
+            default :
+
+                if( strpos($key, 'msgstr[') !== FALSE ) {
+                    // translated-string-case-n
+                    $state = 'msgstr';
+                    $entry[$state][] = $data;
+                } else {
+                    // continued lines
+                    //echo "O NDE ELSE:".$state.':'.$entry['msgid'];
+                    switch($state) {
+                    case 'msgctxt' :
+                    case 'msgid' :
+                    case 'msgid_plural' :
+                        //$entry[$state] .= "\n" . $line;
+                        if(is_string($entry[$state])) {
+                            // Convert it to array
+                            $entry[$state] = array( $entry[$state] );
+                        }
+                        $entry[$state][] = $line;
+                        break;
+                                                                
+                    case 'msgstr' :
+                        //Special fix where msgid is ""
+                        if($entry['msgid']=="\"\"") {
+                            $entry['msgstr'][] = trim($line,'"');
+                        } else {
+                            //$entry['msgstr'][sizeof($entry['msgstr']) - 1] .= "\n" . $line;
+                            $entry['msgstr'][]= trim($line,'"');
+                        }
+                        break;
+                                                                
+                    default :
+                        throw new Exception('Parse ERROR!');
+                        return FALSE;
+                    }
+                }
+                break;
+            }
+        }
+        fclose($handle);
+
+        // add final entry
+        if($state == 'msgstr') {
+            $hash[] = $entry;
+        }
+
+        // Cleanup data, merge multiline entries, reindex hash for ksort
+        $temp = $hash;
+        $entries = array ();
+        foreach($temp as $entry) {
+            foreach($entry as & $v) {
+                $v = self::clean($v);
+                if($v === FALSE) {
+                    // parse error
+                    return FALSE;
+                }
+            }
+
+            $id = is_array($entry['msgid'])? implode('',$entry['msgid']):$entry['msgid'];
+                        
+            $entries[ $id ] = $entry;
+        }
+
+        return $entries;
     }
 
     public static function clean($x)
@@ -3876,7 +4041,7 @@ class MyTool
                 : stripslashes($value);
         }
 
-        if (get_magic_quotes_gpc()) {
+        if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
             $_POST = array_map('stripslashesDeep', $_POST);
             $_GET = array_map('stripslashesDeep', $_GET);
             $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
@@ -4028,14 +4193,15 @@ class MyTool
     {
         $val  = trim($val);
         $last = strtolower($val[strlen($val)-1]);
+        $value = intval($val);
         switch($last)
         {
-        case 'g': $val *= 1024;
-        case 'm': $val *= 1024;
-        case 'k': $val *= 1024;
+        case 'g': $value *= 1024;
+        case 'm': $value *= 1024;
+        case 'k': $value *= 1024;
         }
 
-        return $val;
+        return $value;
     }
 
     public static function getMaxFileSize()
@@ -4532,7 +4698,8 @@ class Rss
         'link' => array('>feedburner:origLink', '>link[rel=alternate][href]', '>link[href]', '>link', '>guid', '>id'),
         'time' => array('>pubDate', '>updated', '>lastBuildDate', '>published', '>dc:date', '>date', '>created', '>modified'),
         'title' => array('>title'),
-        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]')
+        'enclosure' => array('>enclosure*[url]', '>media:group>media:content*[url]'),
+        'thumbnail' => array('>media:thumbnail[url]'),
     );
 
     public static function isValidNodeAttrs($node, $attrs)
@@ -4613,6 +4780,10 @@ class Rss
             if (!is_array($res) && !empty($res)) {
                 break;
             }
+        }
+
+        if ($name == "media:description") {
+            $res = nl2br($res);
         }
 
         return $res;

@@ -182,7 +182,7 @@ class MyTool
                 : stripslashes($value);
         }
 
-        if (get_magic_quotes_gpc()) {
+        if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
             $_POST = array_map('stripslashesDeep', $_POST);
             $_GET = array_map('stripslashesDeep', $_GET);
             $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
