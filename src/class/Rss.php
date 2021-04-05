@@ -283,10 +283,12 @@ class Rss
     public static function loadDom($data)
     {
         libxml_clear_errors();
+        $prev = libxml_disable_entity_loader(true);
         set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
         $dom->loadXML($data);
         restore_error_handler();
+        libxml_disable_entity_loader($prev);
 
         return array(
             'dom' => $dom,
