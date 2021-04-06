@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<opml version="1.0">
-  <head>
-    <title>KrISS Feed</title>
-  </head>
-  <body>
-    <outline title="Tontof" text="Tontof" description="A simple and smart (or stupid) blog" xmlUrl="http://tontof.net/?rss" htmlUrl="http://tontof.net" type="rss"/>
-  </body>
-</opml>
