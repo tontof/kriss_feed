@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.9);
+define('FEED_VERSION', 8.11);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -4040,12 +4040,14 @@ class MyTool
                 ? array_map('stripslashesDeep', $value)
                 : stripslashes($value);
         }
-
-        if (get_magic_quotes_gpc()) {
-            $_POST = array_map('stripslashesDeep', $_POST);
-            $_GET = array_map('stripslashesDeep', $_GET);
-            $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
-        }
+            
+            if (version_compare(PHP_VERSION, '7.4', '<')) {
+                if (get_magic_quotes_gpc()) {
+                    $_POST = array_map('stripslashesDeep', $_POST);
+                    $_GET = array_map('stripslashesDeep', $_GET);
+                    $_COOKIE = array_map('stripslashesDeep', $_COOKIE);
+                }
+            }
 
         ob_start();
     }
@@ -4289,6 +4291,10 @@ class Opml
         $data      = file_get_contents($_FILES['filetoupload']['tmp_name']);
         $overwrite = isset($_POST['overwrite']);
 
+        if (\PHP_VERSION_ID < 80000) {
+            $prev = libxml_disable_entity_loader(true);
+        }
+
         $opml = new DOMDocument('1.0', 'UTF-8');
 
         $importCount=0;
@@ -4385,6 +4391,9 @@ class Opml
             FeedPage::$pb->assign('message', sprintf(Intl::msg('File %s (%s) has an unknown file format. Check encoding, try to remove accents and try again. Nothing was imported.'),htmlspecialchars($filename),MyTool::humanBytes($filesize)));
 
             FeedPage::$pb->renderPage('message');
+        }
+        if (\PHP_VERSION_ID < 80000) {
+            libxml_disable_entity_loader($prev);
         }
     }
 
@@ -4879,10 +4888,16 @@ class Rss
     public static function loadDom($data)
     {
         libxml_clear_errors();
+        if (\PHP_VERSION_ID < 80000) {
+            $prev = libxml_disable_entity_loader(true);
+        }
         set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
         $dom->loadXML($data);
         restore_error_handler();
+        if (\PHP_VERSION_ID < 80000) {
+            libxml_disable_entity_loader($prev);
+        }
 
         return array(
             'dom' => $dom,

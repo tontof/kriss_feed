@@ -18,7 +18,9 @@ class Opml
         $data      = file_get_contents($_FILES['filetoupload']['tmp_name']);
         $overwrite = isset($_POST['overwrite']);
 
-        $prev = libxml_disable_entity_loader(true);
+        if (\PHP_VERSION_ID < 80000) {
+            $prev = libxml_disable_entity_loader(true);
+        }
 
         $opml = new DOMDocument('1.0', 'UTF-8');
 
@@ -117,7 +119,9 @@ class Opml
 
             FeedPage::$pb->renderPage('message');
         }
-        libxml_disable_entity_loader($prev);
+        if (\PHP_VERSION_ID < 80000) {
+            libxml_disable_entity_loader($prev);
+        }
     }
 
     /**
