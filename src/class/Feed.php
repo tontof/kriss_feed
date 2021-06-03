@@ -829,7 +829,6 @@ class Feed
                 $feed['lastModified'] = '';
             }
 
-            MyTool::$opts['http']['headers'] = array();
             if (!empty($feed['lastModified'])) {
                 MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
             }

@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.11);
+define('FEED_VERSION', 8.12);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -670,7 +670,6 @@ class Feed
                 $feed['lastModified'] = '';
             }
 
-            MyTool::$opts['http']['headers'] = array();
             if (!empty($feed['lastModified'])) {
                 MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
             }
@@ -3897,7 +3896,11 @@ class Intl
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
-    static $opts = array();
+    static $opts = [
+        'http' => [
+            'headers' => []
+        ]
+    ];
     static $redirects = 20;
 
     const ERROR_UNKNOWN_CODE = 1;
