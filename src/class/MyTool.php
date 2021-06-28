@@ -46,9 +46,13 @@ class MyTool
             $ch = curl_init($url);
 
             if (!empty($opts)) {
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
-                curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
-                curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                if (!empty($opts['http']['timeout'])) {
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
+                }
+                if (!empty($opts['http']['user_agent'])) {
+                    curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                }
                 if (!empty($opts['http']['headers'])) {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, $opts['http']['headers']);
                 }

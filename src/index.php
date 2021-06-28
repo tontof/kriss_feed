@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.12);
+define('FEED_VERSION', 8.13);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -3921,9 +3921,13 @@ class MyTool
             $ch = curl_init($url);
 
             if (!empty($opts)) {
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
-                curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
-                curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                if (!empty($opts['http']['timeout'])) {
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
+                }
+                if (!empty($opts['http']['user_agent'])) {
+                    curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                }
                 if (!empty($opts['http']['headers'])) {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, $opts['http']['headers']);
                 }
