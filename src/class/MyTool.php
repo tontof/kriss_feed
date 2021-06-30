@@ -13,11 +13,7 @@
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
-    static $opts = [
-        'http' => [
-            'headers' => []
-        ]
-    ];
+    static $opts;
     static $redirects = 20;
 
     const ERROR_UNKNOWN_CODE = 1;

@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.13);
+define('FEED_VERSION', 8.14);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -41,6 +41,7 @@ function __autoload($className)
 
 MyTool::$opts = array(
     'http' => array(
+        'headers' => [],
         'timeout' => 4,
         'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
     )

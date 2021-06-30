@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.13);
+define('FEED_VERSION', 8.14);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -670,6 +670,13 @@ class Feed
                 $feed['lastModified'] = '';
             }
 
+            $headers = [];
+            foreach(MyTool::$opts['http']['headers'] as $header) {
+                if (strpos($header, 'If-Modified-Since:') === false && strpos($header, 'If-None-Match:') === false) {
+                    $headers[] = $header;
+                }
+            }
+            MyTool::$opts['http']['headers'] = $headers;
             if (!empty($feed['lastModified'])) {
                 MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
             }
@@ -3896,11 +3903,7 @@ class Intl
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
-    static $opts = [
-        'http' => [
-            'headers' => []
-        ]
-    ];
+    static $opts;
     static $redirects = 20;
 
     const ERROR_UNKNOWN_CODE = 1;
@@ -5254,6 +5257,7 @@ class Star extends Feed
 
 MyTool::$opts = array(
     'http' => array(
+        'headers' => [],
         'timeout' => 4,
         'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
     )
@@ -8433,13 +8437,15 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
     });
 	};
 	this.getSearchText = function() {
-                var elt = document.getElementById('nb-unread');
-                
-                if (!elt) {
-		  elt = document.getElementById('nb-starred');
-                }
-
-		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+          var elt = document.getElementById('nb-unread');
+          
+          if (!elt) {
+	    elt = document.getElementById('nb-starred');
+          }
+          if (elt) {
+	    return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+          }
+          return '';
 	};
 	this.poll = function() {
 		if(self.getUnreadCount() != "0") {

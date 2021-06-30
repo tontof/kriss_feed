@@ -829,6 +829,13 @@ class Feed
                 $feed['lastModified'] = '';
             }
 
+            $headers = [];
+            foreach(MyTool::$opts['http']['headers'] as $header) {
+                if (strpos($header, 'If-Modified-Since:') === false && strpos($header, 'If-None-Match:') === false) {
+                    $headers[] = $header;
+                }
+            }
+            MyTool::$opts['http']['headers'] = $headers;
             if (!empty($feed['lastModified'])) {
                 MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
             }

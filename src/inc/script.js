@@ -2148,13 +2148,15 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
     });
 	};
 	this.getSearchText = function() {
-                var elt = document.getElementById('nb-unread');
-                
-                if (!elt) {
-		  elt = document.getElementById('nb-starred');
-                }
-
-		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+          var elt = document.getElementById('nb-unread');
+          
+          if (!elt) {
+	    elt = document.getElementById('nb-starred');
+          }
+          if (elt) {
+	    return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+          }
+          return '';
 	};
 	this.poll = function() {
 		if(self.getUnreadCount() != "0") {
