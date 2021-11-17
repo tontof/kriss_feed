@@ -67,7 +67,7 @@ class Star extends Feed
             // didn't exists, want to star it
             $save = true;
 
-            $items[$itemHash] = time();
+            $items[$itemHash] = [time(), 0];
 
             if (!isset($feeds[$feedHash])){
                 $feed['nbAll'] = 0;

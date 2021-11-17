@@ -738,7 +738,6 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];

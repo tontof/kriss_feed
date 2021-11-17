@@ -603,6 +603,7 @@ if (isset($_GET['login'])) {
     MyTool::redirect($query);
 } elseif (isset($_GET['stars']) && $kfc->isLogged()) {
     $ks->loadData();
+    $GLOBALS['starredItems'] = $ks->getItems();
     $listItems = $ks->getItems($currentHash, 'all');
     $listHash = array_keys($listItems);
     $currentItemHash = '';
@@ -671,7 +672,6 @@ if (isset($_GET['login'])) {
 
     $menu = $kfc->getMenu();
     $paging = $kfc->getPaging();
-
     $pb->assign('menu', $menu);
     $pb->assign('paging', $paging);
     $pb->assign('currentHashType', $currentHashType);
@@ -866,11 +866,12 @@ if (isset($_GET['login'])) {
     }
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
+        $ks->loadData();
+        $GLOBALS['starredItems'] = $ks->getItems();
         $kf->loadData();
         if ($kf->updateItems()) {
             $kf->writeData();
         }
-
         $listItems = $kf->getItems($currentHash, $filter);
         $listHash = array_keys($listItems);
 
