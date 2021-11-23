@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.15);
+define('FEED_VERSION', 8.16);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -4962,7 +4962,11 @@ class Session
 
     public static function init()
     {
-        self::setCookie();
+        $lifetime = null;
+        if (!empty($_SESSION['longlastingsession'])) {
+            $lifetime = $_SESSION['longlastingsession'];
+        }
+        self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -5045,7 +5049,7 @@ class Session
 
     public static function logout()
     {
-        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on']);
+        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on'], $_SESSION['longlastingsession']);
     }
 
     public static function isLogged()
@@ -8601,12 +8605,9 @@ if (isset($_GET['login'])) {
             if (!empty($_POST['longlastingsession'])) {
                 // (31536000 seconds = 1 year)
                 $_SESSION['longlastingsession'] = 31536000;
-                $_SESSION['expires_on'] =
-                    time() + $_SESSION['longlastingsession'];
-                Session::setCookie($_SESSION['longlastingsession']);
             } else {
                 // when browser closes
-                Session::setCookie(0);
+                $_SESSION['longlastingsession'] = 0;
             }
             session_regenerate_id(true);
             MyTool::redirect();

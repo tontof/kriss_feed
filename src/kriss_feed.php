@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.14);
+define('FEED_VERSION', 8.16);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -218,12 +218,9 @@ if (isset($_GET['login'])) {
             if (!empty($_POST['longlastingsession'])) {
                 // (31536000 seconds = 1 year)
                 $_SESSION['longlastingsession'] = 31536000;
-                $_SESSION['expires_on'] =
-                    time() + $_SESSION['longlastingsession'];
-                Session::setCookie($_SESSION['longlastingsession']);
             } else {
                 // when browser closes
-                Session::setCookie(0);
+                $_SESSION['longlastingsession'] = 0;
             }
             session_regenerate_id(true);
             MyTool::redirect();

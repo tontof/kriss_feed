@@ -48,7 +48,11 @@ class Session
      */
     public static function init()
     {
-        self::setCookie();
+        $lifetime = null;
+        if (!empty($_SESSION['longlastingsession'])) {
+            $lifetime = $_SESSION['longlastingsession'];
+        }
+        self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -157,7 +161,7 @@ class Session
      */
     public static function logout()
     {
-        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on']);
+        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on'], $_SESSION['longlastingsession']);
     }
 
     /**

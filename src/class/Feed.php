@@ -752,7 +752,7 @@ class Feed
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
-                $item['read'] = $this->_data['items'][$itemHash][1];
+                $item['read'] = is_array($this->_data['items'][$itemHash])?$this->_data['items'][$itemHash][1]:0;
             } else if (isset($this->_data['newItems'][$itemHash])) {
                 $item['read'] = $this->_data['newItems'][$itemHash][1];
 
