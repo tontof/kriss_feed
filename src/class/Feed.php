@@ -253,7 +253,8 @@ class Feed
     public function getFaviconFeed($feedHash)
     {
         $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
-        $url = 'http://www.google.com/s2/favicons?domain='.$htmlUrl;
+        //$url = 'https://s2.googleusercontent.com/s2/favicons?domain='.parse_url($htmlUrl, PHP_URL_HOST);
+        $url = 'https://icons.duckduckgo.com/ip3/'.parse_url($htmlUrl, PHP_URL_HOST).'.ico';
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
         if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
