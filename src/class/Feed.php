@@ -742,14 +742,14 @@ class Feed
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
-            if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
+            if (date('Y-m-d', $time) == date('Y-m-d', time())) {
                 // Today
-                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => date('H:i', $time), 'expanded' => date('l jS F Y H:i:s', $time));
             } else {
-                if (strftime('%Y', $time) == strftime('%Y', time())) {
-                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                if (date('Y', $time) == date('Y', time())) {
+                    $item['time'] = array('time' => $time, 'list' => date('F d', $time), 'expanded' => date('l jS F Y H:i:s', $time));
                 } else {
-                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => date('Y-m-d', $time), 'expanded' => date('l jS F Y H:i:s', $time));
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
