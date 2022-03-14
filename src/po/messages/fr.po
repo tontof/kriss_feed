@@ -731,3 +731,8 @@ msgstr "Revenir en arrière"
 msgid "Force update"
 msgstr "Forcer la mise à jour"
 
+msgid "Swipe on mobile"
+msgstr "Swipe sur mobile"
+
+msgid "Do not swipe on mobile"
+msgstr "Pas de swipe sur mobile"

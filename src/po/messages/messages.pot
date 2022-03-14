@@ -737,3 +737,8 @@ msgstr ""
 msgid "Force update"
 msgstr ""
 
+msgid "Swipe on mobile"
+msgstr ""
+
+msgid "Do not swipe on mobile"
+msgstr ""

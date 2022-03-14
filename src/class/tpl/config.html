@@ -216,6 +216,20 @@
                       </label>
                     </div>
                   </div>
+                  
+                  <div class="control-group">
+                    <label class="control-label">{'Swipe on mobile'|Intl::msg}</label>
+                    <div class="controls">
+                      <label for="donotswipe">
+                        <input type="radio" id="donotswipe" name="Swipe" value="0" {if="!$kfcswipe"}checked="checked"{/if}/>
+                        {'Do not swipe on mobile'|Intl::msg}
+                      </label>
+                      <label for="autoswipe">
+                        <input type="radio" id="swipe" name="Swipe" value="1" {if="$kfcswipe"}checked="checked"{/if}/>
+                        {'Swipe on mobile'|Intl::msg}
+                      </label>
+                    </div>
+                  </div>
 
                   <div class="control-group">
                     <div class="controls">
