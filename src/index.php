@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.18);
+define('FEED_VERSION', 8.19);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -1392,6 +1392,8 @@ class FeedConf
 
     public $blank = false;
 
+    public $swipe = true;
+
     public $visibility = 'private';
 
     public $version;
@@ -1768,6 +1770,11 @@ class FeedConf
         $this->blank = $blank;
     }
 
+    public function setSwipe($swipe)
+    {
+        $this->swipe = $swipe;
+    }
+
     public function getMenu()
     {
         $menu = array();
@@ -1938,7 +1945,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'swipe', 'lang');
             $out = '<?php';
             $out .= "\n";
             foreach ($data as $key) {
@@ -2305,6 +2312,20 @@ class FeedPage
                       <label for="autoupdate">
                         <input type="radio" id="autoupdate" name="autoUpdate" value="1" <?php if( $kfcautoupdate ){ ?>checked="checked"<?php } ?>/>
                         <?php echo Intl::msg( 'Auto update with javascript' );?>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="control-group">
+                    <label class="control-label"><?php echo Intl::msg( 'Swipe on mobile' );?></label>
+                    <div class="controls">
+                      <label for="donotswipe">
+                        <input type="radio" id="donotswipe" name="Swipe" value="0" <?php if( !$kfcswipe ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not swipe on mobile' );?>
+                      </label>
+                      <label for="autoswipe">
+                        <input type="radio" id="swipe" name="Swipe" value="1" <?php if( $kfcswipe ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Swipe on mobile' );?>
                       </label>
                     </div>
                   </div>
@@ -2968,7 +2989,7 @@ class FeedPage
 <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-swipe="<?php echo $swipe;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
       <div class="row-fluid full-height">
         <?php if( $listFeeds == 'show' ){ ?>
         <div id="main-container" class="span9 full-height">
@@ -6315,6 +6336,7 @@ dd {
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
+      swipe = '', // data-swipe
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -7786,24 +7808,26 @@ dd {
         }
       };
 
-      addEvent(window, 'touchmove', moveHandler);
-      addEvent(window, 'touchend', function (e) {
-        removeEvent(window, 'touchmove', moveHandler);
-        if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold &&
-            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
-            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
-             ) {
-            if ( start.coords[0] > stop.coords[ 0 ] ) {
-              nextItem();
+      if (swipe) {
+          addEvent(window, 'touchmove', moveHandler);
+          addEvent(window, 'touchend', function (e) {
+            removeEvent(window, 'touchmove', moveHandler);
+            if ( start && stop ) {
+              if ( stop.time - start.time < durationThreshold &&
+                Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+                Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
+                 ) {
+                if ( start.coords[0] > stop.coords[ 0 ] ) {
+                  nextItem();
+                }
+                else {
+                  previousItem();
+                }
+              }
+              start = stop = undefined;
             }
-            else {
-              previousItem();
-            }
-          }
-          start = stop = undefined;
-        }
-      });
+          });
+      }
     }
   }
 
@@ -8217,6 +8241,10 @@ dd {
     if (elementIndex.hasAttribute('data-intl-from')) {
       intlFrom = elementIndex.getAttribute('data-intl-from');
     }
+    if (elementIndex.hasAttribute('data-swipe')) {
+      swipe = parseInt(elementIndex.getAttribute('data-swipe'), 10);
+      swipe = (swipe === 1)?true:false;
+    }
 
     status = document.getElementById('status').innerHTML;
   }
@@ -8588,6 +8616,7 @@ $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
+$pb->assign('swipe', $kfc->swipe);
 $pb->assign('kf', $kf);
 $pb->assign('isLogged', $kfc->isLogged());
 $pb->assign('pagetitle', strip_tags($kfc->title));
@@ -8832,6 +8861,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
         $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
+        $pb->assign('kfcswipe', (int) $kfc->swipe);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);

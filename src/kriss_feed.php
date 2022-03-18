@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.18);
+define('FEED_VERSION', 8.19);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -200,6 +200,7 @@ $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
+$pb->assign('swipe', $kfc->swipe);
 $pb->assign('kf', $kf);
 $pb->assign('isLogged', $kfc->isLogged());
 $pb->assign('pagetitle', strip_tags($kfc->title));
@@ -444,6 +445,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
         $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
+        $pb->assign('kfcswipe', (int) $kfc->swipe);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);

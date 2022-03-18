@@ -106,6 +106,11 @@ class FeedConf
     public $blank = false;
 
     /**
+     * Swipe on mobile
+     */
+    public $swipe = true;
+
+    /**
      * Visibility public/protected/private feed reader
      */
     public $visibility = 'private';
@@ -669,6 +674,16 @@ class FeedConf
     }
 
     /**
+     * Swipe setter
+     *
+     * @param string $swipe
+     */
+    public function setSwipe($swipe)
+    {
+        $this->swipe = $swipe;
+    }
+
+    /**
      * Get menu
      *
      * @return array of menu sorted elements
@@ -848,7 +863,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'swipe', 'lang');
             $out = '<?php';
             $out .= "\n";
             foreach ($data as $key) {

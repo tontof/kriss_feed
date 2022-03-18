@@ -22,6 +22,7 @@
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
+      swipe = '', // data-swipe
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -1493,24 +1494,26 @@
         }
       };
 
-      addEvent(window, 'touchmove', moveHandler);
-      addEvent(window, 'touchend', function (e) {
-        removeEvent(window, 'touchmove', moveHandler);
-        if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold &&
-            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
-            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
-             ) {
-            if ( start.coords[0] > stop.coords[ 0 ] ) {
-              nextItem();
+      if (swipe) {
+          addEvent(window, 'touchmove', moveHandler);
+          addEvent(window, 'touchend', function (e) {
+            removeEvent(window, 'touchmove', moveHandler);
+            if ( start && stop ) {
+              if ( stop.time - start.time < durationThreshold &&
+                Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+                Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
+                 ) {
+                if ( start.coords[0] > stop.coords[ 0 ] ) {
+                  nextItem();
+                }
+                else {
+                  previousItem();
+                }
+              }
+              start = stop = undefined;
             }
-            else {
-              previousItem();
-            }
-          }
-          start = stop = undefined;
-        }
-      });
+          });
+      }
     }
   }
 
@@ -1923,6 +1926,10 @@
     }
     if (elementIndex.hasAttribute('data-intl-from')) {
       intlFrom = elementIndex.getAttribute('data-intl-from');
+    }
+    if (elementIndex.hasAttribute('data-swipe')) {
+      swipe = parseInt(elementIndex.getAttribute('data-swipe'), 10);
+      swipe = (swipe === 1)?true:false;
     }
 
     status = document.getElementById('status').innerHTML;
