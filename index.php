@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.11);
+define('FEED_VERSION', 8.19);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -206,7 +206,8 @@ class Feed
     public function getFaviconFeed($feedHash)
     {
         $htmlUrl = $this->_data['feeds'][$feedHash]['htmlUrl'];
-        $url = 'http://www.google.com/s2/favicons?domain='.$htmlUrl;
+        //$url = 'https://s2.googleusercontent.com/s2/favicons?domain='.parse_url($htmlUrl, PHP_URL_HOST);
+        $url = 'https://icons.duckduckgo.com/ip3/'.parse_url($htmlUrl, PHP_URL_HOST).'.ico';
         $file = FAVICON_DIR.'/favicon.'.$feedHash.'.ico';
 
         if ($this->kfc->isLogged() && $this->kfc->addFavicon) {
@@ -584,22 +585,21 @@ class Feed
     public function getItem($itemHash, $keep = true)
     {
         $item = $this->loadItem($itemHash, $keep);
-         
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
-            if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
+            if (date('Y-m-d', $time) == date('Y-m-d', time())) {
                 // Today
-                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => date('H:i', $time), 'expanded' => date('l jS F Y H:i:s', $time));
             } else {
-                if (strftime('%Y', $time) == strftime('%Y', time())) {
-                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                if (date('Y', $time) == date('Y', time())) {
+                    $item['time'] = array('time' => $time, 'list' => date('F d', $time), 'expanded' => date('l jS F Y H:i:s', $time));
                 } else {
-                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => date('Y-m-d', $time), 'expanded' => date('l jS F Y H:i:s', $time));
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
-                $item['read'] = $this->_data['items'][$itemHash][1];
+                $item['read'] = is_array($this->_data['items'][$itemHash])?$this->_data['items'][$itemHash][1]:0;
             } else if (isset($this->_data['newItems'][$itemHash])) {
                 $item['read'] = $this->_data['newItems'][$itemHash][1];
 
@@ -670,7 +670,13 @@ class Feed
                 $feed['lastModified'] = '';
             }
 
-            MyTool::$opts['http']['headers'] = array();
+            $headers = [];
+            foreach(MyTool::$opts['http']['headers'] as $header) {
+                if (strpos($header, 'If-Modified-Since:') === false && strpos($header, 'If-None-Match:') === false) {
+                    $headers[] = $header;
+                }
+            }
+            MyTool::$opts['http']['headers'] = $headers;
             if (!empty($feed['lastModified'])) {
                 MyTool::$opts['http']['headers'][] = 'If-Modified-Since: ' . $feed['lastModified'];
             }
@@ -1386,6 +1392,8 @@ class FeedConf
 
     public $blank = false;
 
+    public $swipe = true;
+
     public $visibility = 'private';
 
     public $version;
@@ -1762,6 +1770,11 @@ class FeedConf
         $this->blank = $blank;
     }
 
+    public function setSwipe($swipe)
+    {
+        $this->swipe = $swipe;
+    }
+
     public function getMenu()
     {
         $menu = array();
@@ -1932,7 +1945,7 @@ class FeedConf
                           'menuListFeeds', 'menuFilter', 'menuOrder', 'menuUpdate',
                           'menuRead', 'menuUnread', 'menuEdit', 'menuAdd', 'menuHelp', 'menuStars',
                           'pagingItem', 'pagingPage', 'pagingByPage', 'addFavicon', 'preload',
-                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'lang');
+                          'pagingMarkAs', 'disableSessionProtection', 'blank', 'swipe', 'lang');
             $out = '<?php';
             $out .= "\n";
             foreach ($data as $key) {
@@ -2299,6 +2312,20 @@ class FeedPage
                       <label for="autoupdate">
                         <input type="radio" id="autoupdate" name="autoUpdate" value="1" <?php if( $kfcautoupdate ){ ?>checked="checked"<?php } ?>/>
                         <?php echo Intl::msg( 'Auto update with javascript' );?>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="control-group">
+                    <label class="control-label"><?php echo Intl::msg( 'Swipe on mobile' );?></label>
+                    <div class="controls">
+                      <label for="donotswipe">
+                        <input type="radio" id="donotswipe" name="Swipe" value="0" <?php if( !$kfcswipe ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Do not swipe on mobile' );?>
+                      </label>
+                      <label for="autoswipe">
+                        <input type="radio" id="swipe" name="Swipe" value="1" <?php if( $kfcswipe ){ ?>checked="checked"<?php } ?>/>
+                        <?php echo Intl::msg( 'Swipe on mobile' );?>
                       </label>
                     </div>
                   </div>
@@ -2962,7 +2989,7 @@ class FeedPage
 <?php FeedPage::includesTpl(); ?>
   </head>
   <body>
-<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
+<div id="index" class="container-fluid full-height" data-view="<?php echo $view;?>" data-list-feeds="<?php echo $listFeeds;?>" data-filter="<?php echo $filter;?>" data-order="<?php echo $order;?>" data-by-page="<?php echo $byPage;?>" data-autoread-item="<?php echo $autoreadItem;?>" data-autoread-page="<?php echo $autoreadPage;?>" data-autohide="<?php echo $autohide;?>" data-current-hash="<?php echo $currentHash;?>" data-current-page="<?php echo $currentPage;?>" data-nb-items="<?php echo $nbItems;?>" data-shaarli="<?php echo $shaarli;?>" data-redirector="<?php echo $redirector;?>" data-autoupdate="<?php echo $autoupdate;?>" data-autofocus="<?php echo $autofocus;?>" data-add-favicon="<?php echo $addFavicon;?>" data-preload="<?php echo $preload;?>" data-is-logged="<?php echo $isLogged;?>" data-blank="<?php echo $blank;?>" data-swipe="<?php echo $swipe;?>" data-intl-top="<?php echo Intl::msg( 'top' );?>" data-intl-share="<?php echo Intl::msg( 'share' );?>" data-intl-read="<?php echo Intl::msg( 'read' );?>" data-intl-unread="<?php echo Intl::msg( 'unread' );?>" data-intl-star="<?php echo Intl::msg( 'star' );?>" data-intl-unstar="<?php echo Intl::msg( 'unstar' );?>" data-intl-from="<?php echo Intl::msg( 'from' );?>"<?php if( isset($_GET['stars']) && $kf->kfc->isLogged() ){ ?> data-stars="1"<?php } ?>>
       <div class="row-fluid full-height">
         <?php if( $listFeeds == 'show' ){ ?>
         <div id="main-container" class="span9 full-height">
@@ -3897,7 +3924,7 @@ class Intl
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
-    static $opts = array();
+    static $opts;
     static $redirects = 20;
 
     const ERROR_UNKNOWN_CODE = 1;
@@ -3918,9 +3945,13 @@ class MyTool
             $ch = curl_init($url);
 
             if (!empty($opts)) {
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
-                curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
-                curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                if (!empty($opts['http']['timeout'])) {
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $opts['http']['timeout']);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, $opts['http']['timeout']);
+                }
+                if (!empty($opts['http']['user_agent'])) {
+                    curl_setopt($ch, CURLOPT_USERAGENT, $opts['http']['user_agent']);
+                }
                 if (!empty($opts['http']['headers'])) {
                     curl_setopt($ch, CURLOPT_HTTPHEADER, $opts['http']['headers']);
                 }
@@ -4953,7 +4984,11 @@ class Session
 
     public static function init()
     {
-        self::setCookie();
+        $lifetime = null;
+        if (!empty($_SESSION['longlastingsession'])) {
+            $lifetime = $_SESSION['longlastingsession'];
+        }
+        self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -5036,7 +5071,7 @@ class Session
 
     public static function logout()
     {
-        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on']);
+        unset($_SESSION['uid'], $_SESSION['ip'], $_SESSION['expires_on'], $_SESSION['longlastingsession']);
     }
 
     public static function isLogged()
@@ -5192,7 +5227,7 @@ class Star extends Feed
             // didn't exists, want to star it
             $save = true;
 
-            $items[$itemHash] = time();
+            $items[$itemHash] = [time(), 0];
 
             if (!isset($feeds[$feedHash])){
                 $feed['nbAll'] = 0;
@@ -5247,6 +5282,7 @@ class Star extends Feed
 
 MyTool::$opts = array(
     'http' => array(
+        'headers' => [],
         'timeout' => 4,
         'user_agent' => 'KrISS feed agent '.FEED_VERSION.' by Tontof.net http://tontof.net/kriss/feed',
     )
@@ -6300,6 +6336,7 @@ dd {
       stars = false, // data-stars
       isLogged = false, // data-is-logged
       blank = false, // data-blank
+      swipe = '', // data-swipe
       status = '',
       listUpdateFeeds = [],
       listItemsHash = [],
@@ -7771,24 +7808,26 @@ dd {
         }
       };
 
-      addEvent(window, 'touchmove', moveHandler);
-      addEvent(window, 'touchend', function (e) {
-        removeEvent(window, 'touchmove', moveHandler);
-        if ( start && stop ) {
-          if ( stop.time - start.time < durationThreshold &&
-            Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
-            Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
-             ) {
-            if ( start.coords[0] > stop.coords[ 0 ] ) {
-              nextItem();
+      if (swipe) {
+          addEvent(window, 'touchmove', moveHandler);
+          addEvent(window, 'touchend', function (e) {
+            removeEvent(window, 'touchmove', moveHandler);
+            if ( start && stop ) {
+              if ( stop.time - start.time < durationThreshold &&
+                Math.abs( start.coords[ 0 ] - stop.coords[ 0 ] ) > horizontalDistanceThreshold &&
+                Math.abs( start.coords[ 1 ] - stop.coords[ 1 ] ) < verticalDistanceThreshold
+                 ) {
+                if ( start.coords[0] > stop.coords[ 0 ] ) {
+                  nextItem();
+                }
+                else {
+                  previousItem();
+                }
+              }
+              start = stop = undefined;
             }
-            else {
-              previousItem();
-            }
-          }
-          start = stop = undefined;
-        }
-      });
+          });
+      }
     }
   }
 
@@ -8202,6 +8241,10 @@ dd {
     if (elementIndex.hasAttribute('data-intl-from')) {
       intlFrom = elementIndex.getAttribute('data-intl-from');
     }
+    if (elementIndex.hasAttribute('data-swipe')) {
+      swipe = parseInt(elementIndex.getAttribute('data-swipe'), 10);
+      swipe = (swipe === 1)?true:false;
+    }
 
     status = document.getElementById('status').innerHTML;
   }
@@ -8426,13 +8469,15 @@ if(typeof GM_registerMenuCommand !== 'undefined') {
     });
 	};
 	this.getSearchText = function() {
-                var elt = document.getElementById('nb-unread');
-                
-                if (!elt) {
-		  elt = document.getElementById('nb-starred');
-                }
-
-		return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+          var elt = document.getElementById('nb-unread');
+          
+          if (!elt) {
+	    elt = document.getElementById('nb-starred');
+          }
+          if (elt) {
+	    return 'Kriss feed (' + parseInt(elt.innerHTML, 10) + ')';
+          }
+          return '';
 	};
 	this.poll = function() {
 		if(self.getUnreadCount() != "0") {
@@ -8571,6 +8616,7 @@ $pb->assign('autoupdate', $kfc->autoUpdate);
 $pb->assign('addFavicon', $kfc->addFavicon);
 $pb->assign('preload', $kfc->preload);
 $pb->assign('blank', $kfc->blank);
+$pb->assign('swipe', $kfc->swipe);
 $pb->assign('kf', $kf);
 $pb->assign('isLogged', $kfc->isLogged());
 $pb->assign('pagetitle', strip_tags($kfc->title));
@@ -8589,12 +8635,9 @@ if (isset($_GET['login'])) {
             if (!empty($_POST['longlastingsession'])) {
                 // (31536000 seconds = 1 year)
                 $_SESSION['longlastingsession'] = 31536000;
-                $_SESSION['expires_on'] =
-                    time() + $_SESSION['longlastingsession'];
-                Session::setCookie($_SESSION['longlastingsession']);
             } else {
                 // when browser closes
-                Session::setCookie(0);
+                $_SESSION['longlastingsession'] = 0;
             }
             session_regenerate_id(true);
             MyTool::redirect();
@@ -8818,6 +8861,7 @@ if (isset($_GET['login'])) {
         $pb->assign('kfcaddfavicon', (int) $kfc->addFavicon);
         $pb->assign('kfcpreload', (int) $kfc->preload);
         $pb->assign('kfcblank', (int) $kfc->blank);
+        $pb->assign('kfcswipe', (int) $kfc->swipe);
         $pb->assign('kfcdisablesessionprotection', (int) $kfc->disableSessionProtection);
         $pb->assign('kfcmenu', $menu);
         $pb->assign('kfcpaging', $paging);
@@ -8974,6 +9018,7 @@ if (isset($_GET['login'])) {
     MyTool::redirect($query);
 } elseif (isset($_GET['stars']) && $kfc->isLogged()) {
     $ks->loadData();
+    $GLOBALS['starredItems'] = $ks->getItems();
     $listItems = $ks->getItems($currentHash, 'all');
     $listHash = array_keys($listItems);
     $currentItemHash = '';
@@ -9042,7 +9087,6 @@ if (isset($_GET['login'])) {
 
     $menu = $kfc->getMenu();
     $paging = $kfc->getPaging();
-
     $pb->assign('menu', $menu);
     $pb->assign('paging', $paging);
     $pb->assign('currentHashType', $currentHashType);
@@ -9237,11 +9281,12 @@ if (isset($_GET['login'])) {
     }
 } else {
     if (($kfc->isLogged() || $kfc->visibility === 'protected') && !isset($_GET['password']) && !isset($_GET['help']) && !isset($_GET['update']) && !isset($_GET['config']) && !isset($_GET['import']) && !isset($_GET['export']) && !isset($_GET['add']) && !isset($_GET['toggleFolder']) && !isset($_GET['read']) && !isset($_GET['unread']) && !isset($_GET['edit'])) {
+        $ks->loadData();
+        $GLOBALS['starredItems'] = $ks->getItems();
         $kf->loadData();
         if ($kf->updateItems()) {
             $kf->writeData();
         }
-
         $listItems = $kf->getItems($currentHash, $filter);
         $listHash = array_keys($listItems);
 
