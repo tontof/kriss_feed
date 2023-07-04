@@ -588,14 +588,14 @@ class Feed
         if (!empty($item)) {
             $item['itemHash'] = $itemHash;
             $time = $item['time'];
-            if (strftime('%Y%m%d', $time) == strftime('%Y%m%d', time())) {
+            if (date('Ymd', $time) == date('Ymd', time())) {
                 // Today
-                $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%H:%M', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                $item['time'] = array('time' => $time, 'list' => iconv('ISO-8859-1','UTF-8',date('H:i', $time)), 'expanded' => iconv('ISO-8859-1','UTF-8',date('D d F Y - H:i', $time)));
             } else {
                 if (strftime('%Y', $time) == strftime('%Y', time())) {
-                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => iconv('ISO-8859-1','UTF-8',date('M d', $time)), 'expanded' => iconv('ISO-8859-1','UTF-8',date('D d F Y - H:i', $time)));
                 } else {
-                    $item['time'] = array('time' => $time, 'list' => utf8_encode(strftime('%b %d, %Y', $time)), 'expanded' => utf8_encode(strftime('%A %d %B %Y - %H:%M', $time)));
+                    $item['time'] = array('time' => $time, 'list' => iconv('ISO-8859-1','UTF-8',date('M d, Y', $time)), 'expanded' => iconv('ISO-8859-1','UTF-8',date('D d F Y - H:i', $time)));
                 }
             }
             if (isset($this->_data['items'][$itemHash])) {
