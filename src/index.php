@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.20);
+define('FEED_VERSION', 8.21);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -4984,20 +4984,21 @@ class Session
 
     public static function init()
     {
+        $lifetime = null;
+        self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
         ini_set('session.use_only_cookies', 1);
-        if (!session_id()) {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
             if (!empty(self::$sessionName)) {
                 session_name(self::$sessionName);
             }
             session_start();
-            $lifetime = null;
             if (!empty($_SESSION['longlastingsession'])) {
-                $lifetime = $_SESSION['longlastingsession'];
+              $lifetime = $_SESSION['longlastingsession'];
             }
             self::setCookie($lifetime);
         }
@@ -5027,7 +5028,11 @@ class Session
         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $secure = true;
         }
-        session_set_cookie_params($lifetime, $path, $domain, $secure);
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+          session_set_cookie_params($lifetime, $path, $domain, $secure);
+        } else {
+          setcookie(session_name(),session_id(),time()+$lifetime, $path, $domain, $secure);
+        }
     }
 
     private static function _allIPs()
