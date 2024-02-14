@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.19);
+define('FEED_VERSION', 8.20);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -4984,11 +4984,6 @@ class Session
 
     public static function init()
     {
-        $lifetime = null;
-        if (!empty($_SESSION['longlastingsession'])) {
-            $lifetime = $_SESSION['longlastingsession'];
-        }
-        self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
@@ -5000,6 +4995,11 @@ class Session
                 session_name(self::$sessionName);
             }
             session_start();
+            $lifetime = null;
+            if (!empty($_SESSION['longlastingsession'])) {
+                $lifetime = $_SESSION['longlastingsession'];
+            }
+            self::setCookie($lifetime);
         }
     }
 
