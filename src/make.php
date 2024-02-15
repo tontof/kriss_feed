@@ -15,7 +15,7 @@ class Make
 
         $replace = preg_replace('/^del><\?php/m', '', $replace);
 
-        return self::replaceFunction($code, '__autoload', $replace);
+        return self::replaceFunctionCall($code, 'spl_autoload_register', $replace);
     }
 
     public static function includeFile($filename)
@@ -176,6 +176,33 @@ class Make
                 $tab = $match[1];
             }
             if ($end === -1 && $begin !== -1 && preg_match('/^'.$tab.'}/', $lines[$i], $match)) {
+                $end = $i;
+            }
+        }
+
+        if ($begin !== -1 & $end !== -1) {
+            array_splice($lines, $begin, $end-$begin+1);
+            if (!empty($replace)) {
+                $lines[$begin] = $replace;
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    public static function replaceFunctionCall($code, $name, $replace = '')
+    {
+        $lines = explode(PHP_EOL, $code);
+
+        $begin = -1;
+        $end = -1;
+        $tab = '';
+        for ($i = 0; $i < count($lines); $i++) {
+            if ($begin === -1 && preg_match('/(\s*).*'.$name.'.*\(.*/', $lines[$i], $match)) {
+                $begin = $i;
+                $tab = $match[1];
+            }
+            if ($end === -1 && $begin !== -1 && preg_match('/^'.$tab.'\);/', $lines[$i], $match)) {
                 $end = $i;
             }
         }

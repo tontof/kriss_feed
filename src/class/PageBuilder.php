@@ -9,6 +9,7 @@
 class PageBuilder
 {
     private $pageClass;
+    public $tpl;
     public $var = array();
 
     /**

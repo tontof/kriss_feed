@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.21);
+define('FEED_VERSION', 8.22);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -32,12 +32,13 @@ date_default_timezone_set('Europe/Paris');
  *
  * @param string $className The name of the class to load
  */
-function __autoload($className)
-{
+spl_autoload_register(
+  function($className) {
     if (file_exists('class/'. $className . '.php')) {
         include_once 'class/'. $className . '.php';
     }
-}
+  }
+);
 
 MyTool::$opts = array(
     'http' => array(
@@ -978,4 +979,3 @@ if (isset($_GET['login'])) {
         $pb->renderPage('login');
     }
 }
-

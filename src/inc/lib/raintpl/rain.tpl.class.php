@@ -728,7 +728,7 @@ class RainTPL{
 
                     //get the function
                     $function = str_replace( "@double_dot@", "::", $function_var );
-                    $params = null;
+                    $params = "";
 
                 }
 
@@ -835,7 +835,7 @@ class RainTPL{
 
                                         //get the function
                                         $function = str_replace( "@double_dot@", "::", $function_var );
-                                        $params = null;
+                                        $params = "";
 
                                     }
 
