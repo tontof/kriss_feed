@@ -48,7 +48,7 @@ class Session
      */
     public static function init()
     {
-        $lifetime = null;
+        $lifetime = 0;
         self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
@@ -62,7 +62,7 @@ class Session
             }
             session_start();
             if (!empty($_SESSION['longlastingsession'])) {
-              $lifetime = $_SESSION['longlastingsession'];
+              $lifetime = time()+$_SESSION['longlastingsession'];
             }
             self::setCookie($lifetime);
         }
@@ -76,6 +76,7 @@ class Session
     public static function setCookie($lifetime = null)
     {
         $cookie = session_get_cookie_params();
+
         // Do not change lifetime
         if ($lifetime === null) {
             $lifetime = $cookie['lifetime'];
@@ -91,7 +92,7 @@ class Session
             $domain = $_SERVER['HTTP_HOST'];
         }
         // remove port from domain : http://php.net/manual/en/function.setcookie.php#36202
-        $domain = parse_url($domain, PHP_URL_HOST);
+        $domain = (string)parse_url($domain, PHP_URL_HOST);
         // Check if secure
         $secure = false;
         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
@@ -100,7 +101,7 @@ class Session
         if (session_status() !== PHP_SESSION_ACTIVE) {
           session_set_cookie_params($lifetime, $path, $domain, $secure);
         } else {
-          setcookie(session_name(),session_id(),time()+$lifetime, $path, $domain, $secure);
+          setcookie(session_name(), session_id(), $lifetime, $path, $domain, $secure);
         }
     }
 
