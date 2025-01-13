@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.22);
+define('FEED_VERSION', 8.23);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -3958,7 +3958,6 @@ class MyTool
             }
             curl_setopt($ch, CURLOPT_ENCODING, '');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_HEADER, true);
 
@@ -4273,7 +4272,6 @@ class MyTool
             $ch = curl_init ($url);
             curl_setopt($ch, CURLOPT_HEADER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
             $raw = curl_exec($ch);
             if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
                 $fp = fopen($file, 'x');

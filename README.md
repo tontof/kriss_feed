@@ -7,7 +7,7 @@ An example is available on [tontof.net](http://tontof.net/feed).
 
 This is an alternative to Google Reader or other RSS feed readers:
 - It does not require SQL or database.
-- It works with PHP 5.2
+- It works with PHP 5.4+
 
 More information here: [KrISS feed](http://tontof.net/kriss/feed).
 

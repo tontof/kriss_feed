@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.22);
+define('FEED_VERSION', 8.23);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');

@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.19);
+define('FEED_VERSION', 8.23);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -3958,7 +3958,6 @@ class MyTool
             }
             curl_setopt($ch, CURLOPT_ENCODING, '');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_HEADER, true);
 
@@ -4273,7 +4272,6 @@ class MyTool
             $ch = curl_init ($url);
             curl_setopt($ch, CURLOPT_HEADER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
             $raw = curl_exec($ch);
             if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
                 $fp = fopen($file, 'x');
@@ -4643,6 +4641,7 @@ class Opml
 class PageBuilder
 {
     private $pageClass;
+    public $tpl;
     public $var = array();
 
     public function __construct($pageClass)
@@ -4984,28 +4983,30 @@ class Session
 
     public static function init()
     {
-        $lifetime = null;
-        if (!empty($_SESSION['longlastingsession'])) {
-            $lifetime = $_SESSION['longlastingsession'];
-        }
+        $lifetime = 0;
         self::setCookie($lifetime);
         // Use cookies to store session.
         ini_set('session.use_cookies', 1);
         // Force cookies for session  (phpsessionID forbidden in URL)
         ini_set('session.use_only_cookies', 1);
-        if (!session_id()) {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
             // Prevent php to use sessionID in URL if cookies are disabled.
             ini_set('session.use_trans_sid', false);
             if (!empty(self::$sessionName)) {
                 session_name(self::$sessionName);
             }
             session_start();
+            if (!empty($_SESSION['longlastingsession'])) {
+              $lifetime = time()+$_SESSION['longlastingsession'];
+            }
+            self::setCookie($lifetime);
         }
     }
 
     public static function setCookie($lifetime = null)
     {
         $cookie = session_get_cookie_params();
+
         // Do not change lifetime
         if ($lifetime === null) {
             $lifetime = $cookie['lifetime'];
@@ -5021,13 +5022,17 @@ class Session
             $domain = $_SERVER['HTTP_HOST'];
         }
         // remove port from domain : http://php.net/manual/en/function.setcookie.php#36202
-        $domain = parse_url($domain, PHP_URL_HOST);
+        $domain = (string)parse_url($domain, PHP_URL_HOST);
         // Check if secure
         $secure = false;
         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
             $secure = true;
         }
-        session_set_cookie_params($lifetime, $path, $domain, $secure);
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+          session_set_cookie_params($lifetime, $path, $domain, $secure);
+        } else {
+          setcookie(session_name(), session_id(), $lifetime, $path, $domain, $secure);
+        }
     }
 
     private static function _allIPs()
@@ -9394,4 +9399,3 @@ if (isset($_GET['login'])) {
         $pb->renderPage('login');
     }
 }
-
