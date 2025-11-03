@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.23);
+define('FEED_VERSION', 8.24);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -751,7 +751,7 @@ class Feed
         switch(strtolower($ext)) {
         case '':
             if (strpos($enclosure, 'https://www.youtube.com') === 0) {
-                $link = '<iframe src="'.str_replace('/v/','/embed/', $enclosure).'" width="640" height="360" allowfullscreen></iframe>';
+                $link = '<iframe src="'.str_replace('/v/','/embed/', str_replace('www.youtube.com', 'www.youtube-nocookie.com', $enclosure)).'" width="640" height="360" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
             }
             break;
         case 'jpg':
