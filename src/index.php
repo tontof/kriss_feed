@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.24);
+define('FEED_VERSION', 8.25);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -3921,6 +3921,17 @@ class Intl
 }
 
 
+
+if (!function_exists("http_get_last_response_headers")) {
+    function http_get_last_response_headers() {
+        if (!isset($http_response_header) ) {
+            return null;
+        }
+        return $http_response_header;
+    }
+}
+
+
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
@@ -3997,12 +4008,11 @@ class MyTool
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $data = substr($data, $headerSize);
             $error = curl_error($ch);
-
-            curl_close($ch);
         } else {
             $context = stream_context_create($opts);
             if ($stream = fopen($url, 'r', false, $context)) {
                 $data = stream_get_contents($stream);
+                $http_response_header = http_get_last_response_headers();
                 $status = $http_response_header[0];
                 $code = explode(' ', $status);
                 if (count($code)>1) {
