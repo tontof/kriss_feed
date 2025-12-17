@@ -11,16 +11,6 @@
  *
  */
 
-if (!function_exists("http_get_last_response_headers")) {
-    function http_get_last_response_headers() {
-        if (!isset($http_response_header) ) {
-            return null;
-        }
-        return $http_response_header;
-    }
-}
-
-
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
@@ -115,7 +105,9 @@ class MyTool
             $context = stream_context_create($opts);
             if ($stream = fopen($url, 'r', false, $context)) {
                 $data = stream_get_contents($stream);
-                $http_response_header = http_get_last_response_headers();
+                if (function_exists("http_get_last_response_headers")) {
+                    $http_response_header = http_get_last_response_headers();
+                }
                 $status = $http_response_header[0];
                 $code = explode(' ', $status);
                 if (count($code)>1) {
@@ -493,7 +485,6 @@ class MyTool
                 fwrite($fp, $raw);
                 fclose($fp);
             }
-            curl_close ($ch);
         }
     }
 
