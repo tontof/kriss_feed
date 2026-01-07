@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.23);
+define('FEED_VERSION', 8.26);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -751,7 +751,7 @@ class Feed
         switch(strtolower($ext)) {
         case '':
             if (strpos($enclosure, 'https://www.youtube.com') === 0) {
-                $link = '<iframe src="'.str_replace('/v/','/embed/', $enclosure).'" width="640" height="360" allowfullscreen></iframe>';
+                $link = '<iframe src="'.str_replace('/v/','/embed/', str_replace('www.youtube.com', 'www.youtube-nocookie.com', $enclosure)).'" width="640" height="360" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
             }
             break;
         case 'jpg':
@@ -3921,6 +3921,7 @@ class Intl
 }
 
 
+
 class MyTool
 {
     // http://php.net/manual/en/function.libxml-set-streams-context.php
@@ -3997,12 +3998,13 @@ class MyTool
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $data = substr($data, $headerSize);
             $error = curl_error($ch);
-
-            curl_close($ch);
         } else {
             $context = stream_context_create($opts);
             if ($stream = fopen($url, 'r', false, $context)) {
                 $data = stream_get_contents($stream);
+                if (function_exists("http_get_last_response_headers")) {
+                    $http_response_header = http_get_last_response_headers();
+                }
                 $status = $http_response_header[0];
                 $code = explode(' ', $status);
                 if (count($code)>1) {
@@ -4278,7 +4280,6 @@ class MyTool
                 fwrite($fp, $raw);
                 fclose($fp);
             }
-            curl_close ($ch);
         }
     }
 
