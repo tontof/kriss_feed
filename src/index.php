@@ -2,7 +2,7 @@
 // KrISS feed: a simple and smart (or stupid) feed reader
 // Copyleft (ɔ) - Tontof - http://tontof.net
 // use KrISS feed at your own risk
-define('FEED_VERSION', 8.26);
+define('FEED_VERSION', 8.27);
 
 define('DATA_DIR', 'data');
 define('INC_DIR', 'inc');
@@ -4924,7 +4924,7 @@ class Rss
         }
         set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
-        $dom->loadXML($data);
+        $dom->loadXML(strstr($data, '<'));
         restore_error_handler();
         if (\PHP_VERSION_ID < 80000) {
             libxml_disable_entity_loader($prev);

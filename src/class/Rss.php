@@ -288,7 +288,7 @@ class Rss
         }
         set_error_handler(array('Rss', 'silenceErrors'));
         $dom = new DOMDocument();
-        $dom->loadXML($data);
+        $dom->loadXML(strstr($data, '<'));
         restore_error_handler();
         if (\PHP_VERSION_ID < 80000) {
             libxml_disable_entity_loader($prev);
